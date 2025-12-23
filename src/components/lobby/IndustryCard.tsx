@@ -31,6 +31,7 @@ export default function IndustryCard({ image, title, description, delay = 0 }: I
                 style={{
                     transform: isHovered ? 'scale(1.1)' : 'scale(1)',
                     filter: isHovered ? 'brightness(1.2)' : 'brightness(0.8)',
+                    objectFit: 'cover',
                 }}
             />
 

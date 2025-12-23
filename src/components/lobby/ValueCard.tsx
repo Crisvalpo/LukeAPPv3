@@ -15,8 +15,8 @@ export default function ValueCard({ icon, title, description, delay = 0 }: Value
                 animation: `fade-in-up 0.6s ease-out ${delay}ms backwards`,
             }}
         >
-            {/* Icon */}
-            <div className="text-5xl mb-4 animate-float">{icon}</div>
+            {/* Icon - Suavizado */}
+            <div className="text-5xl mb-4 icon-subtle-float">{icon}</div>
 
             {/* Title */}
             <h3 className="text-xl font-bold mb-2 text-white">{title}</h3>

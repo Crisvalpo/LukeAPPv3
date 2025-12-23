@@ -1,103 +1,149 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import LogoutButton from '@/components/LogoutButton';
-import ProjectCard3D from '@/components/lobby/ProjectCard3D';
+import EmptyLobbyState from '@/components/lobby/EmptyLobbyState';
+import AnimatedParticles from '@/components/animations/AnimatedParticles';
+import Image from 'next/image';
 
-// Mock data type for what we'd fetch.
-// In reality, this would be a complex join query.
-type ContextOption = {
+type Membership = {
     id: string;
     role_id: string;
     companies: { name: string } | null;
     projects: { name: string; code: string } | null;
+    roles: { description: string } | null;
 };
 
 export default async function LobbyPage() {
     let user = null;
-    let contexts: ContextOption[] | null = [];
+    let membership: Membership | null = null;
 
     try {
         const supabase = await createClient();
         const { data } = await supabase.auth.getUser();
         user = data.user;
 
-        if (user) {
-            const result = await supabase
-                .from('members')
-                .select(`
+        if (!user) {
+            redirect('/login');
+        }
+
+        // Get single active membership (invite-only model)
+        const { data: memberData, error } = await supabase
+            .from('members')
+            .select(`
                 id,
                 role_id,
                 companies ( name ),
-                projects ( name, code )
-                `)
-                .eq('user_id', user.id)
-                .eq('status', 'ACTIVE');
-            contexts = result.data as unknown as ContextOption[]; // explicit cast
+                projects ( name, code ),
+                roles ( description )
+            `)
+            .eq('user_id', user.id)
+            .eq('status', 'ACTIVE')
+            .single();
+
+        if (!error && memberData) {
+            membership = memberData as unknown as Membership;
         }
     } catch (error) {
         console.error('Lobby load error:', error);
     }
 
-    // Handle empty state
-    const hasContexts = contexts && contexts.length > 0;
+    // No membership = Empty State
+    if (!membership || !user) {
+        return <EmptyLobbyState userName={user?.user_metadata?.full_name} />;
+    }
 
+    // Basic Lobby (Minimal for now)
     return (
-        <div className="min-h-screen flex flex-col p-6 relative">
-            {/* Background Ambience */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 bg-[var(--color-bg-app)]">
+        <main className="landing-root">
+            {/* Background */}
+            <div className="landing-background">
+                <AnimatedParticles />
                 <div className="absolute top-[20%] left-[50%] transform -translate-x-1/2 w-[60%] h-[60%] bg-[var(--color-primary)] opacity-5 blur-[120px] rounded-full animate-pulse" />
             </div>
 
-            <header className="flex justify-between items-center mb-12 hero-title">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Luke<span className="text-gradient">APP</span></h1>
-                </div>
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-[var(--color-bg-surface-2)] flex items-center justify-center text-xs font-bold border border-[var(--glass-border)]">
-                            {user?.email?.charAt(0).toUpperCase() ?? '?'}
+            <div className="landing-content" style={{ gap: '3rem', paddingTop: '2rem' }}>
+                {/* Header */}
+                <header className="flex justify-between items-center w-full max-w-6xl mx-auto">
+                    <div className="flex items-center gap-3">
+                        <Image
+                            src="/logo.png"
+                            alt="LukeAPP"
+                            width={40}
+                            height={40}
+                            style={{ filter: 'invert(1) brightness(2)' }}
+                        />
+                        <div>
+                            <h1 className="text-xl font-bold text-white">
+                                {membership.projects?.name || 'LukeAPP'}
+                            </h1>
+                            <p className="text-xs text-[var(--color-text-dim)]">
+                                {membership.companies?.name}
+                            </p>
                         </div>
                     </div>
-                    <LogoutButton />
-                </div>
-            </header>
-
-            <main className="flex-1 flex flex-col items-center justify-center max-w-6xl mx-auto w-full">
-                <div className="w-full text-center mb-8 hero-subtitle">
-                    <h2 className="text-3xl font-bold mb-2">Selecciona tu Contexto</h2>
-                    <p className="text-[var(--color-text-muted)]">Elige el proyecto donde vas a operar hoy.</p>
-                </div>
-
-                {!hasContexts ? (
-                    <div className="glass-panel p-12 text-center w-full max-w-xl hero-actions">
-                        <div className="w-16 h-16 bg-[var(--color-bg-surface-2)] rounded-full flex items-center justify-center mx-auto mb-4 text-2xl animate-pulse">
-                            🚫
+                    <div className="flex items-center gap-4">
+                        <div className="flex flex-col items-end">
+                            <p className="text-sm font-medium text-white">
+                                {user.user_metadata?.full_name || user.email}
+                            </p>
+                            <p className="text-xs text-[var(--color-text-dim)]">
+                                {membership.roles?.description || membership.role_id}
+                            </p>
                         </div>
-                        <h3 className="text-xl font-bold mb-2">Sin proyectos asignados</h3>
-                        <p className="text-[var(--color-text-muted)] mb-6">
-                            Tu identidad está validada, pero no tienes acceso a ningún contexto activo.
-                            Contacta al administrador de tu empresa.
+                        <div className="w-10 h-10 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-sm font-bold text-white">
+                            {user.email?.charAt(0).toUpperCase()}
+                        </div>
+                        <LogoutButton />
+                    </div>
+                </header>
+
+                {/* Main Content */}
+                <div className="w-full max-w-6xl mx-auto">
+                    <div className="text-center mb-8">
+                        <h2 className="text-3xl font-bold text-white mb-2">
+                            Hall del Proyecto
+                        </h2>
+                        <p className="text-[var(--color-text-muted)]">
+                            Bienvenido al proyecto {membership.projects?.code}
                         </p>
-                        <button className="px-6 py-2 rounded-lg border border-[var(--glass-border)] hover:bg-[var(--glass-border)] transition-colors">
-                            Solicitar Acceso
-                        </button>
                     </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-                        {(contexts as unknown as ContextOption[]).map((ctx, index) => (
-                            <ProjectCard3D
-                                key={ctx.id}
-                                id={ctx.id}
-                                roleId={ctx.role_id}
-                                projectName={ctx.projects?.name || 'Empresa Global'}
-                                companyName={ctx.companies?.name || ''}
-                                projectCode={ctx.projects?.code || 'CORP'}
-                                delay={index * 100}
-                            />
+
+                    {/* Placeholder Grid for Future Features */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {['Perfil', 'Estado del Proyecto', 'Galería', 'Comunicaciones', 'Tareas', 'Intereses'].map((feature, idx) => (
+                            <div
+                                key={feature}
+                                className="auth-card opacity-50"
+                                style={{
+                                    minHeight: '200px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    animation: `fade-in-up 0.6s ease-out ${idx * 100}ms both`
+                                }}
+                            >
+                                <div className="text-4xl mb-3">📦</div>
+                                <h3 className="text-lg font-bold text-white mb-2">{feature}</h3>
+                                <p className="text-xs text-[var(--color-text-dim)] text-center">
+                                    Próximamente
+                                </p>
+                            </div>
                         ))}
                     </div>
-                )}
-            </main>
-        </div>
+
+                    {/* CTA */}
+                    <div className="mt-8 text-center">
+                        <button
+                            className="hero-btn hero-btn-primary"
+                            disabled
+                            style={{ opacity: 0.5, cursor: 'not-allowed' }}
+                        >
+                            Ir al Dashboard (Próximamente)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
     );
 }
