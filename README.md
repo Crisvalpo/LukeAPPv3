@@ -83,25 +83,36 @@ LukeAPP/
 
 **Implementado:**
 - [x] Next.js 16 App Router con TypeScript
-- [x] Sistema de diseño Vanilla CSS (Glassmorphism)
+- [x] Sistema de diseño Enterprise (Glassmorphism, animaciones)
 - [x] Integración Supabase (Auth + DB)
 - [x] Schema multi-tenant (profiles, companies, projects, roles, members)
-- [x] Flujo de autenticación (Login/Register/Lobby)
-- [x] Selector de contexto
+- [x] Flujo de autenticación completo:
+  - Landing page premium con partículas animadas
+  - Login con estética industrial
+  - Register como placeholder "Bolsa de Trabajo" (futuro)
+- [x] **Lobby como "Hall del Proyecto"**:
+  - Sistema invite-only (un proyecto por usuario)
+  - Empty State para usuarios sin asignación
+  - Placeholder para 6 funcionalidades futuras
 - [x] Políticas RLS para seguridad de datos
 - [x] Fundación offline-first
 
-**Verificado:**
-- ✅ Registro de usuarios funcional
-- ✅ Redirección automática al lobby
-- ✅ Sesión persistente
-- ✅ Conexión Supabase operativa
+**Filosofía del Lobby:**
+> El Lobby NO es un selector de proyectos.  
+> Es el **Hall del Proyecto** donde el usuario confirma su contexto, completa su identidad profesional, se informa del estado general y se prepara para la operación.
+
+**Regla arquitectónica:**
+- Los usuarios NO eligen proyectos libremente
+- Cada usuario pertenece a UN proyecto vía invitación
+- Sin proyecto → Empty Lobby State (contactar admin)
+- Con proyecto → Hall del Proyecto (6 módulos futuros: Perfil, Estado, Galería, Comunicaciones, Tareas, Intereses)
 
 ### 🚧 Próximas Fases
 
-- [ ] **Fase 2**: Arquitectura Offline-First
-- [ ] **Fase 3**: Módulos de Terreno (Spools, QA, Logística)
-- [ ] **Fase 4**: Comunidad Profesional
+- [ ] **Fase 2**: Ingeniería y Carga de Datos (Event Contract, Excel imports)
+- [ ] **Fase 3**: Dashboard del Fundador (Configuración total del proyecto)
+- [ ] **Fase 4**: Módulos de Terreno (Spools, QA, Logística - Offline-first)
+- [ ] **Fase 5**: Comunidad Profesional (Bolsa de Trabajo)
 
 ---
 

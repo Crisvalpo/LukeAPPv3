@@ -4,7 +4,60 @@ description: WORKSPACE RULES (LukeAPP)
 
 7️⃣ Separación Online vs Field (CRÍTICA)
 
-Treat Web Core (online) and Field Apps (offline-first) as separate worlds.
+Treat### 7. Lenguaje Técnico
+
+| Capa | Idioma |
+|------|--------|
+| Base de datos | Inglés |
+| Tablas/Columnas | Inglés |
+| Funciones/APIs | Inglés |
+| Código | Inglés |
+| UI/Labels | Español |
+
+---
+
+## 🏨 LOBBY: "HALL DEL PROYECTO"
+
+### Definición Formal
+
+El Lobby es el espacio común del proyecto donde el usuario:
+- Confirma su contexto (Proyecto + Rol)
+- Completa su identidad profesional
+- Se informa del estado general del proyecto
+- Recibe comunicación oficial
+- Se prepara para la operación
+
+⚠️ **El Lobby NO es un dashboard operativo**
+⚠️ **El Lobby NO ejecuta acciones críticas**
+
+**Regla:** El Lobby informa, orienta y motiva. Los Dashboards ejecutan.
+
+### Modelo Invite-Only
+
+- Los usuarios **NO eligen** proyectos libremente
+- Cada usuario pertenece a **UN ÚNICO** proyecto, asignado mediante invitación
+- Sin proyecto → **Empty Lobby State** (contactar admin)
+- Con proyecto → **Hall del Proyecto** (acceso a las 6 funcionalidades)
+
+### Funcionalidades del Lobby (Fase 1 - Placeholder)
+
+1. **Perfil del Usuario**: Foto, cargo, skills, experiencia, completitud %
+2. **Estado Macro del Proyecto**: Semana actual, % avance, fase, próximo hito
+3. **Galería de Avance**: Fotos destacadas, videos (curado, sin comentarios)
+4. **Comunicaciones Oficiales**: Avisos, campañas de seguridad, comunicados
+5. **Tareas Futuras**: Asignaciones próximas, inducciones (solo lectura)
+6. **Social Light**: Intereses del usuario (capacitación, horas extra) - controlado, sin chat
+
+### Ruta del Usuario (LEY DEL SISTEMA)
+
+```
+Landing → Auth → Lobby → Dashboard según Rol
+```
+
+- El Lobby es **obligatorio** antes de cualquier feature operativa
+- Sin contexto (empresa + proyecto + rol) → Sin aplicación
+
+--- Web Core (online) and Field Apps (offline-first) as separate worlds.
 Do not share execution logic between them.
 Only shared domain models and types are allowed.
 
