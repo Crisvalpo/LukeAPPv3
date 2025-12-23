@@ -246,17 +246,46 @@ Las apps de terreno deben:
 - Schema multi-tenant
 - Fundación del proyecto
 
-### 🔄 Fase 2: Arquitectura Offline-First (Próxima)
-- Migración a monorepo
-- Configuración de múltiples apps
-- Service workers y PWA
-- Motor de sincronización base
+### 🔄 Fase 2: Ingeniería y Carga de Datos (Próxima)
 
-### 📦 Fase 3: Módulos de Terreno
-- App Spools
-- App QA
-- App Logística
-- Sincronización offline
+**Objetivo**: Permitir que Oficina Técnica cargue la información de ingeniería que luego consumirán las apps de terreno.
+
+**Submódulos**:
+
+#### 2A: Carga de Datos de Ingeniería
+- Importación de Excel/CSV (isométricos, spools, welds)
+- Validación y preview de datos
+- Gestión de planos y documentos
+- Parser de datos de ingeniería
+
+#### 2B: Gestión de Revisiones
+- Anuncio de nuevas revisiones (Rev A → Rev B)
+- Comparación automática de cambios
+- Análisis de impacto en spools existentes
+- Aprobación y migración de datos
+
+#### 2C: Motor de Sincronización
+- Configuración de Dexie (IndexedDB)
+- Lógica de sincronización offline
+- Cola de reintentos
+- Preparación de snapshots para apps de terreno
+
+**Tecnologías a integrar**:
+- `dexie` + `dexie-react-hooks` (Offline DB)
+- `xlsx` (Excel import/export)
+- `papaparse` (CSV parsing)
+- `@react-pdf/renderer` (PDF generation)
+- `zustand` (State management)
+
+**Ver**: [`PIPING_ANALYSIS.md`](file:///c:/Github/LukeAPP/PIPING_ANALYSIS.md) para análisis completo del código anterior reutilizable.
+
+---
+
+### 📦 Fase 3: Módulos de Terreno (Después de Fase 2)
+- App Spools (Fabricación)
+- App QA (Control de calidad)
+- App Logística (Movimientos)
+- Sincronización offline real
 
 ### 👥 Fase 4: Comunidad Profesional
 - Perfiles profesionales
