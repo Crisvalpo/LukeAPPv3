@@ -190,6 +190,7 @@ LukeAPP/
 - Offline-first real
 - PWA con service workers
 - Sincronización eventual
+- **Las Field Apps pueden ejecutarse en móviles, tablets o laptops de terreno**
 
 > ⚠️ **Nunca compartir lógica de ejecución entre mundos.**
 
@@ -207,6 +208,7 @@ Las apps de terreno deben:
 - No mutan estado global directamente
 - Sincronización basada en eventos ordenados
 - Eventual consistency aceptada
+- **El estado visible en la UI es una proyección derivada de eventos, no una fuente de verdad**
 
 ### 4. Lobby Obligatorio
 
@@ -224,7 +226,7 @@ Las apps de terreno deben:
 
 - Toda solución debe escalar a múltiples empresas, proyectos y equipos
 - Cualquier solución que no escale es inválida
-- Backend como árbitro final
+- **Backend como árbitro final**: Los eventos no actualizan tablas de negocio directamente; primero son validados y procesados por el motor de sincronización
 
 ### 7. Lenguaje Técnico
 
@@ -249,6 +251,9 @@ Las apps de terreno deben:
 ### 🔄 Fase 2: Ingeniería y Carga de Datos (Próxima)
 
 **Objetivo**: Permitir que Oficina Técnica cargue la información de ingeniería que luego consumirán las apps de terreno.
+
+> **⚠️ Nota Arquitectónica Crítica**:  
+> Antes de desarrollar cualquier app de terreno, se debe definir el **Event Contract oficial** del sistema (schemas de eventos, validaciones y versionado). Esto evita que alguien empiece por UI o tablas.
 
 **Submódulos**:
 
