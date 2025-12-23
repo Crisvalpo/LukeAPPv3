@@ -175,3 +175,42 @@ button {
     transition-duration: 0.01ms !important;
   }
 }
+/* ===== Landing Page Components ===== */
+
+/* Hero Logo Animation */
+.hero-logo {
+  animation: scale-in 0.6s ease-out;
+}
+
+/* Industry Cards */
+.industry-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.industry-card:hover {
+  transform: scale(1.02);
+}
+
+/* Value Cards */
+.value-card {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.value-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.3);
+}
+
+/* Enterprise CTA */
+.enterprise-cta {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-info) 100%);
+  animation: gradient-shift 8s ease infinite;
+  background-size: 200% 200%;
+}
