@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
@@ -13,12 +13,29 @@ type ViewState = 'hero' | 'login' | 'register';
 
 export default function LandingPage() {
     const [viewState, setViewState] = useState<ViewState>('hero');
+    const [isTransitioning, setIsTransitioning] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [userCount, setUserCount] = useState<number | null>(null);
     const router = useRouter();
     const supabase = createClient();
+
+    // Fetch user count for community card
+    useEffect(() => {
+        const fetchUserCount = async () => {
+            const { data, error } = await supabase.rpc('get_total_profiles');
+
+            if (!error && typeof data === 'number') {
+                setUserCount(data);
+            }
+        };
+
+        fetchUserCount();
+    }, []);
+
+
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -99,7 +116,7 @@ export default function LandingPage() {
                                     </p>
                                 </div>
 
-                                <div className="hero-actions" style={{ display: 'flex', justifyContent: 'center' }}>
+                                <div className="hero-actions">
                                     <button
                                         onClick={() => switchView('login')}
                                         className="hero-btn hero-btn-primary"
@@ -111,117 +128,135 @@ export default function LandingPage() {
                         )}
 
                         {viewState === 'login' && (
-                            <>
-                                <div className="text-center space-y-3 mb-8">
-                                    <h2 className="text-2xl font-bold text-white">Bienvenido de nuevo</h2>
-                                    <p className="text-[var(--color-text-muted)] text-sm">Ingresa a tu cuenta Enterprise</p>
-                                </div>
-
-                                <form onSubmit={handleLogin} className="space-y-6">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-semibold text-[var(--color-text-dim)] uppercase tracking-wider ml-1">
-                                            Email Corporativo
-                                        </label>
-                                        <input
-                                            type="email"
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            className="auth-input"
-                                            placeholder="nombre@empresa.com"
-                                            required
-                                        />
+                            <div className="w-full max-w-[80rem] mx-auto animate-in fade-in zoom-in-95 duration-300">
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '5rem', alignItems: 'center' }}>
+                                    {/* Left Column: Brand & Welcome (Desktop Only via CSS) */}
+                                    <div className="desktop-only" style={{ flexDirection: 'column' }}>
+                                        <h2 className="text-5xl font-bold text-white mb-4 tracking-tight">Bienvenido de nuevo</h2>
+                                        <p className="text-[var(--color-text-muted)] text-lg leading-relaxed max-w-md">
+                                            Ingresa a tu cuenta Enterprise para acceder al panel de control industrial.
+                                        </p>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-semibold text-[var(--color-text-dim)] uppercase tracking-wider ml-1">
-                                            Contraseña
-                                        </label>
-                                        <input
-                                            type="password"
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            className="auth-input"
-                                            placeholder="••••••••"
-                                            required
-                                        />
-                                    </div>
+                                    {/* Right Column: Login Form */}
+                                    <div className="bg-[#121216]/50 p-8 rounded-3xl border border-white/5 backdrop-blur-sm w-full max-w-[500px] mx-auto">
+                                        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
+                                            {/* Mobile-Only Header (To keep context when split view is hidden) */}
+                                            <div className="text-center mb-6 mobile-only">
+                                                <h2 className="text-3xl font-bold text-white mb-2">Bienvenido</h2>
+                                                <p className="text-[var(--color-text-muted)] text-sm">Ingresa a tu cuenta</p>
+                                            </div>
 
-                                    {error && (
-                                        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
-                                            {error}
+                                            {/* Email Field */}
+                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                <label className="auth-label auth-mb-2">
+                                                    Email
+                                                </label>
+                                                <input
+                                                    type="email"
+                                                    value={email}
+                                                    onChange={(e) => setEmail(e.target.value)}
+                                                    className="auth-input"
+                                                    placeholder="nombre@empresa.com"
+                                                    required
+                                                />
+                                            </div>
+
+                                            {/* Password Field */}
+                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                <label className="auth-label auth-mb-2">
+                                                    Contraseña
+                                                </label>
+                                                <input
+                                                    type="password"
+                                                    value={password}
+                                                    onChange={(e) => setPassword(e.target.value)}
+                                                    className="auth-input"
+                                                    placeholder="••••••••"
+                                                    required
+                                                />
+                                            </div>
+
+                                            {error && (
+                                                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+                                                    {error}
+                                                </div>
+                                            )}
+
+                                            {/* Actions */}
+                                            <div className="mt-2" style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+                                                <button
+                                                    type="submit"
+                                                    disabled={loading}
+                                                    className="hero-btn hero-btn-primary w-full"
+                                                >
+                                                    {loading ? 'Validando...' : 'Iniciar Sesión'}
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => switchView('hero')}
+                                                    className="hero-btn hero-btn-secondary w-full"
+                                                >
+                                                    Volver
+                                                </button>
+                                            </div>
+                                        </form>
+
+                                        <div className="text-center mt-6 pt-6 border-t border-white/5">
+                                            <button
+                                                onClick={() => switchView('register')}
+                                                className="auth-footer-text !mt-0"
+                                            >
+                                                ¿Necesitas una cuenta? <span className="text-[var(--color-primary)] font-medium">Ver Info</span>
+                                            </button>
                                         </div>
-                                    )}
-
-                                    <div className="pt-2 flex flex-col gap-3">
-                                        <button
-                                            type="submit"
-                                            disabled={loading}
-                                            className="hero-btn hero-btn-primary"
-                                        >
-                                            {loading ? 'Validando credenciales...' : 'Iniciar Sesión'}
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => switchView('hero')}
-                                            className="hero-btn hero-btn-secondary"
-                                        >
-                                            Volver
-                                        </button>
                                     </div>
-                                </form>
-
-                                <div className="text-center pt-4 border-t border-white/5 mt-4">
-                                    <button
-                                        onClick={() => switchView('register')}
-                                        className="text-sm text-[var(--color-text-dim)] hover:text-white transition-colors"
-                                    >
-                                        ¿Necesitas una cuenta? <span className="text-[var(--color-primary)] font-medium">Ver Info</span>
-                                    </button>
                                 </div>
-                            </>
+                            </div>
                         )}
 
                         {viewState === 'register' && (
-                            <>
-                                <div className="text-center space-y-4">
-                                    <span className="inline-block px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-widest">
-                                        Próximamente
-                                    </span>
+                            <div className="w-full max-w-[500px] mx-auto animate-in fade-in zoom-in-95 duration-300" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                <div className="text-center" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    <div className="flex justify-center">
+                                        <span className="inline-block px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-widest">
+                                            Próximamente
+                                        </span>
+                                    </div>
                                     <h2 className="text-2xl font-bold text-white">Bolsa de Trabajo</h2>
-                                    <p className="text-[var(--color-text-muted)] text-sm leading-relaxed">
+                                    <p className="text-[var(--color-text-muted)] text-sm leading-relaxed px-4">
                                         El registro público estará habilitado para profesionales en búsqueda de oportunidades laborales.
                                     </p>
                                 </div>
 
                                 <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-left">
-                                    <div className="flex items-start gap-3">
-                                        <span className="text-xl">🔒</span>
+                                    <div className="flex items-start gap-4">
+                                        <span className="text-xl mt-1">🔒</span>
                                         <div>
                                             <h3 className="text-sm font-bold text-white mb-1">Acceso a la Plataforma</h3>
                                             <p className="text-xs text-[var(--color-text-dim)] leading-relaxed">
-                                                Para gestionar proyectos, necesitas una <u>invitación oficial</u> de tu empresa.
+                                                Para gestionar proyectos, necesitas una <span className="text-white underline decoration-white/30 underline-offset-4">invitación oficial</span> de tu empresa.
                                             </p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="pt-2 flex flex-col gap-3">
+                                <div className="pt-2" style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
                                     <button
                                         onClick={() => switchView('login')}
-                                        className="hero-btn hero-btn-primary"
+                                        className="hero-btn hero-btn-primary w-full"
                                     >
                                         Ir a Iniciar Sesión
                                     </button>
-
                                     <button
                                         onClick={() => switchView('hero')}
-                                        className="hero-btn hero-btn-secondary"
+                                        className="hero-btn hero-btn-secondary w-full"
                                     >
                                         Volver
                                     </button>
                                 </div>
-                            </>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -252,13 +287,13 @@ export default function LandingPage() {
 
                 {/* Enterprise CTA - Premium Card */}
                 <div className="enterprise-conversion-card">
-                    <div className="flex items-center gap-4 mb-2">
-                        <div className="text-4xl">🏢</div>
-                        <div className="flex-1">
-                            <h3 className="text-2xl font-bold text-white mb-1">
+                    <div className="enterprise-content">
+                        <div className="enterprise-icon">⚙️</div>
+                        <div className="enterprise-text">
+                            <h3 className="text-2xl font-bold text-white mb-2">
                                 ¿Buscas implementar LukeAPP en tu empresa?
                             </h3>
-                            <p className="text-[var(--color-text-muted)] text-sm">
+                            <p className="text-[var(--color-text-muted)] text-base">
                                 Soluciones enterprise para operaciones industriales a gran escala
                             </p>
                         </div>
@@ -271,30 +306,35 @@ export default function LandingPage() {
                     </div>
                 </div>
 
-                <div className="landing-grid-4">
+                <div className="value-cards-grid">
                     <ValueCard
                         icon="🔒"
                         title="Seguro"
-                        description="Tus datos están protegidos con la mejor tecnología"
+                        description="Tus datos están protegidos con la mejor tecnología de encriptación"
                         delay={100}
+                        variant="safe"
                     />
                     <ValueCard
                         icon="⚡"
                         title="Rápido"
-                        description="Experiencia fluida y optimizada"
+                        description="Experiencia fluida y optimizada para máxima velocidad"
                         delay={200}
+                        variant="fast"
                     />
                     <ValueCard
                         icon="👍"
                         title="Fácil"
-                        description="Interfaz intuitiva y amigable"
+                        description="Interfaz intuitiva diseñada para tu comodidad"
                         delay={300}
+                        variant="easy"
                     />
                     <ValueCard
                         icon="👥"
                         title="Comunidad"
-                        description="Usuarios confiando en nuestra plataforma"
+                        description="Usuarios Registrados"
+                        value={userCount !== null ? userCount : '-'}
                         delay={400}
+                        variant="community"
                     />
                 </div>
 

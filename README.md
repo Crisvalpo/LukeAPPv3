@@ -186,6 +186,27 @@ LukeAPP/
 
 ---
 
+## 🎨 Tech Stack & Styling Guidelines (CRÍTICO)
+
+> [!IMPORTANT]  
+> **Este proyecto utiliza 100% Vanilla CSS.**
+> **Tailwind CSS NO está instalado y NO debe usarse.**
+
+### ¿Por qué Vanilla CSS?
+Para mantener control total sobre nuestro "Industrial Glassmorphism" y animaciones complejas sin luchar contra la especificidad de utilidades o configuraciones de purga.
+
+### Reglas de Estilo
+1.  **Estilos Globales**: Definidos en `src/app/globals.css`.
+2.  **Design Tokens**: Variables CSS (colores, espacios, blur) centralizadas en `src/styles/design-system.css`.
+3.  **Utilidades de Layout**: Usar clases semánticas reales como `.auth-stack`, `.auth-header`, `.landing-hero` definidas en CSS estricto.
+4.  **Sin "Fake" Classes**: No escribir `flex`, `gap-4`, `w-full` directamente en JSX a menos que hayas verificado personalmente que existen en `globals.css`.
+
+### Workflow de Contribución
+- **Agregar Estilos**: Crear una clase BEM-like en `globals.css` (ej: `.my-component__element`) y aplicarla en JSX.
+- **Prohibido instalar Tailwind**: Cualquier intento de introducir Tailwind será rechazado para preservar la consistencia arquitectónica.
+
+---
+
 ## 🎨 Principios de Diseño
 
 ### 1. Separación Online vs Offline (CRÍTICA)
