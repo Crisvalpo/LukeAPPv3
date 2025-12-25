@@ -16,6 +16,7 @@ type Membership = {
 export default async function LobbyPage() {
     let user = null;
     let membership: Membership | null = null;
+    let isStaff = false;
 
     try {
         const supabase = await createClient();
@@ -26,18 +27,32 @@ export default async function LobbyPage() {
             redirect('/');
         }
 
+        // Check for super_admin role (Staff)
+        const { data: staffMember } = await supabase
+            .from('members')
+            .select('role_id')
+            .eq('user_id', user.id)
+            .eq('role_id', 'super_admin')
+            .maybeSingle();
+
+        // Direct Access for Staff (Super Admin)
+        if (staffMember) {
+            redirect('/staff');
+        }
+
         // Get single active membership (invite-only model)
         const { data: memberData, error } = await supabase
             .from('members')
             .select(`
-                id,
-                role_id,
-                companies ( name ),
-                projects ( name, code ),
-                roles ( description )
-            `)
+            id,
+            role_id,
+            companies ( name ),
+            projects ( name, code ),
+            roles ( description )
+        `)
             .eq('user_id', user.id)
             .eq('status', 'ACTIVE')
+            .neq('role_id', 'super_admin') // Exclude staff role from normal flow
             .single();
 
         if (!error && memberData) {

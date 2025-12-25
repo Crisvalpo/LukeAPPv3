@@ -29,14 +29,24 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
     }, [])
 
     async function checkAuthAndValidate() {
-        const { data: { user } } = await supabase.auth.getUser()
+        // Use getSession() to check current session
+        const { data: { session } } = await supabase.auth.getSession()
+        const user = session?.user
+
         setIsAuthenticated(!!user)
-        if (user && user.email) setCurrentUserEmail(user.email)
+        if (user?.email) setCurrentUserEmail(user.email)
 
         const result = await validateInvitationToken(resolvedParams.token)
 
         if (result.success && result.data) {
             setInvitation(result.data)
+
+            // If user is already authenticated with the correct email, auto-accept
+            if (user && user.email && user.email.toLowerCase() === result.data.email.toLowerCase()) {
+                console.log('✅ Usuario autenticado con email correcto, auto-aceptando...')
+                await handleAccept() // Use existing accept flow
+                return
+            }
         } else {
             setError(result.message)
         }
@@ -74,8 +84,8 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
                     data: {
                         full_name: invitation.email.split('@')[0]
                     },
-                    // CRITICAL FOR PRODUCTION: Redirect back here after email confirmation
-                    emailRedirectTo: window.location.href
+                    // Redirect to confirmation page with invitation token
+                    emailRedirectTo: `${window.location.origin}/invitations/confirm?token=${resolvedParams.token}`
                 }
             })
 
@@ -119,14 +129,9 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
         const result = await acceptInvitation(resolvedParams.token)
 
         if (result.success) {
-            // Determine redirect
-            const role = invitation.role_id
-            let path = '/founder' // default
-            if (role === 'admin') path = '/admin/workforce'
-            if (role === 'founder') path = '/founder'
-
+            console.log('✅ Invitación aceptada exitosamente')
             alert('¡Invitación aceptada correctamente! Bienvenido a LukeAPP.')
-            router.push(path)
+            router.push('/') // Let middleware handle routing
         } else {
             setError(result.message)
             setAccepting(false)

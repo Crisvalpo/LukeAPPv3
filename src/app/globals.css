@@ -789,6 +789,21 @@ button {
   margin-bottom: 0.5rem;
 }
 
+/* Spinner Animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
 /* ===== Dashboard Animations ===== */
 @keyframes fade-in {
   from {

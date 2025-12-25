@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getProjectsByCompany, type Project } from '@/services/projects'
-import ProjectsList from '@/components/projects/ProjectsList'
+import { ListView } from '@/components/views/ListView'
+import { ProjectSchema } from '@/schemas/project'
 import { Building2, ChevronRight } from 'lucide-react'
 import '@/styles/dashboard.css'
 
@@ -151,11 +152,13 @@ export default function StaffProjectsPage() {
                         </button>
                     </div>
 
-                    {/* REUSABLE PROJECTS LIST */}
-                    <ProjectsList
-                        projects={projects}
-                        context="staff"
-                    // No logic to create for 'staff' in this context
+                    {/* REUSABLE PROJECTS LIST (View System) */}
+                    <ListView
+                        schema={ProjectSchema}
+                        data={projects}
+                        onAction={(action: string, item: Project) => {
+                            if (action === 'view') router.push(`/staff/projects/${item.id}`)
+                        }}
                     />
                 </>
             )}

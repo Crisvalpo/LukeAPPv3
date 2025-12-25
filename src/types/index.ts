@@ -66,7 +66,7 @@ export interface User {
 export interface Member {
     id: string
     user_id: string
-    company_id: string
+    company_id: string | null
     project_id: string | null
     role_id: UserRoleType
     created_at: string

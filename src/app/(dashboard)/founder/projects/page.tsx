@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+
 import { getProjectsByCompany, type Project } from '@/services/projects'
-import ProjectsList from '@/components/projects/ProjectsList'
+import { ListView } from '@/components/views/ListView'
+import { ProjectSchema } from '@/schemas/project'
 import '@/styles/dashboard.css'
 
 interface ProjectWithStats extends Project {
@@ -64,11 +66,18 @@ export default function ProjectsListPage() {
                 <p className="dashboard-subtitle">Gestiona los proyectos de tu empresa</p>
             </div>
 
-            <ProjectsList
-                projects={projects}
-                onCreate={() => router.push('/founder/projects/new')}
-                context="founder"
-            />
+            {/* ListView Implementation */}
+            <div style={{ marginTop: '2rem' }}>
+                <ListView
+                    schema={ProjectSchema}
+                    data={projects}
+                    isLoading={isLoading}
+                    onCreate={() => router.push('/founder/projects/new')}
+                    onAction={(action: string, item: Project) => {
+                        if (action === 'view') router.push(`/founder/projects/${item.id}`)
+                    }}
+                />
+            </div>
         </div>
     )
 }
