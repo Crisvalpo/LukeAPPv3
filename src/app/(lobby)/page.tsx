@@ -14,10 +14,13 @@ type ViewState = 'hero' | 'login' | 'register';
 export default function LandingPage() {
     const [viewState, setViewState] = useState<ViewState>('hero');
     const [isTransitioning, setIsTransitioning] = useState(false);
+
+    // Auth state
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
     const [userCount, setUserCount] = useState<number | null>(null);
     const router = useRouter();
     const supabase = createClient();
@@ -34,6 +37,7 @@ export default function LandingPage() {
 
         fetchUserCount();
     }, []);
+
 
 
 

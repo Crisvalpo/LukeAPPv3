@@ -47,6 +47,30 @@ export async function updateSession(request: NextRequest) {
 
         if (memberError) console.error('MW: Member verification error:', memberError.message)
 
+        // Auto-accept pending invitation if no membership exists
+        if (!memberData && user.email) {
+            const { data: pendingInv } = await supabase
+                .from('invitations')
+                .select('token')
+                .eq('email', user.email)
+                .eq('status', 'pending')
+                .maybeSingle()
+
+            if (pendingInv) {
+                console.log('MW: Auto-accepting pending invitation for', user.email)
+                const { error: acceptError } = await supabase.rpc('accept_invitation', {
+                    token_input: pendingInv.token,
+                    user_id_input: user.id
+                })
+
+                if (!acceptError) {
+                    console.log('MW: Invitation auto-accepted, reloading...')
+                    // Redirect to same path to reload with new membership
+                    return NextResponse.redirect(request.url)
+                }
+            }
+        }
+
         const role = memberData?.role_id
         const path = request.nextUrl.pathname
 
@@ -66,26 +90,23 @@ export async function updateSession(request: NextRequest) {
 
         // 4. Auto-redirect from Lobby (Smart Routing)
         // Management roles shouldn't stay in lobby - send them to their dashboards
-        if (path === '/lobby') {
+        // 4. Auto-redirect from Lobby & Root (Smart Routing)
+        if (path === '/lobby' || path === '/') {
             if (role === 'super_admin') {
-                console.log('MW: Auto-redirect super_admin /lobby -> /staff')
+                console.log(`MW: Redirect ${role} -> /staff`)
                 return NextResponse.redirect(new URL('/staff', request.url))
-            } else if (['founder', 'admin'].includes(role || '')) {
-                console.log('MW: Auto-redirect founder/admin /lobby -> /founder')
+            } else if (role === 'founder') {
+                console.log(`MW: Redirect ${role} -> /founder`)
                 return NextResponse.redirect(new URL('/founder', request.url))
-            }
-            // Workers and other roles stay in lobby (correct behavior)
-        }
-
-        // 5. Redirect Rules on Root (Smart Landing)
-        if (path === '/') {
-            if (role === 'super_admin') {
-                return NextResponse.redirect(new URL('/staff', request.url))
-            } else if (['founder', 'admin'].includes(role || '')) {
-                return NextResponse.redirect(new URL('/founder', request.url))
-            } else {
+            } else if (role === 'admin') {
+                console.log(`MW: Redirect ${role} -> /admin`)
+                return NextResponse.redirect(new URL('/admin', request.url))
+            } else if (path === '/') {
+                // If root and operational role -> Go to Lobby
+                console.log(`MW: Redirect ${role || 'user'} -> /lobby`)
                 return NextResponse.redirect(new URL('/lobby', request.url))
             }
+            // If path is /lobby and role is operational -> Stay in Lobby (Correct)
         }
 
         // -- ROLE BASED REDIRECT LOGIC END --

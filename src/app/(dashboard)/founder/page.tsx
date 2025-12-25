@@ -38,8 +38,9 @@ export default function FounderDashboard() {
             .from('members')
             .select('company_id, companies(id, name, slug)')
             .eq('user_id', user.id)
-            .eq('role_id', 'founder')
-            .single()
+            .in('role_id', ['founder', 'admin'])
+            .limit(1)
+            .maybeSingle()
 
         if (!memberData || !memberData.companies) {
             router.push('/')
