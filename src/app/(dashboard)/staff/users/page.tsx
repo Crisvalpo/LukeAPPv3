@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import UsersList from '@/components/users/UsersList'
 import { Building2, ChevronRight } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { getMembersByCompany, deleteMember } from '@/services/members'
 import '@/styles/dashboard.css'
 
 interface Company {
@@ -13,7 +14,7 @@ interface Company {
     code: string
 }
 
-interface Member {
+interface UIMember {
     id: string
     user_id: string
     email: string
@@ -27,7 +28,7 @@ export default function StaffUsersPage() {
     const [isLoading, setIsLoading] = useState(true)
     const [companies, setCompanies] = useState<Company[]>([])
     const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
-    const [members, setMembers] = useState<Member[]>([])
+    const [members, setMembers] = useState<UIMember[]>([])
 
     useEffect(() => {
         loadCompanies()
@@ -41,6 +42,7 @@ export default function StaffUsersPage() {
 
     async function loadCompanies() {
         const supabase = createClient()
+        // Ideally this should also move to a service, but for now we fix the critical part (Members)
         const { data } = await supabase
             .from('companies')
             .select('id, name, slug')
@@ -53,38 +55,20 @@ export default function StaffUsersPage() {
     }
 
     async function loadCompanyMembers(companyId: string) {
-        const supabase = createClient()
-        // Fetch members with user email and project info
-        const { data, error } = await supabase
-            .from('members')
-            .select(`
-                id,
-                user_id,
-                role_id,
-                created_at,
-                users ( email ),
-                projects ( name, code )
-            `)
-            .eq('company_id', companyId)
-            .order('created_at', { ascending: false })
+        setIsLoading(true)
+        const data = await getMembersByCompany(companyId)
 
-        if (error) {
-            console.error('Error fetching members:', error)
-            setMembers([])
-            return
-        }
-
-        // Transform data to flat structure
-        const formattedMembers: Member[] = data.map((m: any) => ({
+        const formattedMembers: UIMember[] = data.map(m => ({
             id: m.id,
             user_id: m.user_id,
             role_id: m.role_id,
-            email: m.users?.email || 'N/A', // users table join
-            project: m.projects, // projects table join
+            email: m.user?.email || 'N/A',
+            project: m.project,
             created_at: m.created_at
         }))
 
         setMembers(formattedMembers)
+        setIsLoading(false)
     }
 
     async function handleDeleteMember(memberId: string) {
@@ -92,20 +76,16 @@ export default function StaffUsersPage() {
             return
         }
 
-        const supabase = createClient()
-        const { error } = await supabase
-            .from('members')
-            .delete()
-            .eq('id', memberId)
+        const result = await deleteMember(memberId)
 
-        if (error) {
-            alert('Error al eliminar usuario')
-        } else {
+        if (result.success) {
             if (selectedCompany) loadCompanyMembers(selectedCompany.id)
+        } else {
+            alert(result.message)
         }
     }
 
-    if (isLoading) {
+    if (isLoading && !selectedCompany) {
         return <div className="dashboard-page"><p style={{ color: 'white', textAlign: 'center' }}>Cargando...</p></div>
     }
 

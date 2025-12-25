@@ -77,9 +77,10 @@ Synchronization must be based on ordered events and eventual consistency.
 Never assume immediate synchronization.
 Code must tolerate delayed, partial, or failed sync attempts.
 
-1️⃣1️⃣ Lobby obligatorio
+1️⃣1️⃣ Lobby obligatorio (con excepciones)
 
-No user may access operational features without passing through the Lobby and selecting a context (company, project, role).
+Operational roles (Supervisor, Worker) MUST pass through the Lobby to select context.
+High-level roles (Staff, Founder, Admin) MAY have direct dashboard access (`/staff`, `/founder`) as they manage multiple contexts or a clear default one.
 
 1️⃣2️⃣ Roles are scoped
 
