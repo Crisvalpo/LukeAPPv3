@@ -1,0 +1,256 @@
+=== REPORTE DE ESTADO ACTUAL DE SUPABASE (Generado Automáticamente) ===
+
+[
+  {
+    "tablename": "companies",
+    "policyname": "Founders can select their company",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.company_id = companies.id) AND (members.role_id = 'founder'::text))))",
+    "with_check": null
+  },
+  {
+    "tablename": "companies",
+    "policyname": "Founders can update their company",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.company_id = companies.id) AND (members.role_id = 'founder'::text))))",
+    "with_check": null
+  },
+  {
+    "tablename": "companies",
+    "policyname": "Members can view their company",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.company_id = companies.id))))",
+    "with_check": null
+  },
+  {
+    "tablename": "companies",
+    "policyname": "Super admins can delete companies",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.role_id = 'super_admin'::text))))",
+    "with_check": null
+  },
+  {
+    "tablename": "companies",
+    "policyname": "Super admins can insert companies",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(EXISTS ( SELECT 1\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.role_id = 'super_admin'::text))))"
+  },
+  {
+    "tablename": "companies",
+    "policyname": "Super admins can select all companies",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.role_id = 'super_admin'::text))))",
+    "with_check": null
+  },
+  {
+    "tablename": "companies",
+    "policyname": "Super admins can update companies",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.role_id = 'super_admin'::text))))",
+    "with_check": null
+  },
+  {
+    "tablename": "invitations",
+    "policyname": "Founders can create invitations for their company",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(EXISTS ( SELECT 1\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.role_id = 'founder'::text) AND (members.company_id = members.company_id))))"
+  },
+  {
+    "tablename": "invitations",
+    "policyname": "Founders can delete invitations for their company",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.role_id = 'founder'::text) AND (members.company_id = invitations.company_id))))",
+    "with_check": null
+  },
+  {
+    "tablename": "invitations",
+    "policyname": "Founders can view invitations for their company",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.role_id = 'founder'::text) AND (members.company_id = invitations.company_id))))",
+    "with_check": null
+  },
+  {
+    "tablename": "invitations",
+    "policyname": "Founders can view their own invitations",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(inviter_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "tablename": "invitations",
+    "policyname": "Super admins can delete invitations",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.role_id = 'super_admin'::text))))",
+    "with_check": null
+  },
+  {
+    "tablename": "invitations",
+    "policyname": "Super admins full access to invitations",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(EXISTS ( SELECT 1\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.role_id = 'super_admin'::text))))",
+    "with_check": "(EXISTS ( SELECT 1\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.role_id = 'super_admin'::text))))"
+  },
+  {
+    "tablename": "invitations",
+    "policyname": "Users can update via RPC only",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "false",
+    "with_check": null
+  },
+  {
+    "tablename": "invitations",
+    "policyname": "Users can view pending invitations",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((status = 'pending'::text) AND (expires_at > now()))",
+    "with_check": null
+  },
+  {
+    "tablename": "members",
+    "policyname": "Users can view own memberships",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "tablename": "projects",
+    "policyname": "Founders can create projects for their company",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(company_id IN ( SELECT members.company_id\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.role_id = 'founder'::text))))"
+  },
+  {
+    "tablename": "projects",
+    "policyname": "Founders can delete their company projects",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "(company_id IN ( SELECT members.company_id\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.role_id = 'founder'::text))))",
+    "with_check": null
+  },
+  {
+    "tablename": "projects",
+    "policyname": "Founders can update their company projects",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(company_id IN ( SELECT members.company_id\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.role_id = 'founder'::text))))",
+    "with_check": null
+  },
+  {
+    "tablename": "projects",
+    "policyname": "Founders can view their company projects",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(company_id IN ( SELECT members.company_id\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.role_id = 'founder'::text))))",
+    "with_check": null
+  },
+  {
+    "tablename": "projects",
+    "policyname": "Members can view their company projects",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(company_id IN ( SELECT members.company_id\n   FROM members\n  WHERE (members.user_id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "tablename": "projects",
+    "policyname": "Super admins can delete projects",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.role_id = 'super_admin'::text))))",
+    "with_check": null
+  },
+  {
+    "tablename": "projects",
+    "policyname": "Super admins can insert projects",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(EXISTS ( SELECT 1\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.role_id = 'super_admin'::text))))"
+  },
+  {
+    "tablename": "projects",
+    "policyname": "Super admins can update all projects",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.role_id = 'super_admin'::text))))",
+    "with_check": null
+  },
+  {
+    "tablename": "projects",
+    "policyname": "Super admins can view all projects",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM members\n  WHERE ((members.user_id = auth.uid()) AND (members.role_id = 'super_admin'::text))))",
+    "with_check": null
+  },
+  {
+    "tablename": "projects",
+    "policyname": "Users can view assigned projects",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM members\n  WHERE ((members.project_id = projects.id) AND (members.user_id = auth.uid()))))",
+    "with_check": null
+  },
+  {
+    "tablename": "users",
+    "policyname": "Users can update own profile",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(auth.uid() = id)",
+    "with_check": null
+  },
+  {
+    "tablename": "users",
+    "policyname": "Users can view own profile",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(auth.uid() = id)",
+    "with_check": null
+  }
+]
