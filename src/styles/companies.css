@@ -1,0 +1,333 @@
+/* Companies Management Styles - 100% Vanilla CSS */
+
+/* ===== Companies Container ===== */
+.companies-page {
+    animation: fade-in 0.4s ease-out;
+}
+
+/* ===== Companies Form ===== */
+.company-form-container {
+    background: rgba(30, 41, 59, 0.9);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.company-form-header {
+    margin-bottom: 1.5rem;
+}
+
+.company-form-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.company-form-description {
+    font-size: 0.875rem;
+    color: #94a3b8;
+}
+
+.company-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.company-form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+/* Responsive grid for larger screens */
+@media (min-width: 768px) {
+    .company-form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ===== Form Fields ===== */
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.form-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    letter-spacing: 0.01em;
+}
+
+.form-input,
+.form-select {
+    padding: 0.75rem 1rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    color: white;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.form-input::placeholder {
+    color: #64748b;
+}
+
+.form-input:focus,
+.form-select:focus {
+    outline: none;
+    border-color: rgba(96, 165, 250, 0.5);
+    background: rgba(15, 23, 42, 0.8);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+}
+
+.form-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.form-select {
+    cursor: pointer;
+}
+
+.form-select option {
+    background: #0f172a;
+    color: white;
+}
+
+.form-hint {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.form-button {
+    padding: 0.875rem 1.5rem;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    border: none;
+    border-radius: 0.75rem;
+    color: white;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    width: 100%;
+}
+
+.form-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+}
+
+.form-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.form-button-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.action-button {
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.action-button.delete {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.action-button.delete:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* ===== Companies List ===== */
+.companies-list-container {
+    background: rgba(30, 41, 59, 0.9);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 2rem;
+}
+
+.companies-list-header {
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.companies-list-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+}
+
+.companies-empty {
+    padding: 3rem;
+    text-align: center;
+}
+
+.companies-empty-text {
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+/* ===== Companies Table ===== */
+.companies-table-wrapper {
+    overflow-x: auto;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.companies-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.companies-table thead {
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.companies-table th {
+    padding: 1rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.companies-table tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.2s;
+}
+
+.companies-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.companies-table td {
+    padding: 1rem;
+    font-size: 0.875rem;
+    color: #e2e8f0;
+}
+
+.company-name {
+    font-weight: 600;
+    color: white;
+}
+
+.company-slug {
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    color: #60a5fa;
+    background: rgba(96, 165, 250, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    border: 1px solid rgba(96, 165, 250, 0.2);
+}
+
+.company-date {
+    color: #94a3b8;
+    font-size: 0.8125rem;
+}
+
+.company-stats {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.company-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.company-stat-label {
+    font-size: 0.625rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.company-stat-value {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #60a5fa;
+}
+
+/* ===== Company Actions ===== */
+.company-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+/* ===== Success Message ===== */
+.company-success {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.company-success-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #4ade80;
+    margin-bottom: 0.5rem;
+}
+
+.company-success-text {
+    font-size: 0.875rem;
+    color: #86efac;
+}
+
+/* ===== Animations ===== */
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createInvitation, getPendingInvitations, revokeInvitation, generateInvitationLink, type Invitation } from '@/services/invitations'
+import { getAllCompanies, type Company } from '@/services/companies'
 import { Copy, Mail, MessageCircle, Trash2 } from 'lucide-react'
 import '@/styles/invitations.css'
 
@@ -14,6 +15,7 @@ export default function InvitationsPage() {
     const [success, setSuccess] = useState(false)
     const [invitationLink, setInvitationLink] = useState('')
     const [invitations, setInvitations] = useState<Invitation[]>([])
+    const [companies, setCompanies] = useState<Company[]>([])
 
     const [formData, setFormData] = useState({
         email: '',
@@ -22,13 +24,17 @@ export default function InvitationsPage() {
     })
 
     useEffect(() => {
-        loadInvitations()
+        loadData()
     }, [])
 
-    async function loadInvitations() {
+    async function loadData() {
         setLoading(true)
-        const data = await getPendingInvitations()
-        setInvitations(data)
+        const [invitationsData, companiesData] = await Promise.all([
+            getPendingInvitations(),
+            getAllCompanies()
+        ])
+        setInvitations(invitationsData)
+        setCompanies(companiesData)
         setLoading(false)
     }
 
@@ -38,18 +44,19 @@ export default function InvitationsPage() {
         setError('')
         setSuccess(false)
 
-        // For MVP, use LukeAPP HQ company (hardcoded)
-        // TODO: Allow selecting company
-        const result = await createInvitation({
-            ...formData,
-            company_id: 'fd7ec8a9-46d8-4aea-8cb8-1c35e8b8497b' // LukeAPP HQ
-        })
+        if (!formData.company_id) {
+            setError('Debes seleccionar una empresa')
+            setSubmitting(false)
+            return
+        }
+
+        const result = await createInvitation(formData)
 
         if (result.success && result.data) {
             setSuccess(true)
             setInvitationLink(result.data.link)
             setFormData({ email: '', company_id: '', role_id: 'founder' })
-            loadInvitations()
+            loadData()
         } else {
             setError(result.message)
         }
@@ -62,7 +69,7 @@ export default function InvitationsPage() {
 
         const result = await revokeInvitation(id)
         if (result.success) {
-            loadInvitations()
+            loadData()
         } else {
             alert('Error: ' + result.message)
         }
@@ -145,6 +152,27 @@ export default function InvitationsPage() {
                             {error}
                         </div>
                     )}
+
+                    <div className="form-field">
+                        <label htmlFor="company" className="form-label">
+                            Empresa *
+                        </label>
+                        <select
+                            id="company"
+                            required
+                            value={formData.company_id}
+                            onChange={(e) => setFormData({ ...formData, company_id: e.target.value })}
+                            className="form-select"
+                        >
+                            <option value="">Seleccionar empresa</option>
+                            {companies.map((company) => (
+                                <option key={company.id} value={company.id}>
+                                    {company.name}
+                                </option>
+                            ))}
+                        </select>
+                        <span className="form-hint">El founder gestionará proyectos de esta empresa</span>
+                    </div>
 
                     <div className="form-field">
                         <label htmlFor="email" className="form-label">

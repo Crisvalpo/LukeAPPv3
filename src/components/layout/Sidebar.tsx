@@ -54,6 +54,7 @@ export default function Sidebar({ role }: SidebarProps) {
     // Staff Menu (Super Admin Global)
     const staffMenu: MenuItem[] = [
         { name: 'Overview', href: '/staff', icon: LayoutDashboard },
+        { name: 'Companies', href: '/staff/companies', icon: Building2 },
         { name: 'Projects', href: '/staff/projects', icon: Building2 },
         { name: 'Global Users', href: '/staff/users', icon: Users },
         { name: 'Invitations', href: '/staff/invitations', icon: UserPlus },
