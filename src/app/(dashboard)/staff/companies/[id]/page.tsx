@@ -2,8 +2,8 @@
 
 import { use, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getCompanyById, updateCompany, getCompanyStats, type Company } from '@/services/companies'
-import { Building2, Users, FolderKanban, ArrowLeft } from 'lucide-react'
+import { getCompanyById, updateCompany, deleteCompany, getCompanyStats, type Company } from '@/services/companies'
+import { Building2, Users, FolderKanban, ArrowLeft, Trash2 } from 'lucide-react'
 import '@/styles/companies.css'
 
 export default function CompanyDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -11,6 +11,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
     const resolvedParams = use(params)
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
+    const [deleting, setDeleting] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState(false)
     const [company, setCompany] = useState<Company | null>(null)
@@ -59,6 +60,27 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
         }
 
         setSubmitting(false)
+    }
+
+    async function handleDelete() {
+        if (!confirm(`¿Eliminar "${company?.name}"?\n\nEsta acción no se puede deshacer.`)) {
+            return
+        }
+
+        setDeleting(true)
+        setError('')
+
+        const result = await deleteCompany(resolvedParams.id)
+
+        if (result.success) {
+            alert('Empresa eliminada exitosamente')
+            router.push('/staff/companies')
+        } else {
+            alert(result.message)
+            setError(result.message)
+        }
+
+        setDeleting(false)
     }
 
     function generateSlug(name: string) {
@@ -161,15 +183,28 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                             {isEditing ? 'Editando detalles de la empresa' : 'Detalles de la empresa'}
                         </p>
                     </div>
-                    {!isEditing && (
-                        <button
-                            onClick={() => setIsEditing(true)}
-                            className="action-button"
-                            style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
-                        >
-                            ✏️ Editar
-                        </button>
-                    )}
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        {!isEditing && (
+                            <>
+                                <button
+                                    onClick={() => setIsEditing(true)}
+                                    className="action-button"
+                                    style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+                                >
+                                    ✏️ Editar
+                                </button>
+                                <button
+                                    onClick={handleDelete}
+                                    disabled={deleting}
+                                    className="action-button delete"
+                                    style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+                                    title="Eliminar empresa"
+                                >
+                                    {deleting ? '...' : '🗑️ Eliminar'}
+                                </button>
+                            </>
+                        )}
+                    </div>
                 </div>
 
                 {success && (
