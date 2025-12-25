@@ -64,6 +64,20 @@ export async function createCompany(params: CreateCompanyParams) {
     const supabase = createClient()
 
     try {
+        // Check if name already exists
+        const { data: existingName } = await supabase
+            .from('companies')
+            .select('id')
+            .eq('name', params.name)
+            .maybeSingle()
+
+        if (existingName) {
+            return {
+                success: false,
+                message: 'Ya existe una empresa con este nombre'
+            }
+        }
+
         // Check if slug already exists
         const { data: existing } = await supabase
             .from('companies')

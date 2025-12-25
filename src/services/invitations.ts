@@ -35,6 +35,23 @@ export async function createInvitation(params: CreateInvitationParams) {
             return { success: false, message: 'No autenticado' }
         }
 
+        // Check if company already has a founder (only for founder invitations)
+        if (params.role_id === 'founder') {
+            const { count } = await supabase
+                .from('members')
+                .select('id', { count: 'exact', head: true })
+                .eq('company_id', params.company_id)
+                .eq('role_id', 'founder')
+
+            if (count && count > 0) {
+                return {
+                    success: false,
+                    message: '⚠️ Esta empresa ya tiene un founder asignado. ¿Realmente necesitas invitar otro?',
+                    hasFounder: true
+                }
+            }
+        }
+
         // Check for duplicate pending invitation
         const { data: duplicate } = await supabase
             .from('invitations')
@@ -48,6 +65,30 @@ export async function createInvitation(params: CreateInvitationParams) {
             return {
                 success: false,
                 message: 'Ya existe una invitación pendiente para este email'
+            }
+        }
+
+        // Check if user already exists and is a member
+        const { data: existingUser } = await supabase
+            .from('users')
+            .select('id')
+            .eq('email', params.email.toLowerCase())
+            .maybeSingle()
+
+        if (existingUser) {
+            // User exists in auth, check if already a member
+            const { data: existingMember } = await supabase
+                .from('members')
+                .select('id, role_id')
+                .eq('user_id', existingUser.id)
+                .eq('company_id', params.company_id)
+                .maybeSingle()
+
+            if (existingMember) {
+                return {
+                    success: false,
+                    message: `Este usuario ya es ${existingMember.role_id} de la empresa`
+                }
             }
         }
 

@@ -1,189 +1,186 @@
-import { Building2, Users, Activity, TrendingUp, Calendar, CheckCircle2 } from 'lucide-react'
-import Link from 'next/link'
-import '../../../styles/dashboard.css'
+'use client'
 
-export default function StaffDashboardPage() {
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { getGlobalStats, getRecentCompanies, type GlobalStats, type RecentCompany } from '@/services/staff'
+import { getPendingInvitations, type Invitation } from '@/services/invitations'
+import { Building2, Users, FolderKanban, Mail } from 'lucide-react'
+import StatCard from '@/components/dashboard/StatCard'
+import DashboardWidget from '@/components/dashboard/DashboardWidget'
+import '@/styles/dashboard.css'
+import '@/styles/companies.css'
+import '@/styles/invitations.css'
+
+export default function StaffDashboard() {
+    const router = useRouter()
+    const [isLoading, setIsLoading] = useState(true)
+    const [stats, setStats] = useState<GlobalStats>({
+        totalCompanies: 0,
+        totalProjects: 0,
+        totalUsers: 0,
+        pendingInvitations: 0
+    })
+    const [recentCompanies, setRecentCompanies] = useState<RecentCompany[]>([])
+    const [pendingInvitations, setPendingInvitations] = useState<Invitation[]>([])
+
+    useEffect(() => {
+        loadDashboardData()
+    }, [])
+
+    async function loadDashboardData() {
+        setIsLoading(true)
+
+        const [statsData, companiesData, invitationsData] = await Promise.all([
+            getGlobalStats(),
+            getRecentCompanies(5),
+            getPendingInvitations()
+        ])
+
+        setStats(statsData)
+        setRecentCompanies(companiesData)
+        setPendingInvitations(invitationsData.slice(0, 5)) // Last 5
+        setIsLoading(false)
+    }
+
+    if (isLoading) {
+        return (
+            <div className="dashboard-page">
+                <p style={{ color: 'white', textAlign: 'center' }}>Cargando...</p>
+            </div>
+        )
+    }
+
     return (
         <div className="dashboard-page">
-            {/* Header with Gradient */}
+            {/* Header */}
             <div className="dashboard-header">
-                <div className="dashboard-header-glow" />
                 <div className="dashboard-header-content">
                     <div className="dashboard-accent-line" />
-                    <h1 className="dashboard-title">Global Oversight</h1>
+                    <h1 className="dashboard-title">Vista General</h1>
                 </div>
-                <p className="dashboard-subtitle">Monitor system health and project activity across all tenants</p>
+                <p className="dashboard-subtitle">Panel de control global del sistema (Staff)</p>
             </div>
 
-            {/* KPI Cards Grid */}
-            <div className="kpi-grid">
-                {/* Card 1: Projects */}
-                <div className="kpi-card">
-                    <div className="kpi-card-header">
-                        <div className="kpi-icon-box">
-                            <Building2 className="kpi-icon" />
-                        </div>
-                        <div className="kpi-trend">
-                            <TrendingUp className="kpi-trend-icon" />
-                            <span>+12%</span>
-                        </div>
-                    </div>
-                    <p className="kpi-label">Total Projects</p>
-                    <div className="kpi-value-row">
-                        <p className="kpi-value">12</p>
-                        <p className="kpi-value-note">active deployments</p>
-                    </div>
-                    <div className="kpi-footer">
-                        <CheckCircle2 className="kpi-footer-icon emerald" />
-                        <span>8 Active · 4 Planning</span>
-                    </div>
-                </div>
+            {/* Stats Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+                <StatCard
+                    title="Empresas"
+                    value={stats.totalCompanies}
+                    icon={Building2}
+                    color="blue"
+                    onClick={() => router.push('/staff/companies')}
+                    buttonText="Gestionar Empresas"
+                />
 
-                {/* Card 2: Users */}
-                <div className="kpi-card">
-                    <div className="kpi-card-header">
-                        <div className="kpi-icon-box purple">
-                            <Users className="kpi-icon purple" />
-                        </div>
-                        <div className="kpi-trend">
-                            <TrendingUp className="kpi-trend-icon" />
-                            <span>+8%</span>
-                        </div>
-                    </div>
-                    <p className="kpi-label">Total Users</p>
-                    <div className="kpi-value-row">
-                        <p className="kpi-value">1,248</p>
-                        <p className="kpi-value-note">registered accounts</p>
-                    </div>
-                    <div className="kpi-footer">
-                        <Calendar className="kpi-footer-icon purple" />
-                        <span>Across 3 companies</span>
-                    </div>
-                </div>
+                <StatCard
+                    title="Proyectos"
+                    value={stats.totalProjects}
+                    icon={FolderKanban}
+                    color="purple"
+                    onClick={() => router.push('/staff/projects')}
+                    buttonText="Auditar Proyectos"
+                />
 
-                {/* Card 3: System Health */}
-                <div className="kpi-card">
-                    <div className="kpi-card-header">
-                        <div className="kpi-icon-box emerald">
-                            <Activity className="kpi-icon emerald" />
-                        </div>
-                        <div className="kpi-trend">
-                            <div className="status-dot" />
-                            <span>Live</span>
-                        </div>
-                    </div>
-                    <p className="kpi-label">System Status</p>
-                    <div className="kpi-value-row">
-                        <p className="kpi-value gradient">99.9%</p>
-                        <p className="kpi-value-note">uptime</p>
-                    </div>
-                    <div className="kpi-progress">
-                        <div className="kpi-progress-header">
-                            <span>Performance</span>
-                            <span>Excellent</span>
-                        </div>
-                        <div className="kpi-progress-bar">
-                            <div className="kpi-progress-fill" />
-                        </div>
-                    </div>
-                </div>
+                <StatCard
+                    title="Usuarios"
+                    value={stats.totalUsers}
+                    icon={Users}
+                    color="green"
+                    onClick={() => router.push('/staff/users')}
+                    buttonText="Ver Personal Global"
+                />
+
+                <StatCard
+                    title="Pendientes"
+                    value={stats.pendingInvitations}
+                    icon={Mail}
+                    color="orange"
+                    onClick={() => router.push('/staff/invitations')}
+                    buttonText="Revisar Invitaciones"
+                />
             </div>
 
-            {/* Projects Section */}
-            <div className="projects-section">
-                <div className="projects-header">
-                    <div className="projects-title-group">
-                        <h2>
-                            Recent Projects
-                            <span className="projects-badge">Last 7 days</span>
-                        </h2>
-                        <p className="projects-description">Active deployments and recent updates</p>
-                    </div>
-                    <Link href="/staff/projects" className="projects-link">
-                        View Full Registry
-                        <svg className="projects-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                    </Link>
+            {/* Recent Companies Widget */}
+            <DashboardWidget
+                title="Empresas Recientes"
+                onAction={() => router.push('/staff/companies')}
+                isEmpty={recentCompanies.length === 0}
+                emptyMessage="No hay empresas registradas"
+            >
+                <div className="companies-table-wrapper">
+                    <table className="companies-table">
+                        <thead>
+                            <tr>
+                                <th>Empresa</th>
+                                <th>Proyectos</th>
+                                <th>Miembros</th>
+                                <th>Creada</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {recentCompanies.map((company) => (
+                                <tr
+                                    key={company.id}
+                                    onClick={() => router.push(`/staff/companies/${company.id}`)}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <td>
+                                        <div className="company-name">{company.name}</div>
+                                    </td>
+                                    <td>{company.projects_count}</td>
+                                    <td>{company.members_count}</td>
+                                    <td>
+                                        <span className="company-date">
+                                            {new Date(company.created_at).toLocaleDateString('es-ES')}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
+            </DashboardWidget>
 
-                {/* Table */}
-                <div className="projects-table-container">
-                    <div className="projects-table-glow" />
-                    <div className="projects-table-wrapper">
-                        <table className="projects-table">
+            {/* Pending Invitations Widget */}
+            {pendingInvitations.length > 0 && (
+                <DashboardWidget
+                    title="Invitaciones Pendientes"
+                    onAction={() => router.push('/staff/invitations')}
+                >
+                    <div className="invitations-table-wrapper">
+                        <table className="invitations-table">
                             <thead>
                                 <tr>
-                                    <th>Project Name</th>
-                                    <th>Code</th>
-                                    <th>Company</th>
-                                    <th>Status</th>
-                                    <th>Activity</th>
+                                    <th>Email</th>
+                                    <th>Rol</th>
+                                    <th>Empresa</th>
+                                    <th>Creada</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>
-                                        <div className="project-cell">
-                                            <div className="project-icon-box blue">
-                                                <Building2 className="project-icon blue" />
-                                            </div>
-                                            <span className="project-name">Expansión Norte</span>
-                                        </div>
-                                    </td>
-                                    <td><span className="project-code">PRJ-001</span></td>
-                                    <td><span className="project-company">Minera Candelaria</span></td>
-                                    <td>
-                                        <span className="status-badge active">
-                                            <span className="status-badge-dot active" />
-                                            Active
-                                        </span>
-                                    </td>
-                                    <td><span className="project-activity">2 hours ago</span></td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div className="project-cell">
-                                            <div className="project-icon-box purple">
-                                                <Building2 className="project-icon purple" />
-                                            </div>
-                                            <span className="project-name">Mantenimiento Planta Sulfuros</span>
-                                        </div>
-                                    </td>
-                                    <td><span className="project-code">PRJ-004</span></td>
-                                    <td><span className="project-company">Codelco División Andina</span></td>
-                                    <td>
-                                        <span className="status-badge pending">
-                                            <span className="status-badge-dot pending" />
-                                            Pending
-                                        </span>
-                                    </td>
-                                    <td><span className="project-activity">1 day ago</span></td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div className="project-cell">
-                                            <div className="project-icon-box teal">
-                                                <Building2 className="project-icon teal" />
-                                            </div>
-                                            <span className="project-name">Instalación Chancadores</span>
-                                        </div>
-                                    </td>
-                                    <td><span className="project-code">PRJ-007</span></td>
-                                    <td><span className="project-company">Antofagasta Minerals</span></td>
-                                    <td>
-                                        <span className="status-badge active">
-                                            <span className="status-badge-dot active" />
-                                            Active
-                                        </span>
-                                    </td>
-                                    <td><span className="project-activity">5 hours ago</span></td>
-                                </tr>
+                                {pendingInvitations.map((invitation) => (
+                                    <tr key={invitation.id}>
+                                        <td>
+                                            <span className="invitation-email">{invitation.email}</span>
+                                        </td>
+                                        <td>
+                                            <span className="invitation-role-badge">
+                                                {invitation.role_id}
+                                            </span>
+                                        </td>
+                                        <td>{(invitation as any).company?.name || 'N/A'}</td>
+                                        <td>
+                                            <span className="invitation-date">
+                                                {new Date(invitation.created_at).toLocaleDateString('es-ES')}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>
-                </div>
-            </div>
+                </DashboardWidget>
+            )}
         </div>
     )
 }

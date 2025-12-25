@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
     LayoutDashboard,
     Building2,
+    FolderKanban,
     Users,
     UserPlus,
     Settings,
@@ -35,11 +36,21 @@ export default function Sidebar({ role }: SidebarProps) {
     const pathname = usePathname()
     const router = useRouter()
     const [openItems, setOpenItems] = useState<Record<string, boolean>>({})
+    const [user, setUser] = useState<{ email?: string } | null>(null)
 
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
+
+    // Load user data
+    React.useEffect(() => {
+        async function loadUser() {
+            const { data: { user } } = await supabase.auth.getUser()
+            setUser(user)
+        }
+        loadUser()
+    }, [])
 
     const handleSignOut = async () => {
         await supabase.auth.signOut()
@@ -53,31 +64,30 @@ export default function Sidebar({ role }: SidebarProps) {
 
     // Staff Menu (Super Admin Global)
     const staffMenu: MenuItem[] = [
-        { name: 'Overview', href: '/staff', icon: LayoutDashboard },
-        { name: 'Companies', href: '/staff/companies', icon: Building2 },
-        { name: 'Projects', href: '/staff/projects', icon: Building2 },
-        { name: 'Global Users', href: '/staff/users', icon: Users },
-        { name: 'Invitations', href: '/staff/invitations', icon: UserPlus },
+        { name: 'Vista General', href: '/staff', icon: LayoutDashboard },
+        { name: 'Empresas', href: '/staff/companies', icon: Building2 },
+        { name: 'Proyectos', href: '/staff/projects', icon: FolderKanban },
+        { name: 'Usuarios', href: '/staff/users', icon: Users },
+        { name: 'Invitaciones', href: '/staff/invitations', icon: UserPlus },
     ]
 
-    // Management Menu (Founder + Admin)
-    const managementMenu: MenuItem[] = [
-        { name: 'Dashboard', href: '/founder', icon: LayoutDashboard },
-        {
-            name: 'Workforce', href: '/founder/workforce', icon: HardHat, subitems: [
-                { name: 'Shifts', href: '/founder/workforce/shifts', icon: CalendarClock },
-                { name: 'Crews', href: '/founder/workforce/crews', icon: Users },
-            ]
-        },
-        {
-            name: 'Operations', href: '/founder/config', icon: Settings, subitems: [
-                { name: 'Locations', href: '/founder/config/locations', icon: MapPin },
-            ]
-        },
+    // Founder Menu (Company-Level)
+    const founderMenu: MenuItem[] = [
+        { name: 'Vista General', href: '/founder', icon: LayoutDashboard },
+        { name: 'Proyectos', href: '/founder/projects', icon: FolderKanban },
+        { name: 'Invitaciones', href: '/founder/invitations', icon: UserPlus },
+        { name: 'Mi Empresa', href: '/founder/company', icon: Building2 },
+    ]
+
+    // Admin Menu (Project-Level)
+    const adminMenu: MenuItem[] = [
+        { name: 'Vista General', href: '/admin', icon: LayoutDashboard },
+        { name: 'Personal', href: '/admin/workforce', icon: Users },
+        { name: 'Configuración', href: '/admin/settings', icon: Settings },
     ]
 
     const isManagement = ['founder', 'admin'].includes(role)
-    const menuItems = role === 'super_admin' ? staffMenu : managementMenu
+    const menuItems = role === 'super_admin' ? staffMenu : (role === 'founder' ? founderMenu : adminMenu)
 
     return (
         <aside className="sidebar">
@@ -141,11 +151,22 @@ export default function Sidebar({ role }: SidebarProps) {
 
             {/* Footer */}
             <div className="sidebar-footer">
-                <div className="sidebar-version">v3.0.0</div>
-                <button onClick={handleSignOut} className="sidebar-logout">
-                    <LogOut className="sidebar-logout-icon" />
-                    Sign Out
-                </button>
+                <div className="sidebar-user-info">
+                    <div className="sidebar-user-avatar">
+                        {user?.email?.[0]?.toUpperCase() || '?'}
+                    </div>
+                    <div className="sidebar-user-details">
+                        <div className="sidebar-user-email">{user?.email || 'Usuario'}</div>
+                        <div className="sidebar-user-role">
+                            {role === 'super_admin' && '⚡ Super Admin'}
+                            {role === 'founder' && '🏢 Founder'}
+                            {role === 'admin' && '👤 Admin'}
+                        </div>
+                    </div>
+                    <button onClick={handleSignOut} className="sidebar-logout" title="Cerrar sesión">
+                        <LogOut size={18} />
+                    </button>
+                </div>
             </div>
         </aside>
     )

@@ -43,25 +43,41 @@ export default async function DashboardLayout({
 
     // 2. Get User Role (needed for Sidebar menu)
     // Querying 'members' table as verified source of truth
-    const { data: memberData } = await supabase
+    const { data: memberData, error: memberError } = await supabase
         .from('members')
-        .select('role_id')
+        .select('role_id, company_id, project_id')
         .eq('user_id', session.user.id)
-        .single()
+        .maybeSingle()
 
-    // Fallback if no role found matches middleware logic
-    // role_id in DB is like 'super_admin', 'founder' etc.
-    const role = memberData?.role_id || 'worker'
+    // Security: If no member record, user shouldn't access dashboard
+    if (memberError || !memberData) {
+        redirect('/unauthorized')
+    }
+
+    // role_id from validated member
+    const role = memberData.role_id
 
     return (
-        <div className="flex h-screen bg-[#0f172a] text-slate-100 font-sans selection:bg-blue-500/30">
+        <div style={{ display: 'flex', height: '100vh', background: '#0f172a', color: '#f1f5f9', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
             {/* Left Sidebar (Fixed) - Role Aware */}
             <Sidebar role={role} />
 
             {/* Main Content Area (Scrollable) */}
-            <main style={{ marginLeft: '16rem', width: 'calc(100% - 16rem)' }} className="flex-1 overflow-y-auto relative bg-[#0f172a]">
+            <main style={{
+                marginLeft: '16rem',
+                width: 'calc(100% - 16rem)',
+                flex: 1,
+                overflowY: 'auto',
+                position: 'relative',
+                background: '#0f172a'
+            }}>
                 {/* Page Content */}
-                <div className="p-8 max-w-7xl mx-auto">
+                <div style={{
+                    padding: '2rem',
+                    maxWidth: '80rem',
+                    marginLeft: 'auto',
+                    marginRight: 'auto'
+                }}>
                     {children}
                 </div>
             </main>

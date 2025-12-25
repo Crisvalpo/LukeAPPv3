@@ -48,7 +48,14 @@ export default function LandingPage() {
         });
 
         if (error) {
-            setError(error.message);
+            // Translate to Spanish
+            const spanishErrors: Record<string, string> = {
+                'Invalid login credentials': 'Credenciales inválidas',
+                'Email not confirmed': 'Email no confirmado',
+                'Invalid email or password': 'Email o contraseña inválidos',
+                'Too many requests': 'Demasiados intentos, intenta más tarde'
+            }
+            setError(spanishErrors[error.message] || error.message);
             setLoading(false);
         } else {
             router.push('/lobby');

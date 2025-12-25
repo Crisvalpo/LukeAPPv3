@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getAllCompanies, createCompany, type Company } from '@/services/companies'
 import { Building2 } from 'lucide-react'
+import '@/styles/dashboard.css'
 import '@/styles/companies.css'
 
 export default function CompaniesPage() {

@@ -4,6 +4,7 @@ import { use, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCompanyById, updateCompany, deleteCompany, getCompanyStats, type Company } from '@/services/companies'
 import { Building2, Users, FolderKanban, ArrowLeft, Trash2 } from 'lucide-react'
+import '@/styles/dashboard.css'
 import '@/styles/companies.css'
 
 export default function CompanyDetailPage({ params }: { params: Promise<{ id: string }> }) {

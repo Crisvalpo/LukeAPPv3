@@ -2,284 +2,183 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createInvitation, getPendingInvitations, revokeInvitation, generateInvitationLink, type Invitation } from '@/services/invitations'
-import { getAllCompanies, type Company } from '@/services/companies'
-import { Copy, Mail, MessageCircle, Trash2 } from 'lucide-react'
-import '@/styles/invitations.css'
+import { createClient } from '@/lib/supabase/client'
+import { createInvitation, getPendingInvitations, revokeInvitation, type Invitation } from '@/services/invitations'
+import InvitationManager from '@/components/invitations/InvitationManager'
+import { Building2, ChevronRight } from 'lucide-react'
+import '@/styles/dashboard.css'
 
-export default function InvitationsPage() {
+interface Company {
+    id: string
+    name: string
+    code: string // slug
+}
+
+export default function StaffInvitationsPage() {
     const router = useRouter()
-    const [loading, setLoading] = useState(true)
-    const [submitting, setSubmitting] = useState(false)
-    const [error, setError] = useState('')
-    const [success, setSuccess] = useState(false)
-    const [invitationLink, setInvitationLink] = useState('')
-    const [invitations, setInvitations] = useState<Invitation[]>([])
+    const [isLoading, setIsLoading] = useState(true)
     const [companies, setCompanies] = useState<Company[]>([])
+    const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
 
-    const [formData, setFormData] = useState({
-        email: '',
-        company_id: '',
-        role_id: 'founder' as 'founder' | 'admin'
-    })
+    const [invitations, setInvitations] = useState<Invitation[]>([])
 
     useEffect(() => {
-        loadData()
+        loadCompanies()
     }, [])
 
-    async function loadData() {
-        setLoading(true)
-        const [invitationsData, companiesData] = await Promise.all([
-            getPendingInvitations(),
-            getAllCompanies()
-        ])
-        setInvitations(invitationsData)
-        setCompanies(companiesData)
-        setLoading(false)
+    useEffect(() => {
+        if (selectedCompany) {
+            loadCompanyData(selectedCompany.id)
+        }
+    }, [selectedCompany])
+
+    async function loadCompanies() {
+        const supabase = createClient()
+        // Verify staff access
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { router.push('/'); return }
+
+        // Load all companies
+        const { data } = await supabase
+            .from('companies')
+            .select('id, name, slug')
+            .order('name')
+
+        if (data) {
+            setCompanies(data.map(c => ({ id: c.id, name: c.name, code: c.slug })))
+        }
+        setIsLoading(false)
     }
 
-    async function handleSubmit(e: React.FormEvent) {
-        e.preventDefault()
-        setSubmitting(true)
-        setError('')
-        setSuccess(false)
-
-        if (!formData.company_id) {
-            setError('Debes seleccionar una empresa')
-            setSubmitting(false)
-            return
-        }
-
-        const result = await createInvitation(formData)
-
-        if (result.success && result.data) {
-            setSuccess(true)
-            setInvitationLink(result.data.link)
-            setFormData({ email: '', company_id: '', role_id: 'founder' })
-            loadData()
-        } else {
-            setError(result.message)
-        }
-
-        setSubmitting(false)
+    async function loadCompanyData(companyId: string) {
+        // Only load invitations, Staff doesn't need projects to invite founders
+        const invitationsData = await getPendingInvitations(companyId)
+        setInvitations(invitationsData)
     }
 
     async function handleRevoke(id: string) {
-        if (!confirm('¿Revocar esta invitación? El link dejará de funcionar.')) return
+        if (!confirm('¿Eliminar esta invitación?')) return
+        await revokeInvitation(id)
+        if (selectedCompany) await loadCompanyData(selectedCompany.id)
+    }
 
-        const result = await revokeInvitation(id)
+    async function handleInvite(data: { email: string; project_id?: string; role_id: string }) {
+        if (!selectedCompany) return { success: false, message: 'Selecciona una empresa' }
+
+        // Staff always invites FOUNDERS (or members), project_id is ignored/null
+        const result = await createInvitation({
+            email: data.email,
+            role_id: 'founder', // Force role to founder for Staff context
+            company_id: selectedCompany.id,
+            project_id: undefined
+        })
+
         if (result.success) {
-            loadData()
-        } else {
-            alert('Error: ' + result.message)
+            await loadCompanyData(selectedCompany.id)
         }
+
+        return result
     }
 
-    function copyToClipboard() {
-        navigator.clipboard.writeText(invitationLink)
-        alert('¡Link copiado!')
-    }
-
-    if (loading) {
-        return (
-            <div className="dashboard-page">
-                <p style={{ color: 'white', textAlign: 'center' }}>Cargando...</p>
-            </div>
-        )
+    if (isLoading) {
+        return <div className="dashboard-page"><p style={{ color: 'white', textAlign: 'center' }}>Cargando...</p></div>
     }
 
     return (
         <div className="dashboard-page">
-            {/* Header */}
             <div className="dashboard-header">
                 <div className="dashboard-header-content">
                     <div className="dashboard-accent-line" />
-                    <h1 className="dashboard-title">Invitar Fundadores</h1>
+                    <h1 className="dashboard-title">Centro de Invitaciones</h1>
                 </div>
-                <p className="dashboard-subtitle">Crea invitaciones para que Founders gestionen empresas y proyectos</p>
+                <p className="dashboard-subtitle">Gestión global de accesos para fundadores de empresas.</p>
             </div>
 
-            {/* Form Section */}
-            <div className="invitation-form-container">
-                <div className="invitation-form-header">
-                    <h2 className="invitation-form-title">Nueva Invitación</h2>
-                    <p className="invitation-form-description">Genera un link de invitación para un nuevo Founder</p>
-                </div>
+            {/* COMPANY SELECTOR */}
+            {!selectedCompany ? (
+                <div className="company-form-container" style={{ maxWidth: '800px', margin: '0 auto' }}>
+                    <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+                        <Building2 size={48} color="#60a5fa" style={{ margin: '0 auto 1rem', opacity: 0.8 }} />
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'white', marginBottom: '0.5rem' }}>
+                            Selecciona una Empresa
+                        </h2>
+                        <p style={{ color: '#94a3b8' }}>
+                            Elige la empresa para invitar a su Fundador.
+                        </p>
+                    </div>
 
-                {/* Success Message */}
-                {success && invitationLink && (
-                    <div className="invitation-success">
-                        <h3 className="invitation-success-title">✅ Invitación creada exitosamente</h3>
-                        <p className="invitation-success-label">Comparte este link:</p>
-
-                        <div className="invitation-link-wrapper">
-                            <input
-                                type="text"
-                                readOnly
-                                value={invitationLink}
-                                className="invitation-link-input"
-                            />
-                            <button onClick={copyToClipboard} className="copy-button">
-                                <Copy size={16} />
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
+                        {companies.map(company => (
+                            <button
+                                key={company.id}
+                                onClick={() => setSelectedCompany(company)}
+                                className="action-button"
+                                style={{
+                                    width: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'flex-start',
+                                    padding: '1.5rem',
+                                    background: 'rgba(30, 41, 59, 0.4)',
+                                    height: 'auto',
+                                    gap: '0.5rem'
+                                }}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                                    <span style={{ fontWeight: '600', color: 'white', fontSize: '1.1rem' }}>{company.name}</span>
+                                    <ChevronRight size={16} color="#64748b" />
+                                </div>
+                                <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontFamily: 'monospace' }}>
+                                    {company.code}
+                                </span>
                             </button>
-                        </div>
-
-                        <div className="share-actions">
-                            <a
-                                href={`https://wa.me/?text=${encodeURIComponent(`Te invito a LukeAPP.\n\nRegistrate aquí:\n${invitationLink}`)}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="share-button share-button-whatsapp"
-                            >
-                                <MessageCircle size={18} />
-                                WhatsApp
-                            </a>
-                            <a
-                                href={`mailto:?subject=${encodeURIComponent('Invitación a LukeAPP')}&body=${encodeURIComponent(`Hola,\n\nTe han invitado a LukeAPP.\n\nPuedes registrarte aquí:\n${invitationLink}`)}`}
-                                className="share-button share-button-email"
-                            >
-                                <Mail size={18} />
-                                Email
-                            </a>
-                        </div>
+                        ))}
                     </div>
-                )}
-
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="invitation-form">
-                    {error && (
-                        <div style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '0.5rem', color: '#f87171' }}>
-                            {error}
-                        </div>
-                    )}
-
-                    <div className="form-field">
-                        <label htmlFor="company" className="form-label">
-                            Empresa *
-                        </label>
-                        <select
-                            id="company"
-                            required
-                            value={formData.company_id}
-                            onChange={(e) => setFormData({ ...formData, company_id: e.target.value })}
-                            className="form-select"
-                        >
-                            <option value="">Seleccionar empresa</option>
-                            {companies.map((company) => (
-                                <option key={company.id} value={company.id}>
-                                    {company.name}
-                                </option>
-                            ))}
-                        </select>
-                        <span className="form-hint">El founder gestionará proyectos de esta empresa</span>
-                    </div>
-
-                    <div className="form-field">
-                        <label htmlFor="email" className="form-label">
-                            Email del Founder *
-                        </label>
-                        <input
-                            id="email"
-                            type="email"
-                            required
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            className="form-input"
-                            placeholder="founder@company.com"
-                        />
-                        <span className="form-hint">El usuario recibirá un link de invitación</span>
-                    </div>
-
-                    <div className="form-field">
-                        <label htmlFor="role" className="form-label">
-                            Rol Asignado *
-                        </label>
-                        <select
-                            id="role"
-                            value={formData.role_id}
-                            onChange={(e) => setFormData({ ...formData, role_id: e.target.value as 'founder' | 'admin' })}
-                            className="form-select"
-                        >
-                            <option value="founder">Founder</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                        <span className="form-hint">El usuario tendrá este rol al aceptar</span>
-                    </div>
-
-                    <button type="submit" disabled={submitting} className="form-button">
-                        {submitting ? (
-                            <span className="form-button-loading">
-                                <span>Generando...</span>
-                            </span>
-                        ) : (
-                            '📧 Generar Link de Invitación'
-                        )}
-                    </button>
-                </form>
-            </div>
-
-            {/* Invitations List */}
-            <div className="invitations-list-container">
-                <div className="invitations-list-header">
-                    <h2 className="invitations-list-title">Invitaciones Pendientes</h2>
                 </div>
+            ) : (
+                <>
+                    {/* CONTEXT BAR */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '1rem 1.5rem',
+                        background: 'rgba(5b, 33, 182, 0.2)',
+                        border: '1px solid rgba(139, 92, 246, 0.3)',
+                        borderRadius: '0.75rem',
+                        marginBottom: '2rem'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <div className="company-logo-box" style={{ width: '2.5rem', height: '2.5rem', fontSize: '1.25rem' }}>
+                                <Building2 size={20} />
+                            </div>
+                            <div>
+                                <div style={{ fontSize: '0.75rem', color: '#a78bfa', textTransform: 'uppercase', fontWeight: 'bold' }}>Empresa Seleccionada</div>
+                                <div style={{ color: 'white', fontWeight: '600', fontSize: '1.1rem' }}>{selectedCompany.name}</div>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setSelectedCompany(null)}
+                            className="action-button"
+                        >
+                            Cambiar Empresa
+                        </button>
+                    </div>
 
-                {invitations.length === 0 ? (
-                    <div className="invitations-empty">
-                        <p className="invitations-empty-text">No hay invitaciones pendientes</p>
-                    </div>
-                ) : (
-                    <div className="invitations-table-wrapper">
-                        <table className="invitations-table">
-                            <thead>
-                                <tr>
-                                    <th>Email</th>
-                                    <th>Rol</th>
-                                    <th>Empresa</th>
-                                    <th>Fecha</th>
-                                    <th style={{ textAlign: 'right' }}>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {invitations.map((inv) => (
-                                    <tr key={inv.id}>
-                                        <td className="invitation-email">{inv.email}</td>
-                                        <td>
-                                            <span className="invitation-role-badge">{inv.role_id}</span>
-                                        </td>
-                                        <td className="invitation-date">{inv.company?.name || 'N/A'}</td>
-                                        <td className="invitation-date">
-                                            {new Date(inv.created_at).toLocaleDateString()}
-                                        </td>
-                                        <td>
-                                            <div className="invitation-actions">
-                                                <button
-                                                    onClick={() => {
-                                                        const link = generateInvitationLink(inv.token)
-                                                        navigator.clipboard.writeText(link)
-                                                        alert('Link copiado')
-                                                    }}
-                                                    className="action-button"
-                                                    title="Copiar Link"
-                                                >
-                                                    <Copy size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleRevoke(inv.id)}
-                                                    className="action-button delete"
-                                                    title="Revocar"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </div>
+                    {/* REUSABLE MANAGER - STAFF MODE (Founder Invite) */}
+                    <InvitationManager
+                        projects={[]} // No projects needed
+                        invitations={invitations}
+                        companyName={selectedCompany.name}
+                        requireProject={false} // CRITICAL: Disable project requirement
+                        roleOptions={[
+                            { value: 'founder', label: 'Fundador / Dueño', description: 'Acceso total a la empresa, facturación y gestión de proyectos.' }
+                        ]}
+                        onInvite={handleInvite}
+                        onRevoke={handleRevoke}
+                    />
+                </>
+            )}
         </div>
     )
 }

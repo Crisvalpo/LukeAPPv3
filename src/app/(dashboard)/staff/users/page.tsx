@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { getProjectsByCompany, type Project } from '@/services/projects'
-import ProjectsList from '@/components/projects/ProjectsList'
+import UsersList from '@/components/users/UsersList'
 import { Building2, ChevronRight } from 'lucide-react'
 import '@/styles/dashboard.css'
 
@@ -14,16 +13,21 @@ interface Company {
     code: string
 }
 
-interface ProjectWithStats extends Project {
-    members_count: number
+interface Member {
+    id: string
+    user_id: string
+    email: string
+    role_id: string
+    project?: { name: string; code: string } | null
+    created_at: string
 }
 
-export default function StaffProjectsPage() {
+export default function StaffUsersPage() {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(true)
     const [companies, setCompanies] = useState<Company[]>([])
     const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
-    const [projects, setProjects] = useState<ProjectWithStats[]>([])
+    const [members, setMembers] = useState<Member[]>([])
 
     useEffect(() => {
         loadCompanies()
@@ -31,7 +35,7 @@ export default function StaffProjectsPage() {
 
     useEffect(() => {
         if (selectedCompany) {
-            loadCompanyProjects(selectedCompany.id)
+            loadCompanyMembers(selectedCompany.id)
         }
     }, [selectedCompany])
 
@@ -48,22 +52,57 @@ export default function StaffProjectsPage() {
         setIsLoading(false)
     }
 
-    async function loadCompanyProjects(companyId: string) {
+    async function loadCompanyMembers(companyId: string) {
         const supabase = createClient()
-        // Get projects
-        const projectsData = await getProjectsByCompany(companyId)
+        // Fetch members with user email and project info
+        const { data, error } = await supabase
+            .from('members')
+            .select(`
+                id,
+                user_id,
+                role_id,
+                created_at,
+                users ( email ),
+                projects ( name, code )
+            `)
+            .eq('company_id', companyId)
+            .order('created_at', { ascending: false })
 
-        // Get members stats (optional but nice)
-        const projectsWithStats = await Promise.all(
-            projectsData.map(async (project) => {
-                const { count } = await supabase
-                    .from('members')
-                    .select('id', { count: 'exact', head: true })
-                    .eq('project_id', project.id)
-                return { ...project, members_count: count || 0 }
-            })
-        )
-        setProjects(projectsWithStats)
+        if (error) {
+            console.error('Error fetching members:', error)
+            setMembers([])
+            return
+        }
+
+        // Transform data to flat structure
+        const formattedMembers: Member[] = data.map((m: any) => ({
+            id: m.id,
+            user_id: m.user_id,
+            role_id: m.role_id,
+            email: m.users?.email || 'N/A', // users table join
+            project: m.projects, // projects table join
+            created_at: m.created_at
+        }))
+
+        setMembers(formattedMembers)
+    }
+
+    async function handleDeleteMember(memberId: string) {
+        if (!confirm('¿Estás seguro de eliminar este usuario de la empresa? Perderá todos sus accesos.')) {
+            return
+        }
+
+        const supabase = createClient()
+        const { error } = await supabase
+            .from('members')
+            .delete()
+            .eq('id', memberId)
+
+        if (error) {
+            alert('Error al eliminar usuario')
+        } else {
+            if (selectedCompany) loadCompanyMembers(selectedCompany.id)
+        }
     }
 
     if (isLoading) {
@@ -75,21 +114,21 @@ export default function StaffProjectsPage() {
             <div className="dashboard-header">
                 <div className="dashboard-header-content">
                     <div className="dashboard-accent-line" />
-                    <h1 className="dashboard-title">Proyectos Globales</h1>
+                    <h1 className="dashboard-title">Usuarios Globales</h1>
                 </div>
-                <p className="dashboard-subtitle">Auditoría y revisión de proyectos por empresa.</p>
+                <p className="dashboard-subtitle">Gestión de personal y roles por empresa.</p>
             </div>
 
             {/* COMPANY SELECTOR */}
             {!selectedCompany ? (
                 <div className="company-form-container" style={{ maxWidth: '800px', margin: '0 auto' }}>
                     <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-                        <Building2 size={48} color="#60a5fa" style={{ margin: '0 auto 1rem', opacity: 0.8 }} />
+                        <Building2 size={48} color="#4ade80" style={{ margin: '0 auto 1rem', opacity: 0.8 }} />
                         <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'white', marginBottom: '0.5rem' }}>
                             Selecciona una Empresa
                         </h2>
                         <p style={{ color: '#94a3b8' }}>
-                            Elige la empresa para ver sus proyectos activos e históricos.
+                            Elige la empresa para ver su nómina de personal.
                         </p>
                     </div>
 
@@ -129,8 +168,8 @@ export default function StaffProjectsPage() {
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         padding: '1rem 1.5rem',
-                        background: 'rgba(5b, 33, 182, 0.2)',
-                        border: '1px solid rgba(139, 92, 246, 0.3)',
+                        background: 'rgba(22, 163, 74, 0.2)', // Green tint for Users context
+                        border: '1px solid rgba(34, 197, 94, 0.3)',
                         borderRadius: '0.75rem',
                         marginBottom: '2rem'
                     }}>
@@ -139,7 +178,7 @@ export default function StaffProjectsPage() {
                                 <Building2 size={20} />
                             </div>
                             <div>
-                                <div style={{ fontSize: '0.75rem', color: '#a78bfa', textTransform: 'uppercase', fontWeight: 'bold' }}>Empresa Seleccionada</div>
+                                <div style={{ fontSize: '0.75rem', color: '#86efac', textTransform: 'uppercase', fontWeight: 'bold' }}>Empresa Seleccionada</div>
                                 <div style={{ color: 'white', fontWeight: '600', fontSize: '1.1rem' }}>{selectedCompany.name}</div>
                             </div>
                         </div>
@@ -151,11 +190,11 @@ export default function StaffProjectsPage() {
                         </button>
                     </div>
 
-                    {/* REUSABLE PROJECTS LIST */}
-                    <ProjectsList
-                        projects={projects}
+                    {/* REUSABLE USERS LIST */}
+                    <UsersList
+                        users={members}
                         context="staff"
-                    // No logic to create for 'staff' in this context
+                        onDelete={handleDeleteMember}
                     />
                 </>
             )}
