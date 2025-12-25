@@ -101,6 +101,18 @@ Optimize only when a real bottleneck is identified.
 If a requirement or decision is unclear or missing, do not assume.
 Ask for clarification before implementing.
 
+1️⃣6️⃣ Reglas Base de Vistas (Derived UI)
+
+1. **Derive, Don't Design**: Views are derived from domain and role, not invented ad-hoc.
+2. **5 Canonical Types Only**:
+    - `ListView` (Table, Search, Filter)
+    - `CardView` (Kanban, Status-focused)
+    - `FormView` (Create/Edit Entity)
+    - `DashboardView` (Read-only KPIs)
+    - `ContextView` (Lobby/Hall)
+3. **One View = One Primary Role**: Explicit `allowedRoles`.
+4. **No Special Views**: Solve edge cases with filters or states, never new unique views.
+
 🧾 REGLA FINAL (MUY IMPORTANTE)
 
 LukeAPP is a long-term enterprise platform.

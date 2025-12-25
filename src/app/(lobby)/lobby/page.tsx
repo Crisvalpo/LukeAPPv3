@@ -19,11 +19,11 @@ export default async function LobbyPage() {
 
     try {
         const supabase = await createClient();
-        const { data } = await supabase.auth.getUser();
-        user = data.user;
+        const { data: { user: fetchedUser } } = await supabase.auth.getUser();
+        user = fetchedUser;
 
         if (!user) {
-            redirect('/login');
+            redirect('/');
         }
 
         // Get single active membership (invite-only model)

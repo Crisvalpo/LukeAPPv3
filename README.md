@@ -363,10 +363,61 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
 
 ### Ejecutar Migración SQL
 
+#### Método 1: Manual (SQL Editor)
+
 1. Ve a tu proyecto Supabase
 2. Abre el SQL Editor
 3. Copia y pega `supabase/migrations/0000_initial_schema.sql`
 4. Ejecuta el script
+
+#### Método 2: Programático (Recomendado)
+
+Para ejecutar migraciones desde código (útil para automatización):
+
+1. **Generar Access Token:**
+   - Ve a https://supabase.com/dashboard/account/tokens
+   - Click "Generate new token"
+   - Nombre: "Migration Script"
+   - Copia el token generado
+
+2. **Ejecutar migración:**
+
+```bash
+# Crear script (ya existe en scripts/execute_sql_direct.js)
+node scripts/execute_sql_direct.js
+```
+
+**Plantilla del script:**
+
+```javascript
+const SUPABASE_ACCESS_TOKEN = 'sbp_your_token_here'
+const PROJECT_REF = 'your_project_ref'
+const MANAGEMENT_API = 'https://api.supabase.com/v1'
+
+const sql = `/* Tu SQL aquí */`
+
+async function executeSQLDirect() {
+    const response = await fetch(`${MANAGEMENT_API}/projects/${PROJECT_REF}/database/query`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${SUPABASE_ACCESS_TOKEN}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ query: sql })
+    })
+    
+    if (!response.ok) throw new Error(await response.text())
+    console.log('✅ SQL ejecutado')
+}
+
+executeSQLDirect()
+```
+
+**Ventajas:**
+- ✅ Automatizable en CI/CD
+- ✅ Versionable en Git
+- ✅ Ejecutable desde terminal
+- ✅ No requiere abrir navegador
 
 ### Desarrollo Local
 
@@ -411,3 +462,36 @@ Privado - Todos los derechos reservados
 ---
 
 **Última actualización**: Fase 1 completada - 23/12/2025
+
+---
+
+## 👁️ Reglas Base de Vistas (Derived UI)
+
+> **Objetivo**: No “diseñar pantallas”, sino derivar vistas automáticamente desde el dominio y el rol.
+
+### 1. Principio Maestro: "Derive, Don't Design"
+Una vista solo existe si responde a uno de estos 4 propósitos:
+- **Ver estado** (tabla / kanban / resumen)
+- **Actuar** (crear / editar / asignar)
+- **Supervisar** (KPI, alertas)
+- **Contextualizar** (Lobby, Hall)
+
+🚫 Si no cumple uno de esos propósitos, no se crea.
+
+### 2. Tipos Canónicos de Vistas (Estrictamente 5)
+
+| Tipo | Equivalente | Uso | Reglas |
+|------|-------------|-----|--------|
+| **📋 ListView** | Table View | Listar entidades (Personal, Spools) | Siempre lleva Búsqueda + Filtros (Negocio) + Acciones Inline. |
+| **🧩 CardView** | Kanban | Operaciones diarias (Estado > Dato) | Estados definidos por dominio. Drag-and-drop si aplica. |
+| **📝 FormView** | Form | Crear/Editar UNA entidad | Generado desde metadata. Create/Edit comparten componente. |
+| **📊 DashboardView** | Dashboard | KPIs, Supervisión (Staff/Líderes) | Read-only. Drill-down. Bloques reutilizables. NO CRUD. |
+| **🏛️ ContextView** | Lobby | Ubicar al usuario en contexto | No es navegación, es confirmación. |
+
+### 3. Regla de Oro (Anti-Caos)
+❌ **Nunca crear vistas “especiales”.**  
+Si surge un caso borde, se resuelve con: **Filtro**, **Estado**, **Rol** o **Variante del Layout**. Nunca con una `SpecialView.tsx`.
+
+### 4. Una Vista = Un Rol Primario
+Cada vista define explícitamente `allowedRoles: ['SUPERVISOR']`. Si un rol no tiene vistas asignadas, no opera.
+

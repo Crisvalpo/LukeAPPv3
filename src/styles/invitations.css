@@ -1,0 +1,433 @@
+/* Invitation System Styles - 100% Vanilla CSS */
+
+/* ===== Invitation Form ===== */
+.invitation-form-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(30, 41, 59, 0.3) 100%);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+}
+
+.invitation-form-header {
+    margin-bottom: 2rem;
+}
+
+.invitation-form-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.invitation-form-description {
+    font-size: 0.875rem;
+    color: #94a3b8;
+}
+
+.invitation-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #cbd5e1;
+}
+
+.form-input,
+.form-select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    color: white;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.form-input::placeholder {
+    color: #64748b;
+}
+
+.form-input:focus,
+.form-select:focus {
+    outline: none;
+    border-color: #60a5fa;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+}
+
+.form-select {
+    cursor: pointer;
+}
+
+.form-select option {
+    background: #1e293b;
+    color: white;
+}
+
+.form-hint {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.form-button {
+    padding: 0.875rem 1.5rem;
+    background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+    border: none;
+    border-radius: 0.5rem;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.form-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+}
+
+.form-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.form-button-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+/* Success Message */
+.invitation-success {
+    padding: 1.5rem;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.invitation-success-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #34d399;
+    margin-bottom: 0.75rem;
+}
+
+.invitation-success-label {
+    font-size: 0.875rem;
+    color: #6ee7b7;
+    margin-bottom: 0.5rem;
+}
+
+.invitation-link-wrapper {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.invitation-link-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 0.5rem;
+    color: white;
+    font-size: 0.875rem;
+    font-family: 'Courier New', monospace;
+}
+
+.copy-button {
+    padding: 0.75rem 1rem;
+    background: #10b981;
+    border: none;
+    border-radius: 0.5rem;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.copy-button:hover {
+    background: #059669;
+}
+
+.share-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.share-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.share-button-whatsapp {
+    background: #25D366;
+    color: white;
+}
+
+.share-button-whatsapp:hover {
+    background: #128C7E;
+}
+
+.share-button-email {
+    background: #6b7280;
+    color: white;
+}
+
+.share-button-email:hover {
+    background: #4b5563;
+}
+
+/* ===== Invitations List (ListView) ===== */
+.invitations-list-container {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(30, 41, 59, 0.3) 100%);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    padding: 2rem;
+}
+
+.invitations-list-header {
+    margin-bottom: 1.5rem;
+}
+
+.invitations-list-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+}
+
+.invitations-table-wrapper {
+    overflow-x: auto;
+}
+
+.invitations-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.invitations-table thead tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.invitations-table th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+}
+
+.invitations-table tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.2s;
+}
+
+.invitations-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.invitations-table td {
+    padding: 1rem;
+}
+
+.invitation-email {
+    color: white;
+    font-weight: 500;
+}
+
+.invitation-role-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: rgba(168, 85, 247, 0.1);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    color: #c084fc;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.invitation-date {
+    color: #94a3b8;
+    font-size: 0.875rem;
+}
+
+.invitation-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.action-button {
+    padding: 0.5rem;
+    background: rgba(59, 130, 246, 0.1);
+    border: none;
+    border-radius: 0.5rem;
+    color: #60a5fa;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.action-button:hover {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+.action-button.delete {
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+}
+
+.action-button.delete:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+.invitations-empty {
+    text-align: center;
+    padding: 3rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+}
+
+.invitations-empty-text {
+    color: #94a3b8;
+}
+
+/* ===== Accept Invitation Page ===== */
+.accept-invitation-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.accept-invitation-card {
+    max-width: 500px;
+    width: 100%;
+    padding: 3rem;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%);
+    backdrop-filter: blur(32px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1.5rem;
+    text-align: center;
+}
+
+.accept-invitation-icon {
+    width: 4rem;
+    height: 4rem;
+    margin: 0 auto 1.5rem;
+    padding: 1rem;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 9999px;
+}
+
+.accept-invitation-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.accept-invitation-company {
+    font-size: 1.125rem;
+    color: #60a5fa;
+    margin-bottom: 1.5rem;
+}
+
+.accept-invitation-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 0.75rem;
+}
+
+.accept-invitation-detail {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.875rem;
+}
+
+.detail-label {
+    color: #94a3b8;
+}
+
+.detail-value {
+    color: white;
+    font-weight: 500;
+}
+
+.accept-invitation-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.accept-button {
+    padding: 1rem 2rem;
+    background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+    border: none;
+    border-radius: 0.75rem;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.accept-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+}
+
+.decline-button {
+    padding: 0.75rem 2rem;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    color: #94a3b8;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.decline-button:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    color: white;
+}
