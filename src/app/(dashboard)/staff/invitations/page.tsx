@@ -58,7 +58,12 @@ export default function StaffInvitationsPage() {
 
     async function handleRevoke(id: string) {
         if (!confirm('¿Eliminar esta invitación?')) return
-        await revokeInvitation(id)
+
+        // Find email for cleanup
+        const invite = invitations.find(i => i.id === id)
+        const email = invite ? invite.email : undefined
+
+        await revokeInvitation(id, email)
         if (selectedCompany) await loadCompanyData(selectedCompany.id)
     }
 

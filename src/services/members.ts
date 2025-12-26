@@ -6,7 +6,16 @@ import { MemberWithRelations, ApiResponse } from '@/types'
  */
 export async function getMembersByCompany(companyId: string): Promise<MemberWithRelations[]> {
     const supabase = createClient()
+    return fetchMembersRobust(supabase, companyId)
+}
 
+/**
+ * Helper to fetch members with error handling and fallback
+ * (Added to diagnose RLS/Join issues)
+ */
+async function fetchMembersRobust(supabase: ReturnType<typeof createClient>, companyId: string) {
+    // 1. Try full query with joins
+    // We use a try-catch for the promise itself just in case
     try {
         const { data, error } = await supabase
             .from('members')
@@ -24,26 +33,58 @@ export async function getMembersByCompany(companyId: string): Promise<MemberWith
             .eq('company_id', companyId)
             .order('created_at', { ascending: false })
 
+        if (!error && data) {
+            return data.map((m: any) => ({
+                id: m.id,
+                user_id: m.user_id,
+                company_id: m.company_id,
+                project_id: m.project_id,
+                role_id: m.role_id,
+                created_at: m.created_at,
+                user: m.users,
+                project: m.projects,
+                company: m.companies
+            }))
+        }
+
+        // Only log if it's a real error, not just empty data
         if (error) {
-            console.error('Error fetching members:', error)
+            console.error('⚠️ Error fetching members with joins:', JSON.stringify(error, null, 2))
+        }
+    } catch (e) {
+        console.error('⚠️ Exception fetching members with joins:', e)
+    }
+
+    // 2. Fallback: Fetch raw members only (to isolate RLS issues)
+    console.warn('🔄 Attempting fallback fetch (no joins)...')
+
+    try {
+        const { data: rawData, error: rawError } = await supabase
+            .from('members')
+            .select('*')
+            .eq('company_id', companyId)
+
+        if (rawError) {
+            console.error('❌ Critical: Error fetching raw members:', JSON.stringify(rawError, null, 2))
             return []
         }
 
-        // Map to standardized type
-        return data.map((m: any) => ({
+        if (!rawData) return []
+
+        // 3. Return minimal data
+        return rawData.map((m: any) => ({
             id: m.id,
             user_id: m.user_id,
             company_id: m.company_id,
             project_id: m.project_id,
             role_id: m.role_id,
             created_at: m.created_at,
-            user: m.users,       // Joined user data
-            project: m.projects, // Joined project data
-            company: m.companies // Joined company data
+            user: { email: 'Unknown (RLS Error)' },
+            project: null,
+            company: null
         }))
-
-    } catch (error) {
-        console.error('Unexpected error fetching members:', error)
+    } catch (fallbackError) {
+        console.error('❌ Critical: Exception in fallback:', fallbackError)
         return []
     }
 }
@@ -55,14 +96,48 @@ export async function deleteMember(memberId: string): Promise<ApiResponse> {
     const supabase = createClient()
 
     try {
-        const { error } = await supabase
+        // 1. Get User ID first
+        const { data: member, error: fetchError } = await supabase
             .from('members')
-            .delete()
+            .select('user_id')
             .eq('id', memberId)
+            .single()
 
-        if (error) throw error
+        if (fetchError || !member) {
+            throw new Error('Member not found')
+        }
 
-        return { success: true, message: 'Usuario eliminado correctamente' }
+        // 2. Call Admin API to delete user account completely
+        const response = await fetch('/api/admin/users/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: member.user_id })
+        })
+
+        const result = await response.json()
+
+        if (!response.ok) {
+            // Handle Config Error (Missing Key)
+            if (result.message.includes('CONFIG_ERROR')) {
+                console.warn('⚠️ Server Missing Service Role Key. Falling back to simple member removal.')
+                // Fallback: Just delete the member record
+                const { error: deleteError } = await supabase
+                    .from('members')
+                    .delete()
+                    .eq('id', memberId)
+
+                if (deleteError) throw deleteError
+
+                return {
+                    success: true,
+                    message: 'Usuario removido de la empresa (Cuenta Auth conservada - Falta Config Servidor)'
+                }
+            }
+            throw new Error(result.message)
+        }
+
+        return result
+
     } catch (error: any) {
         console.error('Error deleting member:', error)
         return { success: false, message: error.message || 'Error al eliminar usuario' }

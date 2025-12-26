@@ -294,6 +294,34 @@ USING (
         AND role_id = 'founder'
     )
 );
+
+### ⚠️ RLS Recursion (CRITICAL)
+
+When defining policies for the `members` table (which defines the roles themselves), you **CANNOT** query the `members` table directly in the policy, as this causes **infinite recursion**.
+
+**Incorrect:**
+```sql
+-- ❌ Infinite Loop on 'members' table
+CREATE POLICY "Check role" ON members
+USING (EXISTS (SELECT 1 FROM members WHERE ...))
+```
+
+**Correct Solution:**
+Use a `SECURITY DEFINER` function to break the recursion.
+
+```sql
+-- 1. Create function
+CREATE FUNCTION is_super_admin() RETURNS boolean 
+SECURITY DEFINER 
+SET search_path = public
+AS $$ 
+  SELECT EXISTS(SELECT 1 FROM members WHERE user_id = auth.uid() AND role_id = 'super_admin'); 
+$$ LANGUAGE sql;
+
+-- 2. Use in policy
+CREATE POLICY "Check role" ON members
+USING ( is_super_admin() );
+```
 ```
 
 ---

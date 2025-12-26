@@ -205,17 +205,37 @@ export async function acceptInvitation(token: string) {
 
 /**
  * Delete invitation (hard delete from DB)
+ * Now optionally cleans up "zombie" users (unconfirmed) via API
  */
-export async function revokeInvitation(id: string) {
+export async function revokeInvitation(id: string, email?: string) {
     const supabase = createClient()
 
-    const { error } = await supabase
-        .from('invitations')
-        .delete()
-        .eq('id', id)
+    try {
+        // Try the new API for deep cleaning
+        const response = await fetch('/api/invitations/revoke-clean', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ invitationId: id, userEmail: email })
+        })
 
-    if (error) return { success: false, message: error.message }
-    return { success: true, message: 'Invitación eliminada' }
+        if (!response.ok) {
+            console.warn('⚠️ Server API Revoke failed, falling back to client-side delete.')
+            throw new Error('API Failed')
+        }
+
+        const result = await response.json()
+        return result
+
+    } catch (e) {
+        // Fallback: Standard delete
+        const { error } = await supabase
+            .from('invitations')
+            .delete()
+            .eq('id', id)
+
+        if (error) return { success: false, message: error.message }
+        return { success: true, message: 'Invitación eliminada (Limpieza básica)' }
+    }
 }
 
 /**
