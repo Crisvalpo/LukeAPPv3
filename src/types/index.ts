@@ -69,6 +69,7 @@ export interface Member {
     company_id: string | null
     project_id: string | null
     role_id: UserRoleType
+    job_title?: string | null  // Custom role label (e.g., "Jefe de Calidad")
     created_at: string
 }
 
@@ -79,6 +80,7 @@ export interface Invitation {
     company_id: string
     project_id: string | null
     role_id: UserRoleType
+    job_title?: string | null  // Custom role label (e.g., "Jefe de Calidad")
     status: InvitationStatusType
     created_at: string
     expires_at: string | null
@@ -154,4 +156,5 @@ export interface CreateInvitationParams {
     company_id: string
     project_id?: string
     role_id: UserRoleType
+    job_title?: string  // Custom role label
 }

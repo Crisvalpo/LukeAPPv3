@@ -77,15 +77,38 @@ export default function ProjectDetailPage() {
     }
 
     async function handleDelete() {
-        if (!window.confirm('¿Estás seguro de eliminar este proyecto? Esta acción no se puede deshacer.')) {
+        if (!window.confirm('¿Estás seguro de eliminar este proyecto?')) {
             return
         }
 
         setIsSaving(true)
+
+        // 1. Attempt standard delete
         const result = await deleteProject(projectId)
 
         if (result.success) {
             router.push('/founder/projects')
+        } else if (result.requiresForce) {
+            // 2. Ask for Force Delete
+            const confirmSpy = window.confirm(
+                `⚠️ EXTINCIÓN TOTAL DETECTADA\n\n` +
+                `Este proyecto tiene ${result.memberCount} usuarios activos asignados.\n` +
+                `Si eliminas el proyecto, estos usuarios serán BORRADOS TOTALMENTE del sistema (Auth + Datos).\n\n` +
+                `¿Confirmas la ELIMINACIÓN MASIVA de usuarios y proyecto?`
+            )
+
+            if (confirmSpy) {
+                const deepResult = await deleteProject(projectId, true) // Force = true
+                if (deepResult.success) {
+                    alert('Proyecto y todos sus usuarios han sido eliminados.')
+                    router.push('/founder/projects')
+                } else {
+                    alert('Error en borrado profundo: ' + deepResult.message)
+                    setIsSaving(false)
+                }
+            } else {
+                setIsSaving(false)
+            }
         } else {
             alert(result.message)
             setIsSaving(false)

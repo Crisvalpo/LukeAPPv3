@@ -16,6 +16,13 @@ export default function FounderInvitationsPage() {
     const [projects, setProjects] = useState<Project[]>([])
     const [invitations, setInvitations] = useState<Invitation[]>([])
 
+    // Define roles available for Founder to invite
+    const ROLE_OPTIONS = [
+        { value: 'admin', label: 'Administrador de Proyecto', description: 'Gestión total de spools, personal y reportes del proyecto.' },
+        { value: 'supervisor', label: 'Supervisor de Terreno', description: 'Gestión técnica y supervisión de cuadrillas en terreno.' },
+        { value: 'worker', label: 'Trabajador / Operario', description: 'Acceso básico para visualización y tareas asignadas.' }
+    ]
+
     useEffect(() => {
         loadData()
     }, [])
@@ -54,17 +61,24 @@ export default function FounderInvitationsPage() {
 
     async function handleRevoke(id: string) {
         if (!confirm('¿Eliminar esta invitación? El link dejará de funcionar.')) return
-        await revokeInvitation(id)
+
+        // CLEAN DELETE: Find email to remove potential zombie user
+        const invite = invitations.find(i => i.id === id)
+        const email = invite ? invite.email : undefined
+
+        await revokeInvitation(id, email)
         if (companyId) await refreshData(companyId)
     }
 
-    async function handleInvite(data: { email: string; project_id: string; role_id: string }) {
+    async function handleInvite(data: { email: string; project_id?: string; role_id: string; job_title?: string }) {
         if (!companyId) return { success: false, message: 'Error de sesión' }
 
         const result = await createInvitation({
-            ...data,
-            role_id: data.role_id as 'admin',
-            company_id: companyId
+            email: data.email,
+            project_id: data.project_id,
+            role_id: data.role_id as any, // Cast to any or specific union type from service
+            company_id: companyId,
+            job_title: data.job_title
         })
 
         if (result.success) {
@@ -85,7 +99,7 @@ export default function FounderInvitationsPage() {
                     <div className="dashboard-accent-line" />
                     <h1 className="dashboard-title">Gestión de Invitaciones</h1>
                 </div>
-                <p className="dashboard-subtitle">Invita administradores a tus proyectos en {companyName}</p>
+                <p className="dashboard-subtitle">Invita administradores y trabajadores a tus proyectos en {companyName}</p>
             </div>
 
             {/* REUSABLE COMPONENT IN ACTION */}
@@ -93,6 +107,7 @@ export default function FounderInvitationsPage() {
                 projects={projects}
                 invitations={invitations}
                 companyName={companyName}
+                roleOptions={ROLE_OPTIONS}
                 onInvite={handleInvite}
                 onRevoke={handleRevoke}
             />

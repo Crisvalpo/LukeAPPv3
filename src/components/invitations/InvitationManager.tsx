@@ -11,7 +11,7 @@ interface InvitationManagerProps {
     companyName?: string
     requireProject?: boolean
     roleOptions?: { value: string; label: string; description: string }[]
-    onInvite: (data: { email: string; project_id?: string; role_id: string }) => Promise<{ success: boolean; message?: string; data?: { link: string } }>
+    onInvite: (data: { email: string; project_id?: string; role_id: string; job_title: string }) => Promise<{ success: boolean; message?: string; data?: { link: string } }>
     onRevoke: (id: string) => Promise<void>
 }
 
@@ -35,7 +35,8 @@ export default function InvitationManager({
     const [formData, setFormData] = useState({
         email: '',
         project_id: '',
-        role_id: roleOptions[0].value
+        role_id: roleOptions[0].value,
+        job_title: ''
     })
 
     async function handleSubmit(e: React.FormEvent) {
@@ -53,14 +54,14 @@ export default function InvitationManager({
             const result = await onInvite({
                 email: formData.email,
                 role_id: formData.role_id,
-                // Only send project_id if it's required or selected
-                project_id: formData.project_id || undefined
+                project_id: formData.project_id || undefined,
+                job_title: formData.job_title
             })
 
             if (result.success && result.data) {
                 setSuccess(true)
                 setInvitationLink(result.data.link)
-                setFormData(prev => ({ ...prev, email: '' }))
+                setFormData(prev => ({ ...prev, email: '', job_title: '' }))
             } else {
                 setError(result.message || 'Error al crear invitación')
             }
@@ -181,21 +182,51 @@ export default function InvitationManager({
                             />
                         </div>
 
-                        <div className="form-field">
-                            <label className="form-label">Rol Asignado</label>
-                            {roleOptions.length > 1 ? (
-                                <select
-                                    value={formData.role_id}
-                                    onChange={(e) => setFormData({ ...formData, role_id: e.target.value })}
-                                    className="form-select"
-                                    style={{ marginBottom: '0.5rem' }}
-                                >
-                                    {roleOptions.map(role => (
-                                        <option key={role.value} value={role.value}>{role.label}</option>
-                                    ))}
-                                </select>
-                            ) : null}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            <div className="form-field">
+                                <label className="form-label">Rol de Sistema (Permisos)</label>
+                                {roleOptions.length > 1 ? (
+                                    <select
+                                        value={formData.role_id}
+                                        onChange={(e) => {
+                                            // Auto-suggest title if empty
+                                            const newRole = e.target.value;
+                                            const roleLabel = roleOptions.find(r => r.value === newRole)?.label || '';
+                                            const shouldUpdateTitle = !formData.job_title || roleOptions.some(r => r.label === formData.job_title);
 
+                                            setFormData({
+                                                ...formData,
+                                                role_id: newRole,
+                                                job_title: shouldUpdateTitle ? roleLabel : formData.job_title
+                                            })
+                                        }}
+                                        className="form-select"
+                                        style={{ marginBottom: '0.5rem' }}
+                                    >
+                                        {roleOptions.map(role => (
+                                            <option key={role.value} value={role.value}>{role.label}</option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <div className="form-input disabled" style={{ background: 'rgba(255,255,255,0.05)', color: '#94a3b8' }}>
+                                        {roleOptions[0].label}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="form-field">
+                                <label className="form-label">Cargo / Título (Etiqueta)</label>
+                                <input
+                                    type="text"
+                                    value={formData.job_title}
+                                    onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
+                                    className="form-input"
+                                    placeholder="Ej: Jefe Calidad, Capataz..."
+                                />
+                            </div>
+                        </div>
+
+                        <div className="form-field">
                             {/* Role Description Card */}
                             {(() => {
                                 const selectedRole = roleOptions.find(r => r.value === formData.role_id) || roleOptions[0]
@@ -211,7 +242,7 @@ export default function InvitationManager({
                                     }}>
                                         <Shield size={20} color="#4ade80" />
                                         <div>
-                                            <div style={{ color: '#4ade80', fontWeight: '600', fontSize: '0.9rem' }}>{selectedRole.label}</div>
+                                            <div style={{ color: '#4ade80', fontWeight: '600', fontSize: '0.9rem' }}>Permisos: {selectedRole.label}</div>
                                             <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{selectedRole.description}</div>
                                         </div>
                                     </div>
@@ -286,6 +317,8 @@ export default function InvitationManager({
                                                     {inv.role_id}
                                                 </span>
                                             )}
+                                            {/* Show Job Title if available */}
+                                            {/* We need to update Invitation interface to include job_title to show it here properly, but for now just showing basic role tag */}
                                         </td>
                                         <td style={{ padding: '1rem', textAlign: 'right' }}>
                                             <button

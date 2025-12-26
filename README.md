@@ -38,6 +38,38 @@ El sistema separa explícitamente:
 - **Contexto** → empresa + proyecto + rol
 - **Aplicación** → módulo funcional que ejecuta acciones
 
+## 🧑‍🚧 Identity & Roles Model (CRÍTICO)
+
+LukeAPP implementa un modelo de identidad de **doble capa**, diseñado para separar seguridad, función y experiencia de usuario.
+
+### Layer A: System Role (Security Layer)
+- Controla **Row Level Security (RLS)** en Supabase
+- Valores estrictos:
+  - `admin`
+  - `supervisor`
+  - `worker`
+- **No define UX**
+- **No define vistas**
+- Es la única fuente de verdad para acceso a datos
+
+### Layer B: Functional Role (Job / UX Layer)
+- Definido por la empresa (Founder)
+- Representa cargos reales de obra u oficina
+- Ejemplos: `Pañolero`, `Jefe de Calidad`, `Capataz`
+- Controla:
+  - Vistas visibles
+  - Acciones permitidas
+  - Dashboard inicial
+- **Es opcional**
+
+### Regla Clave
+> Un usuario puede operar sin Functional Role,
+> pero **nunca** sin System Role.
+
+Si un usuario no tiene cargo funcional asignado:
+- Se aplica un perfil funcional genérico según su System Role
+- El sistema nunca bloquea el acceso por falta de configuración
+
 ---
 
 ## 🏗️ Arquitectura
@@ -270,19 +302,41 @@ Las apps de terreno deben:
 - Contexto (empresa + proyecto + rol) debe ser seleccionado explícitamente
 - Sin contexto → sin aplicación
 
-### 5. Roles Scoped
+### 5. Lobby como Project Hall (Nueva Regla)
+
+El Lobby **NO es un selector libre de proyectos**.
+
+#### Nueva Regla:
+- Un usuario **solo puede pertenecer a un proyecto**
+- La pertenencia se define **exclusivamente por invitación**
+- El Lobby existe para:
+  - Confirmar contexto
+  - Mostrar rol y empresa
+  - Servir como punto de transición
+
+#### Estados del Lobby:
+- **Usuario sin membresía**:
+  - Se muestra estado "Empty Lobby"
+  - CTA para contacto o completar perfil
+- **Usuario con membresía activa**:
+  - Se carga automáticamente el proyecto asignado
+  - No hay elección manual
+
+> Sin invitación → no hay proyecto → no hay aplicación.
+
+### 6. Roles Scoped
 
 - Los roles siempre están asociados a un proyecto
 - Nunca tratar roles como permisos globales
 - Un usuario puede tener múltiples roles en múltiples proyectos
 
-### 6. Multi-Tenant por Diseño
+### 7. Multi-Tenant por Diseño
 
 - Toda solución debe escalar a múltiples empresas, proyectos y equipos
 - Cualquier solución que no escale es inválida
 - **Backend como árbitro final**: Los eventos no actualizan tablas de negocio directamente; primero son validados y procesados por el motor de sincronización
 
-### 7. Lenguaje Técnico
+### 8. Lenguaje Técnico
 
 | Capa | Idioma |
 |------|--------|
@@ -516,4 +570,39 @@ Si surge un caso borde, se resuelve con: **Filtro**, **Estado**, **Rol** o **Var
 
 ### 4. Una Vista = Un Rol Primario
 Cada vista define explícitamente `allowedRoles: ['SUPERVISOR']`. Si un rol no tiene vistas asignadas, no opera.
+
+### 5. Generación de Vistas (Reglas Operativas)
+
+Las vistas **no se crean manualmente**.
+
+Se derivan desde:
+- Dominio (Entidad + Estado)
+- Rol Funcional
+- Tipo Canónico de Vista
+
+#### Regla:
+> Si una entidad existe en el dominio,
+> su representación visual **ya está definida por convención**.
+
+#### Ejemplo:
+- Entidad: `spools`
+- Estado dominante: `status`
+- Operación principal: seguimiento de avance
+
+→ Vista resultante:
+- `CardView` (kanban)
+- Filtros por estado
+- Acciones derivadas desde permisos
+
+#### Prohibiciones:
+- ❌ Vistas “a pedido”
+- ❌ Formularios únicos por rol
+- ❌ Dashboards que mezclen CRUD con KPIs
+
+Si una vista parece necesitar lógica especial,
+el error está en:
+- El dominio
+- Los permisos
+- O el estado
+**Nunca en la vista.**
 

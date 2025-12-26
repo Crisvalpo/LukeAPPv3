@@ -435,6 +435,67 @@ User profiles are stored in `public.users` (not `auth.users` directly).
 
 ---
 
+## 🧑‍🚧 Identity & Roles Pattern (CRITICAL)
+
+### Dual-Layer Identity Model
+
+LukeAPP implements a **two-layer identity system** to separate security from UX:
+
+#### Layer A: System Role (Security)
+```typescript
+type SystemRole = 'admin' | 'supervisor' | 'worker'
+```
+- **Purpose**: Controls Row Level Security (RLS) in Supabase
+- **Scope**: Database access control
+- **Mutability**: Fixed, never exposed to UI
+- **Usage**: `members.role_id` column
+
+#### Layer B: Functional Role (UX/Job Title)
+```typescript
+interface Member {
+  role_id: SystemRole        // Security layer
+  job_title?: string         // Optional display label
+  functional_role_id?: uuid  // Future: Reference to company_roles table
+}
+```
+- **Purpose**: Defines user's job/function within the company
+- **Scope**: UI routing, feature visibility, display labels
+- **Mutability**: Customizable per company
+- **Examples**: "Pañolero", "Jefe de Calidad", "Capataz"
+
+### Implementation Pattern
+
+**When Creating Invitations:**
+```typescript
+await createInvitation({
+  email: 'user@example.com',
+  role_id: 'worker',              // System role (security)
+  job_title: 'Pañolero',          // Display label (UX)
+  company_id: '...',
+  project_id: '...'
+})
+```
+
+**When Checking Permissions (RLS):**
+```sql
+-- Use role_id for security checks
+WHERE role_id IN ('admin', 'supervisor')
+```
+
+**When Displaying to User:**
+```tsx
+<Badge>{member.job_title || ROLE_LABELS[member.role_id]}</Badge>
+```
+
+### Future: Dynamic Functional Roles
+**Phase 2** will introduce `company_roles` table:
+- Companies define custom roles (e.g., "Oficina Técnica", "Calidad")
+- Each custom role maps to a base `SystemRole`
+- Permissions stored as JSONB for granular control
+- See `technical_spec_dynamic_roles.md` for full design
+
+---
+
 ## 🚧 Work in Progress
 
 ### Current Phase: **Transitioning to Phase 2**

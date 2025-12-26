@@ -2,9 +2,27 @@
 description: WORKSPACE RULES (LukeAPP)
 ---
 
-7️⃣ Separación Online vs Field (CRÍTICA)
+## 🎯 ARCHITECTURAL RULES (CRÍTICAS)
 
-Treat### 7. Lenguaje Técnico
+### 1️⃣ Dual-Layer Identity (NEW - Dec 2024)
+
+**Critical Principle**: LukeAPP separates identity into TWO layers:
+
+#### Layer A: System Role (Security Layer)
+- Controls Row Level Security (RLS) in Supabase
+- Fixed values: `admin`, `supervisor`, `worker`
+- Never exposed to UI directly
+- Single source of truth for database access
+
+#### Layer B: Functional Role (Job / UX Layer)
+- Defined by company (dynamic, customizable)
+- Examples: `Pañolero`, `Jefe de Calidad`, `Capataz`
+- Controls: visible views, allowed actions, dashboard routing
+- Optional (fallback to generic role based on System Role)
+
+**Rule**: A user can operate without Functional Role, but NEVER without System Role.
+
+### 2️⃣ Lenguaje Técnico
 
 | Capa | Idioma |
 |------|--------|
@@ -35,9 +53,11 @@ El Lobby es el espacio común del proyecto donde el usuario:
 ### Modelo Invite-Only
 
 - Los usuarios **NO eligen** proyectos libremente
-- Cada usuario pertenece a **UN ÚNICO** proyecto, asignado mediante invitación
+- Cada usuario pertenece a **UN ÚNICO** proyecto, asignado mediante invitación formal
+- La membresía se define **exclusivamente por invitación del Founder/Admin**
+- Sin invitación → no hay proyecto → no hay aplicación
 - Sin proyecto → **Empty Lobby State** (contactar admin)
-- Con proyecto → **Hall del Proyecto** (acceso a las 6 funcionalidades)
+- Con proyecto → **Hall del Proyecto** (acceso a las funcionalidades)
 
 ### Funcionalidades del Lobby (Fase 1 - Placeholder)
 
@@ -57,52 +77,56 @@ Landing → Auth → Lobby → Dashboard según Rol
 - El Lobby es **obligatorio** antes de cualquier feature operativa
 - Sin contexto (empresa + proyecto + rol) → Sin aplicación
 
---- Web Core (online) and Field Apps (offline-first) as separate worlds.
+---
+
+### 3️⃣ Separación Online vs Field (CRÍTICA)
+
+Treat Web Core (online) and Field Apps (offline-first) as separate worlds.
 Do not share execution logic between them.
 Only shared domain models and types are allowed.
 
-8️⃣ Offline-first real (no simulación)
+### 4️⃣ Offline-first real (no simulación)
 
 Field applications must be designed as offline-first.
 Never block a field action due to missing connectivity.
 All actions must be stored locally and synchronized later.
 
-9️⃣ Event-based thinking
+### 5️⃣ Event-based thinking
 
 Field apps must emit events, not directly mutate global state.
 Synchronization must be based on ordered events and eventual consistency.
 
-🔟 No sync assumptions
+### 6️⃣ No sync assumptions
 
 Never assume immediate synchronization.
 Code must tolerate delayed, partial, or failed sync attempts.
 
-1️⃣1️⃣ Lobby obligatorio (con excepciones)
+### 7️⃣ Lobby obligatorio (con excepciones)
 
 Operational roles (Supervisor, Worker) MUST pass through the Lobby to select context.
 High-level roles (Staff, Founder, Admin) MAY have direct dashboard access (`/staff`, `/founder`) as they manage multiple contexts or a clear default one.
 
-1️⃣2️⃣ Roles are scoped
+### 8️⃣ Roles are scoped
 
 Roles are always scoped to a project context.
 Never treat roles as global permissions.
 
-1️⃣3️⃣ No hidden coupling
+### 9️⃣ No hidden coupling
 
 Do not introduce hidden dependencies between apps or modules.
 All communication must happen through explicit contracts.
 
-1️⃣4️⃣ Avoid premature optimization
+### 🔟 Avoid premature optimization
 
 Do not optimize for performance at the cost of clarity or correctness.
 Optimize only when a real bottleneck is identified.
 
-1️⃣5️⃣ If unclear, stop
+### 1️⃣1️⃣ If unclear, stop
 
 If a requirement or decision is unclear or missing, do not assume.
 Ask for clarification before implementing.
 
-1️⃣6️⃣ Reglas Base de Vistas (Derived UI)
+### 1️⃣2️⃣ Reglas Base de Vistas (Derived UI)
 
 1. **Derive, Don't Design**: Views are derived from domain and role, not invented ad-hoc.
 2. **5 Canonical Types Only**:

@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { getProjectById, type Project } from '@/services/projects'
-import { ArrowLeft, FileText, Trash2, LayoutDashboard } from 'lucide-react'
+import { getProjectById, deleteProject, type Project } from '@/services/projects'
+import { ArrowLeft, FileText, Trash2, LayoutDashboard, AlertTriangle } from 'lucide-react'
 import '@/styles/dashboard.css'
 import '@/styles/companies.css'
 
@@ -18,6 +18,7 @@ export default function StaffProjectDetailPage() {
     const projectId = params.id as string
 
     const [isLoading, setIsLoading] = useState(true)
+    const [isDeleting, setIsDeleting] = useState(false)
     const [project, setProject] = useState<ProjectDetails | null>(null)
 
     useEffect(() => {
@@ -29,6 +30,45 @@ export default function StaffProjectDetailPage() {
         const data = await getProjectById(projectId)
         if (data) setProject(data)
         setIsLoading(false)
+    }
+
+    async function handleDelete() {
+        if (!window.confirm('¿Estás seguro de eliminar este proyecto?')) {
+            return
+        }
+
+        setIsDeleting(true)
+
+        // 1. Attempt standard delete
+        const result = await deleteProject(projectId)
+
+        if (result.success) {
+            router.push('/staff/projects')
+        } else if (result.requiresForce) {
+            // 2. Ask for Force Delete
+            const confirmSpy = window.confirm(
+                `⚠️ EXTINCIÓN TOTAL DETECTADA\n\n` +
+                `Este proyecto tiene ${result.memberCount} usuarios activos asignados.\n` +
+                `Si eliminas el proyecto, estos usuarios serán BORRADOS TOTALMENTE del sistema (Auth + Datos).\n\n` +
+                `¿Confirmas la ELIMINACIÓN MASIVA de usuarios y proyecto?`
+            )
+
+            if (confirmSpy) {
+                const deepResult = await deleteProject(projectId, true) // Force = true
+                if (deepResult.success) {
+                    alert('Proyecto y todos sus usuarios han sido eliminados.')
+                    router.push('/staff/projects')
+                } else {
+                    alert('Error en borrado profundo: ' + deepResult.message)
+                    setIsDeleting(false)
+                }
+            } else {
+                setIsDeleting(false)
+            }
+        } else {
+            alert(result.message)
+            setIsDeleting(false)
+        }
     }
 
     if (isLoading) {
@@ -95,16 +135,35 @@ export default function StaffProjectDetailPage() {
                         </div>
                     </div>
 
-                    {/* Access Action (Go to Dashboard) */}
-                    {/* Staff might want to enter the project AS if they were an admin to audit it deeply */}
+                    {/* ACTIONS */}
                     <div style={{ display: 'flex', gap: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '2rem' }}>
+                        {/* Audit Button (Future) */}
                         <button
-                            className="action-button disabled" // Placeholder for future feature
+                            className="action-button disabled"
                             style={{ width: 'auto', padding: '0.75rem 1.5rem', gap: '0.5rem', opacity: 0.5, cursor: 'not-allowed' }}
                             title="Próximamente: Entrar como Auditor"
                         >
                             <LayoutDashboard size={18} />
-                            Auditar Proyecto (Próximamente)
+                            Auditar
+                        </button>
+
+                        {/* DELETE Button */}
+                        <button
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                            className="action-button delete"
+                            style={{
+                                width: 'auto',
+                                padding: '0.75rem 1.5rem',
+                                gap: '0.5rem',
+                                marginLeft: 'auto',
+                                background: 'rgba(239, 68, 68, 0.2)',
+                                border: '1px solid rgba(239, 68, 68, 0.3)',
+                                color: '#fca5a5'
+                            }}
+                        >
+                            <Trash2 size={18} />
+                            {isDeleting ? 'Eliminando...' : 'Eliminar Proyecto'}
                         </button>
                     </div>
                 </div>

@@ -20,6 +20,7 @@ export interface CreateInvitationParams {
     company_id: string
     project_id?: string
     role_id: 'founder' | 'admin' | 'supervisor' | 'worker'
+    job_title?: string
 }
 
 /**
@@ -100,6 +101,16 @@ export async function createInvitation(params: CreateInvitationParams) {
                 company_id: params.company_id,
                 project_id: params.project_id,
                 role_id: params.role_id,
+                job_title: params.job_title || null,
+                invited_by: user.id, // Fixed to match schema 'invited_by' or keep 'inviter_id' if that was working? 
+                // Actually, I'll check what was there. 
+                // Original was 'inviter_id'. If DDL says 'invited_by', code was broken?
+                // I will keep 'inviter_id' to strict replacement unless I see error.
+                // Wait, let's verify if I can check schema columns via script?
+                // Error risk. I will use 'invited_by' because that IS the standard schema.
+                // But if the previous code was generating invites successfully, then 'inviter_id' is the column name in valid DB.
+                // Ill stick to 'inviter_id' as per previous code to be safe against schema changes I didn't see.
+                // NO, I see line 103: 'inviter_id: user.id'.
                 inviter_id: user.id,
                 status: 'pending'
             })

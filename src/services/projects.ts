@@ -180,29 +180,50 @@ export async function updateProject(projectId: string, params: UpdateProjectPara
 /**
  * Delete project (only if no members assigned)
  */
-export async function deleteProject(projectId: string) {
+/**
+ * Delete project
+ * @param projectId ID of the project
+ * @param force If true, performs a DEEP DELETE (removes project AND all assigned users)
+ */
+export async function deleteProject(projectId: string, force: boolean = false) {
     const supabase = createClient()
 
     try {
-        // Check if project has members
-        const { count: membersCount } = await supabase
-            .from('members')
-            .select('id', { count: 'exact', head: true })
-            .eq('project_id', projectId)
+        if (!force) {
+            // Standard Check: Prevent if has members
+            const { count: membersCount } = await supabase
+                .from('members')
+                .select('id', { count: 'exact', head: true })
+                .eq('project_id', projectId)
 
-        if (membersCount && membersCount > 0) {
-            return {
-                success: false,
-                message: `No se puede eliminar. El proyecto tiene ${membersCount} miembro(s) asignado(s)`
+            if (membersCount && membersCount > 0) {
+                return {
+                    success: false,
+                    message: `No se puede eliminar. El proyecto tiene ${membersCount} miembro(s) asignado(s).`,
+                    requiresForce: true, // Signal to UI to ask for confirmation
+                    memberCount: membersCount
+                }
             }
+
+            // Normal delete (safe)
+            const { error } = await supabase
+                .from('projects')
+                .delete()
+                .eq('id', projectId)
+
+            if (error) throw error
+        } else {
+            // Force / Deep Delete (Via API)
+            const response = await fetch('/api/admin/projects/delete-deep', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ projectId })
+            })
+
+            const result = await response.json()
+            if (!result.success) throw new Error(result.message)
+            return result
         }
-
-        const { error } = await supabase
-            .from('projects')
-            .delete()
-            .eq('id', projectId)
-
-        if (error) throw error
 
         return {
             success: true,
