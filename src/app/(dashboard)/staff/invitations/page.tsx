@@ -172,6 +172,7 @@ export default function StaffInvitationsPage() {
 
                     {/* REUSABLE MANAGER - STAFF MODE (Founder Invite) */}
                     <InvitationManager
+                        companyId={selectedCompany.id}
                         projects={[]} // No projects needed
                         invitations={invitations}
                         companyName={selectedCompany.name}

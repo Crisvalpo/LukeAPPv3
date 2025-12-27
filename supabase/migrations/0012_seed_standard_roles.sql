@@ -109,18 +109,19 @@ BEGIN
       'Control total de la ingeniería del proyecto. Carga masiva de datos y gestión de revisiones.',
       'admin',
       '#10b981',
-      '{
-        "modules": {
-          "engineering": {"enabled": true, "is_home": true},
-          "field": {"enabled": true, "is_home": false},
-          "quality": {"enabled": true, "is_home": false}
-        },
-        "resources": {
-          "lines": {"view": true, "create": true, "edit": true, "delete": true},
-          "isometrics": {"view": true, "create": true, "edit": true, "delete": true},
-          "spools": {"view": true, "create": true, "edit": true, "delete": true},
-          "revisions": {"view": true, "create": true, "edit": true}
-        }
+      '{\r
+        \"modules\": {\r
+          \"engineering\": {\"enabled\": true, \"is_home\": true},\r
+          \"revisiones\": {\"enabled\": true, \"is_home\": false},\r
+          \"field\": {\"enabled\": true, \"is_home\": false},\r
+          \"quality\": {\"enabled\": true, \"is_home\": false}\r
+        },\r
+        \"resources\": {\r
+          \"lines\": {\"view\": true, \"create\": true, \"edit\": true, \"delete\": true},\r
+          \"isometrics\": {\"view\": true, \"create\": true, \"edit\": true, \"delete\": true},\r
+          \"spools\": {\"view\": true, \"create\": true, \"edit\": true, \"delete\": true},\r
+          \"revisions\": {\"view\": true, \"create\": true, \"edit\": true}\r
+        }\r
       }',
       true
     ),

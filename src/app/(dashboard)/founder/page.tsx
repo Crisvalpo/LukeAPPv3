@@ -189,6 +189,30 @@ export default function FounderDashboard() {
                             Gestiona roles funcionales y accesos
                         </p>
                     </div>
+
+                    {/* Engineering Hub (Revisiones) - NEW Phase 2 */}
+                    <div
+                        className="quick-action-card"
+                        onClick={() => router.push('/founder/engineering')}
+                    >
+                        <div className="quick-action-icon">
+                            📋
+                        </div>
+                        <h3 className="quick-action-title">Ingeniería</h3>
+                        <p className="quick-action-description">
+                            Revisiones, isométricos y carga de datos
+                        </p>
+                        <span className="quick-action-badge" style={{
+                            background: 'rgba(59, 130, 246, 0.1)',
+                            color: '#60a5fa',
+                            fontSize: '0.75rem',
+                            padding: '0.25rem 0.5rem',
+                            borderRadius: '0.375rem',
+                            marginTop: '0.5rem'
+                        }}>
+                            Nuevo
+                        </span>
+                    </div>
                 </div>
             )}
         </div>

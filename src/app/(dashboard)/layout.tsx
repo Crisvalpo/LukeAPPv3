@@ -32,12 +32,13 @@ export default async function DashboardLayout({
         }
     )
 
-    // 1. Validate Session
+    // 1. Validate User (Secure)
     const {
-        data: { session },
-    } = await supabase.auth.getSession()
+        data: { user },
+        error: authError
+    } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (!user || authError) {
         redirect('/');
     }
 
@@ -46,7 +47,7 @@ export default async function DashboardLayout({
     const { data: memberData, error: memberError } = await supabase
         .from('members')
         .select('role_id, company_id, project_id')
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .maybeSingle()
 
     // Security: If no member record, user shouldn't access dashboard

@@ -1,0 +1,394 @@
+/**
+ * Revisions Module Styles
+ * 
+ * Styling for the revisions dashboard and impact analysis screens.
+ * Follows the existing design system with glassmorphism and industrial aesthetics.
+ */
+
+/* Stats Grid */
+.revisions-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    background: rgba(15, 23, 42, 0.6);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    font-size: 2rem;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 0.5rem;
+}
+
+.stat-card.stat-warning .stat-icon {
+    background: rgba(251, 146, 60, 0.1);
+}
+
+.stat-card.stat-success .stat-icon {
+    background: rgba(74, 222, 128, 0.1);
+}
+
+.stat-card.stat-info .stat-icon {
+    background: rgba(148, 163, 184, 0.1);
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #94a3b8;
+}
+
+/* Filters */
+.revisions-filters {
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.filter-label {
+    font-size: 0.875rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.filter-select {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    color: white;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-select:hover {
+    border-color: rgba(59, 130, 246, 0.5);
+    background: rgba(15, 23, 42, 0.8);
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Revisions List */
+.revisions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.revision-card {
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.revision-card:hover {
+    background: rgba(15, 23, 42, 0.6);
+    border-color: rgba(59, 130, 246, 0.5);
+    transform: translateX(4px);
+}
+
+.revision-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.revision-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.revision-id {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+}
+
+.revision-entity {
+    font-size: 0.875rem;
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    text-transform: capitalize;
+}
+
+.revision-status-badge {
+    padding: 0.375rem 0.875rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.revision-meta {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.meta-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.meta-value {
+    font-size: 0.875rem;
+    color: #cbd5e1;
+}
+
+.revision-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.action-button {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.action-primary {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    color: white;
+}
+
+.action-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: rgba(15, 23, 42, 0.3);
+    border: 2px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: #94a3b8;
+    font-size: 0.875rem;
+}
+
+/* Impact Analysis (War Room) */
+.war-room-container {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.impacts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.impact-card {
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.impact-card.severity-critical {
+    border-color: rgba(239, 68, 68, 0.5);
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.impact-card.severity-high {
+    border-color: rgba(245, 158, 11, 0.5);
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.impact-card.severity-medium {
+    border-color: rgba(251, 146, 60, 0.5);
+    background: rgba(251, 146, 60, 0.05);
+}
+
+.impact-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.impact-severity-badge {
+    padding: 0.375rem 0.875rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.impact-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.impact-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.impact-detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.detail-value {
+    font-size: 0.875rem;
+    color: #e2e8f0;
+    font-weight: 500;
+}
+
+/* Resolution Panel */
+.resolution-panel {
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+}
+
+.resolution-section {
+    margin-bottom: 1.5rem;
+}
+
+.resolution-section:last-child {
+    margin-bottom: 0;
+}
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.resolution-option {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.resolution-option:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(59, 130, 246, 0.5);
+}
+
+.resolution-option.selected {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+}
+
+.resolution-name {
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.25rem;
+}
+
+.resolution-description {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}

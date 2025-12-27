@@ -78,3 +78,54 @@ export const COLORS = {
     ERROR: '#f87171',
     INFO: '#60a5fa'
 } as const
+
+// ===== PHASE 2: REVISION SYSTEM LABELS =====
+
+export const REVISION_STATUS_LABELS: Record<string, { label: string; color: string }> = {
+    DRAFT: { label: 'Borrador', color: '#94a3b8' },
+    PENDING: { label: 'Pendiente', color: '#fb923c' },
+    APPROVED: { label: 'Aprobada', color: '#4ade80' },
+    APPLIED: { label: 'Aplicada', color: '#60a5fa' },
+    REJECTED: { label: 'Rechazada', color: '#f87171' }
+}
+
+export const IMPACT_SEVERITY_LABELS: Record<string, { label: string; color: string }> = {
+    LOW: { label: 'Bajo', color: '#4ade80' },
+    MEDIUM: { label: 'Medio', color: '#fb923c' },
+    HIGH: { label: 'Alto', color: '#f59e0b' },
+    CRITICAL: { label: 'Crítico', color: '#f87171' }
+}
+
+export const RESOLUTION_TYPE_LABELS: Record<string, string> = {
+    REWORK: 'Rehacer Trabajo',
+    MATERIAL_RETURN: 'Devolver Material',
+    FREE_JOINT: 'Unión Gratis (Estratégico)',
+    TECHNICAL_EXCEPTION: 'Excepción Técnica',
+    CLIENT_APPROVAL: 'Aprobación Cliente'
+}
+
+// ===== MODULE LABELS (For Permissions) =====
+
+export const MODULE_LABELS: Record<string, string> = {
+    // Engineering
+    revisiones: 'Revisiones de Ingeniería',
+    isometricos: 'Isométricos',
+    documentos: 'Control de Documentos',
+
+    // Field
+    spools: 'Gestión de Spools',
+    qa: 'Control de Calidad',
+    logistica: 'Logística',
+    almacen: 'Almacén/Pañol',
+
+    // Management
+    reportes: 'Reportes',
+    personal: 'Gestión de Personal'
+}
+
+export const FABRICATION_STATUS_LABELS: Record<string, { label: string; color: string }> = {
+    PENDING: { label: 'Pendiente', color: '#94a3b8' },
+    FABRICATED: { label: 'Fabricado', color: '#fb923c' },
+    DISPATCHED: { label: 'Despachado', color: '#3b82f6' },
+    INSTALLED: { label: 'Instalado', color: '#4ade80' }
+}
