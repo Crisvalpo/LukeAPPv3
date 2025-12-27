@@ -66,3 +66,26 @@ function getExampleRow(type: TemplateType): any[] {
             return [];
     }
 }
+
+/**
+ * Generate and download announcement template (PIPING format)
+ */
+export function downloadAnnouncementTemplate() {
+    const headers = ['ISO NUMBER', 'LINE NUMBER', 'REV', 'SHEET', 'AREA'];
+
+    const exampleData = [
+        ['3900AE-O-390-1107-2', '390-1107-2', '0', '1', 'AREA-390'],
+        ['3900AE-O-390-1107-2', '390-1107-2', '1', '1', 'AREA-390'],
+        ['3900AE-O-390-1108-3', '390-1108-3', '0', '1', 'AREA-390']
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...exampleData]);
+
+    // Set column widths
+    const wscols = headers.map(h => ({ wch: Math.max(h.length + 5, 20) }));
+    ws['!cols'] = wscols;
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Revision Announcements');
+    XLSX.writeFile(wb, `Template_Revision_Announcements.xlsx`);
+}

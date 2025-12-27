@@ -17,7 +17,11 @@ export const EXCEL_COLUMNS = {
     welds: [
         'WELD NUMBER', 'SPOOL NUMBER', 'TYPE WELD', 'NPS', 'SCH',
         'THICKNESS', 'PIPING CLASS', 'MATERIAL', 'DESTINATION', 'SHEET'
-    ]
+    ],
+    announcement: [
+        'ISO NUMBER', 'LINE NUMBER', 'REV', 'SHEET', 'AREA'
+    ],
+    mto: []
 };
 
 // Required fields per entity

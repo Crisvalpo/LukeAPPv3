@@ -13,17 +13,19 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import RevisionsTab from '@/components/engineering/RevisionsTab'
+import RevisionAnnouncementTab from '@/components/engineering/RevisionAnnouncementTab'
 import DataLoadingTab from '@/components/engineering/DataLoadingTab'
 import '@/styles/dashboard.css'
 import '@/styles/engineering.css'
+import '@/styles/announcement.css'
 
-type TabType = 'revisiones' | 'isometricos' | 'carga'
+type TabType = 'revisiones' | 'announcement' | 'details' | 'carga'
 
 export default function EngineeringHub() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const [activeTab, setActiveTab] = useState<TabType>('revisiones')
-    const [projects, setProjects] = useState<Array<{ id: string; name: string; code: string }>>([])
+    const [projects, setProjects] = useState<Array<{ id: string; name: string; code: string; company_id: string }>>([])
     const [selectedProject, setSelectedProject] = useState<string>('')
     const [isLoading, setIsLoading] = useState(true)
     const [userRole, setUserRole] = useState<'founder' | 'admin' | null>(null)
@@ -33,7 +35,7 @@ export default function EngineeringHub() {
 
         // Check for tab in URL params
         const tab = searchParams.get('tab') as TabType
-        if (tab && ['revisiones', 'isometricos', 'carga'].includes(tab)) {
+        if (tab && ['revisiones', 'announcement', 'details', 'carga'].includes(tab)) {
             setActiveTab(tab)
         }
     }, [searchParams])
@@ -69,7 +71,7 @@ export default function EngineeringHub() {
             if (memberData.role_id === 'founder') {
                 const { data: companyProjects } = await supabase
                     .from('projects')
-                    .select('id, name, code')
+                    .select('id, name, code, company_id')
                     .eq('company_id', memberData.company_id)
                     .order('name')
 
@@ -82,7 +84,7 @@ export default function EngineeringHub() {
             else if (memberData.role_id === 'admin' && memberData.project_id) {
                 const { data: project } = await supabase
                     .from('projects')
-                    .select('id, name, code')
+                    .select('id, name, code, company_id')
                     .eq('id', memberData.project_id)
                     .single()
 
@@ -172,18 +174,24 @@ export default function EngineeringHub() {
                     📋 Revisiones
                 </button>
                 <button
-                    className={`tab-button ${activeTab === 'isometricos' ? 'active' : ''} disabled`}
+                    className={`tab-button ${activeTab === 'announcement' ? 'active' : ''}`}
+                    onClick={() => changeTab('announcement')}
+                >
+                    📢 1. Anuncio
+                </button>
+                <button
+                    className={`tab-button ${activeTab === 'details' ? 'active' : ''} disabled`}
                     disabled
                     title="Próximamente"
                 >
-                    📐 Isométricos
+                    🔧 2. Detalles
                     <span className="badge-soon">Próximamente</span>
                 </button>
                 <button
                     className={`tab-button ${activeTab === 'carga' ? 'active' : ''}`}
                     onClick={() => changeTab('carga')}
                 >
-                    📤 Carga de Datos
+                    📤 Carga de Datos (Antiguo)
                 </button>
             </div>
 
@@ -193,12 +201,23 @@ export default function EngineeringHub() {
                     <RevisionsTab projectId={selectedProject} />
                 )}
 
-                {activeTab === 'isometricos' && (
+                {activeTab === 'announcement' && selectedProject && userRole && (
+                    <RevisionAnnouncementTab
+                        projectId={selectedProject}
+                        companyId={projects.find(p => p.id === selectedProject)?.company_id || ''}
+                        onSuccess={() => {
+                            // Refresh revisions tab or show success message
+                            console.log('Announcement upload successful!')
+                        }}
+                    />
+                )}
+
+                {activeTab === 'details' && (
                     <div className="empty-state-container">
-                        <div className="empty-state-icon">📐</div>
-                        <h2 className="empty-state-title">Isométricos</h2>
+                        <div className="empty-state-icon">🔧</div>
+                        <h2 className="empty-state-title">Carga de Detalles</h2>
                         <p className="empty-state-description">
-                            Próximamente: Gestión de planos isométricos y carga masiva.
+                            Próximamente: Upload de spools, soldaduras, MTO y juntas empernadas.
                         </p>
                     </div>
                 )}
