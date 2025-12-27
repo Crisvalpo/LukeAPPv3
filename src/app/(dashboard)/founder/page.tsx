@@ -175,6 +175,20 @@ export default function FounderDashboard() {
                             Edita información de {companyData.name}
                         </p>
                     </div>
+
+                    {/* Roles Management */}
+                    <div
+                        className="quick-action-card"
+                        onClick={() => router.push('/founder/settings/roles')}
+                    >
+                        <div className="quick-action-icon">
+                            <Users size={24} color="#f472b6" />
+                        </div>
+                        <h3 className="quick-action-title">Roles y Permisos</h3>
+                        <p className="quick-action-description">
+                            Gestiona roles funcionales y accesos
+                        </p>
+                    </div>
                 </div>
             )}
         </div>

@@ -77,12 +77,14 @@ export default function Sidebar({ role }: SidebarProps) {
         { name: 'Proyectos', href: '/founder/projects', icon: FolderKanban },
         { name: 'Invitaciones', href: '/founder/invitations', icon: UserPlus },
         { name: 'Mi Empresa', href: '/founder/company', icon: Building2 },
+        { name: 'Roles', href: '/founder/settings/roles', icon: Users },
     ]
 
     // Admin Menu (Project-Level)
     const adminMenu: MenuItem[] = [
         { name: 'Vista General', href: '/admin', icon: LayoutDashboard },
         { name: 'Personal', href: '/admin/workforce', icon: Users },
+        { name: 'Invitaciones', href: '/admin/invitations', icon: UserPlus },
         { name: 'Configuración', href: '/admin/settings', icon: Settings },
     ]
 

@@ -70,8 +70,86 @@ export interface Member {
     project_id: string | null
     role_id: UserRoleType
     job_title?: string | null  // Custom role label (e.g., "Jefe de Calidad")
+    functional_role_id?: string | null  // FK to company_roles
     created_at: string
 }
+
+// ===== COMPANY ROLES (Dynamic Roles System) =====
+
+/**
+ * Module configuration in permissions
+ */
+export interface ModuleConfig {
+    enabled: boolean     // Whether user can see this module
+    is_home?: boolean    // Whether this is the default dashboard
+}
+
+/**
+ * Resource-level permissions
+ */
+export interface ResourcePermissions {
+    view?: boolean
+    create?: boolean
+    edit?: boolean
+    delete?: boolean
+    approve?: boolean
+    reject?: boolean
+    inspect?: boolean
+    request?: boolean
+    status_update?: boolean
+    export?: boolean
+    comment?: boolean
+    adjust?: boolean
+    [key: string]: boolean | undefined  // Allow custom permissions
+}
+
+/**
+ * Full permissions structure stored in JSONB
+ */
+export interface RolePermissions {
+    modules: {
+        dashboard?: ModuleConfig
+        engineering?: ModuleConfig
+        field?: ModuleConfig
+        quality?: ModuleConfig
+        warehouse?: ModuleConfig
+        [key: string]: ModuleConfig | undefined
+    }
+    resources: {
+        [resourceName: string]: ResourcePermissions
+    }
+}
+
+/**
+ * Company Role entity (from company_roles table)
+ */
+export interface CompanyRole {
+    id: string
+    company_id: string
+    name: string
+    description: string | null
+    color: string
+    base_role: 'admin' | 'supervisor' | 'worker'  // System role for RLS
+    permissions: RolePermissions
+    is_template: boolean
+    created_at: string
+    updated_at: string
+}
+
+/**
+ * Company Role with usage stats
+ */
+export interface CompanyRoleWithStats extends CompanyRole {
+    members_count: number
+}
+
+/**
+ * Member with full functional role data
+ */
+export interface MemberWithFunctionalRole extends Member {
+    company_role?: CompanyRole
+}
+
 
 export interface Invitation {
     id: string
@@ -81,6 +159,7 @@ export interface Invitation {
     project_id: string | null
     role_id: UserRoleType
     job_title?: string | null  // Custom role label (e.g., "Jefe de Calidad")
+    functional_role_id?: string | null  // FK to company_roles
     status: InvitationStatusType
     created_at: string
     expires_at: string | null
@@ -157,4 +236,23 @@ export interface CreateInvitationParams {
     project_id?: string
     role_id: UserRoleType
     job_title?: string  // Custom role label
+    functional_role_id?: string  // Reference to company_roles
 }
+
+export interface CreateCompanyRoleParams {
+    company_id: string
+    name: string
+    description?: string
+    color?: string
+    base_role: 'admin' | 'supervisor' | 'worker'
+    permissions: RolePermissions
+}
+
+export interface UpdateCompanyRoleParams {
+    name?: string
+    description?: string
+    color?: string
+    base_role?: 'admin' | 'supervisor' | 'worker'
+    permissions?: RolePermissions
+}
+

@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
-import { MemberWithRelations, ApiResponse } from '@/types'
+import { MemberWithRelations, MemberWithFunctionalRole, ApiResponse } from '@/types'
 
 /**
  * Get all members for a specific company with their user info and assigned project
@@ -25,10 +25,13 @@ async function fetchMembersRobust(supabase: ReturnType<typeof createClient>, com
                 company_id,
                 project_id,
                 role_id,
+                job_title,
+                functional_role_id,
                 created_at,
                 users ( email, full_name, avatar_url ),
                 projects ( name, code ),
-                companies ( name, slug )
+                companies ( name, slug ),
+                company_roles ( id, name, color, base_role, permissions )
             `)
             .eq('company_id', companyId)
             .order('created_at', { ascending: false })
@@ -40,10 +43,13 @@ async function fetchMembersRobust(supabase: ReturnType<typeof createClient>, com
                 company_id: m.company_id,
                 project_id: m.project_id,
                 role_id: m.role_id,
+                job_title: m.job_title,
+                functional_role_id: m.functional_role_id,
                 created_at: m.created_at,
                 user: m.users,
                 project: m.projects,
-                company: m.companies
+                company: m.companies,
+                company_role: m.company_roles
             }))
         }
 
@@ -78,10 +84,13 @@ async function fetchMembersRobust(supabase: ReturnType<typeof createClient>, com
             company_id: m.company_id,
             project_id: m.project_id,
             role_id: m.role_id,
+            job_title: m.job_title,
+            functional_role_id: m.functional_role_id,
             created_at: m.created_at,
             user: { email: 'Unknown (RLS Error)' },
             project: null,
-            company: null
+            company: null,
+            company_role: null
         }))
     } catch (fallbackError) {
         console.error('❌ Critical: Exception in fallback:', fallbackError)

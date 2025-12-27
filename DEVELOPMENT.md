@@ -487,18 +487,109 @@ WHERE role_id IN ('admin', 'supervisor')
 <Badge>{member.job_title || ROLE_LABELS[member.role_id]}</Badge>
 ```
 
-### Future: Dynamic Functional Roles
-**Phase 2** will introduce `company_roles` table:
-- Companies define custom roles (e.g., "Oficina Técnica", "Calidad")
-- Each custom role maps to a base `SystemRole`
-- Permissions stored as JSONB for granular control
-- See `technical_spec_dynamic_roles.md` for full design
+### Dynamic Functional Roles System (IMPLEMENTED ✅)
+
+**Status:** Phase 1 Complete (70% - Database, Services, UI)
+
+#### Overview
+LukeAPP uses a **dual-layer identity model**:
+- **System Role** (Security): Fixed roles (`admin`, `supervisor`, `worker`) for RLS
+- **Functional Role** (UX): Company-defined roles (e.g., "Jefe de Calidad", "Pañolero") for modules and permissions
+
+#### Database Schema
+```sql
+-- Main table
+company_roles (
+  id, company_id, name, description, color,
+  base_role,      -- Maps to system role
+  permissions,    -- JSONB: modules + resources
+  is_template     -- System-provided roles
+)
+
+-- Integration
+members.functional_role_id → company_roles.id
+invitations.functional_role_id → company_roles.id
+```
+
+#### Permissions Structure
+```typescript
+{
+  modules: {
+    quality: { enabled: true, is_home: true },
+    field: { enabled: true, is_home: false }
+  },
+  resources: {
+    joints: { view: true, inspect: true, approve: true },
+    test_packs: { view: true, create: true }
+  }
+}
+```
+
+#### Standard Roles (14 Templates)
+- **Management:** Gerencia, Cliente/ITO, P&C
+- **Engineering:** Jefe OT, Control Document, Secretarios (2)
+- **Field:** Supervisor, QA, Jefe Taller, Logística
+- **Workforce:** Expeditor, Capataz, Operario
+
+#### Services
+```typescript
+// src/services/roles.ts
+getCompanyRoles(companyId)         // Fetch all
+createRole(params)                 // Create new
+updateRole(roleId, updates)        // Update
+deleteRole(roleId)                 // Delete (protected)
+cloneStandardRoles(companyId)      // Clone 14 templates
+```
+
+#### UI Components
+- **Page:** `/founder/settings/roles` - Role management
+- **Component:** `RoleEditorModal` - Create/edit interface
+  - Color picker, module toggles, base role selector
+
+#### Usage Example
+```typescript
+// Clone standard roles on company creation
+await cloneStandardRoles(companyId);
+
+// Create custom role
+await createRole({
+  company_id: companyId,
+  name: "Pañolero",
+  base_role: "worker",
+  permissions: {
+    modules: {
+      warehouse: { enabled: true, is_home: true }
+    },
+    resources: {
+      materials: { view: true, request: true }
+    }
+  }
+});
+```
+
+#### Migrations
+```bash
+# Apply all roles migrations
+node scripts/apply_company_roles_migrations.js
+```
+
+Files:
+- `0010_company_roles.sql` - Table + RLS
+- `0011_add_functional_role_to_members.sql` - Integration
+- `0012_seed_standard_roles.sql` - Templates
+
+#### Next Steps (Phase 2 - Pending)
+- [ ] `usePermissions()` hook for frontend
+- [ ] Update middleware to load permissions
+- [ ] Integrate with `InvitationManager`
+- [ ] Dynamic routing based on `is_home` module
+- [ ] E2E testing
 
 ---
 
 ## 🚧 Work in Progress
 
-### Current Phase: **Transitioning to Phase 2**
+### Current Phase: **Phase 1.5 - Roles System Integration**
 
 **Phase 1 - Foundation (COMPLETED):**
 - ✅ Landing + Auth + User Management
@@ -507,6 +598,24 @@ WHERE role_id IN ('admin', 'supervisor')
 - ✅ Founder Dashboard (Company Owner)
 - ✅ Invitation system (Secure Token Flow)
 - ✅ UI Polishing (100% Vanilla CSS)
+- ✅ Dynamic Roles System (Database + Services + UI)
+
+**Phase 1.5 - Roles Integration (COMPLETED ✅):**
+- ✅ Database schema for company_roles
+- ✅ 14 standard piping roles templates
+- ✅ Service layer (CRUD operations)
+- ✅ Founder UI for role management
+- ✅ `usePermissions()` hook & Context
+- ✅ Permission Components (`<Can>`, `<HasModule>`)
+- ✅ Middleware integration (loads permissions + dynamic routing)
+- ✅ InvitationManager update (Founder + Admin with privilege restrictions)
+- ✅ Lobby displays functional role with color
+- ✅ Server-side permission helpers (`can`, `hasModule`, `getUserPermissions`)
+
+**Phase 1.6 - Testing & Refinement (IN PROGRESS):**
+- ⏳ E2E tests for complete invitation flow
+- ⏳ Route protection with permission helpers
+- ⏳ Optional: Client-side hook optimization
 
 **Next Up (Phase 2):**
 - ⏳ Engineering Data Loading
@@ -524,5 +633,5 @@ For questions or issues:
 
 ---
 
-**Last Updated:** December 2024
-**Version:** Phase 1 (Foundation)
+**Last Updated:** December 26, 2024
+**Version:** Phase 1.5 (Foundation + Roles System)

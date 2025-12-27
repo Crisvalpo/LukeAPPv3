@@ -1,21 +1,30 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Copy, Mail, MessageCircle, Trash2, UserPlus, Shield } from 'lucide-react'
-import { Project } from '@/types'
+import { Project, CompanyRole } from '@/types'
 import { Invitation } from '@/services/invitations'
+import { getCompanyRoles } from '@/services/roles'
 
 interface InvitationManagerProps {
+    companyId: string  // Required to fetch functional roles
     projects?: Project[]
     invitations: Invitation[]
     companyName?: string
     requireProject?: boolean
     roleOptions?: { value: string; label: string; description: string }[]
-    onInvite: (data: { email: string; project_id?: string; role_id: string; job_title: string }) => Promise<{ success: boolean; message?: string; data?: { link: string } }>
+    onInvite: (data: {
+        email: string
+        project_id?: string
+        role_id: string
+        functional_role_id?: string  // NEW: Optional functional role
+        job_title: string
+    }) => Promise<{ success: boolean; message?: string; data?: { link: string } }>
     onRevoke: (id: string) => Promise<void>
 }
 
 export default function InvitationManager({
+    companyId,
     projects = [],
     invitations,
     companyName,
@@ -31,13 +40,36 @@ export default function InvitationManager({
     const [success, setSuccess] = useState(false)
     const [error, setError] = useState('')
 
+    // Functional Roles State
+    const [functionalRoles, setFunctionalRoles] = useState<CompanyRole[]>([])
+    const [loadingRoles, setLoadingRoles] = useState(true)
+
     // Form State
     const [formData, setFormData] = useState({
         email: '',
         project_id: '',
         role_id: roleOptions[0].value,
+        functional_role_id: '',  // NEW
         job_title: ''
     })
+
+    // Fetch functional roles on mount
+    useEffect(() => {
+        async function loadFunctionalRoles() {
+            setLoadingRoles(true)
+            const result = await getCompanyRoles(companyId)
+            if (result.success && result.data) {
+                // Filter roles to only show those with base_role matching allowed system roles
+                const allowedBaseRoles = roleOptions.map(r => r.value)
+                const filteredRoles = result.data.filter(role =>
+                    allowedBaseRoles.includes(role.base_role)
+                )
+                setFunctionalRoles(filteredRoles)
+            }
+            setLoadingRoles(false)
+        }
+        loadFunctionalRoles()
+    }, [companyId, roleOptions])
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
@@ -55,6 +87,7 @@ export default function InvitationManager({
                 email: formData.email,
                 role_id: formData.role_id,
                 project_id: formData.project_id || undefined,
+                functional_role_id: formData.functional_role_id || undefined,  // NEW
                 job_title: formData.job_title
             })
 
@@ -215,7 +248,7 @@ export default function InvitationManager({
                             </div>
 
                             <div className="form-field">
-                                <label className="form-label">Cargo / Título (Etiqueta)</label>
+                                <label className="form-label">Cargo / Título (Opcional)</label>
                                 <input
                                     type="text"
                                     value={formData.job_title}
@@ -224,6 +257,88 @@ export default function InvitationManager({
                                     placeholder="Ej: Jefe Calidad, Capataz..."
                                 />
                             </div>
+                        </div>
+
+                        {/* Functional Role Selector (NEW) */}
+                        <div className="form-field">
+                            <label className="form-label">
+                                Rol Funcional (Opcional)
+                                <span style={{ color: '#94a3b8', fontWeight: '400', marginLeft: '0.5rem' }}>- Define permisos y módulos</span>
+                            </label>
+                            {loadingRoles ? (
+                                <div className="form-input disabled" style={{ background: 'rgba(255,255,255,0.05)', color: '#94a3b8' }}>
+                                    Cargando roles...
+                                </div>
+                            ) : functionalRoles.length > 0 ? (
+                                <select
+                                    value={formData.functional_role_id}
+                                    onChange={(e) => {
+                                        const selectedRoleId = e.target.value
+                                        const selectedRole = functionalRoles.find(r => r.id === selectedRoleId)
+
+                                        setFormData({
+                                            ...formData,
+                                            functional_role_id: selectedRoleId,
+                                            job_title: selectedRole?.name || formData.job_title
+                                        })
+                                    }}
+                                    className="form-select"
+                                >
+                                    <option value="">Sin rol funcional (usar rol de sistema)</option>
+                                    {functionalRoles.map(role => (
+                                        <option key={role.id} value={role.id}>
+                                            {role.name} - {role.base_role}
+                                        </option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <div style={{
+                                    padding: '0.75rem',
+                                    background: 'rgba(234, 179, 8, 0.1)',
+                                    border: '1px solid rgba(234, 179, 8, 0.3)',
+                                    borderRadius: '0.5rem',
+                                    color: '#fbbf24',
+                                    fontSize: '0.875rem'
+                                }}>
+                                    No hay roles funcionales. Crea roles en Configuración → Roles.
+                                </div>
+                            )}
+
+                            {/* Show selected functional role preview */}
+                            {formData.functional_role_id && (() => {
+                                const selected = functionalRoles.find(r => r.id === formData.functional_role_id)
+                                if (!selected) return null
+
+                                return (
+                                    <div style={{
+                                        marginTop: '0.75rem',
+                                        padding: '0.75rem',
+                                        background: 'rgba(139, 92, 246, 0.1)',
+                                        border: `1px solid ${selected.color}33`,
+                                        borderRadius: '0.5rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.75rem'
+                                    }}>
+                                        <div style={{
+                                            width: '32px',
+                                            height: '32px',
+                                            borderRadius: '50%',
+                                            background: `${selected.color}22`,
+                                            border: `2px solid ${selected.color}`,
+                                            flexShrink: 0
+                                        }} />
+                                        <div>
+                                            <div style={{ color: selected.color, fontWeight: '600', fontSize: '0.9rem' }}>
+                                                {selected.name}
+                                            </div>
+                                            <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
+                                                {selected.description || 'Sin descripción'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })()}
                         </div>
 
                         <div className="form-field">

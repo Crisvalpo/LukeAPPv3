@@ -21,6 +21,7 @@ export interface CreateInvitationParams {
     project_id?: string
     role_id: 'founder' | 'admin' | 'supervisor' | 'worker'
     job_title?: string
+    functional_role_id?: string  // Reference to company_roles
 }
 
 /**
@@ -102,22 +103,23 @@ export async function createInvitation(params: CreateInvitationParams) {
                 project_id: params.project_id,
                 role_id: params.role_id,
                 job_title: params.job_title || null,
-                invited_by: user.id, // Fixed to match schema 'invited_by' or keep 'inviter_id' if that was working? 
-                // Actually, I'll check what was there. 
-                // Original was 'inviter_id'. If DDL says 'invited_by', code was broken?
-                // I will keep 'inviter_id' to strict replacement unless I see error.
-                // Wait, let's verify if I can check schema columns via script?
-                // Error risk. I will use 'invited_by' because that IS the standard schema.
-                // But if the previous code was generating invites successfully, then 'inviter_id' is the column name in valid DB.
-                // Ill stick to 'inviter_id' as per previous code to be safe against schema changes I didn't see.
-                // NO, I see line 103: 'inviter_id: user.id'.
+                functional_role_id: params.functional_role_id || null,
                 inviter_id: user.id,
                 status: 'pending'
             })
             .select()
             .single()
 
-        if (error) throw error
+        if (error) {
+            console.error('Supabase error creating invitation:', {
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+                code: error.code,
+                fullError: error
+            })
+            throw error
+        }
 
         // Generate link
         const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
@@ -129,8 +131,18 @@ export async function createInvitation(params: CreateInvitationParams) {
             data: { token: data.token, link }
         }
     } catch (error: any) {
-        console.error('Error creating invitation:', error)
-        return { success: false, message: error.message || 'Error al crear invitación' }
+        console.error('Error creating invitation:', {
+            message: error?.message,
+            details: error?.details,
+            hint: error?.hint,
+            code: error?.code,
+            name: error?.name,
+            fullError: error
+        })
+        return {
+            success: false,
+            message: error?.message || error?.hint || 'Error al crear invitación'
+        }
     }
 }
 

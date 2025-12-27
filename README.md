@@ -144,6 +144,13 @@ LukeAPP/
   - Share via WhatsApp/Email
   - Revoke/delete invitations
 
+- ✅ **Dynamic Functional Roles System**
+  - **Dual-Layer Identity:** System Roles (Security) vs Functional Roles (Use/UX)
+  - **Founder UI:** Create, edit, and manage custom roles
+  - **Permissions:** Granular module and resource-level control
+  - **Templates:** 14 Standard Piping Context roles built-in
+  - **Integration:** Hooks, Components (`Can`, `HasModule`), and auto-routing
+
 #### **3. Dashboards Implemented**
 
 **Staff Dashboard** (`/staff`) - Super Admin Global View
@@ -155,11 +162,15 @@ LukeAPP/
 **Founder Dashboard** (`/founder`) - Company-Level Management
 - ✅ Auto-detect founder's company
 - ✅ Projects management (list, create, stats)
-- ✅ Invite admins to projects
+- ✅ Invite admins to projects with functional roles
 - ✅ View & revoke pending invitations
+- ✅ Roles management (create, edit, delete custom roles)
 
-**Admin Dashboard** (`/admin`) - Project-Level (Pending)
-- 🚧 To be implemented
+**Admin Dashboard** (`/admin`) - Project-Level Management
+- ✅ Overview with project context
+- ✅ Invite supervisors/workers with functional roles
+- ✅ View & manage project invitations
+- 🚧 Workforce management (pending)
 
 ### 🚧 Próximas Fases
 
