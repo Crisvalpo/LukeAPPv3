@@ -13,6 +13,7 @@
  */
 
 import { createClient } from '@/lib/supabase/client'
+import { getSpooledStatus } from '@/constants/isometric-status'
 
 export type DetailType = 'spools' | 'welds' | 'mto' | 'bolted_joints'
 
@@ -173,6 +174,11 @@ async function processSpools(
                 action: 'created',
                 message: `Spool creado: ${spoolNumber}`
             })
+
+            // Update isometric status to SPOOLEADO if this is first spool
+            if (result.summary.created === 1) {
+                await updateIsometricToSpooleado(supabase, revisionId)
+            }
         }
     }
 }
@@ -420,5 +426,42 @@ async function processBoltedJoints(
                 message: `Junta creada: ${jointNumber}`
             })
         }
+    }
+}
+
+/**
+ * Update isometric status to SPOOLEADO variant when details are uploaded
+ */
+async function updateIsometricToSpooleado(
+    supabase: ReturnType<typeof createClient>,
+    revisionId: string
+) {
+    // Get isometric for this revision
+    const { data: revision } = await supabase
+        .from('engineering_revisions')
+        .select('isometric_id')
+        .eq('id', revisionId)
+        .single()
+
+    if (!revision) return
+
+    // Get current status
+    const { data: isometric } = await supabase
+        .from('isometrics')
+        .select('status')
+        .eq('id', revision.isometric_id)
+        .single()
+
+    if (!isometric) return
+
+    // Get new status
+    const newStatus = getSpooledStatus(isometric.status as any)
+
+    // Update if changed
+    if (newStatus !== isometric.status) {
+        await supabase
+            .from('isometrics')
+            .update({ status: newStatus })
+            .eq('id', revision.isometric_id)
     }
 }

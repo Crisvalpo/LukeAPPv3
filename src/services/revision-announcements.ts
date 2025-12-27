@@ -13,6 +13,7 @@
  */
 
 import { createClient } from '@/lib/supabase/client'
+import { IsometricStatus, getObsoleteStatus } from '@/constants/isometric-status'
 
 export interface AnnouncementRow {
     iso_number: string
@@ -137,7 +138,7 @@ export async function processAnnouncementUpload(
             } else {
                 isometricId = existing.id
 
-                // Update isometric metadata if needed
+                // Update isometric metadata
                 const latestAnn = announcements[announcements.length - 1]
                 await supabase
                     .from('isometrics')
@@ -151,6 +152,16 @@ export async function processAnnouncementUpload(
                         revision: latestAnn.rev_code
                     })
                     .eq('id', isometricId)
+
+                // Mark old isometric as obsolete if new revision
+                const currentStatus = (existing.status || IsometricStatus.VIGENTE) as any
+                const newStatus = getObsoleteStatus(currentStatus)
+                if (newStatus !== currentStatus) {
+                    await supabase
+                        .from('isometrics')
+                        .update({ status: newStatus })
+                        .eq('id', isometricId)
+                }
 
                 result.summary.isometricsUpdated++
             }
@@ -286,16 +297,16 @@ async function fetchExistingIsometrics(
     supabase: ReturnType<typeof createClient>,
     projectId: string,
     isoNumbers: string[]
-): Promise<Map<string, { id: string; iso_number: string }>> {
+): Promise<Map<string, { id: string; iso_number: string; status?: string }>> {
     const { data, error } = await supabase
         .from('isometrics')
-        .select('id, iso_number')
+        .select('id, iso_number, status')
         .eq('project_id', projectId)
         .in('iso_number', isoNumbers)
 
     if (error) throw error
 
-    const map = new Map<string, { id: string; iso_number: string }>()
+    const map = new Map<string, { id: string; iso_number: string; status?: string }>()
     data?.forEach(iso => map.set(iso.iso_number, iso))
 
     return map
