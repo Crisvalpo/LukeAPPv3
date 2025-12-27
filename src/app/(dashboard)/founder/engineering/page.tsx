@@ -14,10 +14,12 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import RevisionsTab from '@/components/engineering/RevisionsTab'
 import RevisionAnnouncementTab from '@/components/engineering/RevisionAnnouncementTab'
+import EngineeringDetailsTab from '@/components/engineering/EngineeringDetailsTab'
 import DataLoadingTab from '@/components/engineering/DataLoadingTab'
 import '@/styles/dashboard.css'
 import '@/styles/engineering.css'
 import '@/styles/announcement.css'
+import '@/styles/engineering-details.css'
 
 type TabType = 'revisiones' | 'announcement' | 'details' | 'carga'
 
@@ -180,12 +182,10 @@ export default function EngineeringHub() {
                     📢 1. Anuncio
                 </button>
                 <button
-                    className={`tab-button ${activeTab === 'details' ? 'active' : ''} disabled`}
-                    disabled
-                    title="Próximamente"
+                    className={`tab-button ${activeTab === 'details' ? 'active' : ''}`}
+                    onClick={() => changeTab('details')}
                 >
                     🔧 2. Detalles
-                    <span className="badge-soon">Próximamente</span>
                 </button>
                 <button
                     className={`tab-button ${activeTab === 'carga' ? 'active' : ''}`}
@@ -212,14 +212,11 @@ export default function EngineeringHub() {
                     />
                 )}
 
-                {activeTab === 'details' && (
-                    <div className="empty-state-container">
-                        <div className="empty-state-icon">🔧</div>
-                        <h2 className="empty-state-title">Carga de Detalles</h2>
-                        <p className="empty-state-description">
-                            Próximamente: Upload de spools, soldaduras, MTO y juntas empernadas.
-                        </p>
-                    </div>
+                {activeTab === 'details' && selectedProject && (
+                    <EngineeringDetailsTab
+                        projectId={selectedProject}
+                        companyId={projects.find(p => p.id === selectedProject)?.company_id || ''}
+                    />
                 )}
 
                 {activeTab === 'carga' && (
