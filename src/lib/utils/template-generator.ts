@@ -68,24 +68,24 @@ function getExampleRow(type: TemplateType): any[] {
 }
 
 /**
- * Generate and download announcement template (PIPING format)
+ * Generate and download announcement template (USER's format)
  */
 export function downloadAnnouncementTemplate() {
-    const headers = ['ISO NUMBER', 'LINE NUMBER', 'REV', 'SHEET', 'AREA'];
+    const headers = ['N°ISOMÉTRICO', 'N° LÍNEA', 'REV. ISO', 'TIPO LÍNEA', 'ÁREA', 'SUB-ÁREA', 'ARCHIVO', 'REV. ARCHIVO', 'TML', 'FECHA'];
 
     const exampleData = [
-        ['3900AE-O-390-1107-2', '390-1107-2', '0', '1', 'AREA-390'],
-        ['3900AE-O-390-1107-2', '390-1107-2', '1', '1', 'AREA-390'],
-        ['3900AE-O-390-1108-3', '390-1108-3', '0', '1', 'AREA-390']
+        ['3900AE-O-390-1107-2', '390-1107-2', '0', 'Process', 'AREA-390', 'SUB-01', 'DWG-001', 'A', 'TML-1', '2024-01-15'],
+        ['3900AE-O-390-1107-2', '390-1107-2', '1', 'Process', 'AREA-390', 'SUB-01', 'DWG-001', 'B', 'TML-1', '2024-02-20'],
+        ['3900AE-O-390-1108-3', '390-1108-3', '0', 'Utility', 'AREA-390', 'SUB-02', 'DWG-002', 'A', 'TML-2', '2024-01-20']
     ];
 
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet([headers, ...exampleData]);
 
     // Set column widths
-    const wscols = headers.map(h => ({ wch: Math.max(h.length + 5, 20) }));
+    const wscols = headers.map(h => ({ wch: Math.max(h.length + 3, 15) }));
     ws['!cols'] = wscols;
 
-    XLSX.utils.book_append_sheet(wb, ws, 'Revision Announcements');
-    XLSX.writeFile(wb, `Template_Revision_Announcements.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, 'Anuncio Revisiones');
+    XLSX.writeFile(wb, `Plantilla_Anuncio_Revisiones.xlsx`);
 }

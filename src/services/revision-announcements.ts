@@ -18,8 +18,14 @@ export interface AnnouncementRow {
     iso_number: string
     line_number?: string
     rev_code: string
-    sheet?: string
+    line_type?: string
     area?: string
+    sub_area?: string
+    file_name?: string
+    file_revision?: string
+    tml?: string
+    date?: string
+    row?: number
 }
 
 export interface AnnouncementResult {
@@ -226,11 +232,16 @@ export async function processAnnouncementUpload(
  */
 function normalizeAnnouncementData(data: any[]): (AnnouncementRow & { row: number })[] {
     return data.map((row, index) => ({
-        iso_number: String(row['ISO NUMBER'] || '').trim().toUpperCase(),
-        line_number: row['LINE NUMBER'] ? String(row['LINE NUMBER']).trim() : undefined,
-        rev_code: String(row['REV'] || 'A').trim().toUpperCase(),
-        sheet: row['SHEET'] ? String(row['SHEET']).trim() : undefined,
-        area: row['AREA'] ? String(row['AREA']).trim().toUpperCase() : undefined,
+        iso_number: String(row['N°ISOMÉTRICO'] || row['ISO NUMBER'] || '').trim().toUpperCase(),
+        line_number: row['N° LÍNEA'] || row['LINE NUMBER'] ? String(row['N° LÍNEA'] || row['LINE NUMBER']).trim() : undefined,
+        rev_code: String(row['REV. ISO'] || row['REV'] || 'A').trim().toUpperCase(),
+        line_type: row['TIPO LÍNEA'] ? String(row['TIPO LÍNEA']).trim() : undefined,
+        area: row['ÁREA'] || row['AREA'] ? String(row['ÁREA'] || row['AREA']).trim().toUpperCase() : undefined,
+        sub_area: row['SUB-ÁREA'] ? String(row['SUB-ÁREA']).trim().toUpperCase() : undefined,
+        file_name: row['ARCHIVO'] ? String(row['ARCHIVO']).trim() : undefined,
+        file_revision: row['REV. ARCHIVO'] ? String(row['REV. ARCHIVO']).trim() : undefined,
+        tml: row['TML'] ? String(row['TML']).trim() : undefined,
+        date: row['FECHA'] ? String(row['FECHA']).trim() : undefined,
         row: index + 2 // Excel row (with header)
     }))
 }
@@ -296,16 +307,25 @@ export function validateAnnouncementData(data: any[]): {
     }
 
     const firstRow = data[0]
-    const requiredColumns = ['ISO NUMBER', 'REV']
 
-    for (const col of requiredColumns) {
-        if (!(col in firstRow)) {
-            errors.push({
-                row: 0,
-                field: col,
-                message: `Columna requerida faltante: ${col}`
-            })
-        }
+    // Check for ISO NUMBER (Spanish or English)
+    const hasIsoNumber = 'N°ISOMÉTRICO' in firstRow || 'ISO NUMBER' in firstRow
+    if (!hasIsoNumber) {
+        errors.push({
+            row: 0,
+            field: 'N°ISOMÉTRICO',
+            message: 'Columna requerida faltante: N°ISOMÉTRICO o ISO NUMBER'
+        })
+    }
+
+    // Check for REV (Spanish or English)
+    const hasRev = 'REV. ISO' in firstRow || 'REV' in firstRow
+    if (!hasRev) {
+        errors.push({
+            row: 0,
+            field: 'REV. ISO',
+            message: 'Columna requerida faltante: REV. ISO o REV'
+        })
     }
 
     if (errors.length > 0) {
@@ -317,20 +337,22 @@ export function validateAnnouncementData(data: any[]): {
         const rowNum = index + 2 // Excel row
 
         // ISO NUMBER required
-        if (!row['ISO NUMBER'] || String(row['ISO NUMBER']).trim() === '') {
+        const isoNumber = row['N°ISOMÉTRICO'] || row['ISO NUMBER']
+        if (!isoNumber || String(isoNumber).trim() === '') {
             errors.push({
                 row: rowNum,
-                field: 'ISO NUMBER',
-                message: 'ISO NUMBER es requerido'
+                field: 'N°ISOMÉTRICO',
+                message: 'N°ISOMÉTRICO es requerido'
             })
         }
 
         // REV required
-        if (!row['REV'] || String(row['REV']).trim() === '') {
+        const rev = row['REV. ISO'] || row['REV']
+        if (!rev || String(rev).trim() === '') {
             errors.push({
                 row: rowNum,
-                field: 'REV',
-                message: 'REV es requerido'
+                field: 'REV. ISO',
+                message: 'REV. ISO es requerido'
             })
         }
     })
@@ -340,3 +362,4 @@ export function validateAnnouncementData(data: any[]): {
         errors
     }
 }
+```

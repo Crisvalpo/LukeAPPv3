@@ -15,13 +15,12 @@ import { createClient } from '@/lib/supabase/client'
 import RevisionsTab from '@/components/engineering/RevisionsTab'
 import RevisionAnnouncementTab from '@/components/engineering/RevisionAnnouncementTab'
 import EngineeringDetailsTab from '@/components/engineering/EngineeringDetailsTab'
-import DataLoadingTab from '@/components/engineering/DataLoadingTab'
 import '@/styles/dashboard.css'
 import '@/styles/engineering.css'
 import '@/styles/announcement.css'
 import '@/styles/engineering-details.css'
 
-type TabType = 'revisiones' | 'announcement' | 'details' | 'carga'
+type TabType = 'revisiones' | 'announcement' | 'details'
 
 export default function EngineeringHub() {
     const router = useRouter()
@@ -37,7 +36,7 @@ export default function EngineeringHub() {
 
         // Check for tab in URL params
         const tab = searchParams.get('tab') as TabType
-        if (tab && ['revisiones', 'announcement', 'details', 'carga'].includes(tab)) {
+        if (tab && ['revisiones', 'announcement', 'details'].includes(tab)) {
             setActiveTab(tab)
         }
     }, [searchParams])
@@ -187,12 +186,6 @@ export default function EngineeringHub() {
                 >
                     🔧 2. Detalles
                 </button>
-                <button
-                    className={`tab-button ${activeTab === 'carga' ? 'active' : ''}`}
-                    onClick={() => changeTab('carga')}
-                >
-                    📤 Carga de Datos (Antiguo)
-                </button>
             </div>
 
             {/* Tab Content */}
@@ -219,9 +212,6 @@ export default function EngineeringHub() {
                     />
                 )}
 
-                {activeTab === 'carga' && (
-                    <DataLoadingTab projectId={selectedProject} />
-                )}
             </div>
         </div>
     )
