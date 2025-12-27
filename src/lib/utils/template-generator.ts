@@ -74,9 +74,9 @@ export function downloadAnnouncementTemplate() {
     const headers = ['N°ISOMÉTRICO', 'N° LÍNEA', 'REV. ISO', 'TIPO LÍNEA', 'ÁREA', 'SUB-ÁREA', 'ARCHIVO', 'REV. ARCHIVO', 'TML', 'FECHA'];
 
     const exampleData = [
-        ['3900AE-O-390-1107-2', '390-1107-2', '0', 'Process', 'AREA-390', 'SUB-01', 'DWG-001', 'A', 'TML-1', '2024-01-15'],
-        ['3900AE-O-390-1107-2', '390-1107-2', '1', 'Process', 'AREA-390', 'SUB-01', 'DWG-001', 'B', 'TML-1', '2024-02-20'],
-        ['3900AE-O-390-1108-3', '390-1108-3', '0', 'Utility', 'AREA-390', 'SUB-02', 'DWG-002', 'A', 'TML-2', '2024-01-20']
+        ['3900AE-O-390-1107-2', '390-1107-2', '0', 'LB', 'AREA-390', 'SUB-01', 'DWG-001', 'A', 'TML-1', '2024-01-15'],
+        ['3900AE-O-390-1107-2', '390-1107-2', '1', 'LB', 'AREA-390', 'SUB-01', 'DWG-001', 'B', 'TML-1', '2024-02-20'],
+        ['3900AE-O-390-1108-3', '390-1108-3', '0', 'SB', 'AREA-390', 'SUB-02', 'DWG-002', 'A', 'TML-2', '2024-01-20']
     ];
 
     const wb = XLSX.utils.book_new();

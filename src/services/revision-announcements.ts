@@ -112,7 +112,11 @@ export async function processAnnouncementUpload(
                         company_id: companyId,
                         iso_number: isoNumber,
                         line_number: firstAnn.line_number,
+                        line_type: firstAnn.line_type,
                         area: firstAnn.area,
+                        sub_area: firstAnn.sub_area,
+                        file_name: firstAnn.file_name,
+                        file_revision: firstAnn.file_revision,
                         revision: announcements[announcements.length - 1].rev_code, // Latest
                         status: 'ACTIVE'
                     })
@@ -139,7 +143,11 @@ export async function processAnnouncementUpload(
                     .from('isometrics')
                     .update({
                         line_number: latestAnn.line_number,
+                        line_type: latestAnn.line_type,
                         area: latestAnn.area,
+                        sub_area: latestAnn.sub_area,
+                        file_name: latestAnn.file_name,
+                        file_revision: latestAnn.file_revision,
                         revision: latestAnn.rev_code
                     })
                     .eq('id', isometricId)
@@ -176,6 +184,8 @@ export async function processAnnouncementUpload(
                         isometric_id: isometricId,
                         project_id: projectId,
                         rev_code: ann.rev_code,
+                        transmittal: ann.tml,
+                        announcement_date: ann.date ? new Date(ann.date) : null,
                         revision_status: 'PENDING'
                     })
 
@@ -362,4 +372,4 @@ export function validateAnnouncementData(data: any[]): {
         errors
     }
 }
-```
+
