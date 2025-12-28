@@ -1,21 +1,20 @@
 /**
- * DETAIL UPLOADER COMPONENT
+ * DETAIL UPLOADER - WELDS-FIRST PATTERN
  * 
- * Reusable component for uploading Spools, Welds, MTO, etc.
- * Uses the same UX pattern as Announcement Upload (File -> Preview -> Result).
+ * Simpler uploader supporting only Welds upload.
+ * Shows auto-spooling status and impact evaluation warnings.
  */
 
 'use client'
 
 import { useState } from 'react'
 import * as XLSX from 'xlsx'
-import { processDetailUpload, type DetailType, type DetailResult } from '@/services/engineering-details'
+import { uploadSpoolsWelds, type SpoolWeldRow, type UploadWeldsResult } from '@/services/engineering-details'
 
 interface Props {
     revisionId: string
     projectId: string
     companyId: string
-    detailType: DetailType
     onSuccess?: () => void
 }
 
@@ -23,22 +22,19 @@ export default function DetailUploader({
     revisionId,
     projectId,
     companyId,
-    detailType,
     onSuccess
 }: Props) {
     const [file, setFile] = useState<File | null>(null)
     const [isUploading, setIsUploading] = useState(false)
-    const [result, setResult] = useState<DetailResult | null>(null)
+    const [result, setResult] = useState<UploadWeldsResult | null>(null)
     const [previewCount, setPreviewCount] = useState(0)
 
-    // Parse minimal info just for count
     async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
         if (e.target.files && e.target.files[0]) {
             const f = e.target.files[0]
             setFile(f)
             setResult(null)
 
-            // Quick read to get row count
             const reader = new FileReader()
             reader.onload = (evt) => {
                 try {
@@ -48,7 +44,7 @@ export default function DetailUploader({
                     const data = XLSX.utils.sheet_to_json(ws)
                     setPreviewCount(data.length)
                 } catch (err) {
-                    console.error('Error reading count', err)
+                    console.error('Error parsing file', err)
                 }
             }
             reader.readAsBinaryString(f)
@@ -60,8 +56,7 @@ export default function DetailUploader({
         setIsUploading(true)
 
         try {
-            // Read full file
-            const data = await new Promise<any[]>((resolve, reject) => {
+            const data = await new Promise<SpoolWeldRow[]>((resolve, reject) => {
                 const reader = new FileReader()
                 reader.onload = (e) => {
                     try {
@@ -74,37 +69,27 @@ export default function DetailUploader({
                 reader.readAsBinaryString(file)
             })
 
-            const res = await processDetailUpload({
+            const res = await uploadSpoolsWelds(
                 revisionId,
                 projectId,
                 companyId,
-                detailType,
                 data
-            })
+            )
 
             setResult(res)
             if (res.success && onSuccess) onSuccess()
 
         } catch (error: any) {
-            alert('Upload failed: ' + error.message)
+            alert('Error en carga: ' + error.message)
         } finally {
             setIsUploading(false)
         }
-    }
-
-    const typeLabels: Record<DetailType, string> = {
-        spools: 'Spools',
-        welds: 'Soldaduras',
-        mto: 'MTO (Materiales)',
-        bolted_joints: 'Juntas Empernadas'
     }
 
     return (
         <div className="detail-uploader">
             {!result ? (
                 <div className="upload-box">
-                    <h4>Cargar {typeLabels[detailType]}</h4>
-
                     {!file ? (
                         <div className="file-input-wrapper">
                             <input
@@ -147,31 +132,47 @@ export default function DetailUploader({
                         {result.success ? '✅ Carga Exitosa' : '⚠️ Carga con Errores'}
                     </div>
 
-                    <div className="stats-grid">
-                        <div className="stat">
-                            <span>Total</span>
-                            <strong>{result.summary.total}</strong>
-                        </div>
-                        <div className="stat created">
-                            <span>Creados</span>
-                            <strong>{result.summary.created}</strong>
-                        </div>
-                        <div className="stat updated">
-                            <span>Actualizados</span>
-                            <strong>{result.summary.updated}</strong>
-                        </div>
-                        <div className="stat error">
-                            <span>Errores</span>
-                            <strong>{result.summary.errors}</strong>
-                        </div>
+                    <div className="result-message">
+                        {result.message}
                     </div>
+
+                    <div className="stats-grid">
+                        <div className="stat created">
+                            <span>Soldaduras</span>
+                            <strong>{result.details.welds_inserted}</strong>
+                        </div>
+                        <div className="stat">
+                            <span>Spools</span>
+                            <strong>{result.details.spools_detected}</strong>
+                        </div>
+                        {result.was_auto_spooled && (
+                            <div className="stat success">
+                                <span>Auto-Spooleado</span>
+                                <strong>✓</strong>
+                            </div>
+                        )}
+                    </div>
+
+                    {result.was_auto_spooled && (
+                        <div className="info-banner success">
+                            🎯 <strong>Revisión marcada como SPOOLEADO automáticamente.</strong>
+                            <p>Esta es la primera revisión cargada, por lo que fue marcada lista para fabricación.</p>
+                        </div>
+                    )}
+
+                    {result.requires_impact_evaluation && (
+                        <div className="info-banner warning">
+                            ⚠️ <strong>REQUIERE EVALUACIÓN DE IMPACTOS</strong>
+                            <p>Ya existe una revisión spooleada anterior. Antes de aplicar esta revisión, debes verificar los impactos en spools fabricados.</p>
+                        </div>
+                    )}
 
                     {result.errors.length > 0 && (
                         <div className="error-list">
-                            <h5>Detalle de Errores:</h5>
+                            <h5>Errores:</h5>
                             <ul>
-                                {result.errors.slice(0, 10).map((e, i) => (
-                                    <li key={i}>Fila {e.row}: {e.message}</li>
+                                {result.errors.map((e, i) => (
+                                    <li key={i}>{e}</li>
                                 ))}
                             </ul>
                         </div>
@@ -194,7 +195,6 @@ export default function DetailUploader({
                     padding: 20px;
                     background: rgba(0,0,0,0.2);
                 }
-                .upload-box h4 { margin-bottom: 15px; color: var(--text-secondary); }
                 .file-input-wrapper {
                     position: relative;
                     height: 80px;
@@ -227,8 +227,16 @@ export default function DetailUploader({
                     cursor: pointer;
                 }
                 
+                .result-message {
+                    background: rgba(255,255,255,0.05);
+                    padding: 12px;
+                    border-radius: 6px;
+                    margin-bottom: 15px;
+                    font-size: 0.95rem;
+                }
+
                 .stats-grid {
-                    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+                    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px;
                     margin: 20px 0;
                 }
                 .stat {
@@ -238,7 +246,27 @@ export default function DetailUploader({
                 .stat span { display: block; font-size: 0.8rem; color: #888; }
                 .stat strong { font-size: 1.2rem; }
                 .stat.created strong { color: #4ade80; }
-                .stat.error strong { color: #fe405e; }
+                .stat.success strong { color: #4ade80; }
+                
+                .info-banner {
+                    padding: 12px;
+                    border-radius: 6px;
+                    margin-bottom: 15px;
+                    border-left: 3px solid;
+                }
+                .info-banner.success {
+                    background: rgba(74, 222, 128, 0.1);
+                    border-color: #4ade80;
+                }
+                .info-banner.warning {
+                    background: rgba(251, 191, 36, 0.1);
+                    border-color: #fbbf24;
+                }
+                .info-banner p {
+                    margin-top: 5px;
+                    font-size: 0.9rem;
+                    opacity: 0.9;
+                }
                 
                 .error-list { 
                     background: rgba(254, 64, 94, 0.1); 

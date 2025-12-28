@@ -110,3 +110,29 @@ export function downloadSpoolsTemplate() {
     XLSX.utils.book_append_sheet(wb, ws, 'Spools');
     XLSX.writeFile(wb, `Plantilla_Spools_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
+
+/**
+ * Generate and download Welds template (PIPING-REF structure)
+ */
+export function downloadWeldsTemplate() {
+    const headers = [
+        'ISO NUMBER', 'REV', 'LINE NUMBER', 'SPOOL NUMBER', 'SHEET',
+        'WELD NUMBER', 'DESTINATION', 'TYPE WELD', 'NPS', 'SCH',
+        'THICKNESS', 'PIPING CLASS', 'MATERIAL'
+    ];
+
+    const exampleData = [
+        ['ISO-001', 'A', 'L-1001', 'SP-01', '1', 'W-001', 'FIELD', 'BW', '4', '40', '0.237', 'A106B', 'CS'],
+        ['ISO-001', 'A', 'L-1001', 'SP-01', '1', 'W-002', 'FIELD', 'BW', '4', '40', '0.237', 'A106B', 'CS'],
+        ['ISO-001', 'A', 'L-1001', 'SP-02', '1', 'W-003', 'SHOP', 'BW', '6', '40', '0.280', 'A106B', 'CS']
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...exampleData]);
+
+    // Set column widths
+    ws['!cols'] = headers.map(() => ({ wch: 15 }));
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Welds');
+    XLSX.writeFile(wb, `Plantilla_Welds_${new Date().toISOString().split('T')[0]}.xlsx`);
+}

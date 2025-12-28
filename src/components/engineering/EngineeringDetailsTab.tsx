@@ -1,7 +1,9 @@
 /**
- * ENGINEERING DETAILS TAB
+ * ENGINEERING DETAILS TAB - WELDS-FIRST PATTERN
  * 
- * Container for Revision Selector + Detail Uploaders (Multi-tabbed).
+ * Simplified tab structure:
+ * - Only Welds tab (Spools auto-generated)
+ * - MTO and Bolted Joints as placeholders
  */
 
 'use client'
@@ -9,7 +11,7 @@
 import { useState } from 'react'
 import RevisionSelector from './RevisionSelector'
 import DetailUploader from './DetailUploader'
-import { downloadSpoolsTemplate } from '@/lib/utils/template-generator'
+import { downloadWeldsTemplate } from '@/lib/utils/template-generator'
 
 interface Props {
     projectId: string
@@ -23,7 +25,7 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
         isoNumber: string
     } | null>(null)
 
-    const [activeTab, setActiveTab] = useState<'spools' | 'welds' | 'mto' | 'joints'>('spools')
+    const [activeTab, setActiveTab] = useState<'welds' | 'mto' | 'joints'>('welds')
 
     return (
         <div className="details-tab-container">
@@ -31,7 +33,7 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
                 <div className="icon">🔩</div>
                 <div>
                     <h3>2. Carga de Detalles</h3>
-                    <p>Carga spools, soldaduras y materiales vinculados a una revisión específica</p>
+                    <p>Carga el mapa de soldaduras. Los spools se generarán automáticamente.</p>
                 </div>
             </div>
 
@@ -50,16 +52,10 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
 
                     <div className="tabs-nav">
                         <button
-                            className={activeTab === 'spools' ? 'active' : ''}
-                            onClick={() => setActiveTab('spools')}
-                        >
-                            🧵 Spools
-                        </button>
-                        <button
                             className={activeTab === 'welds' ? 'active' : ''}
                             onClick={() => setActiveTab('welds')}
                         >
-                            🔥 Soldaduras
+                            🔥 Soldaduras (Welds)
                         </button>
                         <button
                             className={activeTab === 'mto' ? 'active' : ''}
@@ -76,31 +72,18 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
                     </div>
 
                     <div className="tab-content">
-                        {activeTab === 'spools' && (
+                        {activeTab === 'welds' && (
                             <div className="detail-section">
                                 <div className="section-info">
-                                    <p>Carga el listado de Spools con sus pesos y diámetros.</p>
-                                    <button className="btn-text" onClick={downloadSpoolsTemplate}>
-                                        📥 Descargar Plantilla Spools
+                                    <p><strong>Mapa de Soldaduras:</strong> Los spools se generan automáticamente agrupando por SPOOL NUMBER.</p>
+                                    <button className="btn-text" onClick={downloadWeldsTemplate}>
+                                        📥 Descargar Plantilla Welds
                                     </button>
                                 </div>
                                 <DetailUploader
                                     revisionId={selectedContext.revId}
                                     projectId={projectId}
                                     companyId={companyId}
-                                    detailType="spools"
-                                />
-                            </div>
-                        )}
-
-                        {activeTab === 'welds' && (
-                            <div className="detail-section">
-                                <p>Carga el listado de Soldaduras (Welding Map).</p>
-                                <DetailUploader
-                                    revisionId={selectedContext.revId}
-                                    projectId={projectId}
-                                    companyId={companyId}
-                                    detailType="welds"
                                 />
                             </div>
                         )}
@@ -151,6 +134,7 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
                 }
                 .btn-text { background: none; border: none; color: var(--accent); text-decoration: underline; cursor: pointer; }
                 .section-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+                .coming-soon { text-align: center; padding: 40px; font-size: 1.2rem; color: #666; }
             `}</style>
         </div>
     )

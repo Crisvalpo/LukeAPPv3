@@ -1,217 +1,229 @@
 /**
- * ENGINEERING DETAILS SERVICE
+ * ENGINEERING DETAILS SERVICE - WELDS-FIRST PATTERN
  * 
- * Handles upload of engineering details (Spools, Welds, MTO, Bolted Joints)
- * linked to specific revisions.
+ * Based on PIPING-REF proven architecture:
+ * - Upload Welds (with spool_number column)
+ * - Spools auto-generated from welds grouping
+ * - Auto-spooling logic for first revisions
+ * - Impact evaluation flag for subsequent revisions
  */
 
 import { createClient } from '@/lib/supabase/client'
 
-export type DetailType = 'spools' | 'welds' | 'mto' | 'bolted_joints'
-
-export interface DetailUploadParams {
-    revisionId: string
-    projectId: string
-    companyId: string
-    detailType: DetailType
-    data: any[]
+export interface SpoolWeldRow {
+    'ISO NUMBER': string
+    'REV': string
+    'LINE NUMBER'?: string
+    'SPOOL NUMBER': string
+    'SHEET'?: string
+    'WELD NUMBER': string
+    'DESTINATION'?: string  // SHOP / FIELD
+    'TYPE WELD'?: string    // BW / SW / TW
+    'NPS'?: string
+    'SCH'?: string
+    'THICKNESS'?: string
+    'PIPING CLASS'?: string
+    'MATERIAL'?: string
 }
 
-export interface DetailResult {
+export interface UploadWeldsResult {
     success: boolean
-    summary: {
-        total: number
-        created: number
-        updated: number
-        skipped: number
-        errors: number
+    message: string
+    revision_id?: string
+    was_auto_spooled: boolean
+    requires_impact_evaluation: boolean
+    details: {
+        welds_inserted: number
+        spools_detected: number
     }
-    details: Array<{
-        row: number
-        identifier: string
-        action: 'created' | 'updated' | 'skipped' | 'error'
-        message: string
-    }>
-    errors: Array<{
-        row: number
-        field?: string
-        message: string
-        data?: any
-    }>
+    errors: string[]
 }
 
 /**
- * Process detail upload based on type
+ * Check if revision should be auto-marked as SPOOLEADO
+ * (Only if no previous revisions for this ISO have been spooled)
  */
-export async function processDetailUpload(
-    params: DetailUploadParams
-): Promise<DetailResult> {
-    const { detailType, data, revisionId, projectId, companyId } = params
+async function shouldAutoSpoolRevision(
+    revisionId: string,
+    supabase: ReturnType<typeof createClient>
+): Promise<boolean> {
+    // Get isometric_id for current revision
+    const { data: revision } = await supabase
+        .from('engineering_revisions')
+        .select('isometric_id')
+        .eq('id', revisionId)
+        .maybeSingle()
+
+    if (!revision) return false
+
+    // Check for previous SPOOLEADO/APLICADO revisions
+    const { data: spooled } = await supabase
+        .from('engineering_revisions')
+        .select('id')
+        .eq('isometric_id', revision.isometric_id)
+        .neq('id', revisionId)
+        .in('revision_status', ['SPOOLEADO', 'APLICADO'])
+        .limit(1)
+
+    // Auto-spool if no previous spooled revisions found
+    return (spooled?.length || 0) === 0
+}
+
+/**
+ * Mark revision as SPOOLEADO
+ */
+async function markRevisionAsSpooled(
+    revisionId: string,
+    supabase: ReturnType<typeof createClient>
+): Promise<{ success: boolean; error?: string }> {
+    const { error } = await supabase
+        .from('engineering_revisions')
+        .update({ revision_status: 'SPOOLEADO' })
+        .eq('id', revisionId)
+
+    return { success: !error, error: error?.message }
+}
+
+/**
+ * Upload Welds for a specific revision
+ * Main function following PIPING-REF pattern
+ */
+export async function uploadSpoolsWelds(
+    revisionId: string,
+    projectId: string,
+    companyId: string,
+    excelRows: SpoolWeldRow[],
+    userId?: string
+): Promise<UploadWeldsResult> {
     const supabase = createClient()
 
-    const result: DetailResult = {
+    const result: UploadWeldsResult = {
         success: false,
-        summary: { total: data.length, created: 0, updated: 0, skipped: 0, errors: 0 },
-        details: [],
+        message: '',
+        was_auto_spooled: false,
+        requires_impact_evaluation: false,
+        details: {
+            welds_inserted: 0,
+            spools_detected: 0
+        },
         errors: []
     }
 
     try {
-        // Validate context exists
-        if (!revisionId || !companyId || !projectId) {
-            throw new Error('Missing required context (revisionId, companyId, projectId)')
+        // 1. Validate revision exists and is VIGENTE
+        const { data: revision, error: revError } = await supabase
+            .from('engineering_revisions')
+            .select('id, revision_status, isometric_id')
+            .eq('id', revisionId)
+            .maybeSingle()
+
+        if (revError || !revision) {
+            result.errors.push('Revisión no encontrada')
+            result.message = 'La revisión especificada no existe'
+            return result
         }
 
-        console.log(`🚀 Starting ${detailType} upload for Revision ${revisionId}`)
-
-        // Process in batches of 50 to avoid timeouts
-        const BATCH_SIZE = 50
-        for (let i = 0; i < data.length; i += BATCH_SIZE) {
-            const batch = data.slice(i, i + BATCH_SIZE)
-
-            // Process batch in parallel but track results individually
-            await Promise.all(batch.map(async (row, index) => {
-                const rowIndex = i + index + 2 // Excel row (header + 0-based index)
-
-                try {
-                    // normalize keys to uppercase for easier matching
-                    const normalizedRow: any = {}
-                    Object.keys(row).forEach(k => {
-                        normalizedRow[k.trim().toUpperCase()] = row[k]
-                    })
-
-                    if (detailType === 'spools') {
-                        await processSpool(supabase, normalizedRow, rowIndex, params, result)
-                    } else if (detailType === 'welds') {
-                        await processWeld(supabase, normalizedRow, rowIndex, params, result)
-                    } else if (detailType === 'mto') {
-                        // Pending MTO implementation
-                        result.summary.skipped++
-                    } else if (detailType === 'bolted_joints') {
-                        // Pending Joints implementation
-                        result.summary.skipped++
-                    }
-
-                } catch (error: any) {
-                    result.summary.errors++
-                    result.errors.push({
-                        row: rowIndex,
-                        message: error.message || 'Unknown error',
-                        data: row
-                    })
-                }
-            }))
+        if (revision.revision_status !== 'VIGENTE' && revision.revision_status !== 'PENDING') {
+            result.errors.push('Revisión no está en estado VIGENTE')
+            result.message = `La revisión está en estado ${revision.revision_status}, solo se pueden cargar detalles a revisiones VIGENTE`
+            return result
         }
 
-        result.success = result.summary.errors === 0
+        // 2. Filter and validate rows
+        const validRows = excelRows.filter(row =>
+            row['WELD NUMBER'] && row['SPOOL NUMBER']
+        )
+
+        if (validRows.length === 0) {
+            result.errors.push('No se encontraron filas válidas (deben tener WELD NUMBER y SPOOL NUMBER)')
+            result.message = 'El archivo no contiene soldaduras válidas'
+            return result
+        }
+
+        // 3. Count unique spools
+        const uniqueSpools = new Set(validRows.map(r => r['SPOOL NUMBER']))
+        result.details.spools_detected = uniqueSpools.size
+
+        // 4. Map rows to DB schema
+        const weldsToInsert = validRows.map((row, index) => ({
+            revision_id: revisionId,
+            project_id: projectId,
+            company_id: companyId,
+            iso_number: String(row['ISO NUMBER'] || ''),
+            rev: String(row['REV'] || ''),
+            line_number: row['LINE NUMBER'] ? String(row['LINE NUMBER']) : null,
+            spool_number: String(row['SPOOL NUMBER']),
+            sheet: row['SHEET'] ? String(row['SHEET']) : null,
+            weld_number: String(row['WELD NUMBER']),
+            destination: row['DESTINATION'] ? String(row['DESTINATION']) : null,
+            type_weld: row['TYPE WELD'] ? String(row['TYPE WELD']) : null,
+            nps: row['NPS'] ? String(row['NPS']) : null,
+            sch: row['SCH'] ? String(row['SCH']) : null,
+            thickness: row['THICKNESS'] ? String(row['THICKNESS']) : null,
+            piping_class: row['PIPING CLASS'] ? String(row['PIPING CLASS']) : null,
+            material: row['MATERIAL'] ? String(row['MATERIAL']) : null,
+            display_order: index + 1,
+            created_by: userId || null
+        }))
+
+        // 5. Insert in batches of 100
+        const BATCH_SIZE = 100
+        let totalInserted = 0
+
+        for (let i = 0; i < weldsToInsert.length; i += BATCH_SIZE) {
+            const batch = weldsToInsert.slice(i, i + BATCH_SIZE)
+
+            const { data: inserted, error: insertError } = await supabase
+                .from('spools_welds')
+                .insert(batch)
+                .select('id')
+
+            if (insertError) {
+                result.errors.push(`Error en batch ${Math.floor(i / BATCH_SIZE) + 1}: ${insertError.message}`)
+                console.error('Insert Error:', insertError)
+            } else {
+                totalInserted += inserted?.length || 0
+            }
+        }
+
+        result.details.welds_inserted = totalInserted
+
+        if (totalInserted === 0) {
+            result.message = 'No se pudieron insertar soldaduras'
+            return result
+        }
+
+        // 6. Check if should auto-spool
+        const shouldAutoSpool = await shouldAutoSpoolRevision(revisionId, supabase)
+
+        if (shouldAutoSpool) {
+            const spoolResult = await markRevisionAsSpooled(revisionId, supabase)
+            result.was_auto_spooled = spoolResult.success
+
+            if (!spoolResult.success) {
+                result.errors.push(`No se pudo marcar como SPOOLEADO: ${spoolResult.error}`)
+            }
+        } else {
+            result.requires_impact_evaluation = true
+        }
+
+        // 7. Success
+        result.success = totalInserted > 0
+        result.revision_id = revisionId
+        result.message = `Se cargaron ${totalInserted} soldaduras en ${uniqueSpools.size} spools`
+
+        if (result.was_auto_spooled) {
+            result.message += '. Revisión marcada como SPOOLEADO automáticamente'
+        } else if (result.requires_impact_evaluation) {
+            result.message += '. IMPORTANTE: Esta revisión requiere evaluación de impactos antes de aplicarse'
+        }
+
         return result
 
     } catch (error: any) {
-        console.error('Upload Process Failed:', error)
-        result.errors.push({ row: 0, message: `System Error: ${error.message}` })
+        result.errors.push(`Error inesperado: ${error.message}`)
+        result.message = 'Error al procesar la carga de soldaduras'
+        console.error('Upload Welds Error:', error)
         return result
     }
-}
-
-/**
- * Process a single SPOOL row
- */
-async function processSpool(
-    supabase: any,
-    row: any,
-    rowIndex: number,
-    params: DetailUploadParams,
-    result: DetailResult
-) {
-    const spoolNum = row['SPOOL NUMBER'] || row['SPOOL']
-    const isoNum = row['ISO NUMBER'] || row['ISO']
-
-    if (!spoolNum || !isoNum) {
-        throw new Error('Missing SPOOL NUMBER or ISO NUMBER')
-    }
-
-    // 1. Check if ISO exists in this project
-    // Note: optimization would be to fetch all ISOs once, but for robust checks we query
-    const { data: iso } = await supabase
-        .from('isometrics')
-        .select('id')
-        .eq('project_id', params.projectId)
-        .eq('iso_number', isoNum)
-        .maybeSingle()
-
-    if (!iso) {
-        result.summary.errors++
-        result.details.push({
-            row: rowIndex,
-            identifier: spoolNum,
-            action: 'error',
-            message: `Isometric ${isoNum} not found in project`
-        })
-        return
-    }
-
-    // 2. Insert/Update Spool
-    // Using upsert based on spool_number + project_id (assuming spool numbers unique in project? or just ISO?)
-    // Usually Spools are unique within an ISO. 
-    // Schema likely has unique(project_id, spool_number) or (iso_id, spool_number)
-
-    const payload = {
-        project_id: params.projectId,
-        company_id: params.company_id, // Wait, params has companyId (camelCase)
-        revision_id: params.revisionId,
-        iso_id: iso.id, // If spool table has iso_id link
-        spool_number: spoolNum,
-        line_number: row['LINE NUMBER'],
-        weight: parseFloat(row['WEIGHT'] || '0'),
-        diameter: parseFloat(row['DIAMETER'] || '0'),
-        material: row['MATERIAL'],
-        schedule: row['SCH'] || row['SCHEDULE'],
-        system: row['SYSTEM']
-    }
-
-    // We need to check exact columns of 'spools' table. 
-    // Assuming standard columns + revision_id
-
-    const { error } = await supabase
-        .from('spools')
-        .upsert(payload, { onConflict: 'project_id, spool_number' }) // Check constraint name
-
-    if (error) throw error
-
-    result.summary.created++
-    result.details.push({
-        row: rowIndex,
-        identifier: spoolNum,
-        action: 'created',
-        message: `Spool ${spoolNum} loaded`
-    })
-}
-
-/**
- * Process a single WELD row
- */
-async function processWeld(
-    supabase: any,
-    row: any,
-    rowIndex: number,
-    params: DetailUploadParams,
-    result: DetailResult
-) {
-    // Basic stub for weld processing
-    const weldNum = row['WELD NUMBER'] || row['WELD']
-    const spoolNum = row['SPOOL NUMBER'] || row['SPOOL']
-
-    if (!weldNum || !spoolNum) {
-        throw new Error('Missing WELD NUMBER or SPOOL NUMBER')
-    }
-
-    // Logic similar to Spools (Find Spool -> Upsert Weld)
-    // For now logging as skipped until implemented
-    result.summary.skipped++
-    result.details.push({
-        row: rowIndex,
-        identifier: weldNum,
-        action: 'skipped',
-        message: 'Weld implementation pending'
-    })
 }
