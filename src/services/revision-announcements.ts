@@ -189,17 +189,21 @@ export async function processAnnouncementUpload(
                 }
 
                 // Create revision
+                const revisionPayload = {
+                    isometric_id: isometricId,
+                    project_id: projectId,
+                    company_id: companyId,
+                    rev_code: ann.rev_code,
+                    transmittal: ann.tml,
+                    announcement_date: ann.date ? new Date(ann.date) : null,
+                    revision_status: 'PENDING'
+                }
+
+                console.log('Inserting revision payload:', revisionPayload)
+
                 const { error: revError } = await supabase
                     .from('engineering_revisions')
-                    .insert({
-                        isometric_id: isometricId,
-                        project_id: projectId,
-                        company_id: companyId, // Add this line
-                        rev_code: ann.rev_code,
-                        transmittal: ann.tml,
-                        announcement_date: ann.date ? new Date(ann.date) : null,
-                        revision_status: 'PENDING'
-                    })
+                    .insert(revisionPayload)
 
                 if (revError) {
                     result.summary.errors++
