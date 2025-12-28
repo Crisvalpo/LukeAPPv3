@@ -188,6 +188,15 @@ export async function processAnnouncementUpload(
                     continue
                 }
 
+                // Sanitize Date
+                let formattedDate: string | null = null;
+                if (ann.date) {
+                    const d = new Date(ann.date);
+                    if (!isNaN(d.getTime())) {
+                        formattedDate = d.toISOString();
+                    }
+                }
+
                 // Create revision
                 const revisionPayload = {
                     isometric_id: isometricId,
@@ -195,8 +204,8 @@ export async function processAnnouncementUpload(
                     company_id: companyId,
                     rev_code: ann.rev_code,
                     transmittal: ann.tml,
-                    announcement_date: ann.date ? new Date(ann.date) : null,
-                    revision_status: 'PENDING'
+                    announcement_date: formattedDate,
+                    // revision_status: 'PENDING' // Let DB default handle this to avoid constraint issues
                 }
 
                 console.log('Inserting revision payload:', revisionPayload)
@@ -206,6 +215,7 @@ export async function processAnnouncementUpload(
                     .insert(revisionPayload)
 
                 if (revError) {
+                    console.error('❌ Full Supabase Error:', JSON.stringify(revError, null, 2))
                     result.summary.errors++
                     result.errors.push({
                         row: ann.row || 0,
