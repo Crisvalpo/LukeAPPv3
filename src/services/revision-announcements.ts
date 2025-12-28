@@ -194,6 +194,7 @@ export async function processAnnouncementUpload(
                     .insert({
                         isometric_id: isometricId,
                         project_id: projectId,
+                        company_id: companyId, // Add this line
                         rev_code: ann.rev_code,
                         transmittal: ann.tml,
                         announcement_date: ann.date ? new Date(ann.date) : null,
