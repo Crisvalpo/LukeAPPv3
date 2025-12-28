@@ -191,9 +191,17 @@ export async function processAnnouncementUpload(
                 // Sanitize Date
                 let formattedDate: string | null = null;
                 if (ann.date) {
-                    const d = new Date(ann.date);
+                    let dateStr = ann.date.trim();
+                    // Handle Spanish/European format DD-MM-YYYY or DD/MM/YYYY
+                    // Regex matches: 04-07-2025 or 04/07/2025
+                    const dmyMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+                    if (dmyMatch) {
+                        // Convert to ISO format YYYY-MM-DD (e.g., 2025-07-04)
+                        dateStr = `${dmyMatch[3]}-${dmyMatch[2].padStart(2, '0')}-${dmyMatch[1].padStart(2, '0')}`;
+                    }
+
+                    const d = new Date(dateStr);
                     // Validar que sea una fecha válida y rango razonable (1900 - 2100)
-                    // Las fechas Excel mal parseadas a veces dan años como 45000+
                     if (!isNaN(d.getTime()) && d.getFullYear() > 1900 && d.getFullYear() < 2100) {
                         formattedDate = d.toISOString();
                     } else {

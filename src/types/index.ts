@@ -361,7 +361,6 @@ export interface EngineeringRevision {
     transmittal: string | null
     announcement_date: string | null
     created_at: string
-    updated_at: string
 
     // Computed/joined fields
     iso_number?: string
