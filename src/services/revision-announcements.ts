@@ -192,8 +192,12 @@ export async function processAnnouncementUpload(
                 let formattedDate: string | null = null;
                 if (ann.date) {
                     const d = new Date(ann.date);
-                    if (!isNaN(d.getTime())) {
+                    // Validar que sea una fecha válida y rango razonable (1900 - 2100)
+                    // Las fechas Excel mal parseadas a veces dan años como 45000+
+                    if (!isNaN(d.getTime()) && d.getFullYear() > 1900 && d.getFullYear() < 2100) {
                         formattedDate = d.toISOString();
+                    } else {
+                        console.warn(`⚠️ Fecha inválida detectada en fila ${ann.row}: ${ann.date} (Parseado: ${d.toISOString()})`);
                     }
                 }
 
