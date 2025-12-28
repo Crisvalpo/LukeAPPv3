@@ -62,7 +62,53 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql STABLE;
 
+-- Helper function: Count vigente isometrics (includes EN_EJECUCION and TERMINADA)
+CREATE OR REPLACE FUNCTION public.count_vigente_isometrics(p_project_id UUID)
+RETURNS INTEGER AS $$
+BEGIN
+  RETURN (
+    SELECT COUNT(*)
+    FROM public.isometrics
+    WHERE project_id = p_project_id
+      AND (
+        status LIKE 'VIGENTE%' 
+        OR status = 'EN_EJECUCION' 
+        OR status = 'TERMINADA'
+      )
+  );
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+-- Helper function: Count obsolete isometrics
+CREATE OR REPLACE FUNCTION public.count_obsolete_isometrics(p_project_id UUID)
+RETURNS INTEGER AS $$
+BEGIN
+  RETURN (
+    SELECT COUNT(*)
+    FROM public.isometrics
+    WHERE project_id = p_project_id
+      AND status LIKE 'OBSOLETO%'
+  );
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+-- Helper function: Count eliminated isometrics
+CREATE OR REPLACE FUNCTION public.count_eliminado_isometrics(p_project_id UUID)
+RETURNS INTEGER AS $$
+BEGIN
+  RETURN (
+    SELECT COUNT(*)
+    FROM public.isometrics
+    WHERE project_id = p_project_id
+      AND status LIKE 'ELIMINADO%'
+  );
+END;
+$$ LANGUAGE plpgsql STABLE;
+
 -- Comments
 COMMENT ON CONSTRAINT valid_status ON public.isometrics IS '8-state lifecycle: VIGENTE, VIGENTE_SPOOLEADO, OBSOLETO, OBSOLETO_SPOOLEADO, ELIMINADO, ELIMINADO_SPOOLEADO, EN_EJECUCION, TERMINADA';
 COMMENT ON FUNCTION public.isometric_has_details IS 'Returns true if isometric has spools or welds loaded';
 COMMENT ON FUNCTION public.count_pending_spooling IS 'Count VIGENTE isometrics waiting for spooling';
+COMMENT ON FUNCTION public.count_vigente_isometrics IS 'Count active isometrics (VIGENTE%, EN_EJECUCION, TERMINADA)';
+COMMENT ON FUNCTION public.count_obsolete_isometrics IS 'Count obsolete/superseded isometrics';
+COMMENT ON FUNCTION public.count_eliminado_isometrics IS 'Count deleted/cancelled isometrics';
