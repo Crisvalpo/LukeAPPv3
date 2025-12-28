@@ -119,7 +119,7 @@ export async function processAnnouncementUpload(
                         file_name: firstAnn.file_name,
                         file_revision: firstAnn.file_revision,
                         revision: announcements[announcements.length - 1].rev_code, // Latest
-                        status: 'ACTIVE'
+                        status: IsometricStatus.VIGENTE
                     })
                     .select('id')
                     .single()
