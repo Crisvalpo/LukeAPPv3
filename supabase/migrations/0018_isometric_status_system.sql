@@ -50,16 +50,22 @@ CREATE INDEX IF NOT EXISTS idx_isometrics_status_filter
 CREATE OR REPLACE FUNCTION public.isometric_has_details(p_isometric_id UUID)
 RETURNS BOOLEAN AS $$
 DECLARE
-  detail_count INTEGER;
+  spool_count INTEGER;
+  weld_count INTEGER;
 BEGIN
-  SELECT COUNT(*) INTO detail_count
-  FROM (
-    SELECT id FROM public.spools WHERE isometric_id = p_isometric_id LIMIT 1
-    UNION ALL
-    SELECT id FROM public.welds WHERE isometric_id = p_isometric_id LIMIT 1
-  ) AS details;
+  -- Check for spools
+  SELECT COUNT(*) INTO spool_count
+  FROM public.spools 
+  WHERE isometric_id = p_isometric_id 
+  LIMIT 1;
   
-  RETURN detail_count > 0;
+  -- Check for welds
+  SELECT COUNT(*) INTO weld_count
+  FROM public.welds 
+  WHERE isometric_id = p_isometric_id 
+  LIMIT 1;
+  
+  RETURN (spool_count > 0 OR weld_count > 0);
 END;
 $$ LANGUAGE plpgsql STABLE;
 
