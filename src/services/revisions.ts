@@ -176,7 +176,6 @@ export async function getProjectRevisions(projectId: string): Promise<ApiRespons
                 transmittal,
                 announcement_date,
                 created_at,
-                updated_at,
                 isometrics (
                     iso_number
                 )
@@ -227,7 +226,6 @@ export async function getProjectRevisions(projectId: string): Promise<ApiRespons
                     transmittal: rev.transmittal,
                     announcement_date: rev.announcement_date,
                     created_at: rev.created_at,
-                    updated_at: rev.updated_at,
                     iso_number: rev.isometrics?.iso_number || 'N/A',
                     welds_count: count || 0,
                     spools_count: uniqueSpools.size
