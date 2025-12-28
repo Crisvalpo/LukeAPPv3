@@ -126,3 +126,36 @@
     color: #f87171;
     text-align: center;
 }
+
+/* No Project Message */
+.no-project-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 2px dashed rgba(255, 255, 255, 0.1);
+    min-height: 400px;
+}
+
+.no-project-message .message-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+    opacity: 0.3;
+}
+
+.no-project-message h3 {
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 12px;
+}
+
+.no-project-message p {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.5);
+    max-width: 500px;
+    line-height: 1.6;
+}
