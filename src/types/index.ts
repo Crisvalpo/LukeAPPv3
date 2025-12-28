@@ -353,18 +353,20 @@ export type ResolutionTypeEnum = typeof ResolutionType[keyof typeof ResolutionTy
 
 export interface EngineeringRevision {
     id: string
+    isometric_id: string
     project_id: string
     company_id: string
-    rev_id: string
-    entity_type: 'isometric' | 'line' | 'spool'
-    entity_id: string
-    status: RevisionStatusType
-    announced_at: string | null
-    approved_at: string | null
-    approved_by: string | null
-    created_by: string
+    rev_code: string
+    revision_status: 'VIGENTE' | 'PENDING' | 'SPOOLEADO' | 'APLICADO' | 'OBSOLETA'
+    transmittal: string | null
+    announcement_date: string | null
     created_at: string
     updated_at: string
+
+    // Computed/joined fields
+    iso_number?: string
+    welds_count?: number
+    spools_count?: number
 }
 
 export interface RevisionEvent {

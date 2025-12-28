@@ -1,17 +1,19 @@
 'use client'
 
 /**
- * Revisions Tab Component
+ * Revisions Tab Component - REFACTORED
  * 
- * Displays revisions list and management for a specific project
- * Used within Engineering Hub
+ * Displays revisions with:
+ * - Correct schema (isometric_id, rev_code, revision_status)
+ * - ISO Number (via JOIN)
+ * - Welds count
+ * - Proper status filters (VIGENTE, SPOOLEADO, APLICADO)
  */
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { fetchProjectRevisions } from '@/actions/revisions'
 import type { EngineeringRevision } from '@/types'
-import { REVISION_STATUS_LABELS } from '@/constants'
 import '@/styles/revisions.css'
 
 interface RevisionsTabProps {
@@ -53,14 +55,24 @@ export default function RevisionsTab({ projectId }: RevisionsTabProps) {
 
     const filteredRevisions = statusFilter === 'ALL'
         ? revisions
-        : revisions.filter(r => r.status === statusFilter)
+        : revisions.filter(r => r.revision_status === statusFilter)
 
-    // Calculate stats
+    // Calculate stats with correct status values
     const stats = {
         total: revisions.length,
-        pending: revisions.filter(r => r.status === 'PENDING').length,
-        applied: revisions.filter(r => r.status === 'APPLIED').length,
-        draft: revisions.filter(r => r.status === 'DRAFT').length
+        vigentes: revisions.filter(r => r.revision_status === 'VIGENTE').length,
+        spooleadas: revisions.filter(r => r.revision_status === 'SPOOLEADO').length,
+        aplicadas: revisions.filter(r => r.revision_status === 'APLICADO').length,
+        obsoletas: revisions.filter(r => r.revision_status === 'OBSOLETA').length
+    }
+
+    // Status colors mapping
+    const statusColors: Record<string, string> = {
+        'VIGENTE': '#3b82f6',      // Blue
+        'PENDING': '#fbbf24',      // Yellow
+        'SPOOLEADO': '#10b981',    // Green
+        'APLICADO': '#8b5cf6',     // Purple
+        'OBSOLETA': '#6b7280'      // Gray
     }
 
     if (isLoading) {
@@ -91,24 +103,24 @@ export default function RevisionsTab({ projectId }: RevisionsTabProps) {
                     </div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon">⏳</div>
+                    <div className="stat-icon">🔵</div>
                     <div className="stat-content">
-                        <div className="stat-value">{stats.pending}</div>
-                        <div className="stat-label">Pendientes</div>
+                        <div className="stat-value">{stats.vigentes}</div>
+                        <div className="stat-label">Vigentes</div>
                     </div>
                 </div>
                 <div className="stat-card">
                     <div className="stat-icon">✅</div>
                     <div className="stat-content">
-                        <div className="stat-value">{stats.applied}</div>
-                        <div className="stat-label">Aplicadas</div>
+                        <div className="stat-value">{stats.spooleadas}</div>
+                        <div className="stat-label">Spooleadas</div>
                     </div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon">📝</div>
+                    <div className="stat-icon">🎯</div>
                     <div className="stat-content">
-                        <div className="stat-value">{stats.draft}</div>
-                        <div className="stat-label">Borradores</div>
+                        <div className="stat-value">{stats.aplicadas}</div>
+                        <div className="stat-label">Aplicadas</div>
                     </div>
                 </div>
             </div>
@@ -123,11 +135,10 @@ export default function RevisionsTab({ projectId }: RevisionsTabProps) {
                         className="filter-select"
                     >
                         <option value="ALL">Todos</option>
-                        <option value="DRAFT">Borradores</option>
-                        <option value="PENDING">Pendientes</option>
-                        <option value="APPROVED">Aprobadas</option>
-                        <option value="APPLIED">Aplicadas</option>
-                        <option value="REJECTED">Rechazadas</option>
+                        <option value="VIGENTE">Vigentes</option>
+                        <option value="SPOOLEADO">Spooleadas</option>
+                        <option value="APLICADO">Aplicadas</option>
+                        <option value="OBSOLETA">Obsoletas</option>
                     </select>
                 </div>
             </div>
@@ -139,37 +150,47 @@ export default function RevisionsTab({ projectId }: RevisionsTabProps) {
                     <h2 className="empty-state-title">No hay revisiones</h2>
                     <p className="empty-state-description">
                         {statusFilter !== 'ALL'
-                            ? `No hay revisiones con estado "${REVISION_STATUS_LABELS[statusFilter]?.label || statusFilter}"`
+                            ? `No hay revisiones con estado "${statusFilter}"`
                             : 'Aún no se han creado revisiones para este proyecto'}
                     </p>
+                    {statusFilter === 'ALL' && (
+                        <p className="empty-state-hint">
+                            Ve a la tab "1. Anuncio" para cargar revisiones desde un Excel
+                        </p>
+                    )}
                 </div>
             ) : (
                 <div className="revisions-list">
                     {filteredRevisions.map(revision => {
-                        const statusInfo = REVISION_STATUS_LABELS[revision.status] || {
-                            label: revision.status,
-                            color: '#94a3b8'
-                        }
+                        const statusColor = statusColors[revision.revision_status] || '#94a3b8'
 
                         return (
                             <div key={revision.id} className="revision-card">
                                 <div className="revision-header">
                                     <div className="revision-title">
-                                        <h3>Revisión {revision.rev_id}</h3>
+                                        <h3>{revision.iso_number} - Rev {revision.rev_code}</h3>
                                         <span
                                             className="status-badge"
-                                            style={{ background: statusInfo.color }}
+                                            style={{ background: statusColor }}
                                         >
-                                            {statusInfo.label}
+                                            {revision.revision_status}
                                         </span>
                                     </div>
                                     <div className="revision-meta">
                                         <span className="meta-item">
-                                            {revision.entity_type}
+                                            🔥 {revision.welds_count || 0} soldaduras
                                         </span>
-                                        {revision.announced_at && (
+                                        <span className="meta-item">
+                                            📦 {revision.spools_count || 0} spools
+                                        </span>
+                                        {revision.announcement_date && (
                                             <span className="meta-item">
-                                                Anunciada: {new Date(revision.announced_at).toLocaleDateString('es-CL')}
+                                                📅 {new Date(revision.announcement_date).toLocaleDateString('es-CL')}
+                                            </span>
+                                        )}
+                                        {revision.transmittal && (
+                                            <span className="meta-item">
+                                                TML: {revision.transmittal}
                                             </span>
                                         )}
                                     </div>

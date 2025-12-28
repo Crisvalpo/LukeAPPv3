@@ -157,19 +157,35 @@ export async function getRevisionEvents(revisionId: string): Promise<ApiResponse
 }
 
 /**
- * Get all revisions for a project
+ * Get all revisions for a project with isometric info and welds count
  */
 export async function getProjectRevisions(projectId: string): Promise<ApiResponse<EngineeringRevision[]>> {
     const supabase = await createClient()
 
     try {
+        // Main query: get revisions with isometric data
         const { data: revisions, error } = await supabase
             .from('engineering_revisions')
-            .select('*')
+            .select(`
+                id,
+                isometric_id,
+                project_id,
+                company_id,
+                rev_code,
+                revision_status,
+                transmittal,
+                announcement_date,
+                created_at,
+                updated_at,
+                isometrics (
+                    iso_number
+                )
+            `)
             .eq('project_id', projectId)
             .order('created_at', { ascending: false })
 
         if (error) {
+            console.error('getProjectRevisions error:', error)
             return {
                 success: false,
                 message: `Error al obtener revisiones: ${error.message}`,
@@ -177,10 +193,52 @@ export async function getProjectRevisions(projectId: string): Promise<ApiRespons
             }
         }
 
+        if (!revisions || revisions.length === 0) {
+            return {
+                success: true,
+                message: 'No hay revisiones',
+                data: []
+            }
+        }
+
+        // Get welds count for each revision
+        const revisionsWithCounts = await Promise.all(
+            revisions.map(async (rev: any) => {
+                const { count } = await supabase
+                    .from('spools_welds')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('revision_id', rev.id)
+
+                // Count unique spools
+                const { data: welds } = await supabase
+                    .from('spools_welds')
+                    .select('spool_number')
+                    .eq('revision_id', rev.id)
+
+                const uniqueSpools = new Set(welds?.map(w => w.spool_number) || [])
+
+                return {
+                    id: rev.id,
+                    isometric_id: rev.isometric_id,
+                    project_id: rev.project_id,
+                    company_id: rev.company_id,
+                    rev_code: rev.rev_code,
+                    revision_status: rev.revision_status,
+                    transmittal: rev.transmittal,
+                    announcement_date: rev.announcement_date,
+                    created_at: rev.created_at,
+                    updated_at: rev.updated_at,
+                    iso_number: rev.isometrics?.iso_number || 'N/A',
+                    welds_count: count || 0,
+                    spools_count: uniqueSpools.size
+                } as EngineeringRevision
+            })
+        )
+
         return {
             success: true,
             message: 'Revisiones obtenidas',
-            data: revisions || []
+            data: revisionsWithCounts
         }
     } catch (error) {
         console.error('Error in getProjectRevisions:', error)
