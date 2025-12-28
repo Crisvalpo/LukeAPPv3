@@ -174,7 +174,7 @@ export async function processAnnouncementUpload(
                     .select('id')
                     .eq('isometric_id', isometricId)
                     .eq('rev_code', ann.rev_code)
-                    .single()
+                    .maybeSingle()
 
                 if (existingRev) {
                     result.summary.revisionsSkipped++
