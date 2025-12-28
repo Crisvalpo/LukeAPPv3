@@ -1,16 +1,15 @@
 /**
  * ENGINEERING DETAILS TAB
  * 
- * Main component for Phase 2 upload: Engineering details
- * Features: Revision selector + Multi-tab upload (Spools/Welds/MTO/Bolted Joints)
+ * Container for Revision Selector + Detail Uploaders (Multi-tabbed).
  */
 
 'use client'
 
 import { useState } from 'react'
 import RevisionSelector from './RevisionSelector'
-import { processDetailUpload, type DetailType, type DetailResult } from '@/services/engineering-details'
-import * as XLSX from 'xlsx'
+import DetailUploader from './DetailUploader'
+import { downloadSpoolsTemplate } from '@/lib/utils/template-generator'
 
 interface Props {
     projectId: string
@@ -18,254 +17,141 @@ interface Props {
 }
 
 export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
-    const [selectedRevision, setSelectedRevision] = useState<string | null>(null)
-    const [isoNumber, setIsoNumber] = useState<string>('')
-    const [revCode, setRevCode] = useState<string>('')
-    const [activeTab, setActiveTab] = useState<DetailType>('spools')
-    const [file, setFile] = useState<File | null>(null)
-    const [isUploading, setIsUploading] = useState(false)
-    const [result, setResult] = useState<DetailResult | null>(null)
+    const [selectedContext, setSelectedContext] = useState<{
+        isoId: string,
+        revId: string,
+        isoNumber: string
+    } | null>(null)
 
-    function handleRevisionSelect(revId: string | null, iso: string, rev: string) {
-        setSelectedRevision(revId)
-        setIsoNumber(iso)
-        setRevCode(rev)
-        // Reset file and result when changing revision
-        setFile(null)
-        setResult(null)
-    }
-
-    async function handleUpload() {
-        if (!file || !selectedRevision) return
-
-        setIsUploading(true)
-        try {
-            // Parse Excel
-            const data = await parseExcelFile(file)
-
-            // Process upload
-            const uploadResult = await processDetailUpload({
-                revisionId: selectedRevision,
-                projectId,
-                companyId,
-                detailType: activeTab,
-                data
-            })
-
-            setResult(uploadResult)
-        } catch (error: any) {
-            alert(`Error: ${error.message}`)
-        } finally {
-            setIsUploading(false)
-        }
-    }
-
-    async function parseExcelFile(file: File): Promise<any[]> {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader()
-            reader.onload = (e) => {
-                try {
-                    const data = e.target?.result
-                    const workbook = XLSX.read(data, { type: 'binary' })
-                    const sheetName = workbook.SheetNames[0]
-                    const worksheet = workbook.Sheets[sheetName]
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet)
-                    resolve(jsonData)
-                } catch (error) {
-                    reject(error)
-                }
-            }
-            reader.onerror = () => reject(new Error('Error leyendo archivo'))
-            reader.readAsBinaryString(file)
-        })
-    }
-
-    function handleReset() {
-        setFile(null)
-        setResult(null)
-    }
-
-    const tabConfig = {
-        spools: { label: 'Spools', icon: '🔩' },
-        welds: { label: 'Soldaduras', icon: '🔥' },
-        mto: { label: 'MTO', icon: '📦' },
-        bolted_joints: { label: 'Juntas Empernadas', icon: '🔗' }
-    }
+    const [activeTab, setActiveTab] = useState<'spools' | 'welds' | 'mto' | 'joints'>('spools')
 
     return (
-        <div className="details-tab">
-            {/* Header */}
-            <div className="details-header">
-                <div className="header-content">
-                    <div className="icon">🔧</div>
-                    <div>
-                        <h3>2. Carga de Detalles</h3>
-                        <p>Selecciona ISO + Revisión, luego carga spools, soldaduras, MTO o juntas empernadas</p>
-                    </div>
+        <div className="details-tab-container">
+            <div className="section-header">
+                <div className="icon">🔩</div>
+                <div>
+                    <h3>2. Carga de Detalles</h3>
+                    <p>Carga spools, soldaduras y materiales vinculados a una revisión específica</p>
                 </div>
             </div>
 
-            {/* Revision Selector */}
             <RevisionSelector
                 projectId={projectId}
-                onRevisionSelect={handleRevisionSelect}
+                onRevisionSelect={(isoId, revId, isoNumber) =>
+                    setSelectedContext({ isoId, revId, isoNumber })
+                }
             />
 
-            {/* Show selection summary */}
-            {selectedRevision && (
-                <div className="selection-summary">
-                    <span className="summary-badge">
-                        📐 {isoNumber} → 🔄 Rev {revCode}
-                    </span>
-                </div>
-            )}
-
-            {/* Detail Type Tabs */}
-            {selectedRevision && (
-                <>
-                    <div className="detail-tabs">
-                        {Object.entries(tabConfig).map(([key, config]) => (
-                            <button
-                                key={key}
-                                className={`detail-tab ${activeTab === key ? 'active' : ''}`}
-                                onClick={() => {
-                                    setActiveTab(key as DetailType)
-                                    setFile(null)
-                                    setResult(null)
-                                }}
-                            >
-                                <span className="tab-icon">{config.icon}</span>
-                                {config.label}
-                            </button>
-                        ))}
+            {selectedContext ? (
+                <div className="details-workspace animate-fade-in">
+                    <div className="context-banner">
+                        Trabajando en: <strong>{selectedContext.isoNumber}</strong> (Revisión Seleccionada)
                     </div>
 
-                    {/* Upload Area */}
-                    {!result && (
-                        <div className="upload-area">
-                            <div className="upload-header">
-                                <h4>{tabConfig[activeTab].icon} {tabConfig[activeTab].label}</h4>
-                                <button
-                                    className="btn-template"
-                                    onClick={() => downloadTemplate(activeTab)}
-                                >
-                                    📥 Descargar Plantilla
-                                </button>
+                    <div className="tabs-nav">
+                        <button
+                            className={activeTab === 'spools' ? 'active' : ''}
+                            onClick={() => setActiveTab('spools')}
+                        >
+                            🧵 Spools
+                        </button>
+                        <button
+                            className={activeTab === 'welds' ? 'active' : ''}
+                            onClick={() => setActiveTab('welds')}
+                        >
+                            🔥 Soldaduras
+                        </button>
+                        <button
+                            className={activeTab === 'mto' ? 'active' : ''}
+                            onClick={() => setActiveTab('mto')}
+                        >
+                            📦 MTO
+                        </button>
+                        <button
+                            className={activeTab === 'joints' ? 'active' : ''}
+                            onClick={() => setActiveTab('joints')}
+                        >
+                            🔧 Juntas
+                        </button>
+                    </div>
+
+                    <div className="tab-content">
+                        {activeTab === 'spools' && (
+                            <div className="detail-section">
+                                <div className="section-info">
+                                    <p>Carga el listado de Spools con sus pesos y diámetros.</p>
+                                    <button className="btn-text" onClick={downloadSpoolsTemplate}>
+                                        📥 Descargar Plantilla Spools
+                                    </button>
+                                </div>
+                                <DetailUploader
+                                    revisionId={selectedContext.revId}
+                                    projectId={projectId}
+                                    companyId={companyId}
+                                    detailType="spools"
+                                />
                             </div>
+                        )}
 
-                            {!file ? (
-                                <div className="file-drop">
-                                    <input
-                                        type="file"
-                                        accept=".xlsx,.xls"
-                                        onChange={(e) => e.target.files && setFile(e.target.files[0])}
-                                        id="file-input"
-                                        style={{ display: 'none' }}
-                                    />
-                                    <label htmlFor="file-input" className="drop-label">
-                                        <div className="drop-icon">📁</div>
-                                        <p>Selecciona archivo Excel</p>
-                                        <span className="drop-hint">Formato: .xlsx, .xls</span>
-                                    </label>
-                                </div>
-                            ) : (
-                                <div className="file-selected">
-                                    <div className="file-info">
-                                        <span className="file-icon">📄</span>
-                                        <span className="file-name">{file.name}</span>
-                                        <button className="btn-remove" onClick={() => setFile(null)}>✕</button>
-                                    </div>
-                                    <div className="file-actions">
-                                        <button
-                                            className="btn-upload"
-                                            onClick={handleUpload}
-                                            disabled={isUploading}
-                                        >
-                                            {isUploading ? '⏳ Procesando...' : '⬆️ Importar'}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Results */}
-                    {result && (
-                        <div className="upload-results">
-                            <div className={`results-header ${result.success ? 'success' : 'error'}`}>
-                                <span className="result-icon">{result.success ? '✅' : '⚠️'}</span>
-                                <h4>{result.success ? 'Importación Exitosa' : 'Importación con Errores'}</h4>
+                        {activeTab === 'welds' && (
+                            <div className="detail-section">
+                                <p>Carga el listado de Soldaduras (Welding Map).</p>
+                                <DetailUploader
+                                    revisionId={selectedContext.revId}
+                                    projectId={projectId}
+                                    companyId={companyId}
+                                    detailType="welds"
+                                />
                             </div>
+                        )}
 
-                            <div className="results-summary">
-                                <div className="summary-stat">
-                                    <span className="stat-label">Total:</span>
-                                    <span className="stat-value">{result.summary.total}</span>
-                                </div>
-                                <div className="summary-stat success">
-                                    <span className="stat-label">Creados:</span>
-                                    <span className="stat-value">{result.summary.created}</span>
-                                </div>
-                                <div className="summary-stat warning">
-                                    <span className="stat-label">Omitidos:</span>
-                                    <span className="stat-value">{result.summary.skipped}</span>
-                                </div>
-                                {result.summary.errors > 0 && (
-                                    <div className="summary-stat error">
-                                        <span className="stat-label">Errores:</span>
-                                        <span className="stat-value">{result.summary.errors}</span>
-                                    </div>
-                                )}
+                        {(activeTab === 'mto' || activeTab === 'joints') && (
+                            <div className="coming-soon">
+                                🚧 Próximamente disponible
                             </div>
-
-                            <button className="btn-new-upload" onClick={handleReset}>
-                                Importar Otro Archivo
-                            </button>
-                        </div>
-                    )}
-                </>
-            )}
-
-            {/* Empty state when no revision selected */}
-            {!selectedRevision && (
-                <div className="empty-select">
-                    <div className="empty-icon">👆</div>
-                    <p>Selecciona un isométrico y revisión para continuar</p>
+                        )}
+                    </div>
+                </div>
+            ) : (
+                <div className="placeholder-state">
+                    👆 Selecciona un isométrico y revisión arriba para comenzar
                 </div>
             )}
+
+            <style jsx>{`
+                .details-tab-container { animation: fadeIn 0.3s ease; }
+                .section-header { display: flex; gap: 15px; margin-bottom: 25px; align-items: center; }
+                .section-header .icon { font-size: 2rem; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 12px; }
+                
+                .context-banner {
+                    background: rgba(var(--accent-rgb), 0.1);
+                    color: var(--accent);
+                    padding: 10px 15px;
+                    border-radius: 6px;
+                    margin-bottom: 20px;
+                    font-size: 0.9rem;
+                    border: 1px solid rgba(var(--accent-rgb), 0.2);
+                }
+
+                .tabs-nav {
+                    display: flex; gap: 2px; margin-bottom: 20px;
+                    border-bottom: 1px solid rgba(255,255,255,0.1);
+                }
+                .tabs-nav button {
+                    background: transparent; border: none; color: #888;
+                    padding: 10px 20px; cursor: pointer; border-bottom: 2px solid transparent;
+                    transition: all 0.2s; font-weight: 500;
+                }
+                .tabs-nav button:hover { color: #fff; background: rgba(255,255,255,0.02); }
+                .tabs-nav button.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+                .placeholder-state {
+                    text-align: center; padding: 40px; color: #666;
+                    border: 2px dashed rgba(255,255,255,0.05); border-radius: 12px;
+                }
+                .btn-text { background: none; border: none; color: var(--accent); text-decoration: underline; cursor: pointer; }
+                .section-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+            `}</style>
         </div>
     )
-}
-
-// Template download function
-function downloadTemplate(type: DetailType) {
-    const templates = {
-        spools: {
-            headers: ['SPOOL NUMBER', 'ISO NUMBER', 'LINE NUMBER', 'REV', 'WEIGHT', 'DIAMETER'],
-            example: ['SP-001', 'ISO-001', 'LINE-A-01', 'A', '150.50', '4"']
-        },
-        welds: {
-            headers: ['WELD NUMBER', 'SPOOL NUMBER', 'TYPE WELD', 'NPS', 'SCH', 'THICKNESS', 'PIPING CLASS', 'MATERIAL', 'DESTINATION', 'SHEET'],
-            example: ['W-001', 'SP-001', 'BW', '4', '40', '0.237', 'A106B', 'CS', 'FIELD', '1']
-        },
-        mto: {
-            headers: ['ITEM CODE', 'QTY', 'QTY UNIT', 'PIPING CLASS', 'FAB', 'SHEET', 'LINE NUMBER', 'AREA', 'SPOOL FULL ID', 'SPOOL NUMBER', 'REVISION'],
-            example: ['ITM-001', '10', 'EA', 'A106B', 'SHOP', '1', 'LINE-A', 'AREA-1', 'SP-FULL-001', 'SP-001', 'A']
-        },
-        bolted_joints: {
-            headers: ['FLANGED JOINT NUMBER', 'PIPING CLASS', 'MATERIAL', 'RATING', 'NPS', 'BOLT SIZE', 'SHEET', 'LINE NUMBER', 'ISO NUMBER', 'REVISION'],
-            example: ['FJ-001', 'A105', 'CS', '150', '4', '5/8', '1', 'LINE-A', 'ISO-001', 'A']
-        }
-    }
-
-    const config = templates[type]
-    const wb = XLSX.utils.book_new()
-    const ws = XLSX.utils.aoa_to_sheet([config.headers, config.example])
-
-    // Set column widths
-    const wscols = config.headers.map(h => ({ wch: Math.max(h.length + 5, 15) }))
-    ws['!cols'] = wscols
-
-    XLSX.utils.book_append_sheet(wb, ws, type)
-    XLSX.writeFile(wb, `Template_${type}.xlsx`)
 }

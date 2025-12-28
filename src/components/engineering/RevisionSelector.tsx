@@ -1,8 +1,8 @@
 /**
  * REVISION SELECTOR COMPONENT
  * 
- * Two-dropdown selector: Isométrico → Revisión
- * Used in Engineering Details upload to select target revision
+ * Dropdown pair to select Isometric + Revision for detail upload.
+ * Filters revisions based on selected isometric.
  */
 
 'use client'
@@ -10,41 +10,45 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+interface Props {
+    projectId: string
+    onRevisionSelect: (isoId: string, revId: string, isoNumber: string) => void
+    disabled?: boolean
+}
+
 interface Isometric {
     id: string
     iso_number: string
-    current_revision_id: string | null
 }
 
 interface Revision {
     id: string
     rev_code: string
-    revision_status: string
-}
-
-interface Props {
-    projectId: string
-    onRevisionSelect: (revisionId: string | null, isoNumber: string, revCode: string) => void
-    disabled?: boolean
+    revision_status?: string
 }
 
 export default function RevisionSelector({
     projectId,
     onRevisionSelect,
-    disabled = false
+    disabled
 }: Props) {
     const [isometrics, setIsometrics] = useState<Isometric[]>([])
     const [selectedIso, setSelectedIso] = useState<string>('')
+
     const [revisions, setRevisions] = useState<Revision[]>([])
     const [selectedRev, setSelectedRev] = useState<string>('')
-    const [isLoading, setIsLoading] = useState(true)
 
-    // Load isometrics on mount
+    const [loadingIso, setLoadingIso] = useState(false)
+    const [loadingRev, setLoadingRev] = useState(false)
+
+    // Load Isometrics on mount
     useEffect(() => {
-        loadIsometrics()
+        if (projectId) {
+            loadIsometrics()
+        }
     }, [projectId])
 
-    // Load revisions when ISO changes
+    // Load Revisions when ISO changes
     useEffect(() => {
         if (selectedIso) {
             loadRevisions(selectedIso)
@@ -54,115 +58,124 @@ export default function RevisionSelector({
         }
     }, [selectedIso])
 
-    // Notify parent when both selected
-    useEffect(() => {
-        if (selectedIso && selectedRev) {
-            const iso = isometrics.find(i => i.id === selectedIso)
-            const rev = revisions.find(r => r.id === selectedRev)
-            if (iso && rev) {
-                onRevisionSelect(selectedRev, iso.iso_number, rev.rev_code)
-            }
-        } else {
-            onRevisionSelect(null, '', '')
-        }
-    }, [selectedIso, selectedRev])
-
     async function loadIsometrics() {
-        setIsLoading(true)
+        setLoadingIso(true)
+        const supabase = createClient()
+
         try {
-            const supabase = createClient()
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from('isometrics')
-                .select('id, iso_number, current_revision_id')
+                .select('id, iso_number')
                 .eq('project_id', projectId)
                 .order('iso_number')
 
-            if (error) throw error
-            setIsometrics(data || [])
-        } catch (error) {
-            console.error('Error loading isometrics:', error)
+            if (data) setIsometrics(data)
         } finally {
-            setIsLoading(false)
+            setLoadingIso(false)
         }
     }
 
-    async function loadRevisions(isometricId: string) {
+    async function loadRevisions(isoId: string) {
+        setLoadingRev(true)
+        const supabase = createClient()
+
         try {
-            const supabase = createClient()
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from('engineering_revisions')
                 .select('id, rev_code, revision_status')
-                .eq('isometric_id', isometricId)
-                .order('rev_code')
+                .eq('isometric_id', isoId)
+                .order('rev_code', { ascending: false }) // Newest first
 
-            if (error) throw error
-            setRevisions(data || [])
-
-            // Auto-select latest revision
-            if (data && data.length > 0) {
-                setSelectedRev(data[data.length - 1].id)
-            }
-        } catch (error) {
-            console.error('Error loading revisions:', error)
+            if (data) setRevisions(data)
+        } finally {
+            setLoadingRev(false)
         }
     }
 
-    function handleIsoChange(isoId: string) {
-        setSelectedIso(isoId)
+    function handleIsoChange(e: React.ChangeEvent<HTMLSelectElement>) {
+        setSelectedIso(e.target.value)
         setSelectedRev('') // Reset revision
     }
 
+    function handleRevChange(e: React.ChangeEvent<HTMLSelectElement>) {
+        const revId = e.target.value
+        setSelectedRev(revId)
+
+        const iso = isometrics.find(i => i.id === selectedIso)
+        if (revId && iso) {
+            onRevisionSelect(selectedIso, revId, iso.iso_number)
+        }
+    }
+
     return (
-        <div className="revision-selector">
-            <div className="selector-group">
-                <label htmlFor="iso-select">
-                    <span className="label-icon">📐</span>
-                    Isométrico
-                </label>
+        <div className="revision-selector-group">
+            <div className="selector-item">
+                <label>Isométrico:</label>
                 <select
-                    id="iso-select"
                     value={selectedIso}
-                    onChange={(e) => handleIsoChange(e.target.value)}
-                    disabled={disabled || isLoading}
-                    className="selector-dropdown"
+                    onChange={handleIsoChange}
+                    disabled={disabled || loadingIso}
+                    className="form-select"
                 >
-                    <option value="">Selecciona un isométrico...</option>
+                    <option value="">-- Seleccionar --</option>
                     {isometrics.map(iso => (
                         <option key={iso.id} value={iso.id}>
                             {iso.iso_number}
                         </option>
                     ))}
                 </select>
+                {loadingIso && <span className="loader-mini" />}
             </div>
 
-            <div className="selector-arrow">→</div>
-
-            <div className="selector-group">
-                <label htmlFor="rev-select">
-                    <span className="label-icon">🔄</span>
-                    Revisión
-                </label>
+            <div className="selector-item">
+                <label>Revisión:</label>
                 <select
-                    id="rev-select"
                     value={selectedRev}
-                    onChange={(e) => setSelectedRev(e.target.value)}
-                    disabled={disabled || !selectedIso || revisions.length === 0}
-                    className="selector-dropdown"
+                    onChange={handleRevChange}
+                    disabled={!selectedIso || disabled || loadingRev}
+                    className="form-select"
                 >
-                    <option value="">Selecciona una revisión...</option>
+                    <option value="">-- Seleccionar --</option>
                     {revisions.map(rev => (
                         <option key={rev.id} value={rev.id}>
-                            Rev {rev.rev_code} ({rev.revision_status})
+                            Rev {rev.rev_code} {rev.revision_status ? `(${rev.revision_status})` : ''}
                         </option>
                     ))}
                 </select>
+                {loadingRev && <span className="loader-mini" />}
             </div>
 
-            {selectedIso && revisions.length === 0 && (
-                <div className="selector-warning">
-                    ⚠️ Este isométrico no tiene revisiones
-                </div>
-            )}
+            <style jsx>{`
+                .revision-selector-group {
+                    display: flex;
+                    gap: 20px;
+                    padding: 15px;
+                    background: rgba(255,255,255,0.03);
+                    border-radius: 8px;
+                    border: 1px solid rgba(255,255,255,0.1);
+                    margin-bottom: 20px;
+                    align-items: flex-end;
+                }
+                .selector-item {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 5px;
+                    flex: 1;
+                    position: relative;
+                }
+                .loader-mini {
+                    position: absolute;
+                    right: 10px;
+                    top: 35px;
+                    width: 12px;
+                    height: 12px;
+                    border: 2px solid rgba(255,255,255,0.5);
+                    border-top-color: var(--accent);
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                }
+                @keyframes spin { to { transform: rotate(360deg); } }
+            `}</style>
         </div>
     )
 }

@@ -89,3 +89,24 @@ export function downloadAnnouncementTemplate() {
     XLSX.utils.book_append_sheet(wb, ws, 'Anuncio Revisiones');
     XLSX.writeFile(wb, `Plantilla_Anuncio_Revisiones.xlsx`);
 }
+
+/**
+ * Generate and download Spools template
+ */
+export function downloadSpoolsTemplate() {
+    const headers = ['SPOOL NUMBER', 'ISO NUMBER', 'LINE NUMBER', 'WEIGHT', 'DIAMETER', 'SCH', 'SYSTEM', 'MATERIAL'];
+
+    const exampleData = [
+        ['01-01', 'ISO-001', 'L-1001', 45.5, 4, '40', 'PROCESS', 'A106-B'],
+        ['01-02', 'ISO-001', 'L-1001', 32.0, 4, '40', 'PROCESS', 'A106-B']
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...exampleData]);
+
+    // Set column widths
+    ws['!cols'] = headers.map(() => ({ wch: 15 }));
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Spools');
+    XLSX.writeFile(wb, `Plantilla_Spools_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
