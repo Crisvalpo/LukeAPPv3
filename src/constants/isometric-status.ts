@@ -85,7 +85,24 @@ export function isSpooleado(status: IsometricStatusType): boolean {
 
 /**
  * Check if status is VIGENTE (any variant)
+ * Includes execution states as they are still active/current
  */
 export function isVigente(status: IsometricStatusType): boolean {
-    return status.startsWith('VIGENTE')
+    return status.startsWith('VIGENTE') ||
+        status === IsometricStatus.EN_EJECUCION ||
+        status === IsometricStatus.TERMINADA
+}
+
+/**
+ * Check if status is obsolete
+ */
+export function isObsolete(status: IsometricStatusType): boolean {
+    return status.startsWith('OBSOLETO')
+}
+
+/**
+ * Check if status is eliminated/deleted
+ */
+export function isEliminado(status: IsometricStatusType): boolean {
+    return status.startsWith('ELIMINADO')
 }
