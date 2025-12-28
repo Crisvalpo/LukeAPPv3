@@ -149,7 +149,7 @@ export default function EngineeringHub() {
             </div>
 
             {/* Project Selector (Founders only) */}
-            {userRole === 'founder' && projects.length > 1 && (
+            {userRole === 'founder' && projects.length > 0 && (
                 <div className="engineering-project-selector">
                     <label>Proyecto:</label>
                     <select
