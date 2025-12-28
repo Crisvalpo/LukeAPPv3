@@ -190,28 +190,36 @@ export default function EngineeringHub() {
 
             {/* Tab Content */}
             <div className="engineering-content">
-                {activeTab === 'revisiones' && (
-                    <RevisionsTab projectId={selectedProject} />
-                )}
+                {!selectedProject ? (
+                    <div className="no-project-message">
+                        <div className="message-icon">📁</div>
+                        <h3>Selecciona un Proyecto</h3>
+                        <p>Para acceder al Engineering Hub, primero debes seleccionar un proyecto del menú superior.</p>
+                    </div>
+                ) : (
+                    <>
+                        {activeTab === 'revisiones' && (
+                            <RevisionsTab projectId={selectedProject} />
+                        )}
 
-                {activeTab === 'announcement' && selectedProject && userRole && (
-                    <RevisionAnnouncementTab
-                        projectId={selectedProject}
-                        companyId={projects.find(p => p.id === selectedProject)?.company_id || ''}
-                        onSuccess={() => {
-                            // Refresh revisions tab or show success message
-                            console.log('Announcement upload successful!')
-                        }}
-                    />
-                )}
+                        {activeTab === 'announcement' && userRole && (
+                            <RevisionAnnouncementTab
+                                projectId={selectedProject}
+                                companyId={projects.find(p => p.id === selectedProject)?.company_id || ''}
+                                onSuccess={() => {
+                                    console.log('Announcement upload successful!')
+                                }}
+                            />
+                        )}
 
-                {activeTab === 'details' && selectedProject && (
-                    <EngineeringDetailsTab
-                        projectId={selectedProject}
-                        companyId={projects.find(p => p.id === selectedProject)?.company_id || ''}
-                    />
+                        {activeTab === 'details' && (
+                            <EngineeringDetailsTab
+                                projectId={selectedProject}
+                                companyId={projects.find(p => p.id === selectedProject)?.company_id || ''}
+                            />
+                        )}
+                    </>
                 )}
-
             </div>
         </div>
     )
