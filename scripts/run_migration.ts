@@ -50,5 +50,5 @@ async function executeSQLFile(filePath: string) {
     }
 }
 
-// Ejecutar migration 0030 - Joints Support
-executeSQLFile('supabase/migrations/0030_joints_support.sql')
+// Ejecutar migration 0034 - Force Schema Refresh
+executeSQLFile('supabase/migrations/0034_force_schema_refresh.sql')

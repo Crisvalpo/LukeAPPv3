@@ -1,27 +1,37 @@
 'use client'
 
 /**
- * Revisions Tab Component - REFACTORED
+ * Revisions Tab Component - REFACTORED PHASE 3
  * 
- * Displays revisions with:
- * - Correct schema (isometric_id, rev_code, revision_status)
- * - ISO Number (via JOIN)
- * - Welds count
- * - Proper status filters (VIGENTE, SPOOLEADO, APLICADO)
+ * Displays revisions GROUPED BY ISOMETRIC:
+ * - Groups multiple revisions (0, 1, 2...) under one Isometric Card
+ * - Shows summary stats per isometric
+ * - Collapsible history view
  */
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useMemo } from 'react'
 import { fetchProjectRevisions } from '@/actions/revisions'
 import type { EngineeringRevision } from '@/types'
+import IsometricRevisionCard from './IsometricRevisionCard'
 import '@/styles/revisions.css'
 
 interface RevisionsTabProps {
     projectId: string
 }
 
+interface GroupedIsometric {
+    iso_number: string
+    revisions: EngineeringRevision[]
+    current_revision: EngineeringRevision | null
+    stats: {
+        total: number
+        vigentes: number
+        spooleadas: number
+        obsoletas: number
+    }
+}
+
 export default function RevisionsTab({ projectId }: RevisionsTabProps) {
-    const router = useRouter()
     const [revisions, setRevisions] = useState<EngineeringRevision[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState('')
@@ -53,32 +63,65 @@ export default function RevisionsTab({ projectId }: RevisionsTabProps) {
         }
     }
 
-    const filteredRevisions = statusFilter === 'ALL'
-        ? revisions
-        : revisions.filter(r => r.revision_status === statusFilter)
+    // Grouping Logic
+    const groupedIsometrics = useMemo(() => {
+        const groups: Record<string, EngineeringRevision[]> = {}
 
-    // Calculate stats with correct status values
-    const stats = {
-        total: revisions.length,
-        vigentes: revisions.filter(r => r.revision_status === 'VIGENTE').length,
-        spooleadas: revisions.filter(r => r.revision_status === 'SPOOLEADO').length,
-        aplicadas: revisions.filter(r => r.revision_status === 'APLICADO').length,
-        obsoletas: revisions.filter(r => r.revision_status === 'OBSOLETA').length
-    }
+        revisions.forEach(rev => {
+            const iso = rev.iso_number || 'SIN-ISO'
+            if (!groups[iso]) {
+                groups[iso] = []
+            }
+            groups[iso].push(rev)
+        })
 
-    // Status colors mapping
-    const statusColors: Record<string, string> = {
-        'VIGENTE': '#3b82f6',      // Blue
-        'PENDING': '#fbbf24',      // Yellow
-        'SPOOLEADO': '#10b981',    // Green
-        'APLICADO': '#8b5cf6',     // Purple
-        'OBSOLETA': '#6b7280'      // Gray
+        // Transform to GroupedIsometric objects
+        const result: GroupedIsometric[] = Object.keys(groups).map(isoNum => {
+            const isoRevisions = groups[isoNum]
+
+            // Determine "Current" revision
+            const vigentes = isoRevisions.filter(r => r.revision_status === 'VIGENTE')
+            let current = vigentes.length > 0
+                ? vigentes[vigentes.length - 1] // Last VIGENTE
+                : isoRevisions.sort((a, b) => b.rev_code.localeCompare(a.rev_code, undefined, { numeric: true }))[0]
+
+            // Stats
+            const stats = {
+                total: isoRevisions.length,
+                vigentes: isoRevisions.filter(r => r.revision_status === 'VIGENTE').length,
+                spooleadas: isoRevisions.filter(r => r.revision_status === 'SPOOLEADO').length,
+                obsoletas: isoRevisions.filter(r => ['OBSOLETA', 'OBSOLETO', 'OBSOLETO_SPOOLEADO'].includes(r.revision_status)).length
+            }
+
+            return {
+                iso_number: isoNum,
+                revisions: isoRevisions,
+                current_revision: current,
+                stats
+            }
+        })
+
+        // Sort by ISO number
+        return result.sort((a, b) => a.iso_number.localeCompare(b.iso_number))
+    }, [revisions])
+
+    // Filter Logic
+    const filteredGroups = statusFilter === 'ALL'
+        ? groupedIsometrics
+        : groupedIsometrics.filter(g => g.current_revision?.revision_status === statusFilter)
+
+    // Global Stats
+    const globalStats = {
+        totalIsometrics: groupedIsometrics.length,
+        totalRevisions: revisions.length,
+        isometricsVigentes: groupedIsometrics.filter(g => g.current_revision?.revision_status === 'VIGENTE').length
     }
 
     if (isLoading) {
         return (
-            <div style={{ padding: '2rem', textAlign: 'center', color: 'white' }}>
-                Cargando revisiones...
+            <div style={{ padding: '4rem', textAlign: 'center', color: 'rgba(255,255,255,0.5)' }}>
+                <div className="spinner" style={{ margin: '0 auto 1rem', borderColor: 'rgba(255,255,255,0.2)', borderTopColor: '#3b82f6' }}></div>
+                Cargando historial de ingeniería...
             </div>
         )
     }
@@ -93,34 +136,27 @@ export default function RevisionsTab({ projectId }: RevisionsTabProps) {
 
     return (
         <div className="revisions-tab-container">
-            {/* Stats */}
+            {/* Global Stats Bar */}
             <div className="revisions-stats">
                 <div className="stat-card">
-                    <div className="stat-icon">📋</div>
+                    <div className="stat-icon">📐</div>
                     <div className="stat-content">
-                        <div className="stat-value">{stats.total}</div>
-                        <div className="stat-label">Total Revisiones</div>
+                        <div className="stat-value">{globalStats.totalIsometrics}</div>
+                        <div className="stat-label">Isométricos</div>
                     </div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon">🔵</div>
+                    <div className="stat-icon">📋</div>
                     <div className="stat-content">
-                        <div className="stat-value">{stats.vigentes}</div>
-                        <div className="stat-label">Vigentes</div>
+                        <div className="stat-value">{globalStats.totalRevisions}</div>
+                        <div className="stat-label">Total Versiones</div>
                     </div>
                 </div>
                 <div className="stat-card">
                     <div className="stat-icon">✅</div>
                     <div className="stat-content">
-                        <div className="stat-value">{stats.spooleadas}</div>
-                        <div className="stat-label">Spooleadas</div>
-                    </div>
-                </div>
-                <div className="stat-card">
-                    <div className="stat-icon">🎯</div>
-                    <div className="stat-content">
-                        <div className="stat-value">{stats.aplicadas}</div>
-                        <div className="stat-label">Aplicadas</div>
+                        <div className="stat-value">{globalStats.isometricsVigentes}</div>
+                        <div className="stat-label">Isos Vigentes</div>
                     </div>
                 </div>
             </div>
@@ -128,84 +164,41 @@ export default function RevisionsTab({ projectId }: RevisionsTabProps) {
             {/* Filters */}
             <div className="revisions-filters">
                 <div className="filter-group">
-                    <label className="filter-label">Estado:</label>
+                    <label className="filter-label">Filtrar por Estado Actual:</label>
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
                         className="filter-select"
                     >
-                        <option value="ALL">Todos</option>
-                        <option value="VIGENTE">Vigentes</option>
-                        <option value="SPOOLEADO">Spooleadas</option>
-                        <option value="APLICADO">Aplicadas</option>
-                        <option value="OBSOLETA">Obsoletas</option>
+                        <option value="ALL">Todos los Isométricos</option>
+                        <option value="VIGENTE">Solo Vigentes</option>
+                        <option value="SPOOLEADO">Solo Spooleados</option>
+                        <option value="PENDING">Solo Pendientes</option>
                     </select>
                 </div>
             </div>
 
-            {/* Revisions List */}
-            {filteredRevisions.length === 0 ? (
+            {/* Grouped List */}
+            {filteredGroups.length === 0 ? (
                 <div className="empty-state-container">
-                    <div className="empty-state-icon">📋</div>
-                    <h2 className="empty-state-title">No hay revisiones</h2>
+                    <div className="empty-state-icon">📂</div>
+                    <h2 className="empty-state-title">No hay isométricos</h2>
                     <p className="empty-state-description">
-                        {statusFilter !== 'ALL'
-                            ? `No hay revisiones con estado "${statusFilter}"`
-                            : 'Aún no se han creado revisiones para este proyecto'}
+                        No se encontraron isométricos que coincidan con los filtros.
                     </p>
-                    {statusFilter === 'ALL' && (
-                        <p className="empty-state-hint">
-                            Ve a la tab "1. Anuncio" para cargar revisiones desde un Excel
-                        </p>
-                    )}
                 </div>
             ) : (
-                <div className="revisions-list">
-                    {filteredRevisions.map(revision => {
-                        const statusColor = statusColors[revision.revision_status] || '#94a3b8'
-
-                        return (
-                            <div key={revision.id} className="revision-card">
-                                <div className="revision-header">
-                                    <div className="revision-title">
-                                        <h3>{revision.iso_number} - Rev {revision.rev_code}</h3>
-                                        <span
-                                            className="status-badge"
-                                            style={{ background: statusColor }}
-                                        >
-                                            {revision.revision_status}
-                                        </span>
-                                    </div>
-                                    <div className="revision-meta">
-                                        <span className="meta-item">
-                                            🔥 {revision.welds_count || 0} soldaduras
-                                        </span>
-                                        <span className="meta-item">
-                                            📦 {revision.spools_count || 0} spools
-                                        </span>
-                                        {revision.announcement_date && (
-                                            <span className="meta-item">
-                                                📅 {new Date(revision.announcement_date).toLocaleDateString('es-CL')}
-                                            </span>
-                                        )}
-                                        {revision.transmittal && (
-                                            <span className="meta-item">
-                                                TML: {revision.transmittal}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="revision-actions">
-                                    <button
-                                        onClick={() => router.push(`/founder/engineering/revisions/${revision.id}`)}
-                                        className="action-button primary"
-                                    >
-                                        Ver Detalles →
-                                    </button>
-                                </div>
-                            </div>
-                        )
-                    })}
+                <div className="revisions-list grouped-list">
+                    {filteredGroups.map(group => (
+                        <IsometricRevisionCard
+                            key={group.iso_number}
+                            isoNumber={group.iso_number}
+                            revisions={group.revisions}
+                            currentRevision={group.current_revision}
+                            stats={group.stats}
+                            onRefresh={loadRevisions}
+                        />
+                    ))}
                 </div>
             )}
         </div>

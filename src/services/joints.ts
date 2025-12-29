@@ -10,7 +10,7 @@ export interface JointRow {
     rev_number: string | null
     line_number: string | null
     sheet: string | null
-    joint_number: string
+    flanged_joint_number: string
     piping_class: string | null
     material: string | null
     rating: string | null
@@ -45,7 +45,7 @@ export function parseJointsFromArray(data: any[]): JointRow[] {
                 rev_number: row[1] ? String(row[1]).trim() : null,
                 line_number: row[2] ? String(row[2]).trim() : null,
                 sheet: row[3] ? String(row[3]).trim() : null,
-                joint_number: String(row[4] || '').trim(), // FLANGED JOINT NUMBER
+                flanged_joint_number: String(row[4] || '').trim(), // FLANGED JOINT NUMBER
                 piping_class: row[5] ? String(row[5]).trim() : null,
                 material: row[6] ? String(row[6]).trim() : null,
                 rating: row[7] ? String(row[7]).trim() : null,
@@ -55,7 +55,7 @@ export function parseJointsFromArray(data: any[]): JointRow[] {
             }
 
             // Basic validation
-            if (!jointRow.iso_number || !jointRow.joint_number) {
+            if (!jointRow.iso_number || !jointRow.flanged_joint_number) {
                 console.warn(`Skipping row ${i + 1}: Missing required fields`)
                 continue
             }
@@ -103,7 +103,7 @@ export async function uploadJoints(
             rev_number: row.rev_number,
             line_number: row.line_number,
             sheet: row.sheet,
-            joint_number: row.joint_number,
+            flanged_joint_number: row.flanged_joint_number,
             piping_class: row.piping_class,
             material: row.material,
             rating: row.rating,

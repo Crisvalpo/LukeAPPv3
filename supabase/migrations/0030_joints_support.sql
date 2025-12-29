@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS spools_joints (
   rev_number TEXT, -- REV
   line_number TEXT, -- LINE NUMBER
   sheet TEXT, -- SHEET
-  joint_number TEXT NOT NULL, -- FLANGED JOINT NUMBER
+  flanged_joint_number TEXT NOT NULL, -- FLANGED JOINT NUMBER (Renamed from joint_number)
   
   -- Spec & Material
   piping_class TEXT, -- PIPING CLASS
@@ -38,8 +38,23 @@ CREATE TABLE IF NOT EXISTS spools_joints (
 
 ALTER TABLE spools_joints ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "spools_joints_company_isolation" ON spools_joints
-  FOR ALL USING (company_id = (auth.jwt() ->> 'company_id')::uuid);
+CREATE POLICY "Users can view spools_joints"
+    ON public.spools_joints
+    FOR SELECT
+    USING (
+        company_id IN (
+            SELECT company_id FROM public.members WHERE user_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Users can manage spools_joints"
+    ON public.spools_joints
+    FOR ALL
+    USING (
+        company_id IN (
+            SELECT company_id FROM public.members WHERE user_id = auth.uid()
+        )
+    );
 
 -- =============================================
 -- 3. INDEXES for Performance

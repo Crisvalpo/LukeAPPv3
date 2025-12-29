@@ -123,9 +123,9 @@ export async function uploadSpoolsWelds(
             return result
         }
 
-        if (revision.revision_status !== 'VIGENTE' && revision.revision_status !== 'PENDING') {
-            result.errors.push('Revisión no está en estado VIGENTE')
-            result.message = `La revisión está en estado ${revision.revision_status}, solo se pueden cargar detalles a revisiones VIGENTE`
+        if (revision.revision_status !== 'VIGENTE' && revision.revision_status !== 'PENDING' && revision.revision_status !== 'SPOOLEADO') {
+            result.errors.push('Revisión no está en estado VIGENTE ni SPOOLEADO')
+            result.message = `La revisión está en estado ${revision.revision_status}, solo se pueden cargar detalles a revisiones VIGENTE o SPOOLEADO`
             return result
         }
 

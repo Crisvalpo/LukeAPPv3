@@ -20,6 +20,7 @@ import {
     validateAnnouncementData,
     type AnnouncementResult
 } from '@/services/revision-announcements'
+import '@/styles/engineering-details.css'
 
 interface Props {
     projectId: string
@@ -46,11 +47,36 @@ export default function RevisionAnnouncementTab({
 
         // Parse and preview Excel
         try {
-            const data = await parseExcelFile(selectedFile)
-            setPreview(data.slice(0, 10)) // First 10 rows
+            const rawData = await parseExcelFile(selectedFile)
 
-            // Validate
-            const validation = validateAnnouncementData(data)
+            // Format dates for preview
+            const previewData = rawData.slice(0, 10).map(row => {
+                const newRow = { ...row }
+                // Check common date columns
+                const dateKeys = ['FECHA', 'DATE', 'Fecha', 'Date']
+
+                dateKeys.forEach(key => {
+                    if (key in newRow) {
+                        const val = newRow[key]
+                        // If it's a number looking like an Excel date (roughly > 40000 for recent years)
+                        if (typeof val === 'number' && val > 30000 && val < 60000) {
+                            try {
+                                const excelEpoch = new Date(1899, 11, 30);
+                                const date = new Date(excelEpoch.getTime() + val * 24 * 60 * 60 * 1000);
+                                newRow[key] = date.toLocaleDateString('es-CL')
+                            } catch (e) {
+                                // Keep original if fail
+                            }
+                        }
+                    }
+                })
+                return newRow
+            })
+
+            setPreview(previewData)
+
+            // Validate (using raw data to ensure backend logic is what validates)
+            const validation = validateAnnouncementData(rawData)
             if (!validation.isValid) {
                 setValidationErrors(validation.errors)
             }
@@ -118,27 +144,30 @@ export default function RevisionAnnouncementTab({
     }
 
     return (
-        <div className="announcement-tab">
-            <div className="announcement-header">
-                <div className="header-content">
-                    <div className="icon">📢</div>
-                    <div>
-                        <h3>1. Anuncio de Revisiones</h3>
-                        <p>Carga el Excel con isométricos y sus revisiones para iniciar el flujo de ingeniería</p>
-                    </div>
-                </div>
-
+        <div className="detail-section">
+            <div className="section-info">
+                <p>Carga el Excel con isométricos y sus revisiones para iniciar el flujo de ingeniería.</p>
                 <button
-                    className="btn-download-template"
+                    className="btn-link"
                     onClick={downloadAnnouncementTemplate}
                 >
-                    <span>📥</span>
-                    Descargar Plantilla
+                    📥 Descargar Plantilla
                 </button>
             </div>
 
             {!file && !result && (
-                <FileDropZone onFileSelect={handleFileSelect} />
+                <div className="detail-uploader">
+                    <div className="file-input-wrapper">
+                        <input
+                            type="file"
+                            accept=".xlsx, .xls"
+                            onChange={(e) => {
+                                if (e.target.files?.[0]) handleFileSelect(e.target.files[0])
+                            }}
+                        />
+                        <div className="fake-btn">📂 Seleccionar Excel</div>
+                    </div>
+                </div>
             )}
 
             {file && !result && (
@@ -192,56 +221,6 @@ export default function RevisionAnnouncementTab({
 /**
  * File Drop Zone Component
  */
-function FileDropZone({ onFileSelect }: { onFileSelect: (file: File) => void }) {
-    const [isDragging, setIsDragging] = useState(false)
-
-    function handleDrop(e: React.DragEvent) {
-        e.preventDefault()
-        setIsDragging(false)
-
-        const files = e.dataTransfer.files
-        if (files.length > 0 && isExcelFile(files[0])) {
-            onFileSelect(files[0])
-        }
-    }
-
-    function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
-        const files = e.target.files
-        if (files && files.length > 0) {
-            onFileSelect(files[0])
-        }
-    }
-
-    function isExcelFile(file: File): boolean {
-        return file.name.endsWith('.xlsx') || file.name.endsWith('.xls')
-    }
-
-    return (
-        <div
-            className={`drop-zone ${isDragging ? 'dragging' : ''}`}
-            onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={handleDrop}
-        >
-            <div className="drop-zone-content">
-                <div className="drop-icon">📁</div>
-                <h4>Arrastra tu archivo Excel aquí</h4>
-                <p>o haz click para seleccionar</p>
-                <input
-                    type="file"
-                    accept=".xlsx,.xls"
-                    onChange={handleFileInput}
-                    style={{ display: 'none' }}
-                    id="file-input"
-                />
-                <label htmlFor="file-input" className="btn-select-file">
-                    Seleccionar Archivo
-                </label>
-                <span className="file-hint">Formatos: .xlsx, .xls</span>
-            </div>
-        </div>
-    )
-}
 
 /**
  * File Preview Component
@@ -327,7 +306,7 @@ function ResultsDisplay({
     onReset: () => void
 }) {
     return (
-        <div className="results-display">
+        <div className="upload-results">
             <div className={`results-header ${result.success ? 'success' : 'error'}`}>
                 <div className="icon">{result.success ? '✅' : '⚠️'}</div>
                 <div>

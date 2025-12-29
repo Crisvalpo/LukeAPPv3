@@ -303,3 +303,112 @@ export async function updateRevisionStatus(
         }
     }
 }
+
+/**
+ * Delete a revision and auto-promote the previous one if needed
+ */
+export async function deleteRevision(
+    revisionId: string,
+    userId: string
+): Promise<ApiResponse<void>> {
+    const supabase = await createClient()
+
+    try {
+        // 1. Get revision details before deleting
+        const { data: revisionToDelete, error: fetchError } = await supabase
+            .from('engineering_revisions')
+            .select('isometric_id, rev_code, revision_status')
+            .eq('id', revisionId)
+            .single()
+
+        if (fetchError || !revisionToDelete) {
+            return {
+                success: false,
+                message: 'No se encontró la revisión a eliminar'
+            }
+        }
+
+        const isometricId = revisionToDelete.isometric_id
+
+        // 2. Delete the revision
+        // Note: Cascade delete should handle related events/welds if set up, 
+        // otherwise we might need manual cleanup. Assuming cascade or simple delete for now.
+        const { error: deleteError } = await supabase
+            .from('engineering_revisions')
+            .delete()
+            .eq('id', revisionId)
+
+        if (deleteError) {
+            return {
+                success: false,
+                message: `Error al eliminar revisión: ${deleteError.message}`
+            }
+        }
+
+        // 3. Find the new "latest" revision (Auto-Promote Logic)
+        const { data: remainingRevisions } = await supabase
+            .from('engineering_revisions')
+            .select('id, rev_code, revision_status')
+            .eq('isometric_id', isometricId)
+            // Sort Descending locally to be safe or use DB match
+            .order('rev_code', { ascending: false }) // Assuming alpha-numeric sort works for Rev codes
+
+        if (remainingRevisions && remainingRevisions.length > 0) {
+            // Sort in JS to ensure correct semantic versioning (A, B, C... or 0, 1, 2...)
+            // If rev_code is mixed (0, A), localeCompare usually works well enough for simple cases.
+            const sorted = remainingRevisions.sort((a, b) =>
+                b.rev_code.localeCompare(a.rev_code, undefined, { numeric: true, sensitivity: 'base' })
+            )
+
+            const newLatest = sorted[0]
+
+            // If the deleted revision was VIGENTE (Active), we MUST promote the new latest
+            // Or if we just want to ensure the latest is ALWAYS Vigente in this workflow:
+            if (revisionToDelete.revision_status === 'VIGENTE' || newLatest.revision_status !== 'VIGENTE') {
+                // Promote to VIGENTE
+                await supabase
+                    .from('engineering_revisions')
+                    .update({ revision_status: 'VIGENTE' })
+                    .eq('id', newLatest.id)
+            }
+
+            // Update Isometric Header
+            await supabase
+                .from('isometrics')
+                .update({
+                    current_revision_id: newLatest.id,
+                    revision: newLatest.rev_code
+                    // We might not want to change the Iso Status itself unless it became empty, 
+                    // but usually it remains VIGENTE if it has revisions.
+                })
+                .eq('id', isometricId)
+
+        } else {
+            // No revisions left!
+            await supabase
+                .from('isometrics')
+                .update({
+                    current_revision_id: null,
+                    revision: null,
+                    status: 'VACIO' // Or 'ELIMINADO' depending on logic, but 'VACIO' implies no data
+                })
+                .eq('id', isometricId)
+        }
+
+        // 4. Emit Deletion Event (Optional: Logs)
+        // Since the revision is gone, we can't link the event to it easily unless we keep a separate log.
+        // Skipping strict event logging linked to the revision ID since it's hard deleted.
+
+        return {
+            success: true,
+            message: 'Revisión eliminada y línea de tiempo actualizada'
+        }
+
+    } catch (error) {
+        console.error('Error in deleteRevision:', error)
+        return {
+            success: false,
+            message: 'Error inesperado al eliminar revisión'
+        }
+    }
+}

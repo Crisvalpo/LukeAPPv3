@@ -191,13 +191,21 @@ export async function processAnnouncementUpload(
                 // Sanitize Date
                 let formattedDate: string | null = null;
                 if (ann.date) {
-                    let dateStr = ann.date.trim();
+                    let dateStr = String(ann.date).trim();
                     // Handle Spanish/European format DD-MM-YYYY or DD/MM/YYYY
                     // Regex matches: 04-07-2025 or 04/07/2025
                     const dmyMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
                     if (dmyMatch) {
                         // Convert to ISO format YYYY-MM-DD (e.g., 2025-07-04)
                         dateStr = `${dmyMatch[3]}-${dmyMatch[2].padStart(2, '0')}-${dmyMatch[1].padStart(2, '0')}`;
+                    } else {
+                        // Check fast excel numeric date (Excel serial date) if it looks numeric
+                        if (!isNaN(Number(dateStr))) {
+                            const serial = Number(dateStr);
+                            const excelEpoch = new Date(1899, 11, 30);
+                            const date = new Date(excelEpoch.getTime() + serial * 24 * 60 * 60 * 1000);
+                            dateStr = date.toISOString().split('T')[0];
+                        }
                     }
 
                     const d = new Date(dateStr);
@@ -209,6 +217,11 @@ export async function processAnnouncementUpload(
                     }
                 }
 
+                // Determine Status:
+                // If it's NOT the last one in the announcements list (which is sorted by rev), it is definitely OBSOLETE logic-wise for this batch
+                const isLatestInBatch = ann.rev_code === announcements[announcements.length - 1].rev_code;
+                const status = isLatestInBatch ? 'VIGENTE' : 'OBSOLETA';
+
                 // Create revision
                 const revisionPayload = {
                     isometric_id: isometricId,
@@ -217,7 +230,7 @@ export async function processAnnouncementUpload(
                     rev_code: ann.rev_code,
                     transmittal: ann.tml,
                     announcement_date: formattedDate,
-                    // revision_status: 'PENDING' // Let DB default handle this to avoid constraint issues
+                    revision_status: status // Explicitly set status
                 }
 
                 console.log('Inserting revision payload:', revisionPayload)
@@ -280,9 +293,9 @@ export async function processAnnouncementUpload(
  */
 function normalizeAnnouncementData(data: any[]): (AnnouncementRow & { row: number })[] {
     return data.map((row, index) => ({
-        iso_number: String(row['N°ISOMÉTRICO'] || row['ISO NUMBER'] || '').trim().toUpperCase(),
-        line_number: row['N° LÍNEA'] || row['LINE NUMBER'] ? String(row['N° LÍNEA'] || row['LINE NUMBER']).trim() : undefined,
-        rev_code: String(row['REV. ISO'] || row['REV'] || 'A').trim().toUpperCase(),
+        iso_number: String(row['N°ISOMÉTRICO'] ?? row['ISO NUMBER'] ?? '').trim().toUpperCase(),
+        line_number: row['N° LÍNEA'] ?? row['LINE NUMBER'] ? String(row['N° LÍNEA'] ?? row['LINE NUMBER']).trim() : undefined,
+        rev_code: String(row['REV. ISO'] ?? row['REV'] ?? 'A').trim().toUpperCase(),
         line_type: row['TIPO LÍNEA'] ? String(row['TIPO LÍNEA']).trim() : undefined,
         area: row['ÁREA'] || row['AREA'] ? String(row['ÁREA'] || row['AREA']).trim().toUpperCase() : undefined,
         sub_area: row['SUB-ÁREA'] ? String(row['SUB-ÁREA']).trim().toUpperCase() : undefined,
@@ -395,8 +408,8 @@ export function validateAnnouncementData(data: any[]): {
         }
 
         // REV required
-        const rev = row['REV. ISO'] || row['REV']
-        if (!rev || String(rev).trim() === '') {
+        const rev = row['REV. ISO'] ?? row['REV']
+        if (rev === undefined || rev === null || String(rev).trim() === '') {
             errors.push({
                 row: rowNum,
                 field: 'REV. ISO',
