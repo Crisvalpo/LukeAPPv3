@@ -5,8 +5,9 @@
  * 
  * Tabs:
  * - Revisiones (Phase 2 - Active)
- * - Isométricos (Future)
- * - Carga de Datos (Future)
+ * - Anuncio (Phase 2.7 - Upload announcements)
+ * - Detalles (Phase 2.8 - Upload details)
+ * - Fabricabilidad (Phase 2.10 - Material Control)
  */
 
 import { useState, useEffect } from 'react'
@@ -15,12 +16,13 @@ import { createClient } from '@/lib/supabase/client'
 import RevisionsTab from '@/components/engineering/RevisionsTab'
 import RevisionAnnouncementTab from '@/components/engineering/RevisionAnnouncementTab'
 import EngineeringDetailsTab from '@/components/engineering/EngineeringDetailsTab'
+import FabricabilityDashboard from '@/components/engineering/FabricabilityDashboard'
 import '@/styles/dashboard.css'
 import '@/styles/engineering.css'
 import '@/styles/announcement.css'
 import '@/styles/engineering-details.css'
 
-type TabType = 'revisiones' | 'announcement' | 'details'
+type TabType = 'revisiones' | 'announcement' | 'details' | 'fabricability'
 
 export default function EngineeringHub() {
     const router = useRouter()
@@ -36,7 +38,7 @@ export default function EngineeringHub() {
 
         // Check for tab in URL params
         const tab = searchParams.get('tab') as TabType
-        if (tab && ['revisiones', 'announcement', 'details'].includes(tab)) {
+        if (tab && ['revisiones', 'announcement', 'details', 'fabricability'].includes(tab)) {
             setActiveTab(tab)
         }
     }, [searchParams])
@@ -141,7 +143,9 @@ export default function EngineeringHub() {
             <div className="dashboard-header">
                 <div className="dashboard-header-content">
                     <div className="dashboard-accent-line" />
-                    <h1 className="dashboard-title">Ingeniería</h1>
+                    <h1 className="dashboard-title">Ingenier
+
+                        ía</h1>
                 </div>
                 <p className="dashboard-subtitle">
                     Gestión de datos de ingeniería, revisiones e isométricos
@@ -186,6 +190,12 @@ export default function EngineeringHub() {
                 >
                     🔧 2. Detalles
                 </button>
+                <button
+                    className={`tab-button ${activeTab === 'fabricability' ? 'active' : ''}`}
+                    onClick={() => changeTab('fabricability')}
+                >
+                    🟢 3. Fabricabilidad
+                </button>
             </div>
 
             {/* Tab Content */}
@@ -217,6 +227,10 @@ export default function EngineeringHub() {
                                 projectId={selectedProject}
                                 companyId={projects.find(p => p.id === selectedProject)?.company_id || ''}
                             />
+                        )}
+
+                        {activeTab === 'fabricability' && (
+                            <FabricabilityDashboard projectId={selectedProject} />
                         )}
                     </>
                 )}

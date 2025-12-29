@@ -136,3 +136,58 @@ export function downloadWeldsTemplate() {
     XLSX.utils.book_append_sheet(wb, ws, 'Welds');
     XLSX.writeFile(wb, `Plantilla_Welds_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
+
+/**
+ * Generate and download MTO template
+ */
+export function downloadMTOTemplate() {
+    const headers = [
+        'LINE NUMBER', 'AREA', 'SHEET', 'SPOOL NUMBER', 'SPOOL-ID',
+        'PIPING CLASS', 'REV', 'QTY', 'QTY UNIT', 'ITEM CODE', 'FAB'
+    ];
+
+    const exampleData = [
+        ['BBD-380-0403-1', '3800AE', '1', 'SP01', '3800AE-BBD-380-0403-1-SP01', 'F24', '4', 2.8, 'M', 'I63242705', 'F'],
+        ['BBD-380-0403-1', '3800AE', '1', 'SP01', '3800AE-BBD-380-0403-1-SP01', 'F24', '4', 1, 'PCS', 'I63243611', 'F'],
+        ['BBD-380-0403-1', '3800AE', '1', 'SP02', '3800AE-BBD-380-0403-1-SP02', 'F24', '4', 4.8, 'M', 'I63242705', 'F'],
+        ['BBD-380-0403-1', '3800AE', '1', 'SP02', '3800AE-BBD-380-0403-1-SP02', 'F24', '4', 2, 'PCS', 'I63242229', 'F'],
+        ['BBD-380-0403-1', '3800AE', '1', 'SPXX', '3800AE-BBD-380-0403-1-SPXX', 'F24', '4', 0.1, 'M', 'I63242745', 'G'],
+        ['BBD-380-0403-1', '3800AE', '1', 'SPXX', '3800AE-BBD-380-0403-1-SPXX', 'F24', '4', 1, 'PCS', 'I64908134', 'G']
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...exampleData]);
+
+    // Set column widths
+    ws['!cols'] = headers.map(() => ({ wch: 18 }));
+
+    XLSX.utils.book_append_sheet(wb, ws, 'MTO');
+    XLSX.writeFile(wb, `Plantilla_MTO_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
+/**
+ * Generate and download Joints template
+ */
+export function downloadJointsTemplate() {
+    const headers = [
+        'ISO NUMBER', 'REV', 'LINE NUMBER', 'SHEET', 'FLANGED JOINT NUMBER',
+        'PIPING CLASS', 'MATERIAL', 'RATING', 'NPS', 'BOLT SIZE'
+    ];
+
+    const exampleData = [
+        ['3800AE-BBD-380-0403-1', '0', 'BBD-380-0403-1', '1', 'J-01', 'F24', 'CS', '150#', '4', '5/8" x 90mm'],
+        ['3800AE-BBD-380-0403-1', '0', 'BBD-380-0403-1', '1', 'J-02', 'F24', 'CS', '150#', '4', '5/8" x 90mm'],
+        ['3800AE-BBD-380-0403-1', '0', 'BBD-380-0403-1', '2', 'J-03', 'F24', 'CS', '300#', '6', '3/4" x 110mm']
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...exampleData]);
+
+    // Set column widths
+    ws['!cols'] = headers.map(() => ({ wch: 18 }));
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Joints');
+    XLSX.writeFile(wb, `Plantilla_Juntas_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
+

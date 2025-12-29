@@ -34,12 +34,19 @@ export default function RevisionSelector({
 }: Props) {
     const [isometrics, setIsometrics] = useState<Isometric[]>([])
     const [selectedIso, setSelectedIso] = useState<string>('')
-
     const [revisions, setRevisions] = useState<Revision[]>([])
     const [selectedRev, setSelectedRev] = useState<string>('')
-
     const [loadingIso, setLoadingIso] = useState(false)
     const [loadingRev, setLoadingRev] = useState(false)
+
+    // Search state
+    const [isOpen, setIsOpen] = useState(false)
+    const [searchTerm, setSearchTerm] = useState('')
+
+    // Filter isometrics based on search
+    const filteredIsometrics = isometrics.filter(iso =>
+        iso.iso_number.toLowerCase().includes(searchTerm.toLowerCase())
+    )
 
     // Load Isometrics on mount
     useEffect(() => {
@@ -52,11 +59,17 @@ export default function RevisionSelector({
     useEffect(() => {
         if (selectedIso) {
             loadRevisions(selectedIso)
+            // Update search term to match selected iso if not already (for initial load or external set)
+            const iso = isometrics.find(i => i.id === selectedIso)
+            if (iso && !isOpen) {
+                setSearchTerm(iso.iso_number)
+            }
         } else {
             setRevisions([])
             setSelectedRev('')
+            if (!isOpen) setSearchTerm('')
         }
-    }, [selectedIso])
+    }, [selectedIso, isometrics]) // Added isometrics dependency to ensure name update
 
     async function loadIsometrics() {
         setLoadingIso(true)
@@ -92,9 +105,11 @@ export default function RevisionSelector({
         }
     }
 
-    function handleIsoChange(e: React.ChangeEvent<HTMLSelectElement>) {
-        setSelectedIso(e.target.value)
-        setSelectedRev('') // Reset revision
+    function handleIsoSelect(iso: Isometric) {
+        setSelectedIso(iso.id)
+        setSearchTerm(iso.iso_number)
+        setIsOpen(false)
+        setSelectedRev('')
     }
 
     function handleRevChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -111,20 +126,41 @@ export default function RevisionSelector({
         <div className="revision-selector-group">
             <div className="selector-item">
                 <label>Isométrico:</label>
-                <select
-                    value={selectedIso}
-                    onChange={handleIsoChange}
-                    disabled={disabled || loadingIso}
-                    className="form-select"
-                >
-                    <option value="">-- Seleccionar --</option>
-                    {isometrics.map(iso => (
-                        <option key={iso.id} value={iso.id}>
-                            {iso.iso_number}
-                        </option>
-                    ))}
-                </select>
-                {loadingIso && <span className="loader-mini" />}
+                <div className="combobox-wrapper">
+                    <input
+                        type="text"
+                        placeholder={loadingIso ? "Cargando..." : "Buscar isométrico..."}
+                        value={searchTerm}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value)
+                            setIsOpen(true)
+                            if (e.target.value === '') setSelectedIso('')
+                        }}
+                        onFocus={() => setIsOpen(true)}
+                        onBlur={() => setTimeout(() => setIsOpen(false), 200)} // Delay to allow click
+                        disabled={disabled || loadingIso}
+                        className="form-input search-input"
+                    />
+                    {loadingIso && <span className="loader-mini input-loader" />}
+
+                    {isOpen && !disabled && (
+                        <div className="combobox-options">
+                            {filteredIsometrics.length > 0 ? (
+                                filteredIsometrics.map(iso => (
+                                    <div
+                                        key={iso.id}
+                                        className={`option ${selectedIso === iso.id ? 'selected' : ''}`}
+                                        onClick={() => handleIsoSelect(iso)}
+                                    >
+                                        {iso.iso_number}
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="no-options">No se encontraron resultados</div>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
 
             <div className="selector-item">
@@ -163,10 +199,62 @@ export default function RevisionSelector({
                     flex: 1;
                     position: relative;
                 }
+                
+                .combobox-wrapper {
+                    position: relative;
+                    width: 100%;
+                }
+
+                .search-input {
+                    padding-right: 30px; /* Space for loader */
+                }
+
+                .combobox-options {
+                    position: absolute;
+                    top: 100%;
+                    left: 0;
+                    right: 0;
+                    max-height: 250px;
+                    overflow-y: auto;
+                    background: #1e1e1e;
+                    border: 1px solid rgba(255,255,255,0.2);
+                    border-radius: 6px;
+                    z-index: 100;
+                    margin-top: 4px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                }
+
+                .option {
+                    padding: 10px 12px;
+                    cursor: pointer;
+                    color: #e2e8f0;
+                    border-bottom: 1px solid rgba(255,255,255,0.05);
+                    transition: background 0.2s;
+                }
+
+                .option:last-child {
+                    border-bottom: none;
+                }
+
+                .option:hover {
+                    background: rgba(255,255,255,0.1);
+                }
+
+                .option.selected {
+                    background: rgba(var(--accent-rgb), 0.2);
+                    color: var(--accent);
+                    font-weight: 500;
+                }
+
+                .no-options {
+                    padding: 12px;
+                    color: #718096;
+                    text-align: center;
+                    font-size: 0.9rem;
+                }
+
                 .loader-mini {
                     position: absolute;
-                    right: 10px;
-                    top: 35px;
                     width: 12px;
                     height: 12px;
                     border: 2px solid rgba(255,255,255,0.5);
@@ -174,6 +262,12 @@ export default function RevisionSelector({
                     border-radius: 50%;
                     animation: spin 1s linear infinite;
                 }
+
+                .loader-mini.input-loader {
+                    right: 12px;
+                    top: 14px;
+                }
+
                 @keyframes spin { to { transform: rotate(360deg); } }
             `}</style>
         </div>

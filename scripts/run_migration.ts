@@ -50,5 +50,5 @@ async function executeSQLFile(filePath: string) {
     }
 }
 
-// Ejecutar el fix de RLS
-executeSQLFile('supabase/migrations/0005_fix_auth_users_access.sql')
+// Ejecutar migration 0030 - Joints Support
+executeSQLFile('supabase/migrations/0030_joints_support.sql')

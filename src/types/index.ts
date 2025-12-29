@@ -351,6 +351,134 @@ export const ResolutionType = {
 
 export type ResolutionTypeEnum = typeof ResolutionType[keyof typeof ResolutionType]
 
+// ===== MATERIAL CONTROL =====
+
+export const MaterialRequestType = {
+    CLIENT_MIR: 'CLIENT_MIR',
+    CONTRACTOR_PO: 'CONTRACTOR_PO'
+} as const
+
+export type MaterialRequestTypeEnum = typeof MaterialRequestType[keyof typeof MaterialRequestType]
+
+export const MaterialRequestStatus = {
+    DRAFT: 'DRAFT',
+    SUBMITTED: 'SUBMITTED',
+    APPROVED: 'APPROVED',
+    PARTIAL: 'PARTIAL',
+    REJECTED: 'REJECTED',
+    COMPLETED: 'COMPLETED'
+} as const
+
+export type MaterialRequestStatusEnum = typeof MaterialRequestStatus[keyof typeof MaterialRequestStatus]
+
+export const MaterialInstanceStatus = {
+    ISSUED: 'ISSUED',
+    CUT: 'CUT',
+    INSTALLED: 'INSTALLED',
+    SCRAP: 'SCRAP'
+} as const
+
+export type MaterialInstanceStatusEnum = typeof MaterialInstanceStatus[keyof typeof MaterialInstanceStatus]
+
+export const DataStatus = {
+    VACIO: 'VACIO',
+    EN_DESARROLLO: 'EN_DESARROLLO',
+    COMPLETO: 'COMPLETO',
+    BLOQUEADO: 'BLOQUEADO'
+} as const
+
+export type DataStatusEnum = typeof DataStatus[keyof typeof DataStatus]
+
+export const MaterialStatus = {
+    NO_REQUERIDO: 'NO_REQUERIDO',
+    PENDIENTE_COMPRA: 'PENDIENTE_COMPRA',
+    PENDIENTE_APROBACION: 'PENDIENTE_APROBACION',
+    EN_TRANSITO: 'EN_TRANSITO',
+    DISPONIBLE: 'DISPONIBLE',
+    ASIGNADO: 'ASIGNADO'
+} as const
+
+export type MaterialStatusEnum = typeof MaterialStatus[keyof typeof MaterialStatus]
+
+export const SpoolType = {
+    PIPE_STICK: 'PIPE_STICK',
+    SIMPLE: 'SIMPLE',
+    COMPLEX: 'COMPLEX'
+} as const
+
+export type SpoolTypeEnum = typeof SpoolType[keyof typeof SpoolType]
+
+export interface MaterialRequest {
+    id: string
+    project_id: string
+    company_id: string
+    request_number: string
+    request_type: MaterialRequestTypeEnum
+    status: MaterialRequestStatusEnum
+    requested_date: string
+    eta_date: string | null
+    notes: string | null
+    created_at: string
+}
+
+export interface MaterialRequestItem {
+    id: string
+    request_id: string
+    material_spec: string
+    quantity_requested: number
+    quantity_approved: number | null
+    quantity_received: number
+    spool_id: string | null
+    isometric_id: string | null
+    unit_price: number | null
+    created_at: string
+}
+
+export interface MaterialReceipt {
+    id: string
+    request_id: string
+    project_id: string
+    receipt_date: string
+    delivery_note: string | null
+    received_by: string | null
+    notes: string | null
+    created_at: string
+}
+
+export interface MaterialReceiptItem {
+    id: string
+    receipt_id: string
+    request_item_id: string
+    quantity: number
+    batch_id: string | null
+    created_at: string
+}
+
+export interface MaterialInventory {
+    id: string
+    project_id: string
+    company_id: string
+    material_spec: string
+    quantity_available: number
+    quantity_allocated: number
+    location: string | null
+    source_request_id: string | null
+    created_at: string
+}
+
+export interface MaterialInstance {
+    id: string
+    project_id: string
+    company_id: string
+    qr_code: string
+    material_spec: string
+    source_batch_id: string | null
+    spool_id: string | null
+    request_item_id: string | null
+    status: MaterialInstanceStatusEnum
+    created_at: string
+}
+
 export interface EngineeringRevision {
     id: string
     isometric_id: string
@@ -361,6 +489,10 @@ export interface EngineeringRevision {
     transmittal: string | null
     announcement_date: string | null
     created_at: string
+
+    // New status fields (FASE 2A)
+    data_status: DataStatusEnum
+    material_status: MaterialStatusEnum
 
     // Computed/joined fields
     iso_number?: string
@@ -408,3 +540,26 @@ export interface ProductionStatus {
 }
 
 export type ProductionLevel = 'ENGINEERING_ONLY' | 'FABRICATED_ONLY' | 'IN_PROGRESS'
+
+// Material Control helper types
+export interface CreateMaterialRequestParams {
+    project_id: string
+    request_type: MaterialRequestTypeEnum
+    notes?: string
+    items: {
+        material_spec: string
+        quantity_requested: number
+        spool_id?: string
+        isometric_id?: string
+    }[]
+}
+
+export interface CreateMaterialReceiptParams {
+    request_id: string
+    delivery_note?: string
+    items: {
+        request_item_id: string
+        quantity: number
+        batch_id?: string
+    }[]
+}
