@@ -15,7 +15,8 @@ import {
     HardHat,
     LogOut,
     Shield,
-    ChevronRight
+    ChevronRight,
+    Package
 } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
@@ -78,6 +79,7 @@ export default function Sidebar({ role }: SidebarProps) {
         { name: 'Invitaciones', href: '/founder/invitations', icon: UserPlus },
         { name: 'Mi Empresa', href: '/founder/company', icon: Building2 },
         { name: 'Roles', href: '/founder/settings/roles', icon: Users },
+        { name: 'Abastecimiento', href: '/founder/procurement', icon: Package },
     ]
 
     // Admin Menu (Project-Level)

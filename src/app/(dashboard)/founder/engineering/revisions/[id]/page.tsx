@@ -219,12 +219,12 @@ export default function RevisionDetailPage() {
                     <div className="stat-icon">📅</div>
                     <div>
                         <div className="stat-value">
-                            {revision.announced_at
-                                ? new Date(revision.announced_at).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })
+                            {revision.announcement_date
+                                ? new Date(revision.announcement_date).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })
                                 : 'N/A'
                             }
                         </div>
-                        <div className="stat-label">Anunciada</div>
+                        <div className="stat-label">Fecha Transmittal</div>
                     </div>
                 </div>
             </div>

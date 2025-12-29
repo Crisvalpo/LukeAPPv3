@@ -50,5 +50,5 @@ async function executeSQLFile(filePath: string) {
     }
 }
 
-// Ejecutar migration 0034 - Force Schema Refresh
-executeSQLFile('supabase/migrations/0034_force_schema_refresh.sql')
+// Ejecutar migration 0036 - Material Catalog
+executeSQLFile('supabase/migrations/0036_material_catalog.sql')

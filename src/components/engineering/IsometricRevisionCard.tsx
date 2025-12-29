@@ -100,8 +100,8 @@ export default function IsometricRevisionCard({
                                 <span className="value">{stats.obsoletas}</span>
                             </div>
                         )}
-                        <div className="quick-stat info" title="Spooleadas">
-                            <span className="label">Spool.</span>
+                        <div className="quick-stat info" title="Revisiones Spooleadas">
+                            <span className="label">Spooleadas</span>
                             <span className="value">{stats.spooleadas}</span>
                         </div>
                     </div>
@@ -109,8 +109,9 @@ export default function IsometricRevisionCard({
 
                 <div className="card-controls">
                     {/* Could add bulk actions here */}
+
                     <button
-                        className={`btn - expand ${isExpanded ? 'active' : ''} `}
+                        className={`btn-expand ${isExpanded ? 'active' : ''}`}
                         onClick={() => setIsExpanded(!isExpanded)}
                     >
                         {isExpanded ? 'Ocultar Historial' : 'Ver Historial'}
@@ -120,75 +121,77 @@ export default function IsometricRevisionCard({
             </div>
 
             {/* Expanded History */}
-            {isExpanded && (
-                <div className="isometric-history">
-                    <div className="history-table-wrapper">
-                        <table className="history-table">
-                            <thead>
-                                <tr>
-                                    <th>Rev</th>
-                                    <th>Estado</th>
-                                    <th>Fecha</th>
-                                    <th>Soldaduras</th>
-                                    <th>Spools</th>
-                                    <th>TML</th>
-                                    <th style={{ textAlign: 'right' }}>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {sortedRevisions.map(rev => (
-                                    <tr key={rev.id} className={rev.id === currentRevision?.id ? 'active-row' : ''}>
-                                        <td className="col-rev">
-                                            <span className="rev-circle">{rev.rev_code}</span>
-                                        </td>
-                                        <td>
-                                            <span
-                                                className="status-pill"
-                                                style={{
-                                                    color: statusColors[rev.revision_status] || '#ccc',
-                                                    borderColor: statusColors[rev.revision_status] || '#ccc',
-                                                    background: `${statusColors[rev.revision_status] || '#ccc'} 15` // 15 = hex opacity approx 8%
-                                                }}
-                                            >
-                                                {rev.revision_status}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            {rev.announcement_date
-                                                ? new Date(rev.announcement_date).toLocaleDateString('es-CL')
-                                                : '-'
-                                            }
-                                        </td>
-                                        <td>{rev.welds_count || 0}</td>
-                                        <td>{rev.spools_count || 0}</td>
-                                        <td className="col-tml" title={rev.transmittal || ''}>
-                                            {rev.transmittal || '-'}
-                                        </td>
-                                        <td style={{ textAlign: 'right' }}>
-                                            <div className="action-group">
-                                                <button
-                                                    className="btn-link-action"
-                                                    onClick={() => router.push(`/ founder / engineering / revisions / ${rev.id} `)}
-                                                >
-                                                    Ver Detalles
-                                                </button>
-                                                <button
-                                                    className="btn-icon-danger"
-                                                    onClick={() => handleDelete(rev.id, rev.rev_code)}
-                                                    disabled={isDeleting === rev.id}
-                                                    title="Eliminar Revisión"
-                                                >
-                                                    {isDeleting === rev.id ? '...' : '🗑️'}
-                                                </button>
-                                            </div>
-                                        </td>
+            {
+                isExpanded && (
+                    <div className="isometric-history">
+                        <div className="history-table-wrapper">
+                            <table className="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Rev</th>
+                                        <th>Estado</th>
+                                        <th>Fecha</th>
+                                        <th>Soldaduras</th>
+                                        <th>Spools</th>
+                                        <th>TML</th>
+                                        <th style={{ textAlign: 'right' }}>Acciones</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {sortedRevisions.map(rev => (
+                                        <tr key={rev.id} className={rev.id === currentRevision?.id ? 'active-row' : ''}>
+                                            <td className="col-rev">
+                                                <span className="rev-circle">{rev.rev_code}</span>
+                                            </td>
+                                            <td>
+                                                <span
+                                                    className="status-pill"
+                                                    style={{
+                                                        color: statusColors[rev.revision_status] || '#ccc',
+                                                        borderColor: statusColors[rev.revision_status] || '#ccc',
+                                                        background: `${statusColors[rev.revision_status] || '#ccc'} 15` // 15 = hex opacity approx 8%
+                                                    }}
+                                                >
+                                                    {rev.revision_status}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {rev.announcement_date
+                                                    ? new Date(rev.announcement_date).toLocaleDateString('es-CL')
+                                                    : '-'
+                                                }
+                                            </td>
+                                            <td>{rev.welds_count || 0}</td>
+                                            <td>{rev.spools_count || 0}</td>
+                                            <td className="col-tml" title={rev.transmittal || ''}>
+                                                {rev.transmittal || '-'}
+                                            </td>
+                                            <td style={{ textAlign: 'right' }}>
+                                                <div className="action-group">
+                                                    <button
+                                                        className="btn-link-action"
+                                                        onClick={() => router.push(`/founder/engineering/revisions/${rev.id}`)}
+                                                    >
+                                                        Ver Detalles
+                                                    </button>
+                                                    <button
+                                                        className="btn-icon-danger"
+                                                        onClick={() => handleDelete(rev.id, rev.rev_code)}
+                                                        disabled={isDeleting === rev.id}
+                                                        title="Eliminar Revisión"
+                                                    >
+                                                        {isDeleting === rev.id ? '...' : '🗑️'}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     )
 }

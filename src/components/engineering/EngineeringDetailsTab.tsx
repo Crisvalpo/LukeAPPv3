@@ -15,6 +15,8 @@ import DetailUploader from './DetailUploader'
 import MTOUploader from './MTOUploader'
 import JointsUploader from './JointsUploader'
 import { downloadWeldsTemplate, downloadMTOTemplate, downloadJointsTemplate } from '@/lib/utils/template-generator'
+import { getMTOCount } from '@/services/mto'
+import { getJointsCount } from '@/services/joints'
 import '@/styles/engineering-details.css'
 
 interface Props {
@@ -30,35 +32,84 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
     } | null>(null)
 
     const [activeTab, setActiveTab] = useState<'welds' | 'mto' | 'joints'>('welds')
-    const [counts, setCounts] = useState<{ welds: number, spools: number } | null>(null)
+    const [counts, setCounts] = useState<{ welds: number, spools: number, mto: number, joints: number } | null>(null)
+    const [requiresJoints, setRequiresJoints] = useState<boolean | null>(null)
 
-    // Fetch counts when context changes
+    // Fetch counts and config when context changes
     const handleContextChange = async (context: { isoId: string, revId: string, isoNumber: string }) => {
         setSelectedContext(context)
-        setCounts(null) // Reset while loading
+        setCounts(null)
+        setRequiresJoints(null)
 
         if (!context.revId) return
 
         const supabase = createClient()
 
-        // Count Welds
-        const { count: weldsCount } = await supabase
-            .from('spools_welds')
-            .select('*', { count: 'exact', head: true })
-            .eq('revision_id', context.revId)
+        try {
+            // Fetch Revision Config
+            const { data: revData } = await supabase
+                .from('engineering_revisions')
+                .select('requires_joints')
+                .eq('id', context.revId)
+                .single()
 
-        // Count Spools
-        const { data: spools } = await supabase
-            .from('spools_welds')
-            .select('spool_number')
-            .eq('revision_id', context.revId)
+            if (revData) {
+                setRequiresJoints(revData.requires_joints)
+            }
 
-        const uniqueSpools = new Set(spools?.map(s => s.spool_number))
+            // Count Welds
+            const { count: weldsCount } = await supabase
+                .from('spools_welds')
+                .select('*', { count: 'exact', head: true })
+                .eq('revision_id', context.revId)
 
-        setCounts({
-            welds: weldsCount || 0,
-            spools: uniqueSpools.size
-        })
+            // Count Spools
+            const { data: spools } = await supabase
+                .from('spools_welds')
+                .select('spool_number')
+                .eq('revision_id', context.revId)
+
+            const uniqueSpools = new Set(spools?.map(s => s.spool_number))
+
+            // Count MTO & Joints (Parallel)
+            const [mtoCount, jointsCount] = await Promise.all([
+                getMTOCount(context.revId).catch(() => 0),
+                getJointsCount(context.revId).catch(() => 0)
+            ])
+
+            setCounts({
+                welds: weldsCount || 0,
+                spools: uniqueSpools.size,
+                mto: mtoCount,
+                joints: jointsCount
+            })
+        } catch (error) {
+            console.error('Error fetching detail counts:', error)
+        }
+    }
+
+    // Smart Opacity Logic
+    const getOpacity = (count: number, isJoints: boolean = false) => {
+        if (count > 0) return 1
+        // If it's joints and explicitly NOT required, show solid (confirmed 0)
+        if (isJoints && requiresJoints === false) return 1
+        // Otherwise (pending or unknown) show 0.4
+        return 0.4
+    }
+
+    // Update toggle
+    const updateRequiresJoints = async (required: boolean) => {
+        if (!selectedContext?.revId) return
+
+        const supabase = createClient()
+        const { error } = await supabase
+            .from('engineering_revisions')
+            .update({ requires_joints: required })
+            .eq('id', selectedContext.revId)
+
+        if (!error) {
+            setRequiresJoints(required)
+        }
     }
 
     return (
@@ -85,7 +136,7 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
                             Trabajando en: <strong>{selectedContext.isoNumber}</strong> (Revisión Seleccionada)
                         </div>
 
-                        {counts && (counts.welds > 0 || counts.spools > 0) && (
+                        {counts && (counts.welds > 0 || counts.spools > 0 || counts.mto > 0 || counts.joints > 0) && (
                             <div className="eng-data-summary-card">
                                 <div className="eng-summary-item">
                                     <span className="icon">🔥</span>
@@ -97,6 +148,18 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
                                     <span className="icon">📦</span>
                                     <span className="count">{counts.spools}</span>
                                     <span className="label">Spools</span>
+                                </div>
+                                <div className="eng-divider"></div>
+                                <div className="eng-summary-item" style={{ opacity: getOpacity(counts.mto) }}>
+                                    <span className="icon">📋</span>
+                                    <span className="count">{counts.mto}</span>
+                                    <span className="label">MTO</span>
+                                </div>
+                                <div className="eng-divider"></div>
+                                <div className="eng-summary-item" style={{ opacity: getOpacity(counts.joints, true) }}>
+                                    <span className="icon">🔧</span>
+                                    <span className="count">{counts.joints}</span>
+                                    <span className="label">Juntas</span>
                                 </div>
                                 <div className="eng-status-indicator">
                                     ✅ Datos ya cargados
@@ -124,6 +187,11 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
                         >
                             🔧 Juntas
                         </button>
+
+                        {/* Placeholder Tabs */}
+                        <button className="future-tab" title="Próximamente">🏗️ Soportes</button>
+                        <button className="future-tab" title="Próximamente">🛑 Válvulas</button>
+                        <button className="future-tab" title="Próximamente">🌡️ Instrumentos</button>
                     </div>
 
                     <div className="tab-content">
@@ -161,6 +229,28 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
                                     <strong>Juntas Apernadas:</strong> Cargar reporte de juntas (Bolted Joints).
                                     <button className="btn-link" onClick={downloadJointsTemplate}>📥 Descargar Plantilla</button>
                                 </p>
+
+                                {counts?.joints === 0 && (
+                                    <div className="joints-requirement-check">
+                                        <p>¿Esta revisión requiere Uniones Apernadas?</p>
+                                        <div className="check-actions">
+                                            <button
+                                                className={`btn-check ${requiresJoints === true ? 'active' : ''}`}
+                                                onClick={() => updateRequiresJoints(true)}
+                                            >
+                                                SI
+                                            </button>
+                                            <button
+                                                className={`btn-check ${requiresJoints === false ? 'active' : ''}`}
+                                                onClick={() => updateRequiresJoints(false)}
+                                            >
+                                                NO
+                                            </button>
+                                        </div>
+                                        {requiresJoints === false && <span className="status-note">✅ Marcado como "No Aplica"</span>}
+                                    </div>
+                                )}
+
                                 <JointsUploader
                                     revisionId={selectedContext.revId}
                                     projectId={projectId}
@@ -169,7 +259,7 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
                             </div>
                         )}
                     </div>
-                </div>
+                </div >
             ) : (
                 <div className="placeholder-state">
                     👆 Selecciona un isométrico y revisión arriba para comenzar
@@ -214,10 +304,11 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
 
                 .eng-summary-item {
                     display: flex;
-                    flex-direction: column; /* Vertical layout based on screenshot hint */
+                    flex-direction: column;
                     align-items: center;
                     gap: 4px;
                     min-width: 80px;
+                    transition: opacity 0.3s;
                 }
 
                 .eng-summary-item .icon {
@@ -228,9 +319,13 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
                 .eng-summary-item .count {
                     font-weight: 800;
                     font-size: 1.4rem;
-                    color: #fff; /* White should pop on #1e1e1e */
+                    color: #fff;
                     line-height: 1;
                 }
+                
+                /* Helper classes for JS-in-CSS opacity control */
+                /* We will apply inline styles for dynamic opacity */
+
 
                 .eng-summary-item .label {
                     color: #aaa;
@@ -269,6 +364,26 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
                 }
                 .tabs-nav button:hover { color: #fff; background: rgba(255,255,255,0.02); }
                 .tabs-nav button.active { color: var(--accent); border-bottom-color: var(--accent); }
+                
+                .future-tab {
+                    opacity: 0.4;
+                    cursor: not-allowed !important;
+                    filter: grayscale(1);
+                    position: relative;
+                }
+                .future-tab:hover::after {
+                    content: attr(title);
+                    position: absolute;
+                    bottom: 100%;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: #333;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    font-size: 0.75rem;
+                    white-space: nowrap;
+                    pointer-events: none;
+                }
 
                 .placeholder-state {
                     text-align: center; padding: 40px; color: #666;
@@ -282,6 +397,36 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
                     from { opacity: 0; transform: translateY(-10px); }
                     to { opacity: 1; transform: translateY(0); }
                 }
+                .joints-requirement-check {
+                    background: rgba(255, 255, 255, 0.05);
+                    padding: 15px;
+                    border-radius: 8px;
+                    margin-bottom: 20px;
+                    display: flex;
+                    align-items: center;
+                    gap: 20px;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                }
+                .joints-requirement-check p { margin: 0; color: #ccc; font-size: 0.95rem; }
+                .check-actions { display: flex; gap: 10px; }
+                .btn-check {
+                    padding: 6px 16px;
+                    border-radius: 6px;
+                    border: 1px solid rgba(255,255,255,0.2);
+                    background: transparent;
+                    color: #aaa;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    font-weight: 600;
+                }
+                .btn-check:hover { background: rgba(255,255,255,0.1); color: white; }
+                .btn-check.active {
+                    background: var(--accent);
+                    color: white;
+                    border-color: var(--accent);
+                    box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.3);
+                }
+                .status-note { color: #10b981; font-size: 0.9rem; font-weight: 500; }
             `}</style>
         </div>
     )
