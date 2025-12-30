@@ -12,12 +12,13 @@ interface InvitationManagerProps {
     invitations: Invitation[]
     companyName?: string
     requireProject?: boolean
+    fixedProjectId?: string // NEW: Lock to specific project
     roleOptions?: { value: string; label: string; description: string }[]
     onInvite: (data: {
         email: string
         project_id?: string
         role_id: string
-        functional_role_id?: string  // NEW: Optional functional role
+        functional_role_id?: string
         job_title: string
     }) => Promise<{ success: boolean; message?: string; data?: { link: string } }>
     onRevoke: (id: string) => Promise<void>
@@ -29,6 +30,7 @@ export default function InvitationManager({
     invitations,
     companyName,
     requireProject = true,
+    fixedProjectId, // NEW
     roleOptions = [
         { value: 'admin', label: 'Administrador de Proyecto', description: 'Gestión total de spools, personal y reportes.' }
     ],
@@ -47,11 +49,18 @@ export default function InvitationManager({
     // Form State
     const [formData, setFormData] = useState({
         email: '',
-        project_id: '',
+        project_id: fixedProjectId || '', // Initialize with fixed ID if present
         role_id: roleOptions[0].value,
-        functional_role_id: '',  // NEW
+        functional_role_id: '',
         job_title: ''
     })
+
+    // Update form if fixedProjectId changes
+    useEffect(() => {
+        if (fixedProjectId) {
+            setFormData(prev => ({ ...prev, project_id: fixedProjectId }))
+        }
+    }, [fixedProjectId])
 
     // Fetch functional roles on mount
     useEffect(() => {
@@ -186,23 +195,7 @@ export default function InvitationManager({
                             <div className="error-alert" style={{ marginBottom: '1rem' }}>{error}</div>
                         )}
 
-                        {requireProject && (
-                            <div className="form-field">
-                                <label className="form-label">Proyecto Destino</label>
-                                <select
-                                    required={requireProject}
-                                    value={formData.project_id}
-                                    onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
-                                    className="form-select"
-                                >
-                                    <option value="">Seleccionar proyecto...</option>
-                                    {projects.map((p) => (
-                                        <option key={p.id} value={p.id}>{p.name} ({p.code})</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-
+                        {/* 1. Email (First Step) */}
                         <div className="form-field">
                             <label className="form-label">Email del Usuario</label>
                             <input
@@ -215,55 +208,11 @@ export default function InvitationManager({
                             />
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                            <div className="form-field">
-                                <label className="form-label">Rol de Sistema (Permisos)</label>
-                                {roleOptions.length > 1 ? (
-                                    <select
-                                        value={formData.role_id}
-                                        onChange={(e) => {
-                                            // Auto-suggest title if empty
-                                            const newRole = e.target.value;
-                                            const roleLabel = roleOptions.find(r => r.value === newRole)?.label || '';
-                                            const shouldUpdateTitle = !formData.job_title || roleOptions.some(r => r.label === formData.job_title);
-
-                                            setFormData({
-                                                ...formData,
-                                                role_id: newRole,
-                                                job_title: shouldUpdateTitle ? roleLabel : formData.job_title
-                                            })
-                                        }}
-                                        className="form-select"
-                                        style={{ marginBottom: '0.5rem' }}
-                                    >
-                                        {roleOptions.map(role => (
-                                            <option key={role.value} value={role.value}>{role.label}</option>
-                                        ))}
-                                    </select>
-                                ) : (
-                                    <div className="form-input disabled" style={{ background: 'rgba(255,255,255,0.05)', color: '#94a3b8' }}>
-                                        {roleOptions[0].label}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="form-field">
-                                <label className="form-label">Cargo / Título (Opcional)</label>
-                                <input
-                                    type="text"
-                                    value={formData.job_title}
-                                    onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
-                                    className="form-input"
-                                    placeholder="Ej: Jefe Calidad, Capataz..."
-                                />
-                            </div>
-                        </div>
-
-                        {/* Functional Role Selector (NEW) */}
+                        {/* 2. Functional Role Selector (Main Decision) */}
                         <div className="form-field">
                             <label className="form-label">
-                                Rol Funcional (Opcional)
-                                <span style={{ color: '#94a3b8', fontWeight: '400', marginLeft: '0.5rem' }}>- Define permisos y módulos</span>
+                                Rol Funcional
+                                <span style={{ color: '#94a3b8', fontWeight: '400', marginLeft: '0.5rem' }}>- Define qué hará el usuario</span>
                             </label>
                             {loadingRoles ? (
                                 <div className="form-input disabled" style={{ background: 'rgba(255,255,255,0.05)', color: '#94a3b8' }}>
@@ -276,20 +225,32 @@ export default function InvitationManager({
                                         const selectedRoleId = e.target.value
                                         const selectedRole = functionalRoles.find(r => r.id === selectedRoleId)
 
-                                        setFormData({
-                                            ...formData,
-                                            functional_role_id: selectedRoleId,
-                                            job_title: selectedRole?.name || formData.job_title
-                                        })
+                                        if (selectedRole) {
+                                            // Auto-fill System Role and Job Title based on Functional Role
+                                            setFormData({
+                                                ...formData,
+                                                functional_role_id: selectedRoleId,
+                                                role_id: selectedRole.base_role, // AUTO-SELECT SYSTEM ROLE
+                                                job_title: selectedRole.name     // AUTO-FILL JOB TITLE
+                                            })
+                                        } else {
+                                            // Reset if "No Functional Role" selected
+                                            setFormData({
+                                                ...formData,
+                                                functional_role_id: '',
+                                                job_title: ''
+                                            })
+                                        }
                                     }}
                                     className="form-select"
                                 >
-                                    <option value="">Sin rol funcional (usar rol de sistema)</option>
+                                    <option value="">Seleccionar un rol de la lista...</option>
                                     {functionalRoles.map(role => (
                                         <option key={role.id} value={role.id}>
-                                            {role.name} - {role.base_role}
+                                            {role.name}
                                         </option>
                                     ))}
+                                    <option value="" style={{ color: '#fbbf24' }}>-- Otro / Personalizado --</option>
                                 </select>
                             ) : (
                                 <div style={{
@@ -300,72 +261,109 @@ export default function InvitationManager({
                                     color: '#fbbf24',
                                     fontSize: '0.875rem'
                                 }}>
-                                    No hay roles funcionales. Crea roles en Configuración → Roles.
+                                    No hay roles funcionales definidos.
                                 </div>
                             )}
 
-                            {/* Show selected functional role preview */}
+                            {/* Show selected functional role preview color */}
                             {formData.functional_role_id && (() => {
                                 const selected = functionalRoles.find(r => r.id === formData.functional_role_id)
                                 if (!selected) return null
 
                                 return (
                                     <div style={{
-                                        marginTop: '0.75rem',
-                                        padding: '0.75rem',
-                                        background: 'rgba(139, 92, 246, 0.1)',
-                                        border: `1px solid ${selected.color}33`,
-                                        borderRadius: '0.5rem',
+                                        marginTop: '0.5rem',
+                                        fontSize: '0.8rem',
+                                        color: selected.color,
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '0.75rem'
+                                        gap: '0.5rem'
                                     }}>
-                                        <div style={{
-                                            width: '32px',
-                                            height: '32px',
-                                            borderRadius: '50%',
-                                            background: `${selected.color}22`,
-                                            border: `2px solid ${selected.color}`,
-                                            flexShrink: 0
-                                        }} />
-                                        <div>
-                                            <div style={{ color: selected.color, fontWeight: '600', fontSize: '0.9rem' }}>
-                                                {selected.name}
-                                            </div>
-                                            <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
-                                                {selected.description || 'Sin descripción'}
-                                            </div>
-                                        </div>
+                                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: selected.color }} />
+                                        {selected.description}
                                     </div>
                                 )
                             })()}
                         </div>
 
-                        <div className="form-field">
-                            {/* Role Description Card */}
-                            {(() => {
-                                const selectedRole = roleOptions.find(r => r.value === formData.role_id) || roleOptions[0]
-                                return (
-                                    <div style={{
-                                        padding: '1rem',
-                                        background: 'rgba(34, 197, 94, 0.05)',
-                                        border: '1px solid rgba(34, 197, 94, 0.2)',
-                                        borderRadius: '0.5rem',
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            {/* 3. System Role (Auto-filled but visible) */}
+                            <div className="form-field">
+                                <label className="form-label">Permisos de Sistema</label>
+                                {functionalRoles.length > 0 && formData.functional_role_id ? (
+                                    // READ ONLY MODE (Locked by Functional Role)
+                                    <div className="form-input disabled" style={{
+                                        background: 'rgba(255,255,255,0.05)',
+                                        color: '#94a3b8',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '0.75rem'
+                                        justifyContent: 'space-between'
                                     }}>
-                                        <Shield size={20} color="#4ade80" />
-                                        <div>
-                                            <div style={{ color: '#4ade80', fontWeight: '600', fontSize: '0.9rem' }}>Permisos: {selectedRole.label}</div>
-                                            <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{selectedRole.description}</div>
-                                        </div>
+                                        {roleOptions.find(r => r.value === formData.role_id)?.label}
+                                        <Shield size={14} />
                                     </div>
-                                )
-                            })()}
+                                ) : (
+                                    // MANUAL MODE (If no functional role selected)
+                                    <select
+                                        value={formData.role_id}
+                                        onChange={(e) => setFormData({ ...formData, role_id: e.target.value })}
+                                        className="form-select"
+                                    >
+                                        {roleOptions.map(role => (
+                                            <option key={role.value} value={role.value}>{role.label}</option>
+                                        ))}
+                                    </select>
+                                )}
+                            </div>
+
+                            {/* 4. Job Title (Editable) */}
+                            <div className="form-field">
+                                <label className="form-label">Cargo / Título</label>
+                                <input
+                                    type="text"
+                                    value={formData.job_title}
+                                    onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
+                                    className="form-input"
+                                    placeholder="Ej: Jefe de Area"
+                                />
+                            </div>
                         </div>
 
-                        <button type="submit" disabled={isSubmitting} className="form-button" style={{ width: '100%', marginTop: '0.5rem' }}>
+                        {/* 5. Project (Last Step - Context) */}
+                        {requireProject && (
+                            <div className="form-field">
+                                <label className="form-label">Proyecto Asignado</label>
+                                {fixedProjectId ? (
+                                    <div className="form-input disabled" style={{
+                                        background: 'rgba(255,255,255,0.05)',
+                                        color: '#94a3b8',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between'
+                                    }}>
+                                        {projects.find(p => p.id === fixedProjectId)?.name || 'Proyecto Actual'}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: '#64748b' }}>
+                                            <Shield size={14} />
+                                            Bloqueado por Contexto
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <select
+                                        required={requireProject}
+                                        value={formData.project_id}
+                                        onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
+                                        className="form-select"
+                                    >
+                                        <option value="">Seleccionar proyecto...</option>
+                                        {projects.map((p) => (
+                                            <option key={p.id} value={p.id}>{p.name} ({p.code})</option>
+                                        ))}
+                                    </select>
+                                )}
+                            </div>
+                        )}
+
+                        <button type="submit" disabled={isSubmitting} className="form-button" style={{ width: '100%', marginTop: '1rem' }}>
                             {isSubmitting ? 'Generando...' : 'Generar Link de Invitación'}
                         </button>
                     </form>
@@ -436,13 +434,29 @@ export default function InvitationManager({
                                             {/* We need to update Invitation interface to include job_title to show it here properly, but for now just showing basic role tag */}
                                         </td>
                                         <td style={{ padding: '1rem', textAlign: 'right' }}>
-                                            <button
-                                                onClick={() => onRevoke(inv.id)}
-                                                className="action-button delete"
-                                                title="Revocar invitación"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                                <button
+                                                    onClick={async () => {
+                                                        const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+                                                        const link = `${baseUrl}/invitations/accept/${inv.token}`
+                                                        await navigator.clipboard.writeText(link)
+                                                        alert('Link copiado al portapapeles')
+                                                    }}
+                                                    className="action-button"
+                                                    title="Copiar link de invitación"
+                                                    style={{ fontSize: '0.875rem', padding: '0.5rem' }}
+                                                >
+                                                    <Copy size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => onRevoke(inv.id)}
+                                                    className="action-button delete"
+                                                    title="Revocar invitación"
+                                                    style={{ fontSize: '0.875rem', padding: '0.5rem' }}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -451,6 +465,6 @@ export default function InvitationManager({
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     )
 }

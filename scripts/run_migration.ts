@@ -1,12 +1,21 @@
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync } from 'fs'
+import * as dotenv from 'dotenv'
 
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2Z3JodHF4emZjeXBiZnhxaWxwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjUwODIyMSwiZXhwIjoyMDgyMDg0MjIxfQ.h2FxdoFonxZ4MxdXSNddMAyOavBLVzXN98wI2V6Esxc'
-const PROJECT_URL = 'https://rvgrhtqxzfcypbfxqilp.supabase.co'
-const PROJECT_REF = 'rvgrhtqxzfcypbfxqilp'
+// Load env vars from .env.local
+dotenv.config({ path: '.env.local' })
+
+// Extract Project Ref from URL
+const PROJECT_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
+const PROJECT_REF = PROJECT_URL ? PROJECT_URL.split('.')[0].replace('https://', '') : ''
+
+if (!PROJECT_URL || !PROJECT_REF) {
+    console.error('❌ Error: NEXT_PUBLIC_SUPABASE_URL no encontrado en .env.local')
+    process.exit(1)
+}
 
 async function executeSQLFile(filePath: string) {
-    console.log(`📄 Ejecutando: ${filePath}\n`)
+    console.log(`📄 Procesando: ${filePath} en proyecto ${PROJECT_REF}\n`)
 
     const sql = readFileSync(filePath, 'utf-8')
 
@@ -15,12 +24,8 @@ async function executeSQLFile(filePath: string) {
     const SUPABASE_ACCESS_TOKEN = process.env.SUPABASE_ACCESS_TOKEN
 
     if (!SUPABASE_ACCESS_TOKEN) {
-        console.log('⚠️  SUPABASE_ACCESS_TOKEN no encontrado')
-        console.log('📋 Ejecuta manualmente este SQL:\n')
-        console.log('='.repeat(70))
-        console.log(sql)
-        console.log('='.repeat(70))
-        console.log('\nURL: https://supabase.com/dashboard/project/rvgrhtqxzfcypbfxqilp/sql/new')
+        console.log('⚠️  SUPABASE_ACCESS_TOKEN no encontrado en .env.local')
+        console.log('ℹ️  Asegúrate de agregar SUPABASE_ACCESS_TOKEN=[tu-token] en .env.local')
         return
     }
 
@@ -50,5 +55,22 @@ async function executeSQLFile(filePath: string) {
     }
 }
 
-// Ejecutar migration 0036 - Material Catalog
-executeSQLFile('supabase/migrations/0036_material_catalog.sql')
+// Main entry point
+const args = process.argv.slice(2);
+if (args.length > 0) {
+    // Run files provided in arguments
+    for (const file of args) {
+        // Handle both relative and absolute paths, or just relative to cwd
+        // Assuming simple paths for now or mapped to supabase/migrations if just filename given?
+        // Let's keep it simple: trusted path.
+        let path = file;
+        if (!file.includes('/') && !file.includes('\\')) {
+            path = `supabase/migrations/${file}`;
+        }
+        executeSQLFile(path);
+    }
+} else {
+    // Default fallback or usage instruction
+    console.log('⚠️  No SQL file specified. Usage: npx ts-node scripts/run_migration.ts <filename>');
+    // executeSQLFile('supabase/migrations/DIAG_check_public_and_triggers.sql'); // Optional default
+}

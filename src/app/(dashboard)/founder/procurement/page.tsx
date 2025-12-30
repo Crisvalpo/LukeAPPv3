@@ -15,6 +15,7 @@ import '@/styles/engineering.css' // Reusing unified tab styles
 import MaterialRequestList from '@/components/procurement/MaterialRequestList'
 import CreateRequestModal from '@/components/procurement/CreateRequestModal'
 import ConsolidatedMTO from '@/components/procurement/ConsolidatedMTO'
+import PipeInventoryMaster from '@/components/procurement/PipeInventoryMaster'
 // import ReceivingDashboard from '@/components/procurement/ReceivingDashboard'
 // import InventoryTable from '@/components/procurement/InventoryTable'
 
@@ -32,7 +33,7 @@ export default function ProcurementPage() {
     useEffect(() => {
         loadProjects()
         const tab = searchParams?.get('tab')
-        if (tab && ['requests', 'mto', 'receiving', 'inventory'].includes(tab)) {
+        if (tab && ['requests', 'mto', 'receiving', 'inventory', 'pipe-manager'].includes(tab)) {
             setActiveTab(tab)
         }
     }, [searchParams])
@@ -176,6 +177,12 @@ export default function ProcurementPage() {
                 >
                     📦 Inventario
                 </button>
+                <button
+                    className={`tab-button ${activeTab === 'pipe-manager' ? 'active' : ''}`}
+                    onClick={() => handleTabChange('pipe-manager')}
+                >
+                    📏 Gestión de Cañería
+                </button>
             </div>
 
             <div className="tab-content" style={{ minHeight: '400px' }}>
@@ -207,6 +214,10 @@ export default function ProcurementPage() {
                                 <h3>Inventario de Materiales</h3>
                                 <p>Visualización de stock disponible y asignado</p>
                             </div>
+                        )}
+
+                        {activeTab === 'pipe-manager' && (
+                            <PipeInventoryMaster projectId={selectedProject} companyId={getSelectedCompanyId()} />
                         )}
                     </>
                 )}

@@ -94,17 +94,21 @@ export async function createInvitation(params: CreateInvitationParams) {
             }
         }
 
+        // Generate unique token
+        const token = crypto.randomUUID()
+
         // Insert invitation
         const { data, error } = await supabase
             .from('invitations')
             .insert({
                 email: params.email.toLowerCase(),
+                token: token,
                 company_id: params.company_id,
                 project_id: params.project_id,
                 role_id: params.role_id,
                 job_title: params.job_title || null,
                 functional_role_id: params.functional_role_id || null,
-                inviter_id: user.id,
+                invited_by: user.id,
                 status: 'pending'
             })
             .select()
@@ -149,7 +153,7 @@ export async function createInvitation(params: CreateInvitationParams) {
 /**
  * Get pending invitations for a company
  */
-export async function getPendingInvitations(company_id?: string): Promise<Invitation[]> {
+export async function getPendingInvitations(company_id?: string, project_id?: string): Promise<Invitation[]> {
     const supabase = createClient()
 
     let query = supabase
@@ -166,6 +170,10 @@ export async function getPendingInvitations(company_id?: string): Promise<Invita
         query = query.eq('company_id', company_id)
     }
 
+    if (project_id) {
+        query = query.eq('project_id', project_id)
+    }
+
     const { data } = await query
 
     return (data as any[]) || []
@@ -173,28 +181,43 @@ export async function getPendingInvitations(company_id?: string): Promise<Invita
 
 /**
  * Validate invitation token
+ * UPDATED: Uses Secure RPC to bypass RLS for anonymous users
  */
 export async function validateInvitationToken(token: string) {
     const supabase = createClient()
 
     try {
-        const { data, error } = await supabase
-            .from('invitations')
-            .select(`
-                *,
-                company:companies(name, slug),
-                project:projects(name, code)
-            `)
-            .eq('token', token)
-            .eq('status', 'pending')
-            .single()
+        // Use RPC instead of direct select to avoid 401 RLS error
+        const { data, error } = await supabase.rpc('get_invitation_by_token', {
+            token_input: token
+        })
 
-        if (error || !data) {
+        // RPC returns an array (table), we expect a single row
+        const invitation = data && data[0]
+
+        if (error || !invitation) {
+            console.error('Error validating token:', error)
             return { success: false, message: 'Invitación inválida o expirada' }
         }
 
-        return { success: true, message: 'Invitación válida', data: data as any }
+        // Map RPC result to expected format
+        // RPC returns: id, email, role_id, company_name, project_name, status
+        const mappedData = {
+            ...invitation,
+            // Construct nested objects expected by UI
+            company: {
+                name: invitation.company_name,
+                slug: 'unknown' // RPC doesn't return slug yet, but UI mostly needs name
+            },
+            project: invitation.project_name ? {
+                name: invitation.project_name,
+                code: 'unknown'
+            } : null
+        }
+
+        return { success: true, message: 'Invitación válida', data: mappedData as any }
     } catch (error) {
+        console.error('Exception validating token:', error)
         return { success: false, message: 'Error validando invitación' }
     }
 }

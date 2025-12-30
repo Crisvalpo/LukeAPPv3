@@ -1,312 +1,353 @@
+'use client'
+
 /**
  * Fabricability Dashboard
- * Shows revisions grouped by their fabricability status
+ * FASE 2A - Material Control Foundation
+ * 
+ * Shows an overview of which revisions are ready for fabrication
  */
-
-'use client'
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { EngineeringRevision } from '@/types'
-import {
-    getFabricableRevisions,
-    getRevisionsBlockedByMaterial,
-    getRevisionsBlockedByData
-} from '@/services/revision-status'
+import { getFabricabilitySummary, isFabricable } from '@/services/fabricability'
+import '@/styles/engineering.css'
 
-interface Props {
+interface FabricabilityDashboardProps {
     projectId: string
 }
 
-export default function FabricabilityDashboard({ projectId }: Props) {
-    const [fabricable, setFabricable] = useState<EngineeringRevision[]>([])
-    const [blockedByMaterial, setBlockedByMaterial] = useState<EngineeringRevision[]>([])
-    const [blockedByData, setBlockedByData] = useState<EngineeringRevision[]>([])
-    const [loading, setLoading] = useState(true)
+interface RevisionDetail {
+    id: string
+    iso_number: string
+    rev_code: string
+    revision_status: string
+    data_status: string
+    material_status: string
+    is_fabricable: boolean
+    blocking_reason?: string
+}
+
+export default function FabricabilityDashboard({ projectId }: FabricabilityDashboardProps) {
+    const [summary, setSummary] = useState({
+        total: 0,
+        fabricable: 0,
+        blocked_by_data: 0,
+        blocked_by_material: 0,
+        obsolete: 0
+    })
+    const [revisions, setRevisions] = useState<RevisionDetail[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+    const [filter, setFilter] = useState<'ALL' | 'FABRICABLE' | 'BLOCKED_DATA' | 'BLOCKED_MATERIAL' | 'OBSOLETE'>('ALL')
 
     useEffect(() => {
-        loadRevisions()
+        loadFabricabilityData()
     }, [projectId])
 
-    async function loadRevisions() {
+    async function loadFabricabilityData() {
+        setIsLoading(true)
         try {
-            setLoading(true)
-            const [fab, matBlocked, dataBlocked] = await Promise.all([
-                getFabricableRevisions(projectId),
-                getRevisionsBlockedByMaterial(projectId),
-                getRevisionsBlockedByData(projectId)
-            ])
+            const supabase = createClient()
 
-            setFabricable(fab)
-            setBlockedByMaterial(matBlocked)
-            setBlockedByData(dataBlocked)
+            // 1. Get summary stats
+            const summaryData = await getFabricabilitySummary(projectId)
+            setSummary(summaryData)
+
+            // 2. Get all revisions with their statuses
+            const { data: revisionsData } = await supabase
+                .from('engineering_revisions')
+                .select(`
+                    id,
+                    rev_code,
+                    revision_status,
+                    data_status,
+                    material_status,
+                    isometrics!inner(iso_number)
+                `)
+                .eq('project_id', projectId)
+                .order('iso_number', { foreignTable: 'isometrics' })
+
+            if (revisionsData) {
+                // Calculate fabricability for each
+                const details: RevisionDetail[] = []
+                for (const rev of revisionsData) {
+                    const fab = await isFabricable(rev.id)
+                    details.push({
+                        id: rev.id,
+                        iso_number: (rev.isometrics as any).iso_number,
+                        rev_code: rev.rev_code,
+                        revision_status: rev.revision_status,
+                        data_status: rev.data_status,
+                        material_status: rev.material_status,
+                        is_fabricable: fab.fabricable,
+                        blocking_reason: fab.reason
+                    })
+                }
+                setRevisions(details)
+            }
         } catch (error) {
-            console.error('Error loading revisions:', error)
+            console.error('Error loading fabricability data:', error)
         } finally {
-            setLoading(false)
+            setIsLoading(false)
         }
     }
 
-    if (loading) {
+    // Filter revisions
+    const filteredRevisions = revisions.filter(rev => {
+        switch (filter) {
+            case 'FABRICABLE':
+                return rev.is_fabricable
+            case 'BLOCKED_DATA':
+                return !rev.is_fabricable && rev.data_status !== 'COMPLETO'
+            case 'BLOCKED_MATERIAL':
+                return !rev.is_fabricable && rev.data_status === 'COMPLETO' && rev.material_status !== 'DISPONIBLE'
+            case 'OBSOLETE':
+                return rev.revision_status !== 'VIGENTE'
+            default:
+                return true
+        }
+    })
+
+    const getStatusColor = (status: string) => {
+        const colors: Record<string, string> = {
+            'COMPLETO': '#10b981',
+            'EN_DESARROLLO': '#fbbf24',
+            'VACIO': '#ef4444',
+            'BLOQUEADO': '#6b7280',
+            'DISPONIBLE': '#10b981',
+            'NO_REQUERIDO': '#3b82f6',
+            'PENDIENTE_COMPRA': '#f59e0b',
+            'EN_TRANSITO': '#8b5cf6'
+        }
+        return colors[status] || '#9ca3af'
+    }
+
+    if (isLoading) {
         return (
-            <div className="fabricability-dashboard">
-                <div className="loading">Cargando análisis de fabricabilidad...</div>
+            <div className="engineering-content" style={{ padding: '4rem', textAlign: 'center' }}>
+                <div className="spinner"></div>
+                <p style={{ marginTop: '1rem', color: 'var(--color-text-muted)' }}>
+                    Analizando fabricabilidad...
+                </p>
             </div>
         )
     }
 
     return (
-        <div className="fabricability-dashboard">
-            <div className="dashboard-header">
-                <h2>Fabricabilidad por Revisión</h2>
-                <p>Análisis de 3 dimensiones: Lifecycle + Data + Material</p>
+        <div className="engineering-content">
+            {/* Header */}
+            <div className="section-header">
+                <div>
+                    <h2>Dashboard de Fabricabilidad</h2>
+                    <p className="section-subtitle">
+                        Visualización de qué revisiones están listas para fabricación
+                    </p>
+                </div>
+                <button
+                    className="action-button"
+                    onClick={loadFabricabilityData}
+                >
+                    🔄 Refrescar
+                </button>
             </div>
 
-            <div className="status-grid">
-                {/* Fabricable */}
-                <div className="status-card fabricable">
-                    <div className="card-header">
-                        <span className="icon">🟢</span>
-                        <h3>Fabricables</h3>
-                        <span className="count">{fabricable.length}</span>
+            {/* Summary Stats */}
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: 'var(--spacing-4)',
+                marginBottom: 'var(--spacing-6)'
+            }}>
+                <div style={{
+                    background: 'var(--color-bg-surface-1)',
+                    border: '1px solid var(--glass-border)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: 'var(--spacing-4)',
+                    textAlign: 'center'
+                }}>
+                    <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--color-text-main)' }}>
+                        {summary.total}
                     </div>
-                    <div className="card-body">
-                        {fabricable.length === 0 ? (
-                            <p className="empty">No hay revisiones fabricables</p>
-                        ) : (
-                            <div className="revision-list">
-                                {fabricable.map(rev => (
-                                    <RevisionCard key={rev.id} revision={rev} />
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Blocked by Material */}
-                <div className="status-card blocked-material">
-                    <div className="card-header">
-                        <span className="icon">🟡</span>
-                        <h3>Bloqueadas por Material</h3>
-                        <span className="count">{blockedByMaterial.length}</span>
-                    </div>
-                    <div className="card-body">
-                        {blockedByMaterial.length === 0 ? (
-                            <p className="empty">Ninguna bloqueada por material</p>
-                        ) : (
-                            <div className="revision-list">
-                                {blockedByMaterial.map(rev => (
-                                    <RevisionCard key={rev.id} revision={rev} />
-                                ))}
-                            </div>
-                        )}
+                    <div style={{ color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>
+                        Total Revisiones
                     </div>
                 </div>
 
-                {/* Blocked by Data */}
-                <div className="status-card blocked-data">
-                    <div className="card-header">
-                        <span className="icon">🟡</span>
-                        <h3>Bloqueadas por Datos</h3>
-                        <span className="count">{blockedByData.length}</span>
+                <div style={{
+                    background: 'var(--color-bg-surface-1)',
+                    border: '2px solid var(--color-success)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: 'var(--spacing-4)',
+                    textAlign: 'center'
+                }}>
+                    <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--color-success)' }}>
+                        🟢 {summary.fabricable}
                     </div>
-                    <div className="card-body">
-                        {blockedByData.length === 0 ? (
-                            <p className="empty">Ninguna bloqueada por datos</p>
-                        ) : (
-                            <div className="revision-list">
-                                {blockedByData.map(rev => (
-                                    <RevisionCard key={rev.id} revision={rev} />
-                                ))}
-                            </div>
-                        )}
+                    <div style={{ color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>
+                        Fabricables
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--color-text-dim)', marginTop: '4px' }}>
+                        {summary.total > 0 ? Math.round((summary.fabricable / summary.total) * 100) : 0}% del total
                     </div>
                 </div>
-            </div>
 
-            <style jsx>{`
-                .fabricability-dashboard {
-                    padding: 2rem;
-                    max-width: 1400px;
-                    margin: 0 auto;
-                }
-
-                .dashboard-header {
-                    margin-bottom: 2rem;
-                }
-
-                .dashboard-header h2 {
-                    font-size: 1.75rem;
-                    font-weight: 600;
-                    color: #f7fafc;
-                    margin-bottom: 0.5rem;
-                }
-
-                .dashboard-header p {
-                    color: #a0aec0;
-                    font-size: 0.95rem;
-                }
-
-                .status-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-                    gap: 1.5rem;
-                }
-
-                .status-card {
-                    background: rgba(255, 255, 255, 0.05);
-                    border-radius: 12px;
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    overflow: hidden;
-                }
-
-                .card-header {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.75rem;
-                    padding: 1.25rem;
-                    background: rgba(0, 0, 0, 0.2);
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                }
-
-                .card-header .icon {
-                    font-size: 1.5rem;
-                }
-
-                .card-header h3 {
-                    flex: 1;
-                    font-size: 1.1rem;
-                    font-weight: 600;
-                    color: #f7fafc;
-                    margin: 0;
-                }
-
-                .card-header .count {
-                    font-size: 1.5rem;
-                    font-weight: 700;
-                    color: #63b3ed;
-                }
-
-                .card-body {
-                    padding: 1rem;
-                    max-height: 500px;
-                    overflow-y: auto;
-                }
-
-                .revision-list {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 0.75rem;
-                }
-
-                .empty {
-                    text-align: center;
-                    color: #718096;
-                    padding: 2rem;
-                    font-style: italic;
-                }
-
-                .loading {
-                    text-align: center;
-                    padding: 4rem;
-                    color: #a0aec0;
-                    font-size: 1.1rem;
-                }
-            `}</style>
-        </div>
-    )
-}
-
-function RevisionCard({ revision }: { revision: EngineeringRevision }) {
-    const getDataStatusLabel = (status: string) => {
-        const labels: Record<string, string> = {
-            VACIO: '📄 Vacío',
-            EN_DESARROLLO: '🔨 En Desarrollo',
-            COMPLETO: '✅ Completo',
-            BLOQUEADO: '🔒 Bloqueado'
-        }
-        return labels[status] || status
-    }
-
-    const getMaterialStatusLabel = (status: string) => {
-        const labels: Record<string, string> = {
-            NO_REQUERIDO: '—',
-            PENDIENTE_COMPRA: '🛒 Pendiente Compra',
-            PENDIENTE_APROBACION: '⏳ Pend. Aprobación',
-            EN_TRANSITO: '🚚 En Tránsito',
-            DISPONIBLE: '✅ Disponible',
-            ASIGNADO: '🎯 Asignado'
-        }
-        return labels[status] || status
-    }
-
-    return (
-        <div className="revision-card">
-            <div className="revision-header">
-                <span className="iso-number">{revision.iso_number}</span>
-                <span className="rev-code">Rev {revision.rev_code}</span>
-            </div>
-            <div className="revision-status">
-                <div className="status-badge">
-                    {getDataStatusLabel(revision.data_status)}
+                <div style={{
+                    background: 'var(--color-bg-surface-1)',
+                    border: '1px solid var(--color-warning)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: 'var(--spacing-4)',
+                    textAlign: 'center'
+                }}>
+                    <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--color-warning)' }}>
+                        🟡 {summary.blocked_by_data}
+                    </div>
+                    <div style={{ color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>
+                        Bloqueados por Datos
+                    </div>
                 </div>
-                <div className="status-badge">
-                    {getMaterialStatusLabel(revision.material_status)}
+
+                <div style={{
+                    background: 'var(--color-bg-surface-1)',
+                    border: '1px solid var(--color-error)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: 'var(--spacing-4)',
+                    textAlign: 'center'
+                }}>
+                    <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--color-error)' }}>
+                        🔴 {summary.blocked_by_material}
+                    </div>
+                    <div style={{ color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>
+                        Bloqueados por Material
+                    </div>
+                </div>
+
+                <div style={{
+                    background: 'var(--color-bg-surface-1)',
+                    border: '1px solid var(--glass-border)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: 'var(--spacing-4)',
+                    textAlign: 'center'
+                }}>
+                    <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--color-text-dim)' }}>
+                        ⚫ {summary.obsolete}
+                    </div>
+                    <div style={{ color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>
+                        Obsoletas
+                    </div>
                 </div>
             </div>
 
-            <style jsx>{`
-                .revision-card {
-                    background: rgba(0, 0, 0, 0.3);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 8px;
-                    padding: 1rem;
-                    transition: all 0.2s;
-                }
+            {/* Filters */}
+            <div className="tabs-nav" style={{ marginBottom: 'var(--spacing-4)' }}>
+                <button
+                    className={`tab-button ${filter === 'ALL' ? 'active' : ''}`}
+                    onClick={() => setFilter('ALL')}
+                >
+                    📊 Todas ({revisions.length})
+                </button>
+                <button
+                    className={`tab-button ${filter === 'FABRICABLE' ? 'active' : ''}`}
+                    onClick={() => setFilter('FABRICABLE')}
+                >
+                    🟢 Fabricables ({summary.fabricable})
+                </button>
+                <button
+                    className={`tab-button ${filter === 'BLOCKED_DATA' ? 'active' : ''}`}
+                    onClick={() => setFilter('BLOCKED_DATA')}
+                >
+                    🟡 Bloq. Datos ({summary.blocked_by_data})
+                </button>
+                <button
+                    className={`tab-button ${filter === 'BLOCKED_MATERIAL' ? 'active' : ''}`}
+                    onClick={() => setFilter('BLOCKED_MATERIAL')}
+                >
+                    🔴 Bloq. Material ({summary.blocked_by_material})
+                </button>
+                <button
+                    className={`tab-button ${filter === 'OBSOLETE' ? 'active' : ''}`}
+                    onClick={() => setFilter('OBSOLETE')}
+                >
+                    ⚫ Obsoletas ({summary.obsolete})
+                </button>
+            </div>
 
-                .revision-card:hover {
-                    background: rgba(0, 0, 0, 0.4);
-                    border-color: rgba(99, 179, 237, 0.5);
-                    transform: translateY(-2px);
-                }
-
-                .revision-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 0.75rem;
-                }
-
-                .iso-number {
-                    font-weight: 600;
-                    color: #63b3ed;
-                    font-size: 1rem;
-                }
-
-                .rev-code {
-                    background: rgba(99, 179, 237, 0.2);
-                    color: #90cdf4;
-                    padding: 0.25rem 0.75rem;
-                    border-radius: 12px;
-                    font-size: 0.85rem;
-                    font-weight: 500;
-                }
-
-                .revision-status {
-                    display: flex;
-                    gap: 0.5rem;
-                    flex-wrap: wrap;
-                }
-
-                .status-badge {
-                    background: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    padding: 0.35rem 0.75rem;
-                    border-radius: 6px;
-                    font-size: 0.85rem;
-                    color: #cbd5e0;
-                }
-            `}</style>
+            {/* Revisions Table */}
+            {filteredRevisions.length === 0 ? (
+                <div className="empty-state">
+                    <div className="empty-icon">📋</div>
+                    <h4>No hay revisiones en esta categoría</h4>
+                    <p>Cambia el filtro para ver otras revisiones</p>
+                </div>
+            ) : (
+                <div className="data-table-container">
+                    <table className="data-table">
+                        <thead>
+                            <tr>
+                                <th style={{ textAlign: 'left' }}>Isométrico</th>
+                                <th style={{ textAlign: 'center' }}>Rev</th>
+                                <th style={{ textAlign: 'center' }}>Estado Revisión</th>
+                                <th style={{ textAlign: 'center' }}>Datos</th>
+                                <th style={{ textAlign: 'center' }}>Material</th>
+                                <th style={{ textAlign: 'center' }}>Fabricable</th>
+                                <th style={{ textAlign: 'left' }}>Motivo Bloqueo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredRevisions.map(rev => (
+                                <tr key={rev.id}>
+                                    <td style={{ fontWeight: '600', color: 'var(--color-text-main)' }}>
+                                        {rev.iso_number}
+                                    </td>
+                                    <td style={{ textAlign: 'center', fontFamily: 'var(--font-family-mono)' }}>
+                                        {rev.rev_code}
+                                    </td>
+                                    <td style={{ textAlign: 'center' }}>
+                                        <span style={{
+                                            padding: '4px 8px',
+                                            borderRadius: 'var(--radius-sm)',
+                                            fontSize: '0.75rem',
+                                            fontWeight: '500',
+                                            background: rev.revision_status === 'VIGENTE' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(107, 114, 128, 0.15)',
+                                            color: rev.revision_status === 'VIGENTE' ? '#3b82f6' : '#6b7280'
+                                        }}>
+                                            {rev.revision_status}
+                                        </span>
+                                    </td>
+                                    <td style={{ textAlign: 'center' }}>
+                                        <span style={{
+                                            padding: '4px 8px',
+                                            borderRadius: 'var(--radius-sm)',
+                                            fontSize: '0.75rem',
+                                            fontWeight: '500',
+                                            background: `${getStatusColor(rev.data_status)}15`,
+                                            color: getStatusColor(rev.data_status)
+                                        }}>
+                                            {rev.data_status}
+                                        </span>
+                                    </td>
+                                    <td style={{ textAlign: 'center' }}>
+                                        <span style={{
+                                            padding: '4px 8px',
+                                            borderRadius: 'var(--radius-sm)',
+                                            fontSize: '0.75rem',
+                                            fontWeight: '500',
+                                            background: `${getStatusColor(rev.material_status)}15`,
+                                            color: getStatusColor(rev.material_status)
+                                        }}>
+                                            {rev.material_status}
+                                        </span>
+                                    </td>
+                                    <td style={{ textAlign: 'center', fontSize: '1.5rem' }}>
+                                        {rev.is_fabricable ? '🟢' : '🔴'}
+                                    </td>
+                                    <td style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
+                                        {rev.blocking_reason || '-'}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
     )
 }

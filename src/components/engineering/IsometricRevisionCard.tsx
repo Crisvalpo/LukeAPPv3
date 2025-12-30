@@ -1,10 +1,11 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { EngineeringRevision } from '@/types'
 import { deleteRevisionAction } from '@/actions/revisions'
+import { calculateDataStatus, calculateMaterialStatus, isFabricable, type DataStatus, type MaterialStatus } from '@/services/fabricability'
 
 interface IsometricRevisionCardProps {
     isoNumber: string
@@ -29,6 +30,28 @@ export default function IsometricRevisionCard({
     const router = useRouter()
     const [isExpanded, setIsExpanded] = useState(false)
     const [isDeleting, setIsDeleting] = useState<string | null>(null)
+    const [revisionStatuses, setRevisionStatuses] = useState<Record<string, { data: DataStatus; material: MaterialStatus; fabricable: boolean }>>({})
+
+    // Load fabricability statuses
+    useEffect(() => {
+        async function loadStatuses() {
+            const statuses: Record<string, { data: DataStatus; material: MaterialStatus; fabricable: boolean }> = {}
+            for (const rev of revisions) {
+                try {
+                    const data = await calculateDataStatus(rev.id)
+                    const material = await calculateMaterialStatus(rev.id)
+                    const fab = await isFabricable(rev.id)
+                    statuses[rev.id] = { data, material, fabricable: fab.fabricable }
+                } catch (error) {
+                    console.error(`Error loading status for revision ${rev.id}:`, error)
+                }
+            }
+            setRevisionStatuses(statuses)
+        }
+        if (revisions.length > 0) {
+            loadStatuses()
+        }
+    }, [revisions])
 
     // Sort revisions falling back to date or code, usually they come sorted but good to be safe
     // Assuming higher rev code is newer.
@@ -130,6 +153,9 @@ export default function IsometricRevisionCard({
                                     <tr>
                                         <th>Rev</th>
                                         <th>Estado</th>
+                                        <th>Datos</th>
+                                        <th>Material</th>
+                                        <th>Fab</th>
                                         <th>Fecha</th>
                                         <th>Soldaduras</th>
                                         <th>Spools</th>
@@ -154,6 +180,33 @@ export default function IsometricRevisionCard({
                                                 >
                                                     {rev.revision_status}
                                                 </span>
+                                            </td>
+                                            <td>
+                                                <span
+                                                    className="status-pill"
+                                                    style={{
+                                                        fontSize: '0.75rem',
+                                                        color: revisionStatuses[rev.id]?.data === 'COMPLETO' ? '#10b981' : '#fbbf24',
+                                                        borderColor: revisionStatuses[rev.id]?.data === 'COMPLETO' ? '#10b981' : '#fbbf24'
+                                                    }}
+                                                >
+                                                    {revisionStatuses[rev.id]?.data || '...'}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span
+                                                    className="status-pill"
+                                                    style={{
+                                                        fontSize: '0.75rem',
+                                                        color: revisionStatuses[rev.id]?.material === 'DISPONIBLE' ? '#10b981' : '#6b7280',
+                                                        borderColor: revisionStatuses[rev.id]?.material === 'DISPONIBLE' ? '#10b981' : '#6b7280'
+                                                    }}
+                                                >
+                                                    {revisionStatuses[rev.id]?.material || '...'}
+                                                </span>
+                                            </td>
+                                            <td style={{ textAlign: 'center', fontSize: '1.2rem' }}>
+                                                {revisionStatuses[rev.id]?.fabricable ? '🟢' : '🔴'}
                                             </td>
                                             <td>
                                                 {rev.announcement_date

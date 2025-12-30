@@ -142,3 +142,77 @@ Ask for clarification before implementing.
 
 LukeAPP is a long-term enterprise platform.
 Any solution that cannot scale to multiple companies, projects, and teams is invalid.
+
+---
+
+## 🎨 DESIGN SYSTEM (Vanilla CSS)
+
+### Regla de Estilo
+
+**CRÍTICO:** LukeAPP usa **Vanilla CSS puro** con variables CSS. NO usar Tailwind, NO usar frameworks de componentes externos (salvo que el usuario lo solicite explícitamente).
+
+### Variables de Color Definidas
+
+Ubicación: `src/styles/design-system.css`
+
+#### Backgrounds
+- `--color-bg-app`: Deep dark blue-grey (hsl(220, 20%, 10%))
+- `--color-bg-surface-1`: hsl(220, 15%, 14%)
+- `--color-bg-surface-2`: hsl(220, 15%, 18%)
+
+#### Glassmorphism
+- `--glass-surface`: hsla(220, 15%, 16%, 0.7)
+- `--glass-border`: hsla(0, 0%, 100%, 0.08)
+- `--glass-shadow`: 0 8px 32px 0 rgba(0, 0, 0, 0.37)
+- `--glass-blur`: blur(12px)
+
+#### Primary Colors
+- `--color-primary`: hsl(215, 90%, 55%) - Azul característico
+- `--color-primary-hover`: hsl(215, 90%, 65%)
+- `--color-primary-glow`: hsla(215, 90%, 55%, 0.5)
+
+#### Semantic Colors
+- `--color-success`: hsl(150, 70%, 45%)
+- `--color-warning`: hsl(35, 90%, 60%)
+- `--color-error`: hsl(0, 80%, 60%)
+- `--color-info`: hsl(200, 80%, 55%)
+
+#### Text Colors
+- `--color-text-main`: hsl(0, 0%, 98%)
+- `--color-text-muted`: hsl(220, 10%, 70%)
+- `--color-text-dim`: hsl(220, 10%, 45%)
+
+#### Spacing
+- `--spacing-1` a `--spacing-12`: 4px a 48px
+- Usar estas variables en vez de hardcodear valores
+
+#### Border Radius
+- `--radius-sm`: 6px
+- `--radius-md`: 10px
+- `--radius-lg`: 16px
+- `--radius-full`: 9999px
+
+#### Shadows
+- `--shadow-1`, `--shadow-2`, `--shadow-3`
+- `--shadow-glow`: 0 0 20px var(--color-primary-glow)
+
+### Componentes UI Disponibles
+
+Todos implementados en Vanilla CSS (`src/components/ui/`):
+
+1. **Badge** - Etiquetas de estado
+2. **Button** - Botones (variants: default, destructive, outline, secondary, ghost, link)
+3. **Card** - Contenedores con Header, Content, Footer
+4. **Input** - Campos de texto
+5. **Tabs** - Navegación por pestañas
+6. **Dialog** - Modales
+7. **Select** - Menús desplegables
+8. **Alert** - Avisos y alertas
+
+### Convenciones de Estilo
+
+1. **BEM Naming**: `.component__element--modifier`
+2. **CSS en archivos separados**: Cada componente tiene su `.css`
+3. **Importar CSS en componente**: `import './component.css'`
+4. **Usar variables**: Siempre preferir variables CSS del design system
+5. **No hardcodear colores**: Nunca usar `#fff`, `rgba()`, etc. directamente

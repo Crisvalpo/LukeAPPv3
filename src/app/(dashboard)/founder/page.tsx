@@ -148,19 +148,7 @@ export default function FounderDashboard() {
                         </p>
                     </div>
 
-                    {/* Invite Admins */}
-                    <div
-                        className="quick-action-card"
-                        onClick={() => router.push('/founder/invitations')}
-                    >
-                        <div className="quick-action-icon">
-                            <UserPlus size={24} color="#4ade80" />
-                        </div>
-                        <h3 className="quick-action-title">Invitar Admins</h3>
-                        <p className="quick-action-description">
-                            Invita administradores a tus proyectos
-                        </p>
-                    </div>
+
 
                     {/* Company Settings */}
                     <div
@@ -190,29 +178,7 @@ export default function FounderDashboard() {
                         </p>
                     </div>
 
-                    {/* Engineering Hub (Revisiones) - NEW Phase 2 */}
-                    <div
-                        className="quick-action-card"
-                        onClick={() => router.push('/founder/engineering')}
-                    >
-                        <div className="quick-action-icon">
-                            📋
-                        </div>
-                        <h3 className="quick-action-title">Ingeniería</h3>
-                        <p className="quick-action-description">
-                            Revisiones, isométricos y carga de datos
-                        </p>
-                        <span className="quick-action-badge" style={{
-                            background: 'rgba(59, 130, 246, 0.1)',
-                            color: '#60a5fa',
-                            fontSize: '0.75rem',
-                            padding: '0.25rem 0.5rem',
-                            borderRadius: '0.375rem',
-                            marginTop: '0.5rem'
-                        }}>
-                            Nuevo
-                        </span>
-                    </div>
+
                 </div>
             )}
         </div>

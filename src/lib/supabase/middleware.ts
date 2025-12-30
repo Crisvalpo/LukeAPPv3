@@ -50,7 +50,6 @@ export async function updateSession(request: NextRequest) {
                 )
             `)
             .eq('user_id', user.id)
-            .eq('status', 'ACTIVE')
             .limit(1)
             .maybeSingle()
 
@@ -60,21 +59,27 @@ export async function updateSession(request: NextRequest) {
         if (!memberData && user.email) {
             const { data: pendingInv } = await supabase
                 .from('invitations')
-                .select('token')
+                .select('id, token') // Select ID for the RPC
                 .eq('email', user.email)
                 .eq('status', 'pending')
                 .maybeSingle()
 
             if (pendingInv) {
-                console.log('MW: Auto-accepting pending invitation for', user.email)
-                const { error: acceptError } = await supabase.rpc('accept_invitation', {
-                    token_input: pendingInv.token,
+                console.log('MW: Found pending invitation for', user.email)
+
+                // Call RPC with correct arguments (invitation_id_input)
+                const { data: rpcResult, error: conversionError } = await supabase.rpc('accept_invitation', {
+                    invitation_id_input: pendingInv.id,
                     user_id_input: user.id
                 })
 
-                if (!acceptError) {
-                    console.log('MW: Invitation auto-accepted, reloading...')
+                // Check both transport error AND business logic success
+                if (!conversionError && rpcResult && (rpcResult as any).success) {
+                    console.log('MW: Invitation auto-accepted successfully. Reloading context...')
                     return NextResponse.redirect(request.url)
+                } else {
+                    console.warn('MW: Auto-accept failed or returned error:', conversionError || rpcResult)
+                    // Do NOT redirect if failed, to avoid loop
                 }
             }
         }

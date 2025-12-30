@@ -63,7 +63,7 @@ CREATE POLICY "Users can manage spools_joints"
 CREATE INDEX idx_spools_joints_revision ON spools_joints(revision_id);
 CREATE INDEX idx_spools_joints_iso ON spools_joints(iso_number);
 CREATE INDEX idx_spools_joints_line ON spools_joints(line_number);
-CREATE INDEX idx_spools_joints_joint ON spools_joints(joint_number);
+CREATE INDEX idx_spools_joints_joint ON spools_joints(flanged_joint_number);
 
 -- =============================================
 -- 4. TRIGGER: Update timestamp

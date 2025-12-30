@@ -66,8 +66,6 @@ export async function getConsolidatedMTO(projectId: string): Promise<MTOByIsomet
     })
 
     // Step B: Query spools_mto filtered by these Active Revision IDs
-    // Also fetch revision info to display which revision requires the materials
-    // LEFT JOIN with material_catalog to get enriched descriptions
     const { data: mtoItems, error: mtoError } = await supabase
         .from('spools_mto')
         .select(`
@@ -79,12 +77,23 @@ export async function getConsolidatedMTO(projectId: string): Promise<MTOByIsomet
             qty_unit,
             spool_full_id,
             spool_number,
-            rev_number,
-            material_catalog!left(short_desc, long_desc, part_group)
+            rev_number
         `)
         .in('revision_id', activeRevisionIds)
 
     if (mtoError) throw new Error(`Error fetching MTO: ${mtoError.message}`)
+
+    // Step C: Fetch material catalog for enriched descriptions (if exists)
+    const { data: catalogItems } = await supabase
+        .from('material_catalog')
+        .select('ident_code, short_desc, long_desc, part_group')
+        .eq('project_id', projectId)
+
+    // Create lookup map for quick access
+    const catalogMap = new Map<string, { ident_code: string, short_desc: string, long_desc: string | null, part_group: string | null }>()
+    catalogItems?.forEach(item => {
+        catalogMap.set(item.ident_code, item)
+    })
 
     // Step C: Get existing Material Requests to calculate "Requested" qty (Optional for now)
     // const { data: requestItems } = ... 
@@ -123,10 +132,14 @@ export async function getConsolidatedMTO(projectId: string): Promise<MTOByIsomet
             isoGroup.spools.push(spoolGroup)
         }
 
+        // Get enriched description from catalog if available
+        const catalogEntry = catalogMap.get(item.item_code)
+        const materialDesc = catalogEntry?.short_desc || item.item_code
+
         spoolGroup.items.push({
             id: item.id,
-            material_spec: item.item_code,
-            description: item.item_code,
+            material_spec: materialDesc,
+            description: catalogEntry?.long_desc || materialDesc,
             quantity_required: Number(item.qty),
             quantity_requested: 0, // TODO: Implement request tracking
             quantity_received: 0,

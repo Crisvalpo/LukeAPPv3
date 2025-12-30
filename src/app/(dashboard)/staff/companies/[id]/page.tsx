@@ -194,15 +194,18 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                                 >
                                     ✏️ Editar
                                 </button>
-                                <button
-                                    onClick={handleDelete}
-                                    disabled={deleting}
-                                    className="action-button delete"
-                                    style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
-                                    title="Eliminar empresa"
-                                >
-                                    {deleting ? '...' : '🗑️ Eliminar'}
-                                </button>
+                                {/* Ocultar botón eliminar para empresa genesis */}
+                                {company.slug !== 'lukeapp-hq' && (
+                                    <button
+                                        onClick={handleDelete}
+                                        disabled={deleting}
+                                        className="action-button delete"
+                                        style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+                                        title="Eliminar empresa"
+                                    >
+                                        {deleting ? '...' : '🗑️ Eliminar'}
+                                    </button>
+                                )}
                             </>
                         )}
                     </div>

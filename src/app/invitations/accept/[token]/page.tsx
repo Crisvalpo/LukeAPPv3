@@ -24,6 +24,17 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
+    // Debug checks
+    useEffect(() => {
+        console.log('🔗 Supabase Config Check:', {
+            hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+            urlValue: process.env.NEXT_PUBLIC_SUPABASE_URL,
+            hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+            keyLength: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length,
+            keyFirst20: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.substring(0, 20)
+        })
+    }, [])
+
     useEffect(() => {
         checkAuthAndValidate()
     }, [])
@@ -76,56 +87,64 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
 
             setAccepting(true)
 
-            // 1. Create auth user
-            const { data: authData, error: signUpError } = await supabase.auth.signUp({
-                email: invitation.email,
-                password: password,
-                options: {
-                    data: {
-                        full_name: invitation.email.split('@')[0]
-                    },
-                    // Redirect to confirmation page with invitation token
-                    emailRedirectTo: `${window.location.origin}/invitations/confirm?token=${resolvedParams.token}`
-                }
-            })
+            // 1. Create auth user (BACKEND STRATEGY)
+            // We hash the password client-side (or pass plain and hash on server, but bcryptjs is heavy for edge if we used edge functions).
+            // Since we are using Server Actions (Node.js), we can pass plain text and let the Action hash it, 
+            // OR hash here. The Action expects a hash because the RPC expects a hash.
+            // Let's hash in the Server Action to keep client bundle small, 
+            // BUT wait, we defined the Action to take a hash? 
+            // Let's check the Action definition I just wrote... it takes 'passwordHash'.
+            // Actually, let's update the Action to take plain password and hash it there to avoid 'bcryptjs' on client.
+            // RE-READING my previous step: I installed bcryptjs in the PROJECT, so it's available.
+            // But better to do it on server.
+            // Let's assume for a moment I passed plain password to the action and the action hashes it.
+            // I will update the action in a second if needed, but for now let's implement the call.
 
-            if (signUpError) {
-                if (signUpError.message.includes('already registered') || signUpError.message.includes('User already registered')) {
-                    // Try to sign in instead
-                    const { error: signInError } = await supabase.auth.signInWithPassword({
-                        email: invitation.email,
-                        password: password,
-                    })
+            // Wait, I need to hash it.
+            // Let's dynamic import bcryptjs to avoid load if not needed? 
+            // OR simpler: Just rely on the server action to do the hashing.
+            // I will update the Server Action file to take 'plainPassword' and hash it inside.
+            // Let's assume 'createUserBackend' takes (email, plainPassword, fullName).
 
-                    if (signInError) {
-                        setError('El usuario ya existe pero la contraseña no coincide. Si ya tienes cuenta, inicia sesión primero.')
-                        setAccepting(false)
-                        return
-                    }
+            // Update: I will re-write the action to take plain password.
+
+            // Create user using Admin API (no need to hash password)
+            const { createUserBackend } = await import('@/actions/auth-actions')
+
+            console.log('Calling Admin API to create user...')
+            const signUpResult = await createUserBackend(
+                invitation.email,
+                password,  // Plain password - Admin API will hash it
+                invitation.email.split('@')[0]  // Use email prefix as name
+            )
+
+            if (!signUpResult.success) {
+                console.error('❌ SignUp Error (Backend):', signUpResult.error)
+                // Handle "User already registered" specifically if needed
+                if (signUpResult.error && (signUpResult.error.includes('already exists') || signUpResult.error.includes('duplicate'))) {
+                    // Proceed to login
+                    console.log('User exists, trying login...')
                 } else {
-                    setError('Error al crear cuenta: ' + signUpError.message)
+                    setError('Error al crear cuenta: ' + signUpResult.error)
                     setAccepting(false)
-                    return
-                }
-            } else {
-                // SignUp successful
-                // CASE A: Session created immediately (Dev / No Email Confirm)
-                if (authData.session) {
-                    // Proceed to accept invitation immediately
-                }
-                // CASE B: Session null (Production / Email Confirm Required)
-                else if (authData.user && !authData.session) {
-                    setAccepting(false)
-                    alert('✨ Cuenta creada correctamente.\n\nHemos enviado un correo de confirmación. Por favor, revísalo y haz clic en el enlace para activar tu cuenta y completar la invitación.')
                     return
                 }
             }
 
-            console.log('Cuenta lista, procesando invitación...')
-            await new Promise(resolve => setTimeout(resolve, 500))
+            // 2. Login immediately using the password
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: invitation.email,
+                password: password,
+            })
+
+            if (signInError) {
+                setError('Cuenta creada, pero error al iniciar sesión: ' + signInError.message)
+                setAccepting(false)
+                return
+            }
         }
 
-        // 2. Accept invitation (User is now authenticated or was already)
+        // 2. Accept invitation (User is now authenticated or was already) (OR just finished creating account)
         const result = await acceptInvitation(resolvedParams.token)
 
         if (result.success) {
@@ -267,9 +286,9 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
                         {accepting ? 'Procesando...' : (isAuthenticated ? 'Aceptar Invitación' : 'Crear Cuenta y Aceptar')}
                     </button>
                     {!isAuthenticated && (
-                        <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                        <div style={{ marginTop: '1rem', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <button
-                                onClick={() => router.push('/login')}
+                                onClick={() => router.push('/')}
                                 style={{ background: 'none', border: 'none', color: '#60a5fa', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
                             >
                                 Ya tengo una cuenta, iniciar sesión
