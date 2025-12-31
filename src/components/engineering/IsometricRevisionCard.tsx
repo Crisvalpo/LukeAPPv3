@@ -222,12 +222,6 @@ export default function IsometricRevisionCard({
                                             <td style={{ textAlign: 'right' }}>
                                                 <div className="action-group">
                                                     <button
-                                                        className="btn-link-action"
-                                                        onClick={() => router.push(`/founder/engineering/revisions/${rev.id}`)}
-                                                    >
-                                                        Ver Detalles
-                                                    </button>
-                                                    <button
                                                         className="btn-icon-danger"
                                                         onClick={() => handleDelete(rev.id, rev.rev_code)}
                                                         disabled={isDeleting === rev.id}
