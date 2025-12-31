@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getProjectById, updateProject, deleteProject, type Project } from '@/services/projects'
 import { getPendingInvitations, createInvitation, revokeInvitation, type Invitation } from '@/services/invitations'
-import { ArrowLeft, Building2, Calendar, FileText, Check, X, Shield, Users, Trash2 } from 'lucide-react'
+import { Building2, Calendar, FileText, Check, X, Shield, Users, Trash2 } from 'lucide-react'
 import InvitationManager from '@/components/invitations/InvitationManager'
 import EngineeringManager from '@/components/engineering/EngineeringManager'
 import ProcurementManager from '@/components/procurement/ProcurementManager'
@@ -154,20 +154,11 @@ export default function ProjectDetailPage() {
     return (
         <div className="dashboard-page">
             <div className="dashboard-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                    <button
-                        onClick={() => router.push('/founder/projects')}
-                        className="action-button"
-                        style={{ padding: '0.5rem', width: 'auto' }}
-                    >
-                        <ArrowLeft size={20} />
-                    </button>
-                    <div className="dashboard-header-content">
-                        <div className="dashboard-accent-line" />
-                        <h1 className="dashboard-title">
-                            {isEditing ? 'Editar Proyecto' : project.name}
-                        </h1>
-                    </div>
+                <div className="dashboard-header-content">
+                    <div className="dashboard-accent-line" />
+                    <h1 className="dashboard-title">
+                        {isEditing ? 'Editar Proyecto' : project.name}
+                    </h1>
                 </div>
                 {!isEditing && (
                     <p className="dashboard-subtitle">
