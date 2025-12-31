@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getProjectLocations, createProjectLocation, updateProjectLocation, deactivateLocation, type ProjectLocation } from '@/services/project-locations'
-import { MapPin, Plus, Building2, Package, Wrench, Truck, CheckCircle, Edit, Trash2, ArrowLeft } from 'lucide-react'
+import { getProjectLocations, createProjectLocation, updateProjectLocation, deactivateLocation, deleteLocation, type ProjectLocation } from '@/services/project-locations'
+import { MapPin, Plus, Building2, Package, Wrench, Truck, CheckCircle, Edit, Trash2, ArrowLeft, RotateCcw } from 'lucide-react'
 
 // Using lucid-react icons consistent with the project
 const LOCATION_TYPE_ICONS = {
@@ -59,7 +59,7 @@ export default function ProjectLocationsManager({ projectId, onBack }: Props) {
     }, {} as Record<string, ProjectLocation[]>)
 
     async function handleDelete(locationId: string) {
-        if (!confirm('¿Desactivar esta ubicación? Los spools asignados a ella quedarán sin ubicación.')) {
+        if (!confirm('¿Desactivar esta ubicación? Los spools asignados seguirán apuntando a ella pero se mostrará como inactiva.')) {
             return
         }
 
@@ -68,6 +68,28 @@ export default function ProjectLocationsManager({ projectId, onBack }: Props) {
             await loadLocations()
         } else {
             alert('Error al desactivar ubicación')
+        }
+    }
+
+    async function handleReactivate(locationId: string) {
+        const { error } = await updateProjectLocation(locationId, { is_active: true })
+        if (!error) {
+            await loadLocations()
+        } else {
+            alert('Error al reactivar ubicación')
+        }
+    }
+
+    async function handleHardDelete(locationId: string) {
+        if (!confirm('¿ELIMINAR PERMANENTEMENTE?\n\nEsta acción no se puede deshacer. Si hay spools en esta ubicación, quedarán sin ubicación asignada.')) {
+            return
+        }
+
+        const { error } = await deleteLocation(locationId)
+        if (!error) {
+            await loadLocations()
+        } else {
+            alert('Error al eliminar ubicación. Es posible que tenga registros dependientes.')
         }
     }
 
@@ -203,13 +225,31 @@ export default function ProjectLocationsManager({ projectId, onBack }: Props) {
                                                 >
                                                     <Edit size={14} /> Editar
                                                 </button>
-                                                {location.is_active && (
+                                                {location.is_active ? (
                                                     <button
                                                         onClick={() => handleDelete(location.id)}
                                                         className="btn-action btn-delete"
+                                                        title="Desactivar"
                                                     >
                                                         <Trash2 size={14} /> Desactivar
                                                     </button>
+                                                ) : (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleReactivate(location.id)}
+                                                            className="btn-action btn-reactivate"
+                                                            title="Reactivar"
+                                                        >
+                                                            <RotateCcw size={14} /> Activar
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleHardDelete(location.id)}
+                                                            className="btn-action btn-hard-delete"
+                                                            title="Eliminar Permanentemente"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </>
                                                 )}
                                             </div>
                                         </div>
@@ -541,6 +581,19 @@ export default function ProjectLocationsManager({ projectId, onBack }: Props) {
                     color: #fca5a5;
                 }
                 .btn-delete:hover { background: rgba(239, 68, 68, 0.2); }
+
+                .btn-reactivate {
+                    background: rgba(34, 197, 94, 0.1);
+                    color: #86efac;
+                }
+                .btn-reactivate:hover { background: rgba(34, 197, 94, 0.2); }
+
+                .btn-hard-delete {
+                    background: rgba(239, 68, 68, 0.2);
+                    color: #fca5a5;
+                    max-width: 40px;
+                }
+                .btn-hard-delete:hover { background: rgba(239, 68, 68, 0.4); color: white; }
 
                 /* Empty State */
                 .empty-state {
