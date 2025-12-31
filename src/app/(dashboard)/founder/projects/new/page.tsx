@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { createProject } from '@/services/projects'
-import { ArrowLeft } from 'lucide-react'
+import { FolderKanban } from 'lucide-react'
 import '@/styles/dashboard.css'
 import '@/styles/companies.css'
 
@@ -122,26 +122,9 @@ export default function NewProjectPage() {
         <div className="dashboard-page">
             {/* Header */}
             <div className="dashboard-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                    <button
-                        onClick={() => router.push('/founder/projects')}
-                        style={{
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            borderRadius: '0.5rem',
-                            padding: '0.5rem',
-                            color: 'white',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center'
-                        }}
-                    >
-                        <ArrowLeft size={20} />
-                    </button>
-                    <div className="dashboard-header-content">
-                        <div className="dashboard-accent-line" />
-                        <h1 className="dashboard-title">Nuevo Proyecto</h1>
-                    </div>
+                <div className="dashboard-header-content">
+                    <div className="dashboard-accent-line" />
+                    <h1 className="dashboard-title">Nuevo Proyecto</h1>
                 </div>
                 <p className="dashboard-subtitle">Crea un nuevo proyecto para tu empresa</p>
             </div>
