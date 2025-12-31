@@ -70,21 +70,32 @@ export function ListView<T extends Record<string, any>>({
                                         {schema.fields[colKey as string]?.label || String(colKey)}
                                     </th>
                                 ))}
-                                {schema.views.list.actions && (
+                                {schema.views.list.actions && schema.views.list.actions.length > 0 && (
                                     <th style={{ textAlign: 'right' }}>Acciones</th>
                                 )}
                             </tr>
                         </thead>
                         <tbody>
                             {data.map((item, idx) => (
-                                <tr key={item.id || idx}>
+                                <tr
+                                    key={item.id || idx}
+                                    onClick={() => {
+                                        // If no actions defined or actions is empty, make row clickable with 'view'
+                                        if (!schema.views.list.actions || schema.views.list.actions.length === 0) {
+                                            onAction && onAction('view', item)
+                                        }
+                                    }}
+                                    style={{
+                                        cursor: (!schema.views.list.actions || schema.views.list.actions.length === 0) ? 'pointer' : 'default'
+                                    }}
+                                >
                                     {columns.map((colKey) => (
                                         <td key={String(colKey)}>
                                             {renderCell(item, colKey as string, schema.fields[colKey as string])}
                                         </td>
                                     ))}
 
-                                    {schema.views.list.actions && (
+                                    {schema.views.list.actions && schema.views.list.actions.length > 0 && (
                                         <td style={{ textAlign: 'right' }}>
                                             {schema.views.list.actions.map(action => (
                                                 <button

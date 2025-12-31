@@ -36,8 +36,8 @@ export const ProjectSchema = { // Intentionally leaving out explicit generic for
     },
     views: {
         list: {
-            columns: ['name', 'code', 'status', 'members_count', 'created_at'],
-            actions: ['view']
+            columns: ['name', 'status', 'members_count', 'created_at'],
+            actions: []
         }
     }
 } as const
