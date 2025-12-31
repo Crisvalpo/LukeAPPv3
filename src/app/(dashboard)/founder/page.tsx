@@ -153,14 +153,14 @@ export default function FounderDashboard() {
                     {/* Company Settings */}
                     <div
                         className="quick-action-card"
-                        onClick={() => router.push('/founder/company')}
+                        onClick={() => router.push('/founder/settings')}
                     >
                         <div className="quick-action-icon">
                             <Building2 size={24} color="#c084fc" />
                         </div>
                         <h3 className="quick-action-title">Configuración</h3>
                         <p className="quick-action-description">
-                            Edita información de {companyData.name}
+                            Administra configuraciones de tu empresa
                         </p>
                     </div>
 

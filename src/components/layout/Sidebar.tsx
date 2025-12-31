@@ -76,7 +76,6 @@ export default function Sidebar({ role }: SidebarProps) {
     const founderMenu: MenuItem[] = [
         { name: 'Vista General', href: '/founder', icon: LayoutDashboard },
         { name: 'Proyectos', href: '/founder/projects', icon: FolderKanban },
-        { name: 'Roles', href: '/founder/settings/roles', icon: Users },
         // { name: 'Abastecimiento', href: '/founder/procurement', icon: Package }, // MOVED TO PROJECT DETAILS
     ]
 
