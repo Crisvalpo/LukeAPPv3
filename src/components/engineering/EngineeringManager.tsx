@@ -62,7 +62,10 @@ export default function EngineeringManager({ projectId, companyId, userRole = 'f
                         projectId={projectId}
                         companyId={companyId}
                         onSuccess={() => {
-                            console.log('Announcement upload successful!')
+                            // Auto-switch to Revisiones tab to show updated statistics
+                            setTimeout(() => {
+                                setActiveTab('revisiones')
+                            }, 1500) // Wait 1.5s to show success message first
                         }}
                     />
                 )}
