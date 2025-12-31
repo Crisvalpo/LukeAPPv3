@@ -9,6 +9,7 @@ import { Building2, Calendar, FileText, Check, X, Shield, Users, Trash2 } from '
 import InvitationManager from '@/components/invitations/InvitationManager'
 import EngineeringManager from '@/components/engineering/EngineeringManager'
 import ProcurementManager from '@/components/procurement/ProcurementManager'
+import ProjectLocationsManager from '@/components/projects/ProjectLocationsManager'
 import '@/styles/dashboard.css'
 import '@/styles/companies.css'
 
@@ -25,7 +26,8 @@ export default function ProjectDetailPage() {
     const [isLoading, setIsLoading] = useState(true)
     const [project, setProject] = useState<ProjectDetails | null>(null)
     const [invitations, setInvitations] = useState<Invitation[]>([])
-    const [activeTab, setActiveTab] = useState<'details' | 'team' | 'engineering' | 'procurement'>('details')
+    const [activeTab, setActiveTab] = useState<'details' | 'team' | 'engineering' | 'procurement' | 'settings'>('details')
+    const [settingsView, setSettingsView] = useState<'menu' | 'locations'>('menu')
 
     const [isEditing, setIsEditing] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
@@ -312,6 +314,21 @@ export default function ProjectDetailPage() {
                             >
                                 Abastecimiento
                             </button>
+                            <button
+                                onClick={() => setActiveTab('settings')}
+                                style={{
+                                    padding: '0.75rem 1rem',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    borderBottom: activeTab === 'settings' ? '2px solid var(--color-primary)' : '2px solid transparent',
+                                    color: activeTab === 'settings' ? 'white' : '#94a3b8',
+                                    fontWeight: activeTab === 'settings' ? 600 : 400,
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                Configuración
+                            </button>
                         </div>
 
                         {activeTab === 'details' && (
@@ -404,9 +421,65 @@ export default function ProjectDetailPage() {
                                 />
                             </div>
                         )}
+
+                        {activeTab === 'settings' && (
+                            <div className="fade-in" style={{ padding: '1rem' }}>
+                                {settingsView === 'menu' ? (
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                                        <div
+                                            onClick={() => setSettingsView('locations')}
+                                            style={{
+                                                background: '#1e293b',
+                                                borderRadius: '1rem',
+                                                padding: '1.5rem',
+                                                border: '1px solid #334155',
+                                                cursor: 'pointer',
+                                                flex: 1,
+                                                transition: 'transform 0.2s, box-shadow 0.2s',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.transform = 'translateY(-4px)'
+                                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
+                                                e.currentTarget.style.borderColor = '#8b5cf6'
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.transform = 'none'
+                                                e.currentTarget.style.boxShadow = 'none'
+                                                e.currentTarget.style.borderColor = '#334155'
+                                            }}
+                                        >
+                                            <div style={{
+                                                background: 'rgba(139, 92, 246, 0.2)',
+                                                width: '48px',
+                                                height: '48px',
+                                                borderRadius: '12px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                marginBottom: '1rem'
+                                            }}>
+                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                                    <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                                </svg>
+                                            </div>
+                                            <h3 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 600 }}>Ubicaciones</h3>
+                                            <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                                                Gestiona bodegas, talleres, áreas de acopio y sitios de montaje para el control de spools.
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <ProjectLocationsManager
+                                        projectId={projectId}
+                                        onBack={() => setSettingsView('menu')}
+                                    />
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     )
 }

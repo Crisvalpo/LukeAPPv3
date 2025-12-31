@@ -9,6 +9,7 @@
  */
 
 import { createClient } from '@/lib/supabase/client'
+import { assignSpoolTags } from './spool-tagging'
 
 export interface SpoolWeldRow {
     'ISO NUMBER': string
@@ -193,7 +194,37 @@ export async function uploadSpoolsWelds(
             return result
         }
 
-        // 6. Check if should auto-spool
+        // 6. Auto-assign tags to spools (NEW)
+        // Fetch all spools created by trigger for this revision
+        const { data: spools } = await supabase
+            .from('spools')
+            .select('id, spool_number, isometric_id')
+            .eq('revision_id', revisionId)
+
+        if (spools && spools.length > 0) {
+            try {
+                const spoolsToTag = spools.map(s => ({
+                    spool_id: s.id,
+                    spool_number: s.spool_number,
+                    isometric_id: s.isometric_id,
+                    revision_id: revisionId
+                }))
+
+                const tagAssignments = await assignSpoolTags(
+                    projectId,
+                    companyId,
+                    revisionId,
+                    spoolsToTag
+                )
+
+                console.log(`✅ Auto-assigned tags to ${tagAssignments.size} spools`)
+            } catch (tagError) {
+                console.error('Error auto-assigning tags:', tagError)
+                result.errors.push('Tags no pudieron asignarse automáticamente')
+            }
+        }
+
+        // 7. Check if should auto-spool
         const shouldAutoSpool = await shouldAutoSpoolRevision(revisionId, supabase)
 
         if (shouldAutoSpool) {
@@ -207,7 +238,7 @@ export async function uploadSpoolsWelds(
             result.requires_impact_evaluation = true
         }
 
-        // 7. Success
+        // 8. Success
         result.success = totalInserted > 0
         result.revision_id = revisionId
         result.message = `Se cargaron ${totalInserted} soldaduras en ${uniqueSpools.size} spools`

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import type { EngineeringRevision } from '@/types'
 import { deleteRevisionAction } from '@/actions/revisions'
 import { calculateDataStatus, calculateMaterialStatus, isFabricable, type DataStatus, type MaterialStatus } from '@/services/fabricability'
+import RevisionSpoolsList from './RevisionSpoolsList'
 
 interface IsometricRevisionCardProps {
     isoNumber: string
@@ -29,6 +30,7 @@ export default function IsometricRevisionCard({
 }: IsometricRevisionCardProps) {
     const router = useRouter()
     const [isExpanded, setIsExpanded] = useState(false)
+    const [openRevId, setOpenRevId] = useState<string | null>(null)
     const [isDeleting, setIsDeleting] = useState<string | null>(null)
     const [revisionStatuses, setRevisionStatuses] = useState<Record<string, { data: DataStatus; material: MaterialStatus; fabricable: boolean }>>({})
 
@@ -165,73 +167,90 @@ export default function IsometricRevisionCard({
                                 </thead>
                                 <tbody>
                                     {sortedRevisions.map(rev => (
-                                        <tr key={rev.id} className={rev.id === currentRevision?.id ? 'active-row' : ''}>
-                                            <td className="col-rev">
-                                                <span className="rev-circle">{rev.rev_code}</span>
-                                            </td>
-                                            <td>
-                                                <span
-                                                    className="status-pill"
-                                                    style={{
-                                                        color: statusColors[rev.revision_status] || '#ccc',
-                                                        borderColor: statusColors[rev.revision_status] || '#ccc',
-                                                        background: `${statusColors[rev.revision_status] || '#ccc'} 15` // 15 = hex opacity approx 8%
-                                                    }}
-                                                >
-                                                    {rev.revision_status}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span
-                                                    className="status-pill"
-                                                    style={{
-                                                        fontSize: '0.75rem',
-                                                        color: revisionStatuses[rev.id]?.data === 'COMPLETO' ? '#10b981' : '#fbbf24',
-                                                        borderColor: revisionStatuses[rev.id]?.data === 'COMPLETO' ? '#10b981' : '#fbbf24'
-                                                    }}
-                                                >
-                                                    {revisionStatuses[rev.id]?.data || '...'}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span
-                                                    className="status-pill"
-                                                    style={{
-                                                        fontSize: '0.75rem',
-                                                        color: revisionStatuses[rev.id]?.material === 'DISPONIBLE' ? '#10b981' : '#6b7280',
-                                                        borderColor: revisionStatuses[rev.id]?.material === 'DISPONIBLE' ? '#10b981' : '#6b7280'
-                                                    }}
-                                                >
-                                                    {revisionStatuses[rev.id]?.material || '...'}
-                                                </span>
-                                            </td>
-                                            <td style={{ textAlign: 'center', fontSize: '1.2rem' }}>
-                                                {revisionStatuses[rev.id]?.fabricable ? '🟢' : '🔴'}
-                                            </td>
-                                            <td>
-                                                {rev.announcement_date
-                                                    ? new Date(rev.announcement_date).toLocaleDateString('es-CL')
-                                                    : '-'
-                                                }
-                                            </td>
-                                            <td>{rev.welds_count || 0}</td>
-                                            <td>{rev.spools_count || 0}</td>
-                                            <td className="col-tml" title={rev.transmittal || ''}>
-                                                {rev.transmittal || '-'}
-                                            </td>
-                                            <td style={{ textAlign: 'right' }}>
-                                                <div className="action-group">
-                                                    <button
-                                                        className="btn-icon-danger"
-                                                        onClick={() => handleDelete(rev.id, rev.rev_code)}
-                                                        disabled={isDeleting === rev.id}
-                                                        title="Eliminar Revisión"
+                                        <div key={rev.id} style={{ display: 'contents' }}>
+                                            <tr className={rev.id === currentRevision?.id ? 'active-row' : ''}>
+                                                <td className="col-rev">
+                                                    <span className="rev-circle">{rev.rev_code}</span>
+                                                </td>
+                                                <td>
+                                                    <span
+                                                        className="status-pill"
+                                                        style={{
+                                                            color: statusColors[rev.revision_status] || '#ccc',
+                                                            borderColor: statusColors[rev.revision_status] || '#ccc',
+                                                            background: `${statusColors[rev.revision_status] || '#ccc'} 15` // 15 = hex opacity approx 8%
+                                                        }}
                                                     >
-                                                        {isDeleting === rev.id ? '...' : '🗑️'}
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                                        {rev.revision_status}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span
+                                                        className="status-pill"
+                                                        style={{
+                                                            fontSize: '0.75rem',
+                                                            color: revisionStatuses[rev.id]?.data === 'COMPLETO' ? '#10b981' : '#fbbf24',
+                                                            borderColor: revisionStatuses[rev.id]?.data === 'COMPLETO' ? '#10b981' : '#fbbf24'
+                                                        }}
+                                                    >
+                                                        {revisionStatuses[rev.id]?.data || '...'}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span
+                                                        className="status-pill"
+                                                        style={{
+                                                            fontSize: '0.75rem',
+                                                            color: revisionStatuses[rev.id]?.material === 'DISPONIBLE' ? '#10b981' : '#6b7280',
+                                                            borderColor: revisionStatuses[rev.id]?.material === 'DISPONIBLE' ? '#10b981' : '#6b7280'
+                                                        }}
+                                                    >
+                                                        {revisionStatuses[rev.id]?.material || '...'}
+                                                    </span>
+                                                </td>
+                                                <td style={{ textAlign: 'center', fontSize: '1.2rem' }}>
+                                                    {revisionStatuses[rev.id]?.fabricable ? '🟢' : '🔴'}
+                                                </td>
+                                                <td>
+                                                    {rev.announcement_date
+                                                        ? new Date(rev.announcement_date).toLocaleDateString('es-CL')
+                                                        : '-'
+                                                    }
+                                                </td>
+                                                <td>{rev.welds_count || 0}</td>
+                                                <td>{rev.spools_count || 0}</td>
+                                                <td className="col-tml" title={rev.transmittal || ''}>
+                                                    {rev.transmittal || '-'}
+                                                </td>
+                                                <td style={{ textAlign: 'right' }}>
+                                                    <div className="action-group">
+                                                        <button
+                                                            className="btn-icon-secondary"
+                                                            onClick={() => setOpenRevId(openRevId === rev.id ? null : rev.id)}
+                                                            title="Ver Spools y Tags"
+                                                            style={{ marginRight: '5px' }}
+                                                        >
+                                                            🏷️
+                                                        </button>
+                                                        <button
+                                                            className="btn-icon-danger"
+                                                            onClick={() => handleDelete(rev.id, rev.rev_code)}
+                                                            disabled={isDeleting === rev.id}
+                                                            title="Eliminar Revisión"
+                                                        >
+                                                            {isDeleting === rev.id ? '...' : '🗑️'}
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {openRevId === rev.id && (
+                                                <tr>
+                                                    <td colSpan={10} style={{ padding: 0, borderBottom: 'none' }}>
+                                                        <RevisionSpoolsList revisionId={rev.id} projectId={rev.project_id} />
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </div>
                                     ))}
                                 </tbody>
                             </table>
