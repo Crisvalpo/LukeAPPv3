@@ -157,10 +157,11 @@ export default function RolesManagementPage() {
         <div className="dashboard-page">
             {/* Header */}
             <div className="dashboard-header">
-                <div>
-                    <h1>Gestión de Roles</h1>
-                    <p className="subtitle">Configura los roles y permisos de tu empresa</p>
+                <div className="dashboard-header-content">
+                    <div className="dashboard-accent-line" />
+                    <h1 className="dashboard-title">Gestión de Roles</h1>
                 </div>
+                <p className="dashboard-subtitle">Configura los roles y permisos de tu empresa</p>
                 <div className="header-actions">
                     <button
                         className="btn-secondary"
