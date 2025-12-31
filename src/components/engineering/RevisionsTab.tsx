@@ -128,8 +128,68 @@ export default function RevisionsTab({ projectId }: RevisionsTabProps) {
 
     if (error) {
         return (
-            <div className="error-message">
-                {error}
+            <div className="error-message" style={{
+                padding: '3rem',
+                textAlign: 'center',
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '0.75rem',
+                color: '#f87171'
+            }}>
+                <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⚠️</div>
+                <h3 style={{ marginBottom: '0.5rem', color: 'white' }}>Error al cargar revisiones</h3>
+                <p style={{ color: '#cbd5e1', fontSize: '0.875rem', maxWidth: '500px', margin: '0 auto' }}>
+                    {error}
+                </p>
+                <button
+                    onClick={loadRevisions}
+                    style={{
+                        marginTop: '1rem',
+                        padding: '0.5rem 1rem',
+                        background: 'rgba(239, 68, 68, 0.2)',
+                        border: '1px solid rgba(239, 68, 68, 0.4)',
+                        borderRadius: '0.375rem',
+                        color: '#fca5a5',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Reintentar
+                </button>
+            </div>
+        )
+    }
+
+    // Show empty state if no revisions (not an error)
+    if (revisions.length === 0) {
+        return (
+            <div className="empty-state-container" style={{ padding: '4rem 2rem', textAlign: 'center' }}>
+                <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📋</div>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'white', marginBottom: '0.5rem' }}>
+                    No hay revisiones de ingeniería
+                </h2>
+                <p style={{ color: '#94a3b8', maxWidth: '500px', margin: '0 auto 2rem', lineHeight: '1.6' }}>
+                    Comienza cargando un anuncio de revisión usando la pestaña <strong style={{ color: '#60a5fa' }}>1. Anuncio</strong>.
+                    Podrás subir isométricos, revisiones y detalles técnicos.
+                </p>
+                <button
+                    onClick={() => {
+                        // Switch to announcement tab if possible
+                        // This would require passing a callback from parent
+                        alert('Ve a la pestaña "1. Anuncio" para subir tu primer anuncio de revisión')
+                    }}
+                    style={{
+                        padding: '0.75rem 1.5rem',
+                        background: 'var(--color-primary)',
+                        border: 'none',
+                        borderRadius: '0.5rem',
+                        color: 'white',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        fontSize: '0.875rem'
+                    }}
+                >
+                    Ver cómo empezar
+                </button>
             </div>
         )
     }

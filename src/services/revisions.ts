@@ -156,14 +156,11 @@ export async function getRevisionEvents(revisionId: string): Promise<ApiResponse
     }
 }
 
-/**
- * Get all revisions for a project with isometric info and welds count
- */
 export async function getProjectRevisions(projectId: string): Promise<ApiResponse<EngineeringRevision[]>> {
     const supabase = await createClient()
 
     try {
-        // Main query: get revisions with isometric data
+        // Main query: get revisions WITHOUT isometric embed to avoid relationship ambiguity
         const { data: revisions, error } = await supabase
             .from('engineering_revisions')
             .select(`
@@ -175,10 +172,7 @@ export async function getProjectRevisions(projectId: string): Promise<ApiRespons
                 revision_status,
                 transmittal,
                 announcement_date,
-                created_at,
-                isometrics (
-                    iso_number
-                )
+                created_at
             `)
             .eq('project_id', projectId)
             .order('created_at', { ascending: false })
@@ -187,7 +181,7 @@ export async function getProjectRevisions(projectId: string): Promise<ApiRespons
             console.error('getProjectRevisions error:', error)
             return {
                 success: false,
-                message: `Error al obtener revisiones: ${error.message}`,
+                message: `Error al obtener revisiones:${error.message}`,
                 data: []
             }
         }
@@ -195,14 +189,22 @@ export async function getProjectRevisions(projectId: string): Promise<ApiRespons
         if (!revisions || revisions.length === 0) {
             return {
                 success: true,
-                message: 'No hay revisiones',
+                message: 'No hay revisiones para este proyecto',
                 data: []
             }
         }
 
-        // Get welds count for each revision
-        const revisionsWithCounts = await Promise.all(
+        // Get isometric numbers and welds count separately
+        const revisionsWithData = await Promise.all(
             revisions.map(async (rev: any) => {
+                // Get isometric data
+                const { data: iso } = await supabase
+                    .from('isometrics')
+                    .select('iso_number')
+                    .eq('id', rev.isometric_id)
+                    .maybeSingle()
+
+                // Get welds count
                 const { count } = await supabase
                     .from('spools_welds')
                     .select('*', { count: 'exact', head: true })
@@ -226,7 +228,7 @@ export async function getProjectRevisions(projectId: string): Promise<ApiRespons
                     transmittal: rev.transmittal,
                     announcement_date: rev.announcement_date,
                     created_at: rev.created_at,
-                    iso_number: rev.isometrics?.iso_number || 'N/A',
+                    iso_number: iso?.iso_number || 'N/A',
                     welds_count: count || 0,
                     spools_count: uniqueSpools.size
                 } as EngineeringRevision
@@ -236,13 +238,13 @@ export async function getProjectRevisions(projectId: string): Promise<ApiRespons
         return {
             success: true,
             message: 'Revisiones obtenidas',
-            data: revisionsWithCounts
+            data: revisionsWithData
         }
     } catch (error) {
         console.error('Error in getProjectRevisions:', error)
         return {
             success: false,
-            message: 'Error inesperado',
+            message: 'Error inesperado al cargar revisiones',
             data: []
         }
     }
