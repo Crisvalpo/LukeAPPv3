@@ -7,7 +7,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 interface Props {
@@ -43,10 +43,25 @@ export default function RevisionSelector({
     const [isOpen, setIsOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
 
+    const wrapperRef = useRef<HTMLDivElement>(null)
+
     // Filter isometrics based on search
     const filteredIsometrics = isometrics.filter(iso =>
         iso.iso_number.toLowerCase().includes(searchTerm.toLowerCase())
     )
+
+    // Click outside handler
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+                setIsOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+    }, [])
 
     // Load Isometrics on mount
     useEffect(() => {
@@ -126,7 +141,7 @@ export default function RevisionSelector({
         <div className="revision-selector-group">
             <div className="selector-item">
                 <label>Isométrico:</label>
-                <div className="combobox-wrapper">
+                <div className="combobox-wrapper" ref={wrapperRef}>
                     <input
                         type="text"
                         placeholder={loadingIso ? "Cargando..." : "Buscar isométrico..."}
@@ -137,7 +152,6 @@ export default function RevisionSelector({
                             if (e.target.value === '') setSelectedIso('')
                         }}
                         onFocus={() => setIsOpen(true)}
-                        onBlur={() => setTimeout(() => setIsOpen(false), 200)} // Delay to allow click
                         disabled={disabled || loadingIso}
                         className="form-input search-input"
                     />
@@ -219,7 +233,7 @@ export default function RevisionSelector({
                     background: #1e1e1e;
                     border: 1px solid rgba(255,255,255,0.2);
                     border-radius: 6px;
-                    z-index: 100;
+                    z-index: 1000;
                     margin-top: 4px;
                     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
                 }

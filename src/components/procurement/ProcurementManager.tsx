@@ -5,6 +5,7 @@ import MaterialRequestList from '@/components/procurement/MaterialRequestList'
 import CreateRequestModal from '@/components/procurement/CreateRequestModal'
 import ConsolidatedMTO from '@/components/procurement/ConsolidatedMTO'
 import PipeInventoryMaster from '@/components/procurement/PipeInventoryMaster'
+import MaterialCatalogManager from '@/components/procurement/MaterialCatalogManager'
 import '@/styles/dashboard.css'
 import '@/styles/engineering.css'
 
@@ -14,10 +15,10 @@ interface ProcurementManagerProps {
     userRole?: 'founder' | 'admin'
 }
 
-type TabType = 'requests' | 'mto' | 'receiving' | 'inventory' | 'pipe-manager'
+type TabType = 'catalog' | 'requests' | 'mto' | 'receiving' | 'inventory' | 'pipe-manager'
 
 export default function ProcurementManager({ projectId, companyId, userRole = 'founder' }: ProcurementManagerProps) {
-    const [activeTab, setActiveTab] = useState<TabType>('requests')
+    const [activeTab, setActiveTab] = useState<TabType>('catalog')
     const [showCreateModal, setShowCreateModal] = useState(false)
 
     return (
@@ -36,6 +37,12 @@ export default function ProcurementManager({ projectId, companyId, userRole = 'f
 
             {/* Tabs Navigation */}
             <div className="tabs-nav">
+                <button
+                    className={`tab-button ${activeTab === 'catalog' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('catalog')}
+                >
+                    📚 Catálogo
+                </button>
                 <button
                     className={`tab-button ${activeTab === 'requests' ? 'active' : ''}`}
                     onClick={() => setActiveTab('requests')}
@@ -70,6 +77,10 @@ export default function ProcurementManager({ projectId, companyId, userRole = 'f
 
             {/* Tab Content */}
             <div className="tab-content" style={{ minHeight: '400px', marginTop: '1.5rem' }}>
+                {activeTab === 'catalog' && (
+                    <MaterialCatalogManager projectId={projectId} companyId={companyId} />
+                )}
+
                 {activeTab === 'requests' && (
                     <MaterialRequestList projectId={projectId} />
                 )}
@@ -107,8 +118,6 @@ export default function ProcurementManager({ projectId, companyId, userRole = 'f
                     onClose={() => setShowCreateModal(false)}
                     onSuccess={() => {
                         setShowCreateModal(false)
-                        // In a real implementation we should trigger a refresh of the list
-                        // For now we rely on the component's internal state or page reload if needed
                         window.location.reload()
                     }}
                 />

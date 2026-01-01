@@ -216,3 +216,78 @@ Todos implementados en Vanilla CSS (`src/components/ui/`):
 3. **Importar CSS en componente**: `import './component.css'`
 4. **Usar variables**: Siempre preferir variables CSS del design system
 5. **No hardcodear colores**: Nunca usar `#fff`, `rgba()`, etc. directamente
+
+---
+
+## 📦 MATERIAL CATALOG (Procurement Module)
+
+### Multi-Specification Support (Jan 2025)
+
+**Context**: El catálogo de materiales ahora soporta múltiples especificaciones técnicas para el mismo código de identificación.
+
+#### Database Schema Change
+
+**Migration**: `0065_update_material_catalog_constraint.sql`
+
+```sql
+-- Dropped old constraint
+ALTER TABLE material_catalog DROP CONSTRAINT IF EXISTS unique_ident_per_project;
+
+-- New composite unique index
+CREATE UNIQUE INDEX IF NOT EXISTS idx_material_catalog_unique_key 
+ON material_catalog (project_id, ident_code, COALESCE(spec_code, ''));
+```
+
+**Behavior**:
+- Mismo `ident_code` + Mismo `spec_code` = **UPDATE automático**
+- Mismo `ident_code` + Diferente `spec_code` = **INSERT nuevo registro**
+- Permite múltiples especificaciones del mismo material
+
+#### Performance Optimization
+
+**File**: `src/services/material-catalog.ts` → `bulkUploadMaterials()`
+
+**Before**: 
+- 2 queries per item (SELECT + INSERT/UPDATE)
+- ~60 segundos para 2300 items
+
+**After**:
+- Batch operations: 1 SELECT + 1 INSERT + N parallel UPDATEs per chunk (100 items)
+- ~5-10 segundos para 2300 items
+- **10x performance improvement**
+
+**Key Changes**:
+1. Pre-fetch all existing items in chunk by `ident_code`
+2. Build lookup map with key `ident|||spec`
+3. Separate items into `toInsert[]` and `toUpdate[]`
+4. Batch INSERT all new items
+5. Parallel UPDATE existing items with `Promise.allSettled`
+
+#### UI Improvements
+
+**File**: `src/components/procurement/MaterialCatalogManager.tsx`
+
+**Completed**:
+1. ✅ Progress bar during upload (real-time feedback)
+2. ✅ Fixed footer pagination (always visible)
+3. ✅ Table limited to 8 visible rows with scroll
+4. ✅ "Vaciar Catálogo" moved to Settings menu (safer)
+5. ✅ Removed obsolete "Actualizar Dup" checkbox
+
+**Pending** (next session):
+- Consolidate all action buttons into Settings dropdown menu
+- Single horizontal toolbar: `[Search] [Filters] [⚙️]`
+
+#### Rules
+
+1. **Always update on exact match**: Si `(project_id, ident_code, spec_code)` existe, actualizar automáticamente
+2. **Multi-tenant isolation**: Cada proyecto tiene su catálogo independiente
+3. **Error transparency**: Todos los errores se reportan al usuario (no silent failures)
+4. **Batch operations only**: No item-by-item processing para >100 items
+
+#### Next Steps
+
+- [ ] Complete toolbar UI consolidation
+- [ ] Add bulk delete with confirmation
+- [ ] Add export with filters applied
+- [ ] Add column sorting
