@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Book, FileText, BarChart2, Download, Package, Ruler } from 'lucide-react'
 import MaterialRequestList from '@/components/procurement/MaterialRequestList'
 import CreateRequestModal from '@/components/procurement/CreateRequestModal'
 import ConsolidatedMTO from '@/components/procurement/ConsolidatedMTO'
@@ -22,7 +23,7 @@ export default function ProcurementManager({ projectId, companyId, userRole = 'f
     const [showCreateModal, setShowCreateModal] = useState(false)
 
     return (
-        <div className="procurement-manager-container">
+        <div className="engineering-hub-container">
             {/* Header Actions */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
                 {activeTab === 'requests' && (
@@ -36,47 +37,53 @@ export default function ProcurementManager({ projectId, companyId, userRole = 'f
             </div>
 
             {/* Tabs Navigation */}
-            <div className="tabs-nav">
+            <div className="engineering-tabs">
                 <button
                     className={`tab-button ${activeTab === 'catalog' ? 'active' : ''}`}
                     onClick={() => setActiveTab('catalog')}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
-                    📚 Catálogo
+                    <Book size={16} /> Catálogo
                 </button>
                 <button
                     className={`tab-button ${activeTab === 'requests' ? 'active' : ''}`}
                     onClick={() => setActiveTab('requests')}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
-                    📋 Solicitudes (MIR/PO)
+                    <FileText size={16} /> Solicitudes (MIR/PO)
                 </button>
                 <button
                     className={`tab-button ${activeTab === 'mto' ? 'active' : ''}`}
                     onClick={() => setActiveTab('mto')}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
-                    📊 MTO (Ingeniería)
+                    <BarChart2 size={16} /> MTO (Ingeniería)
                 </button>
                 <button
                     className={`tab-button ${activeTab === 'receiving' ? 'active' : ''}`}
                     onClick={() => setActiveTab('receiving')}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
-                    📥 Recepción
+                    <Download size={16} /> Recepción
                 </button>
                 <button
                     className={`tab-button ${activeTab === 'inventory' ? 'active' : ''}`}
                     onClick={() => setActiveTab('inventory')}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
-                    📦 Inventario
+                    <Package size={16} /> Inventario
                 </button>
                 <button
                     className={`tab-button ${activeTab === 'pipe-manager' ? 'active' : ''}`}
                     onClick={() => setActiveTab('pipe-manager')}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
-                    📏 Gestión de Cañería
+                    <Ruler size={16} /> Gestión de Cañería
                 </button>
             </div>
 
             {/* Tab Content */}
-            <div className="tab-content" style={{ minHeight: '400px', marginTop: '1.5rem' }}>
+            <div className="engineering-content" style={{ minHeight: '400px', marginTop: '1.5rem' }}>
                 {activeTab === 'catalog' && (
                     <MaterialCatalogManager projectId={projectId} companyId={companyId} />
                 )}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { ClipboardList, Megaphone, Wrench, CheckCircle } from 'lucide-react'
 import RevisionsTab from '@/components/engineering/RevisionsTab'
 import RevisionAnnouncementTab from '@/components/engineering/RevisionAnnouncementTab'
 import EngineeringDetailsTab from '@/components/engineering/EngineeringDetailsTab'
@@ -28,26 +29,30 @@ export default function EngineeringManager({ projectId, companyId, userRole = 'f
                 <button
                     className={`tab-button ${activeTab === 'revisiones' ? 'active' : ''}`}
                     onClick={() => setActiveTab('revisiones')}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
-                    📋 Revisiones
+                    <ClipboardList size={16} /> Revisiones
                 </button>
                 <button
                     className={`tab-button ${activeTab === 'announcement' ? 'active' : ''}`}
                     onClick={() => setActiveTab('announcement')}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
-                    📢 1. Anuncio
+                    <Megaphone size={16} /> 1. Anuncio
                 </button>
                 <button
                     className={`tab-button ${activeTab === 'details' ? 'active' : ''}`}
                     onClick={() => setActiveTab('details')}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
-                    🔧 2. Detalles
+                    <Wrench size={16} /> 2. Detalles
                 </button>
                 <button
                     className={`tab-button ${activeTab === 'fabricability' ? 'active' : ''}`}
                     onClick={() => setActiveTab('fabricability')}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
-                    🟢 3. Fabricabilidad
+                    <CheckCircle size={16} /> 3. Fabricabilidad
                 </button>
             </div>
 

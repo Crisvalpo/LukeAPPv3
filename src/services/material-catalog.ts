@@ -19,6 +19,7 @@ export interface MaterialCatalogItem {
     part_group?: string
     sap_mat_grp?: string
     commodity_group?: string
+    custom_fields?: Record<string, any>
     created_at: string
     updated_at: string
 }
@@ -51,6 +52,7 @@ export async function getMaterialCatalog(
         search?: string
         partGroup?: string
         inputFilters?: Record<string, string>
+        specCode?: string
     }
 ): Promise<{ data: MaterialCatalogItem[]; count: number }> {
     const supabase = createClient()
@@ -72,6 +74,11 @@ export async function getMaterialCatalog(
     // Part group filter
     if (params?.partGroup) {
         query = query.ilike('part_group', `%${params.partGroup}%`)
+    }
+
+    // Spec code filter
+    if (params?.specCode) {
+        query = query.eq('spec_code', params.specCode)
     }
 
     // Custom Input filters (JSONB)
@@ -257,6 +264,27 @@ export function parseMaterialCatalogFromArray(rows: any[]): CreateMaterialParams
 /**
  * Get distinct values for filter dropdowns
  */
+/**
+ * Get raw data for client-side intelligent filtering
+ */
+export async function getCatalogRawFilterData(projectId: string): Promise<Pick<MaterialCatalogItem, 'part_group' | 'custom_fields' | 'spec_code'>[]> {
+    const supabase = createClient()
+
+    // Fetch only necessary columns for filtering
+    const { data, error } = await supabase
+        .from('material_catalog')
+        .select('part_group, custom_fields, spec_code')
+        .eq('project_id', projectId)
+
+    if (error) throw new Error(`Error fetching filter data: ${error.message}`)
+
+    // Cast to correct type since Supabase returns any[]
+    return (data || []) as unknown as Pick<MaterialCatalogItem, 'part_group' | 'custom_fields' | 'spec_code'>[]
+}
+
+/**
+ * Get distinct values for filter dropdowns (Deprecated related to UI, but kept for static initial load if needed)
+ */
 export async function getCatalogFilterOptions(projectId: string): Promise<{
     partGroups: string[]
     input1: string[]
@@ -264,17 +292,7 @@ export async function getCatalogFilterOptions(projectId: string): Promise<{
     input3: string[]
     input4: string[]
 }> {
-    const supabase = createClient()
-
-    // We fetch relevant columns to compute distincts
-    // NOTE: For very large datasets (100k+), this should be replaced by a Postgres RPC 
-    // to avoid fetching data. For now (up to ~20k), fetching these strings is fast enough.
-    const { data, error } = await supabase
-        .from('material_catalog')
-        .select('part_group, custom_fields')
-        .eq('project_id', projectId)
-
-    if (error) throw new Error(`Error fetching filter options: ${error.message}`)
+    const data = await getCatalogRawFilterData(projectId)
 
     const partGroups = new Set<string>()
     const input1 = new Set<string>()
@@ -282,14 +300,14 @@ export async function getCatalogFilterOptions(projectId: string): Promise<{
     const input3 = new Set<string>()
     const input4 = new Set<string>()
 
-    data?.forEach(item => {
+    data.forEach(item => {
         if (item.part_group) partGroups.add(item.part_group)
-        if (item.custom_fields) {
-            if (item.custom_fields['Input 1']) input1.add(item.custom_fields['Input 1'])
-            if (item.custom_fields['Input 2']) input2.add(item.custom_fields['Input 2'])
-            if (item.custom_fields['Input 3']) input3.add(item.custom_fields['Input 3'])
-            if (item.custom_fields['Input 4']) input4.add(item.custom_fields['Input 4'])
-        }
+        // Access safely as it might be unknown/any from DB
+        const custom: any = item.custom_fields || {}
+        if (custom['Input 1']) input1.add(custom['Input 1'])
+        if (custom['Input 2']) input2.add(custom['Input 2'])
+        if (custom['Input 3']) input3.add(custom['Input 3'])
+        if (custom['Input 4']) input4.add(custom['Input 4'])
     })
 
     return {
@@ -434,30 +452,57 @@ export async function bulkUploadMaterials(
 /**
  * Export catalog to Excel
  */
-/**
- * Export catalog to Excel
- */
 export async function exportCatalogToExcel(projectId: string): Promise<void> {
-    // Fetch all items (limit 10000)
-    const { data: materials } = await getMaterialCatalog(projectId, { limit: 10000 })
+    let allMaterials: MaterialCatalogItem[] = []
+    let page = 1
+    const BATCH_SIZE = 1000
+    let hasMore = true
 
-    const exportData = materials.map(m => ({
-        'Ident': m.ident_code,
-        'Short Desc': m.short_desc,
-        'Long Desc': m.long_desc || '',
-        'Commodity Code': m.commodity_code || '',
-        'Spec Code': m.spec_code || '',
-        'Unit Weight': m.unit_weight || '',
-        'Part Group': m.part_group || '',
-        'Sap Mat Grp': m.sap_mat_grp || '',
-        'Commodity Group': m.commodity_group || ''
-    }))
+    // Fetch all items in batches
+    while (hasMore) {
+        const { data } = await getMaterialCatalog(projectId, {
+            page,
+            limit: BATCH_SIZE
+        })
 
-    const worksheet = XLSX.utils.json_to_sheet(exportData)
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Materials')
+        if (data && data.length > 0) {
+            allMaterials = [...allMaterials, ...data]
+            if (data.length < BATCH_SIZE) {
+                hasMore = false
+            } else {
+                page++
+            }
+        } else {
+            hasMore = false
+        }
+    }
 
-    XLSX.writeFile(workbook, `material_catalog_${projectId.slice(0, 8)}.xlsx`)
+    const exportData = allMaterials.map(m => {
+        // Extract inputs from custom_fields
+        const custom = (m as any).custom_fields || {}
+
+        return {
+            'Ident': m.ident_code,
+            'Ident code': custom.alt_ident_code || '',
+            'Unit Weight': m.unit_weight || '',
+            'Input 1': custom['Input 1'] || '',
+            'Input 2': custom['Input 2'] || '',
+            'Input 3': custom['Input 3'] || '',
+            'Input 4': custom['Input 4'] || '',
+            'Commodity Code': m.commodity_code || '',
+            'Spec Code': m.spec_code || '',
+            'Short Desc': m.short_desc,
+            'Short Code': (m as any).short_code || '', // Assuming it might exist in DB even if not in type
+            'Sap Mat Grp': m.sap_mat_grp || '',
+            'Commodity Group': m.commodity_group || '',
+            'Part Group': m.part_group || ''
+        }
+    })
+
+    const ws = XLSX.utils.json_to_sheet(exportData)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Material Catalog')
+    XLSX.writeFile(wb, `material_catalog_${projectId}.xlsx`)
 }
 
 /**

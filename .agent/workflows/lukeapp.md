@@ -273,10 +273,30 @@ ON material_catalog (project_id, ident_code, COALESCE(spec_code, ''));
 3. ✅ Table limited to 8 visible rows with scroll
 4. ✅ "Vaciar Catálogo" moved to Settings menu (safer)
 5. ✅ Removed obsolete "Actualizar Dup" checkbox
+6. ✅ Consolidated action buttons into Settings dropdown menu (`[Search] [Filters] [⚙️]`)
+7. ✅ Added "Spec Code" intelligent filter
+8. ✅ Added "Download Template" functionality in Settings
+9. ✅ Refined table headers (Grouped "INPUTS", Sticky Headers pixel-perfect, Compact Columns)
 
 **Pending** (next session):
-- Consolidate all action buttons into Settings dropdown menu
-- Single horizontal toolbar: `[Search] [Filters] [⚙️]`
+- Add bulk delete with confirmation
+- Add export with filters applied
+- Add column sorting
+
+#### Standards Update (Jan 2025)
+
+1. **Icons**: Use `Lucide-React` for all UI icons (Tabs, Actions). No emojis.
+   - Catalog: `Book`
+   - Requests: `FileText`
+   - MTO: `BarChart2`
+   - Receiving: `Download`
+   - Inventory: `Package`
+   - Piping: `Ruler`
+   - Engineering: `ClipboardList`, `Megaphone`, `Wrench`, `CheckCircle`
+
+2. **Table Headers**:
+   - Use grouped headers for related columns (e.g., Inputs 1-4).
+   - Ensure sticky headers have `z-index: 20` and correct background/border to avoid visual glitches on scroll.
 
 #### Rules
 
@@ -287,7 +307,6 @@ ON material_catalog (project_id, ident_code, COALESCE(spec_code, ''));
 
 #### Next Steps
 
-- [ ] Complete toolbar UI consolidation
 - [ ] Add bulk delete with confirmation
 - [ ] Add export with filters applied
 - [ ] Add column sorting
