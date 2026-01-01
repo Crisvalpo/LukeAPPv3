@@ -89,7 +89,7 @@ export default function RevisionSpoolsList({ revisionId, projectId }: Props) {
                             <th style={{ width: '120px' }}>Tag Gestión</th>
                             <th>Spool Number</th>
                             <th>Ubicación</th>
-                            <th style={{ textAlign: 'center' }}>Soldaduras</th>
+                            <th style={{ textAlign: 'center' }}>Uniones</th>
                             <th style={{ textAlign: 'right' }}>Estado Actual</th>
                         </tr>
                     </thead>

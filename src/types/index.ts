@@ -485,9 +485,9 @@ export interface EngineeringRevision {
     project_id: string
     company_id: string
     rev_code: string
-    revision_status: 'VIGENTE' | 'PENDING' | 'SPOOLEADO' | 'APLICADO' | 'OBSOLETA'
-    transmittal: string | null
-    announcement_date: string | null
+    revision_status: string
+    transmittal?: string | null
+    announcement_date?: string | null
     created_at: string
 
     // New status fields (FASE 2A)
@@ -498,6 +498,21 @@ export interface EngineeringRevision {
     iso_number?: string
     welds_count?: number
     spools_count?: number
+}
+
+// Phase 6: Weld Type Configuration (Union Types)
+export interface WeldTypeConfig {
+    id: string
+    project_id: string
+    company_id: string
+    type_code: string // BW, SW, TW, FL, GR, etc.
+    type_name_es: string
+    type_name_en?: string | null
+    requires_welder: boolean
+    icon: string
+    color: string
+    created_at: string
+    updated_at: string
 }
 
 export interface RevisionEvent {

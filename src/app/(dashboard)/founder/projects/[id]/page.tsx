@@ -10,6 +10,7 @@ import InvitationManager from '@/components/invitations/InvitationManager'
 import EngineeringManager from '@/components/engineering/EngineeringManager'
 import ProcurementManager from '@/components/procurement/ProcurementManager'
 import ProjectLocationsManager from '@/components/projects/ProjectLocationsManager'
+import WeldTypesManager from '@/components/engineering/WeldTypesManager'
 import '@/styles/dashboard.css'
 import '@/styles/companies.css'
 
@@ -27,7 +28,7 @@ export default function ProjectDetailPage() {
     const [project, setProject] = useState<ProjectDetails | null>(null)
     const [invitations, setInvitations] = useState<Invitation[]>([])
     const [activeTab, setActiveTab] = useState<'details' | 'team' | 'engineering' | 'procurement' | 'settings'>('details')
-    const [settingsView, setSettingsView] = useState<'menu' | 'locations'>('menu')
+    const [settingsView, setSettingsView] = useState<'menu' | 'locations' | 'weld-types'>('menu')
 
     const [isEditing, setIsEditing] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
@@ -429,13 +430,13 @@ export default function ProjectDetailPage() {
                                         <div
                                             onClick={() => setSettingsView('locations')}
                                             style={{
-                                                background: '#1e293b',
-                                                borderRadius: '1rem',
-                                                padding: '1.5rem',
+                                                background: 'rgba(30, 41, 59, 0.7)',
+                                                backdropFilter: 'blur(10px)',
                                                 border: '1px solid #334155',
+                                                borderRadius: '16px',
+                                                padding: '1.5rem',
                                                 cursor: 'pointer',
-                                                flex: 1,
-                                                transition: 'transform 0.2s, box-shadow 0.2s',
+                                                transition: 'all 0.2s ease',
                                             }}
                                             onMouseEnter={(e) => {
                                                 e.currentTarget.style.transform = 'translateY(-4px)'
@@ -468,13 +469,59 @@ export default function ProjectDetailPage() {
                                                 Gestiona bodegas, talleres, áreas de acopio y sitios de montaje para el control de spools.
                                             </p>
                                         </div>
+
+                                        <div
+                                            onClick={() => setSettingsView('weld-types')}
+                                            style={{
+                                                background: 'rgba(30, 41, 59, 0.7)',
+                                                backdropFilter: 'blur(10px)',
+                                                border: '1px solid #334155',
+                                                borderRadius: '16px',
+                                                padding: '1.5rem',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s ease',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.transform = 'translateY(-4px)'
+                                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
+                                                e.currentTarget.style.borderColor = '#ef4444'
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.transform = 'none'
+                                                e.currentTarget.style.boxShadow = 'none'
+                                                e.currentTarget.style.borderColor = '#334155'
+                                            }}
+                                        >
+                                            <div style={{
+                                                background: 'rgba(239, 68, 68, 0.2)',
+                                                width: '48px',
+                                                height: '48px',
+                                                borderRadius: '12px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                marginBottom: '1rem',
+                                                fontSize: '1.5rem'
+                                            }}>
+                                                🔥
+                                            </div>
+                                            <h3 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 600 }}>Tipos de Unión</h3>
+                                            <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                                                Marca las excepciones que NO requieren soldador (por defecto, todos los tipos requieren soldador).
+                                            </p>
+                                        </div>
                                     </div>
-                                ) : (
+                                ) : settingsView === 'locations' ? (
                                     <ProjectLocationsManager
                                         projectId={projectId}
                                         onBack={() => setSettingsView('menu')}
                                     />
-                                )}
+                                ) : settingsView === 'weld-types' ? (
+                                    <WeldTypesManager
+                                        projectId={projectId}
+                                        onBack={() => setSettingsView('menu')}
+                                    />
+                                ) : null}
                             </div>
                         )}
                     </div>

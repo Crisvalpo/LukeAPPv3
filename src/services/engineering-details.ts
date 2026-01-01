@@ -198,7 +198,7 @@ export async function uploadSpoolsWelds(
         // Fetch all spools created by trigger for this revision
         const { data: spools } = await supabase
             .from('spools')
-            .select('id, spool_number, isometric_id')
+            .select('id, spool_number') // Removed erroneous isometric_id
             .eq('revision_id', revisionId)
 
         if (spools && spools.length > 0) {
@@ -206,7 +206,7 @@ export async function uploadSpoolsWelds(
                 const spoolsToTag = spools.map(s => ({
                     spool_id: s.id,
                     spool_number: s.spool_number,
-                    isometric_id: s.isometric_id,
+                    isometric_id: revision.isometric_id, // Use valid isometric_id from revision
                     revision_id: revisionId
                 }))
 
@@ -248,6 +248,14 @@ export async function uploadSpoolsWelds(
         } else if (result.requires_impact_evaluation) {
             result.message += '. IMPORTANTE: Esta revisión requiere evaluación de impactos antes de aplicarse'
         }
+
+        // 9. Update Parent Isometric Timestamp (Touch)
+        // Ensure this action floats to the top of the Master View
+        await supabase
+            .from('isometrics')
+            .update({ updated_at: new Date().toISOString() })
+            .eq('id', revision.isometric_id)
+
 
         return result
 

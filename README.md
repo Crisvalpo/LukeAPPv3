@@ -209,9 +209,39 @@ LukeAPP/
 - ✅ **Strategic Resolutions** - Business-driven conflict resolution
 - ✅ **Severity Classification** - LOW → CRITICAL based on production level
 
+### ✅ **Phase 6: Configurable Weld Types System** (100% Complete - December 2024)
+
+**Objetivo:** Distinguir entre uniones soldadas (requieren soldador) y no soldadas (roscadas, bridas).
+
+**Completado:**
+
+#### **1. Database Architecture**
+- ✅ **project_weld_type_config** - Configuration table for union types per project
+- ✅ **Auto-seeding** - 6 default types (BW/SW=welded, TW/FL/GR=non-welded)
+- ✅ **Trigger on project creation** - Automatic setup for new projects
+- ✅ **Helper function** - `get_weld_type_config()` for business logic
+- ✅ **RLS Policies** - Company-scoped access control
+
+#### **2. Service Layer**
+- ✅ **weld-types.ts** - CRUD operations for type management
+- ✅ **Server Actions** - Client-safe wrappers
+- ✅ **Business Logic Helpers** - `doesWeldTypeRequireWelder()`
+
+#### **3. UI Terminology Updates**
+- ✅ **"Soldaduras" → "Uniones"** across 7 component files
+- ✅ **RevisionMasterView** - Tab labels updated
+- ✅ **EngineeringDetailsTab** - Instructions and labels
+- ✅ **UI Improvements** - Triangle icon, transmittal repositioning, bold counts
+
+#### **4. Data Fixes**
+- ✅ **Count columns** - Added `welds_count` and `spools_count` to `engineering_revisions`
+- ✅ **Mapping fix** - Included counts in `searchIsometrics` service
+- ✅ **Schema corrections** - Fixed column names in detail list components
+
 ### 🚧 Próximas Fases
 
 - [x] **Phase 2**: Revision System ✅ **COMPLETE**
+- [x] **Phase 6**: Configurable Weld Types ✅ **COMPLETE**
 - [ ] **Phase 3**: Field Execution Modules (Real production tracking)
 - [ ] **Phase 4**: Offline-First PWA (Spools, QA, Logistics)
 - [ ] **Phase 5**: Professional Community (Job Board)

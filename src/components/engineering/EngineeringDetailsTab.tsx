@@ -118,7 +118,7 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
                 <div className="icon">🔩</div>
                 <div>
                     <h3>2. Carga de Detalles</h3>
-                    <p>Carga el mapa de soldaduras. Los spools se generarán automáticamente.</p>
+                    <p>Carga el mapa de uniones. Los spools se generarán automáticamente.</p>
                 </div>
             </div>
 
@@ -141,7 +141,7 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
                                 <div className="eng-summary-item">
                                     <span className="icon">🔥</span>
                                     <span className="count">{counts.welds}</span>
-                                    <span className="label">Soldaduras</span>
+                                    <span className="label">Uniones</span>
                                 </div>
                                 <div className="eng-divider"></div>
                                 <div className="eng-summary-item">
@@ -173,7 +173,7 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
                             className={activeTab === 'welds' ? 'active' : ''}
                             onClick={() => setActiveTab('welds')}
                         >
-                            🔥 Soldaduras (Welds)
+                            🔥 Uniones (Joints/Connections)
                         </button>
                         <button
                             className={activeTab === 'mto' ? 'active' : ''}
@@ -198,7 +198,7 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
                         {activeTab === 'welds' && (
                             <div className="detail-section">
                                 <p className="tab-description">
-                                    <strong>Mapa de Soldaduras:</strong> Los spools se generan automáticamente agrupando por SPOOL NUMBER.
+                                    <strong>Mapa de Uniones:</strong> Los spools se generan automáticamente agrupando por SPOOL NUMBER.
                                     <button className="btn-link" onClick={downloadWeldsTemplate}>📥 Descargar Plantilla</button>
                                 </p>
                                 <DetailUploader

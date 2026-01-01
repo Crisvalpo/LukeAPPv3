@@ -1,12 +1,12 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import type { EngineeringRevision } from '@/types'
 import { deleteRevisionAction } from '@/actions/revisions'
 import { calculateDataStatus, calculateMaterialStatus, isFabricable, type DataStatus, type MaterialStatus } from '@/services/fabricability'
-import RevisionSpoolsList from './RevisionSpoolsList'
+import RevisionMasterView from './RevisionMasterView'
 
 interface IsometricRevisionCardProps {
     isoNumber: string
@@ -60,6 +60,18 @@ export default function IsometricRevisionCard({
     const sortedRevisions = [...revisions].sort((a, b) => {
         return b.rev_code.localeCompare(a.rev_code, undefined, { numeric: true, sensitivity: 'base' })
     })
+
+    // DEBUG: Log revision data to see if counts are coming from backend
+    useEffect(() => {
+        if (revisions.length > 0) {
+            console.log('[IsometricRevisionCard] Revisions data:', revisions.map(r => ({
+                rev_code: r.rev_code,
+                welds_count: r.welds_count,
+                spools_count: r.spools_count,
+                status: r.revision_status
+            })))
+        }
+    }, [revisions])
 
     const statusColors: Record<string, string> = {
         'VIGENTE': '#3b82f6',      // Blue
@@ -158,16 +170,15 @@ export default function IsometricRevisionCard({
                                         <th>Datos</th>
                                         <th>Material</th>
                                         <th>Fab</th>
-                                        <th>Fecha</th>
-                                        <th>Soldaduras</th>
+                                        <th>F. Anuncio</th>
+                                        <th>Uniones</th>
                                         <th>Spools</th>
-                                        <th>TML</th>
                                         <th style={{ textAlign: 'right' }}>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {sortedRevisions.map(rev => (
-                                        <div key={rev.id} style={{ display: 'contents' }}>
+                                        <Fragment key={rev.id}>
                                             <tr className={rev.id === currentRevision?.id ? 'active-row' : ''}>
                                                 <td className="col-rev">
                                                     <span className="rev-circle">{rev.rev_code}</span>
@@ -211,26 +222,36 @@ export default function IsometricRevisionCard({
                                                 <td style={{ textAlign: 'center', fontSize: '1.2rem' }}>
                                                     {revisionStatuses[rev.id]?.fabricable ? '🟢' : '🔴'}
                                                 </td>
-                                                <td>
-                                                    {rev.announcement_date
-                                                        ? new Date(rev.announcement_date).toLocaleDateString('es-CL')
-                                                        : '-'
-                                                    }
+                                                <td title={rev.transmittal ? `TML: ${rev.transmittal}` : 'Sin transmittal'}>
+                                                    <span style={{ fontSize: '0.9rem' }}>
+                                                        {rev.announcement_date
+                                                            ? new Date(rev.announcement_date).toLocaleDateString('es-CL')
+                                                            : '-'
+                                                        }
+                                                    </span>
+                                                    {rev.transmittal && (
+                                                        <div style={{ fontSize: '0.65rem', color: '#9ca3af', marginTop: '2px' }}>
+                                                            {rev.transmittal}
+                                                        </div>
+                                                    )}
                                                 </td>
-                                                <td>{rev.welds_count || 0}</td>
-                                                <td>{rev.spools_count || 0}</td>
-                                                <td className="col-tml" title={rev.transmittal || ''}>
-                                                    {rev.transmittal || '-'}
-                                                </td>
+                                                <td><strong>{rev.welds_count || 0}</strong></td>
+                                                <td><strong>{rev.spools_count || 0}</strong></td>
                                                 <td style={{ textAlign: 'right' }}>
                                                     <div className="action-group">
                                                         <button
                                                             className="btn-icon-secondary"
                                                             onClick={() => setOpenRevId(openRevId === rev.id ? null : rev.id)}
-                                                            title="Ver Spools y Tags"
-                                                            style={{ marginRight: '5px' }}
+                                                            title="Ver detalles"
+                                                            style={{
+                                                                marginRight: '5px',
+                                                                transform: openRevId === rev.id ? 'rotate(180deg)' : 'rotate(0deg)',
+                                                                transition: 'transform 0.2s ease',
+                                                                color: 'white',
+                                                                fontSize: '0.9rem'
+                                                            }}
                                                         >
-                                                            🏷️
+                                                            ▼
                                                         </button>
                                                         <button
                                                             className="btn-icon-danger"
@@ -245,13 +266,15 @@ export default function IsometricRevisionCard({
                                             </tr>
                                             {openRevId === rev.id && (
                                                 <tr>
-                                                    <td colSpan={10} style={{ padding: 0, borderBottom: 'none' }}>
-                                                        <RevisionSpoolsList revisionId={rev.id} projectId={rev.project_id} />
+                                                    <td colSpan={9} style={{ padding: 0, borderBottom: 'none' }}>
+                                                        <RevisionMasterView revisionId={rev.id} projectId={rev.project_id} />
                                                     </td>
                                                 </tr>
                                             )}
-                                        </div>
+                                        </Fragment>
                                     ))}
+
+
                                 </tbody>
                             </table>
                         </div>

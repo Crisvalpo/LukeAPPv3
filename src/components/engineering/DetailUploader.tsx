@@ -138,7 +138,7 @@ export default function DetailUploader({
 
                     <div className="stats-grid">
                         <div className="stat created">
-                            <span>Soldaduras</span>
+                            <span>Uniones</span>
                             <strong>{result.details.welds_inserted}</strong>
                         </div>
                         <div className="stat">
