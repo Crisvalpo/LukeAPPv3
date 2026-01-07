@@ -99,10 +99,10 @@ export async function fetchMaterialTracking(
                 id,
                 spool_number,
                 management_tag,
-                revision:engineering_revisions!inner!revision_id(
+                revision:engineering_revisions!revision_id(
                     id,
                     rev_code,
-                    isometric:isometrics!inner!isometric_id(
+                    isometric:isometrics!isometric_id(
                         id,
                         iso_number
                     )
