@@ -16,6 +16,7 @@ export interface MaterialCatalogItem {
     commodity_code?: string
     spec_code?: string
     unit_weight?: number
+    stick_standard_length?: number  // Standard length for pipes (in meters)
     part_group?: string
     sap_mat_grp?: string
     commodity_group?: string
@@ -32,6 +33,7 @@ export interface CreateMaterialParams {
     commodity_code?: string
     spec_code?: string
     unit_weight?: number
+    stick_standard_length?: number  // Standard length for pipes (in meters)
     part_group?: string
     sap_mat_grp?: string
     commodity_group?: string
@@ -164,6 +166,29 @@ export async function updateMaterial(
 }
 
 /**
+ * Update stick_standard_length for ALL materials with the same ident_code
+ * Used when completing pending tasks - propagates the value to all variations
+ */
+export async function updateStickLengthByIdentCode(
+    projectId: string,
+    identCode: string,
+    stickLength: number
+): Promise<{ updated: number }> {
+    const supabase = createClient()
+
+    const { error, count } = await supabase
+        .from('material_catalog')
+        .update({ stick_standard_length: stickLength })
+        .eq('project_id', projectId)
+        .eq('ident_code', identCode)
+
+    if (error) throw new Error(`Error updating materials by ident_code: ${error.message}`)
+
+    return { updated: count || 0 }
+}
+
+
+/**
  * Delete a material
  */
 export async function deleteMaterial(id: string): Promise<void> {
@@ -231,6 +256,19 @@ export function parseMaterialCatalogFromArray(rows: any[]): CreateMaterialParams
             }
         }
 
+        // Parse stick standard length (for pipes)
+        let stickLength: number | undefined = undefined
+        const rawLength = row['Stick Length'] || row['Standard Length']
+        if (rawLength !== undefined && rawLength !== null) {
+            if (typeof rawLength === 'number') {
+                stickLength = rawLength
+            } else {
+                const normalized = String(rawLength).replace(',', '.')
+                const parsed = parseFloat(normalized)
+                if (!isNaN(parsed)) stickLength = parsed
+            }
+        }
+
         // Capture custom inputs
         const customFields: Record<string, any> = {}
         if (row['Input 1'] !== undefined) customFields['Input 1'] = row['Input 1']
@@ -248,6 +286,7 @@ export function parseMaterialCatalogFromArray(rows: any[]): CreateMaterialParams
             commodity_code: row['Commodity Code'] || undefined,
             spec_code: row['Spec Code'] || undefined,
             unit_weight: weight,
+            stick_standard_length: stickLength,
             part_group: row['Part Group'] || undefined,
             sap_mat_grp: row['Sap Mat Grp'] || undefined,
             commodity_group: row['Commodity Group'] || undefined,
@@ -485,6 +524,7 @@ export async function exportCatalogToExcel(projectId: string): Promise<void> {
             'Ident': m.ident_code,
             'Ident code': custom.alt_ident_code || '',
             'Unit Weight': m.unit_weight || '',
+            'Stick Length': m.stick_standard_length || '',
             'Input 1': custom['Input 1'] || '',
             'Input 2': custom['Input 2'] || '',
             'Input 3': custom['Input 3'] || '',
@@ -528,6 +568,7 @@ export async function cloneCatalogFromProject(
         commodity_code: m.commodity_code,
         spec_code: m.spec_code,
         unit_weight: m.unit_weight,
+        stick_standard_length: m.stick_standard_length,
         part_group: m.part_group,
         sap_mat_grp: m.sap_mat_grp,
         commodity_group: m.commodity_group

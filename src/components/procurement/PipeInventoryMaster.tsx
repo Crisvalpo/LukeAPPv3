@@ -1,13 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { PipeStick, PipeNeed, aggregatePipeNeeds } from '@/services/pipe-inventory'
-import { getConsolidatedMTO } from '@/services/material-consolidation'
-import '@/styles/engineering.css'
+import { useState } from 'react'
 
-// Only using lucide icons, removed custom UI components
-import { Loader2, Ruler, Package } from 'lucide-react'
+import { PipeNeed, aggregatePipeNeeds } from '@/services/pipe-inventory'
+import { getConsolidatedMTO } from '@/services/material-consolidation'
+
+import '@/styles/engineering.css'
+import { Loader2, Calculator, TrendingUp, Package, AlertTriangle } from 'lucide-react'
 
 interface PipeInventoryMasterProps {
     projectId: string
@@ -15,243 +14,285 @@ interface PipeInventoryMasterProps {
 }
 
 export default function PipeInventoryMaster({ projectId, companyId }: PipeInventoryMasterProps) {
-    const [activeSubTab, setActiveSubTab] = useState('planning')
+
     const [isLoading, setIsLoading] = useState(false)
 
     // State for Planning
     const [pipeNeeds, setPipeNeeds] = useState<PipeNeed[]>([])
 
-    // State for Inventory
-    const [inventory, setInventory] = useState<PipeStick[]>([])
+
+
+
+
+
+
+    // Computed stats
+    const totalMetersNeeded = pipeNeeds.reduce((sum, need) => sum + need.total_required_meters, 0)
+    const totalSticksEstimated = pipeNeeds.reduce((sum, need) => sum + Math.ceil(need.total_required_meters / 12), 0)
+
+
+
 
     // Load initial data
-    useEffect(() => {
-        loadInventory()
-    }, [projectId])
 
-    async function loadInventory() {
-        const supabase = createClient()
-        const { data } = await supabase
-            .from('pipe_sticks')
-            .select('*')
-            .eq('project_id', projectId)
-            .order('ident_code')
-
-        if (data) setInventory(data as PipeStick[])
-    }
 
     async function handleCalculateNeeds() {
         setIsLoading(true)
         try {
             const mto = await getConsolidatedMTO(projectId)
-
-            // Extract all spool IDs from MTO
-            const allSpoolIds: string[] = []
-            mto.forEach(iso => iso.spools.forEach(s => allSpoolIds.push(s.spool_id)))
-
-            // Aggregate needs
+            const allSpoolIds = mto.flatMap(iso => iso.spools.map(s => s.spool_id))
             const needs = await aggregatePipeNeeds(projectId, allSpoolIds)
             setPipeNeeds(needs)
         } catch (error) {
             console.error('Error calculating needs:', error)
+            alert('Error al calcular necesidades')
         } finally {
             setIsLoading(false)
         }
     }
 
     return (
-        <div className="engineering-content">
-            {/* Sub Navigation */}
-            <div className="tabs-nav" style={{ marginBottom: 'var(--spacing-6)' }}>
-                <button
-                    className={`tab-button ${activeSubTab === 'planning' ? 'active' : ''}`}
-                    onClick={() => setActiveSubTab('planning')}
-                >
-                    📊 Planificación
-                </button>
-                <button
-                    className={`tab-button ${activeSubTab === 'inventory' ? 'active' : ''}`}
-                    onClick={() => setActiveSubTab('inventory')}
-                >
-                    📦 Inventario Físico
-                </button>
-                <button
-                    className={`tab-button ${activeSubTab === 'dispatch' ? 'active' : ''}`}
-                    onClick={() => setActiveSubTab('dispatch')}
-                >
-                    🚚 Despachos
-                </button>
-                <button
-                    className={`tab-button ${activeSubTab === 'cutting' ? 'active' : ''}`}
-                    onClick={() => setActiveSubTab('cutting')}
-                >
-                    ✂️ Taller / Corte
-                </button>
-            </div>
-
-            {/* TAB CONTENT */}
-            <div className="tab-content">
-                {/* PLANNING TAB */}
-                {activeSubTab === 'planning' && (
-                    <div className="data-section">
-                        <div className="section-header">
-                            <div>
-                                <h3>Cálculo de Necesidades Globales</h3>
-                                <p className="section-subtitle">
-                                    Agrupa requerimientos de cañería de todos los Spools para optimizar el uso de Sticks.
-                                </p>
+        <div className="pipe-inventory-master">
+            {/* Simplified Planning View - No Banner, No Tabs */}
+            <div className="planning-view">
+                {/* Stats Cards */}
+                {pipeNeeds.length > 0 && (
+                    <div className="stats-grid">
+                        <div className="stat-card">
+                            <div className="stat-icon primary">
+                                <TrendingUp size={24} />
                             </div>
-                            <div style={{ display: 'flex', gap: 'var(--spacing-3)' }}>
-                                <button
-                                    className="action-button action-primary"
-                                    onClick={handleCalculateNeeds}
-                                    disabled={isLoading}
-                                >
-                                    {isLoading ? (
-                                        <>
-                                            <Loader2 className="icon-sm animate-spin" style={{ marginRight: '8px' }} />
-                                            Calculando...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Ruler className="icon-sm" style={{ marginRight: '8px' }} />
-                                            Calcular Total Proyecto
-                                        </>
-                                    )}
-                                </button>
-                                <button
-                                    className="action-button"
-                                    onClick={loadInventory}
-                                >
-                                    <Package className="icon-sm" style={{ marginRight: '8px' }} />
-                                    Refrescar
-                                </button>
+                            <div className="stat-info">
+                                <div className="stat-label">Total Requerido</div>
+                                <div className="stat-value">{totalMetersNeeded.toFixed(1)} m</div>
                             </div>
                         </div>
-
-                        {pipeNeeds.length > 0 ? (
-                            <div className="data-table-container">
-                                <table className="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th style={{ textAlign: 'left' }}>Material / Ident</th>
-                                            <th style={{ textAlign: 'right' }}>Total Requerido (m)</th>
-                                            <th style={{ textAlign: 'right' }}>Spools</th>
-                                            <th style={{ textAlign: 'right' }}>Sticks Est. (12m)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {pipeNeeds.map((need, idx) => (
-                                            <tr key={idx}>
-                                                <td>
-                                                    <div style={{ fontWeight: '600', color: 'var(--color-text-main)', marginBottom: '4px' }}>
-                                                        {need.material_spec}
-                                                    </div>
-                                                    <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-dim)' }}>
-                                                        {need.ident_code}
-                                                    </div>
-                                                </td>
-                                                <td style={{
-                                                    textAlign: 'right',
-                                                    fontFamily: 'var(--font-family-mono)',
-                                                    color: 'var(--color-primary)',
-                                                    fontWeight: '700',
-                                                    fontSize: 'var(--font-size-lg)'
-                                                }}>
-                                                    {need.total_required_meters.toFixed(2)}m
-                                                </td>
-                                                <td style={{ textAlign: 'right', color: 'var(--color-text-muted)' }}>
-                                                    {need.spool_ids.length}
-                                                </td>
-                                                <td style={{ textAlign: 'right', fontWeight: '600', color: 'var(--color-text-main)' }}>
-                                                    {Math.ceil(need.total_required_meters / 12)}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                        <div className="stat-card">
+                            <div className="stat-icon success">
+                                <Package size={24} />
                             </div>
-                        ) : (
-                            <div className="empty-state">
-                                <div className="empty-icon">📊</div>
-                                <h4>No hay cálculos activos</h4>
-                                <p>Haz click en "Calcular Total Proyecto" para analizar las necesidades de cañería.</p>
+                            <div className="stat-info">
+                                <div className="stat-label">Sticks Estimados</div>
+                                <div className="stat-value">{totalSticksEstimated}</div>
                             </div>
-                        )}
-                    </div>
-                )}
-
-                {/* INVENTORY TAB */}
-                {activeSubTab === 'inventory' && (
-                    <div className="data-section">
-                        <div className="section-header">
-                            <h3>Inventario de Sticks</h3>
-                            <p className="section-subtitle">Control de tiras físicas, retazos y ubicación.</p>
                         </div>
-
-                        {inventory.length > 0 ? (
-                            <div className="data-table-container">
-                                <table className="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th style={{ textAlign: 'left' }}>Ident Code</th>
-                                            <th style={{ textAlign: 'left' }}>Heat Number</th>
-                                            <th style={{ textAlign: 'right' }}>Largo Inicial</th>
-                                            <th style={{ textAlign: 'right' }}>Largo Actual</th>
-                                            <th style={{ textAlign: 'center' }}>Ubicación</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {inventory.map(stick => (
-                                            <tr key={stick.id}>
-                                                <td style={{ fontWeight: '600' }}>{stick.ident_code}</td>
-                                                <td style={{ fontFamily: 'var(--font-family-mono)', fontSize: 'var(--font-size-xs)' }}>
-                                                    {stick.heat_number || '-'}
-                                                </td>
-                                                <td style={{ textAlign: 'right', color: 'var(--color-text-muted)' }}>
-                                                    {stick.initial_length}m
-                                                </td>
-                                                <td style={{ textAlign: 'right', fontWeight: '700', color: 'var(--color-text-main)' }}>
-                                                    {stick.current_length}m
-                                                </td>
-                                                <td style={{ textAlign: 'center' }}>
-                                                    <span className={`status-badge status-${stick.location.toLowerCase()}`}>
-                                                        {stick.location}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                        <div className="stat-card">
+                            <div className="stat-icon warning">
+                                <AlertTriangle size={24} />
                             </div>
-                        ) : (
-                            <div className="empty-state">
-                                <div className="empty-icon">📦</div>
-                                <h4>No hay inventario registrado</h4>
-                                <p>Los sticks de cañería aparecerán aquí una vez que se registren en el sistema.</p>
+                            <div className="stat-info">
+                                <div className="stat-label">Tipos de Pipe</div>
+                                <div className="stat-value">{pipeNeeds.length}</div>
                             </div>
-                        )}
+                        </div>
                     </div>
                 )}
 
-                {/* DISPATCH TAB */}
-                {activeSubTab === 'dispatch' && (
-                    <div className="empty-state">
-                        <div className="empty-icon">🚚</div>
-                        <h4>Módulo de Despachos</h4>
-                        <p>Gestión de envíos masivos de sticks a talleres. Próximamente disponible.</p>
+                {/* Header with actions */}
+                <div className="section-header">
+                    <div>
+                        <h3>Cálculo de Necesidades Globales</h3>
+                        <p className="section-subtitle">
+                            Agrega requerimientos de todos los spools para optimizar compras y cortes
+                        </p>
                     </div>
-                )}
 
-                {/* CUTTING TAB */}
-                {activeSubTab === 'cutting' && (
+
+
+                    <div className="header-actions">
+
+                        <button
+                            className="btn-primary"
+                            onClick={handleCalculateNeeds}
+                            disabled={isLoading}
+                        >
+                            {isLoading ? (
+                                <>
+                                    <Loader2 size={16} className="animate-spin" />
+                                    Calculando...
+                                </>
+                            ) : (
+                                <>
+                                    <Calculator size={16} />
+                                    Calcular Total
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Results Table */}
+                {pipeNeeds.length > 0 ? (
+                    <div className="pipe-table-container">
+                        <table className="pipe-table">
+                            <thead>
+                                <tr>
+                                    <th>Material / Ident</th>
+                                    <th className="text-right">Total Requerido</th>
+                                    <th className="text-right">Spools</th>
+                                    <th className="text-right">Sticks Est.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {pipeNeeds.map((need, idx) => (
+                                    <tr key={idx}>
+                                        <td>
+                                            <div className="material-info">
+                                                <div className="material-spec">{need.material_spec}</div>
+                                                <div className="material-ident">{need.ident_code}</div>
+                                            </div>
+                                        </td>
+                                        <td className="text-right">
+                                            <span className="highlight-value">
+                                                {need.total_required_meters.toFixed(2)} m
+                                            </span>
+                                        </td>
+                                        <td className="text-right text-muted">
+                                            {need.spool_ids.length}
+                                        </td>
+                                        <td className="text-right">
+                                            <span className="badge badge-neutral">
+                                                {Math.ceil(need.total_required_meters / 12)} varas
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+
+                ) : (
                     <div className="empty-state">
-                        <div className="empty-icon">✂️</div>
-                        <h4>Vista de Taller / Corte</h4>
-                        <p>Órdenes inteligentes de corte para optimizar el uso de retazos. Próximamente disponible.</p>
+                        <div className="empty-icon">
+                            <Calculator size={48} />
+                        </div>
+                        <h4>No hay cálculos activos</h4>
+                        <p>Haz click en "Calcular Total" para analizar las necesidades de cañería del proyecto</p>
                     </div>
                 )}
             </div>
         </div>
     )
 }
+
+const styles = `
+    .pipe-inventory-master {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        padding: 1rem;
+    }
+    .planning-view {
+        background: #1e293b;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        background: rgba(30, 41, 59, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .stat-icon.primary { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+    .stat-icon.success { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+    .stat-icon.warning { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+    .stat-value { font-size: 1.5rem; font-weight: 700; color: white; }
+    .stat-label { font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; font-weight: 600; }
+    
+    .header-actions {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+        margin-bottom: 1.5rem;
+    }
+    .btn-primary {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    .btn-primary:hover:not(:disabled) { background: #2563eb; }
+    .btn-secondary {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    .btn-secondary:hover:not(:disabled) { background: rgba(255, 255, 255, 0.15); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .pipe-table-container {
+        overflow-x: auto;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.2);
+    }
+    .pipe-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .pipe-table th {
+        text-align: left;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: 500;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .pipe-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        color: #e2e8f0;
+    }
+    .text-right { text-align: right; }
+    .text-muted { color: rgba(255, 255, 255, 0.5); }
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.1);
+    }
+    .animate-spin { animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    .empty-state {
+        padding: 4rem;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: rgba(255, 255, 255, 0.5);
+    }
+`
+
+

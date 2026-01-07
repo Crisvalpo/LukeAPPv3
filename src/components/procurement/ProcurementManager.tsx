@@ -3,10 +3,12 @@
 import { useState } from 'react'
 import { Book, FileText, BarChart2, Download, Package, Ruler } from 'lucide-react'
 import MaterialRequestList from '@/components/procurement/MaterialRequestList'
-import CreateRequestModal from '@/components/procurement/CreateRequestModal'
 import ConsolidatedMTO from '@/components/procurement/ConsolidatedMTO'
 import PipeInventoryMaster from '@/components/procurement/PipeInventoryMaster'
 import MaterialCatalogManager from '@/components/procurement/MaterialCatalogManager'
+import MaterialReceiptsManager from '@/components/procurement/MaterialReceiptsManager'
+import MaterialInventoryManager from '@/components/procurement/MaterialInventoryManager'
+import MaterialTrackingView from '@/components/procurement/MaterialTrackingView'
 import '@/styles/dashboard.css'
 import '@/styles/engineering.css'
 
@@ -16,24 +18,16 @@ interface ProcurementManagerProps {
     userRole?: 'founder' | 'admin'
 }
 
-type TabType = 'catalog' | 'requests' | 'mto' | 'receiving' | 'inventory' | 'pipe-manager'
+type TabType = 'catalog' | 'requests' | 'mto' | 'tracking' | 'receiving' | 'inventory' | 'pipe-manager'
 
 export default function ProcurementManager({ projectId, companyId, userRole = 'founder' }: ProcurementManagerProps) {
     const [activeTab, setActiveTab] = useState<TabType>('catalog')
-    const [showCreateModal, setShowCreateModal] = useState(false)
 
     return (
         <div className="engineering-hub-container">
             {/* Header Actions */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-                {activeTab === 'requests' && (
-                    <button
-                        className="action-button action-primary"
-                        onClick={() => setShowCreateModal(true)}
-                    >
-                        + Nueva Solicitud
-                    </button>
-                )}
+                {/* Actions removed as per request to enforce context-aware creation via MTO */}
             </div>
 
             {/* Tabs Navigation */}
@@ -58,6 +52,13 @@ export default function ProcurementManager({ projectId, companyId, userRole = 'f
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
                     <BarChart2 size={16} /> MTO (Ingeniería)
+                </button>
+                <button
+                    className={`tab-button ${activeTab === 'tracking' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('tracking')}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                    <Package size={16} /> Tracking
                 </button>
                 <button
                     className={`tab-button ${activeTab === 'receiving' ? 'active' : ''}`}
@@ -96,20 +97,17 @@ export default function ProcurementManager({ projectId, companyId, userRole = 'f
                     <ConsolidatedMTO projectId={projectId} companyId={companyId} />
                 )}
 
+                {activeTab === 'tracking' && (
+                    <MaterialTrackingView projectId={projectId} companyId={companyId} />
+                )}
+
+
                 {activeTab === 'receiving' && (
-                    <div className="coming-soon-placeholder">
-                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📥</div>
-                        <h3>Módulo de Recepción</h3>
-                        <p>Ingreso de materiales y control de guías de despacho</p>
-                    </div>
+                    <MaterialReceiptsManager projectId={projectId} companyId={companyId} />
                 )}
 
                 {activeTab === 'inventory' && (
-                    <div className="coming-soon-placeholder">
-                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📦</div>
-                        <h3>Inventario de Materiales</h3>
-                        <p>Visualización de stock disponible y asignado</p>
-                    </div>
+                    <MaterialInventoryManager projectId={projectId} companyId={companyId} />
                 )}
 
                 {activeTab === 'pipe-manager' && (
@@ -117,18 +115,6 @@ export default function ProcurementManager({ projectId, companyId, userRole = 'f
                 )}
             </div>
 
-            {/* Modals */}
-            {showCreateModal && (
-                <CreateRequestModal
-                    projectId={projectId}
-                    companyId={companyId}
-                    onClose={() => setShowCreateModal(false)}
-                    onSuccess={() => {
-                        setShowCreateModal(false)
-                        window.location.reload()
-                    }}
-                />
-            )}
 
             <style jsx>{`
                 .coming-soon-placeholder {

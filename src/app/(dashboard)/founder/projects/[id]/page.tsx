@@ -5,18 +5,24 @@ import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getProjectById, updateProject, deleteProject, type Project } from '@/services/projects'
 import { getPendingInvitations, createInvitation, revokeInvitation, type Invitation } from '@/services/invitations'
-import { Building2, Calendar, FileText, Check, X, Shield, Users, Trash2 } from 'lucide-react'
+import { Building2, Calendar, FileText, Check, X, Shield, Users, Trash2, Image as ImageIcon } from 'lucide-react'
 import InvitationManager from '@/components/invitations/InvitationManager'
 import EngineeringManager from '@/components/engineering/EngineeringManager'
 import ProcurementManager from '@/components/procurement/ProcurementManager'
 import ProjectLocationsManager from '@/components/projects/ProjectLocationsManager'
 import WeldTypesManager from '@/components/engineering/WeldTypesManager'
+import ProjectWeekConfigModal from '@/components/project/ProjectWeekConfigModal'
+import ProjectLogosManager from '@/components/common/ProjectLogosManager'
 import '@/styles/dashboard.css'
 import '@/styles/companies.css'
 
 interface ProjectDetails extends Project {
     contract_number?: string
     client_name?: string
+    logo_primary_url?: string | null
+    logo_secondary_url?: string | null
+    logo_primary_crop?: any
+    logo_secondary_crop?: any
 }
 
 export default function ProjectDetailPage() {
@@ -28,11 +34,12 @@ export default function ProjectDetailPage() {
     const [project, setProject] = useState<ProjectDetails | null>(null)
     const [invitations, setInvitations] = useState<Invitation[]>([])
     const [activeTab, setActiveTab] = useState<'details' | 'team' | 'engineering' | 'procurement' | 'settings'>('details')
-    const [settingsView, setSettingsView] = useState<'menu' | 'locations' | 'weld-types'>('menu')
+    const [settingsView, setSettingsView] = useState<'menu' | 'locations' | 'weld-types' | 'logo'>('menu')
 
     const [isEditing, setIsEditing] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
     const [error, setError] = useState('')
+    const [isWeekConfigOpen, setIsWeekConfigOpen] = useState(false)
 
     const [editForm, setEditForm] = useState({
         name: '',
@@ -510,6 +517,86 @@ export default function ProjectDetailPage() {
                                                 Marca las excepciones que NO requieren soldador (por defecto, todos los tipos requieren soldador).
                                             </p>
                                         </div>
+
+                                        <div
+                                            onClick={() => setIsWeekConfigOpen(true)}
+                                            style={{
+                                                background: 'rgba(30, 41, 59, 0.7)',
+                                                backdropFilter: 'blur(10px)',
+                                                border: '1px solid #334155',
+                                                borderRadius: '16px',
+                                                padding: '1.5rem',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s ease',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.transform = 'translateY(-4px)'
+                                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
+                                                e.currentTarget.style.borderColor = '#3b82f6'
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.transform = 'none'
+                                                e.currentTarget.style.boxShadow = 'none'
+                                                e.currentTarget.style.borderColor = '#334155'
+                                            }}
+                                        >
+                                            <div style={{
+                                                background: 'rgba(59, 130, 246, 0.2)',
+                                                width: '48px',
+                                                height: '48px',
+                                                borderRadius: '12px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                marginBottom: '1rem'
+                                            }}>
+                                                <Calendar size={24} color="#3b82f6" />
+                                            </div>
+                                            <h3 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 600 }}>Configuración de Semanas</h3>
+                                            <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                                                Define la fecha de inicio del proyecto y el ciclo semanal para tracking temporal de necesidades.
+                                            </p>
+                                        </div>
+
+                                        <div
+                                            onClick={() => setSettingsView('logo')}
+                                            style={{
+                                                background: 'rgba(30, 41, 59, 0.7)',
+                                                backdropFilter: 'blur(10px)',
+                                                border: '1px solid #334155',
+                                                borderRadius: '16px',
+                                                padding: '1.5rem',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s ease',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.transform = 'translateY(-4px)'
+                                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
+                                                e.currentTarget.style.borderColor = '#10b981'
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.transform = 'none'
+                                                e.currentTarget.style.boxShadow = 'none'
+                                                e.currentTarget.style.borderColor = '#334155'
+                                            }}
+                                        >
+                                            <div style={{
+                                                background: 'rgba(16, 185, 129, 0.2)',
+                                                width: '48px',
+                                                height: '48px',
+                                                borderRadius: '12px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                marginBottom: '1rem'
+                                            }}>
+                                                <ImageIcon size={24} color="#10b981" />
+                                            </div>
+                                            <h3 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 600 }}>Logo del Proyecto</h3>
+                                            <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                                                Sube el logo del proyecto para incluirlo en documentos MIR y reportes PDF.
+                                            </p>
+                                        </div>
                                     </div>
                                 ) : settingsView === 'locations' ? (
                                     <ProjectLocationsManager
@@ -521,12 +608,49 @@ export default function ProjectDetailPage() {
                                         projectId={projectId}
                                         onBack={() => setSettingsView('menu')}
                                     />
+                                ) : settingsView === 'logo' ? (
+                                    <div>
+                                        <button
+                                            onClick={() => setSettingsView('menu')}
+                                            style={{
+                                                padding: '0.75rem 1.25rem',
+                                                background: 'rgba(255, 255, 255, 0.05)',
+                                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                                borderRadius: '8px',
+                                                color: 'white',
+                                                cursor: 'pointer',
+                                                marginBottom: '2rem',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            ← Volver a Configuración
+                                        </button>
+                                        <div style={{ maxWidth: '800px' }}>
+                                            <ProjectLogosManager
+                                                projectId={projectId}
+                                                primaryLogoUrl={project.logo_primary_url}
+                                                secondaryLogoUrl={project.logo_secondary_url}
+                                                onUpdate={() => loadProject()}
+                                            />
+                                        </div>
+                                    </div>
                                 ) : null}
                             </div>
                         )}
                     </div>
                 )}
             </div>
+
+            {/* Week Configuration Modal */}
+            <ProjectWeekConfigModal
+                isOpen={isWeekConfigOpen}
+                onClose={() => setIsWeekConfigOpen(false)}
+                projectId={projectId}
+                onSave={() => {
+                    setIsWeekConfigOpen(false)
+                    // Optional: refresh project data if needed
+                }}
+            />
         </div >
     )
 }

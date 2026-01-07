@@ -28,6 +28,11 @@ export const ProjectSchema = { // Intentionally leaving out explicit generic for
             label: 'Miembros',
             readOnly: true
         },
+        current_week: {
+            type: 'text',
+            label: 'Semana',
+            readOnly: true
+        },
         created_at: {
             type: 'date',
             label: 'Creado',
@@ -36,7 +41,7 @@ export const ProjectSchema = { // Intentionally leaving out explicit generic for
     },
     views: {
         list: {
-            columns: ['name', 'status', 'members_count', 'created_at'],
+            columns: ['name', 'status', 'members_count', 'current_week', 'created_at'],
             actions: []
         }
     }

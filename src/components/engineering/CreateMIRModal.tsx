@@ -228,7 +228,8 @@ export default function CreateMIRModal({
                         max-width: 700px;
                         width: 100%;
                         max-height: 90vh;
-                        overflow-y: auto;
+                        display: flex;
+                        flex-direction: column;
                         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
                     }
 
@@ -238,6 +239,7 @@ export default function CreateMIRModal({
                         align-items: center;
                         padding: 1.5rem;
                         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                        flex-shrink: 0;
                     }
 
                     .modal-header h2 {
@@ -263,6 +265,8 @@ export default function CreateMIRModal({
 
                     .modal-body {
                         padding: 1.5rem;
+                        overflow-y: auto;
+                        flex: 1;
                     }
 
                     .form-group {

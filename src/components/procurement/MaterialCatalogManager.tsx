@@ -5,6 +5,7 @@ import {
     getMaterialCatalog,
     createMaterial,
     updateMaterial,
+    updateStickLengthByIdentCode,
     deleteMaterial,
     parseMaterialCatalogFromArray,
     bulkUploadMaterials,
@@ -67,6 +68,11 @@ export default function MaterialCatalogManager({ projectId, companyId }: Props) 
 
     // Raw data for compounding intelligent filters
     const [rawFilterData, setRawFilterData] = useState<Pick<MaterialCatalogItem, 'part_group' | 'spec_code' | 'custom_fields'>[]>([])
+
+    // ⭐ NEW: Pending Tasks State
+    const [showPendingTasks, setShowPendingTasks] = useState(false)
+    const [pendingPipes, setPendingPipes] = useState<MaterialCatalogItem[]>([])
+
 
     // Computed Intelligent Filters using useMemo
     const filterOptions = useMemo(() => {
@@ -140,7 +146,10 @@ export default function MaterialCatalogManager({ projectId, companyId }: Props) 
     useEffect(() => {
         loadCatalog()
         // We only need to load raw filter data ONCE or when upload happens
-        if (rawFilterData.length === 0) loadFilterOptions()
+        if (rawFilterData.length === 0) {
+            loadFilterOptions()
+            loadPendingPipes() // ⭐ Check for pending tasks
+        }
     }, [projectId, page, searchTerm, filters]) // Re-fetch catalog on params
 
     // Debounce search effect could be added here for better UX, but relying on enter or blur is also fine for now
@@ -181,6 +190,34 @@ export default function MaterialCatalogManager({ projectId, companyId }: Props) 
         }
     }
 
+    // ⭐ NEW: Load pipes without stick_standard_length
+    async function loadPendingPipes() {
+        try {
+            // Fetch all pipes without stick length
+            const { data } = await getMaterialCatalog(projectId, {
+                limit: 1000, // Get all
+                partGroup: 'PIPE'  // Updated to match actual data
+            })
+
+            // Filter only those without stick_standard_length
+            const withoutLength = data.filter(item => !item.stick_standard_length)
+
+            // ⭐ DEDUPLICATE by ident_code (show only ONE per ident_code)
+            const uniqueByIdentCode = new Map<string, MaterialCatalogItem>()
+            withoutLength.forEach(item => {
+                if (!uniqueByIdentCode.has(item.ident_code)) {
+                    uniqueByIdentCode.set(item.ident_code, item)
+                }
+            })
+
+            const pending = Array.from(uniqueByIdentCode.values())
+            setPendingPipes(pending)
+        } catch (error) {
+            console.error('Error loading pending pipes:', error)
+        }
+    }
+
+
     // Handlers
     async function handleDelete(id: string) {
         if (!confirm('¿Estás seguro de eliminar este material?')) return
@@ -218,13 +255,13 @@ export default function MaterialCatalogManager({ projectId, companyId }: Props) 
 
     function handleDownloadTemplate() {
         const headers = [
-            'Ident', 'Ident code', 'Unit Weight', 'Input 1', 'Input 2', 'Input 3', 'Input 4',
+            'Ident', 'Ident code', 'Unit Weight', 'Stick Length', 'Input 1', 'Input 2', 'Input 3', 'Input 4',
             'Commodity Code', 'Spec Code', 'Short Desc', 'Short Code', 'Sap Mat Grp',
             'Commodity Group', 'Part Group'
         ]
         // Add an example row
         const exampleRow = [
-            '123456', 'ALT-123', '10.5', 'X', 'Y', 'Z', 'W',
+            '123456', 'ALT-123', '10.5', '6.0', 'X', 'Y', 'Z', 'W',
             'CC-100', 'SPE-01', 'Tubo 4" Sch 40 Carbon Steel', 'T4S40', 'MAT-99',
             'Piping', 'Pipes'
         ]
@@ -485,6 +522,56 @@ export default function MaterialCatalogManager({ projectId, companyId }: Props) 
                 </div>
             )}
 
+            {/* ⭐ NEW: Pending Tasks Banner */}
+            {pendingPipes.length > 0 && (
+                <div className="pending-tasks-banner animate-slide-in">
+                    <div className="pending-header">
+                        <div className="header-left">
+                            <span className="warning-icon">⚠️</span>
+                            <span className="title">Tareas Pendientes:</span>
+                            <strong className="count">{pendingPipes.length} Item Codes</strong>
+                            <span>sin longitud estándar configurada</span>
+                        </div>
+                        <button
+                            className="toggle-btn"
+                            onClick={() => setShowPendingTasks(!showPendingTasks)}
+                        >
+                            {showPendingTasks ? 'Ocultar' : 'Ver Lista'}
+                        </button>
+                    </div>
+
+                    {showPendingTasks && (
+                        <div className="pending-list">
+                            <div className="list-header">
+                                <span>IDENT CODE</span>
+                                <span>DESCRIPCIÓN</span>
+                                <span>ACCIÓN</span>
+                            </div>
+                            {pendingPipes.slice(0, 10).map(item => (
+                                <div key={item.id} className="pending-item">
+                                    <span className="ident">{item.ident_code}</span>
+                                    <span className="desc">{item.short_desc}</span>
+                                    <button
+                                        className="complete-btn"
+                                        onClick={() => {
+                                            setEditingItem(item)
+                                            setIsModalOpen(true)
+                                        }}
+                                    >
+                                        Completar
+                                    </button>
+                                </div>
+                            ))}
+                            {pendingPipes.length > 10 && (
+                                <div className="more-items">
+                                    ...y {pendingPipes.length - 10} items más
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Data Table */}
             <div className="catalog-table-wrapper">
                 {loading ? (
@@ -516,7 +603,12 @@ export default function MaterialCatalogManager({ projectId, companyId }: Props) 
                             {items.map(item => {
                                 const custom = item.custom_fields as any || {}
                                 return (
-                                    <tr key={item.id}>
+                                    <tr
+                                        key={item.id}
+                                        onClick={() => { setEditingItem(item); setIsModalOpen(true) }}
+                                        style={{ cursor: 'pointer' }}
+                                        title="Click para editar"
+                                    >
                                         <td className="font-mono">{item.ident_code}</td>
                                         <td className="text-center">{custom['Input 1'] || '-'}</td>
                                         <td className="text-center">{custom['Input 2'] || '-'}</td>
@@ -526,7 +618,7 @@ export default function MaterialCatalogManager({ projectId, companyId }: Props) 
                                         <td>
                                             <div className="desc-text" title={item.short_desc}>{item.short_desc}</div>
                                         </td>
-                                        <td className="actions-cell">
+                                        <td className="actions-cell" onClick={(e) => e.stopPropagation()}>
                                             <button
                                                 className="action-icon edit"
                                                 onClick={() => { setEditingItem(item); setIsModalOpen(true) }}
@@ -579,6 +671,7 @@ export default function MaterialCatalogManager({ projectId, companyId }: Props) 
                     onSave={async () => {
                         setIsModalOpen(false)
                         loadCatalog()
+                        loadPendingPipes() // ⭐ Refresh pending tasks
                     }}
                     projectId={projectId}
                     companyId={companyId}
@@ -864,6 +957,109 @@ export default function MaterialCatalogManager({ projectId, companyId }: Props) 
                 .divider { color: #64748b; }
                 .close-stats { margin-left: auto; background: none; border: none; color: #64748b; cursor: pointer; }
 
+                /* ⭐ NEW: Pending Tasks Banner */
+                .pending-tasks-banner {
+                    background: rgba(251, 191, 36, 0.1);
+                    border: 1px solid rgba(251, 191, 36, 0.4);
+                    border-radius: 8px;
+                    padding: 14px;
+                    font-size: 0.9rem;
+                    margin-top: 0.5rem;
+                }
+                .pending-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 12px;
+                }
+                .pending-header .header-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    color: #fef3c7;
+                }
+                .pending-header .warning-icon {
+                    font-size: 1.2rem;
+                }
+                .pending-header .title {
+                    font-weight: 600;
+                }
+                .pending-header .count {
+                    color: #fbbf24;
+                    font-size: 1rem;
+                }
+                .pending-header .toggle-btn {
+                    background: transparent;
+                    border: 1px solid rgba(251, 191, 36, 0.4);
+                    color: #fbbf24;
+                    padding: 6px 14px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 0.85rem;
+                    transition: all 0.2s;
+                }
+                .pending-header .toggle-btn:hover {
+                    background: rgba(251, 191, 36, 0.15);
+                    border-color: #fbbf24;
+                }
+                .pending-list {
+                    margin-top: 12px;
+                    border-top: 1px solid rgba(251, 191, 36, 0.2);
+                    padding-top: 12px;
+                }
+                .pending-list .list-header {
+                    display: grid;
+                    grid-template-columns: 180px 1fr 120px;
+                    gap: 12px;
+                    padding: 8px 12px;
+                    font-size: 0.75rem;
+                    color: #a78bfa;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+                .pending-item {
+                    display: grid;
+                    grid-template-columns: 180px 1fr 120px;
+                    gap: 12px;
+                    padding: 10px 12px;
+                    background: rgba(15, 23, 42, 0.5);
+                    border-radius: 4px;
+                    margin-bottom: 6px;
+                    align-items: center;
+                }
+                .pending-item .ident {
+                    font-family: monospace;
+                    color: #fbbf24;
+                    font-weight: 600;
+                }
+                .pending-item .desc {
+                    color: #e2e8f0;
+                    font-size: 0.85rem;
+                }
+                .pending-item .complete-btn {
+                    background: rgba(251, 19136, 0.15);
+                    border: 1px solid rgba(251, 191, 36, 0.4);
+                    color: #fbbf24;
+                    padding: 6px 12px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 0.8rem;
+                    transition: all 0.2s;
+                }
+                .pending-item .complete-btn:hover {
+                    background: rgba(251, 191, 36, 0.25);
+                    border-color: #fbbf24;
+                }
+                .pending-list .more-items {
+                    padding: 10px;
+                    text-align: center;
+                    color: #94a3b8;
+                    font-size: 0.85rem;
+                    font-style: italic;
+                }
+
+
                 .action-icon {
                     background: none;
                     border: none;
@@ -912,6 +1108,7 @@ function MaterialModal({ item, onClose, onSave, projectId, companyId }: {
         commodity_code: item?.commodity_code || '',
         spec_code: item?.spec_code || '',
         unit_weight: item?.unit_weight || undefined,
+        stick_standard_length: item?.stick_standard_length || undefined,
         part_group: item?.part_group || '',
         sap_mat_grp: item?.sap_mat_grp || '',
         commodity_group: item?.commodity_group || '',
@@ -932,7 +1129,22 @@ function MaterialModal({ item, onClose, onSave, projectId, companyId }: {
         setSaving(true)
         try {
             if (item) {
+                // Update the current item
                 await updateMaterial(item.id, formData)
+
+                // ⭐ If stick_standard_length was changed, propagate to ALL items with same ident_code
+                if (formData.stick_standard_length &&
+                    formData.stick_standard_length !== item.stick_standard_length) {
+                    const result = await updateStickLengthByIdentCode(
+                        projectId,
+                        item.ident_code,
+                        formData.stick_standard_length
+                    )
+
+                    if (result.updated > 1) {
+                        alert(`✅ Stick Length actualizado en ${result.updated} items con código ${item.ident_code}`)
+                    }
+                }
             } else {
                 await createMaterial(projectId, companyId, formData)
             }
@@ -1050,7 +1262,16 @@ function MaterialModal({ item, onClose, onSave, projectId, companyId }: {
                                 onChange={e => setFormData({ ...formData, unit_weight: parseFloat(e.target.value) })}
                             />
                         </div>
-                        <div className="field"></div> {/* Spacer */}
+                        <div className="field">
+                            <label>Stick Length (m) <span style={{ color: '#64748b', fontSize: '0.8rem' }}>- para pipes</span></label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                placeholder="6.0, 12.0, etc."
+                                value={formData.stick_standard_length || ''}
+                                onChange={e => setFormData({ ...formData, stick_standard_length: parseFloat(e.target.value) || undefined })}
+                            />
+                        </div>
 
                         {/* Custom Inputs */}
                         <div className="section-label full">

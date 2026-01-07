@@ -89,13 +89,20 @@ export async function createMaterialRequest(
         throw new Error(`Error creating material request: ${requestError.message}`)
     }
 
+    if (!request.company_id) {
+        // Rollback
+        await supabase.from('material_requests').delete().eq('id', request.id)
+        throw new Error('Critical: Generated Request is missing company_id. Cannot create items.')
+    }
+
     // Create the items
     const itemsToInsert = params.items.map(item => ({
         request_id: request.id,
         material_spec: item.material_spec,
         quantity_requested: item.quantity_requested,
         spool_id: item.spool_id,
-        isometric_id: item.isometric_id
+        isometric_id: item.isometric_id,
+        company_id: request.company_id // Use the stored ID to ensure consistency
     }))
 
     const { error: itemsError } = await supabase
@@ -105,7 +112,7 @@ export async function createMaterialRequest(
     if (itemsError) {
         // Rollback: delete the request if items fail
         await supabase.from('material_requests').delete().eq('id', request.id)
-        throw new Error(`Error creating request items: ${itemsError.message}`)
+        throw new Error(`Error creating request items: ${itemsError.message} (Company: ${request.company_id})`)
     }
 
     return request as MaterialRequest

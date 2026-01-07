@@ -11,6 +11,7 @@ import '@/styles/dashboard.css'
 
 interface ProjectWithStats extends Project {
     members_count: number
+    current_week: string | null
 }
 
 export default function ProjectsListPage() {
@@ -40,11 +41,36 @@ export default function ProjectsListPage() {
 
         const projectsWithStats = await Promise.all(
             projectsData.map(async (project) => {
+                // Get members count
                 const { count } = await supabase
                     .from('members')
                     .select('id', { count: 'exact', head: true })
                     .eq('project_id', project.id)
-                return { ...project, members_count: count || 0 }
+
+                // Get current week if project has start_date configured
+                let currentWeek: string | null = null
+
+                const { data: projectData } = await supabase
+                    .from('projects')
+                    .select('start_date')
+                    .eq('id', project.id)
+                    .single()
+
+                if (projectData?.start_date) {
+                    const { data: weekData } = await supabase
+                        .rpc('calculate_project_week', {
+                            p_project_id: project.id,
+                            p_date: new Date().toISOString().split('T')[0]
+                        })
+
+                    currentWeek = weekData ? `Semana ${weekData}` : null
+                }
+
+                return {
+                    ...project,
+                    members_count: count || 0,
+                    current_week: currentWeek
+                }
             })
         )
 

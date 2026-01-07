@@ -84,7 +84,25 @@ export async function uploadMTO(
 ): Promise<void> {
     const supabase = createClient()
 
-    // Delete existing MTO data for this revision (replace strategy)
+    // 1. Fetch all spools for this revision to build lookup map
+    const { data: spoolsData, error: spoolsError } = await supabase
+        .from('spools')
+        .select('id, spool_number, revision_id')
+        .eq('revision_id', revisionId)
+
+    if (spoolsError) {
+        throw new Error(`Error fetching spools: ${spoolsError.message}`)
+    }
+
+    // 2. Create map: spool_number -> spool_id
+    const spoolMap = new Map<string, string>()
+    spoolsData?.forEach(spool => {
+        spoolMap.set(spool.spool_number, spool.id)
+    })
+
+    console.log(`[MTO Upload] Found ${spoolMap.size} spools in revision`)
+
+    // 3. Delete existing MTO data for this revision (replace strategy)
     const { error: deleteError } = await supabase
         .from('spools_mto')
         .delete()
@@ -94,36 +112,72 @@ export async function uploadMTO(
         throw new Error(`Error deleting existing MTO: ${deleteError.message}`)
     }
 
-    // Insert new MTO data in batches (Supabase has a limit)
-    const BATCH_SIZE = 500
-    for (let i = 0; i < mtoData.length; i += BATCH_SIZE) {
-        const batch = mtoData.slice(i, i + BATCH_SIZE)
+    // Track spools not found for logging
+    const spoolsNotFound = new Set<string>()
 
-        const rowsToInsert = batch.map(row => ({
-            revision_id: revisionId,
-            project_id: projectId,
-            company_id: companyId,
-            line_number: row.line_number,
-            area: row.area,
-            sheet: row.sheet,
-            spool_number: row.spool_number,
-            spool_full_id: row.spool_full_id,
-            piping_class: row.piping_class,
-            rev_number: row.rev_number,
-            qty: row.qty,
-            qty_unit: row.qty_unit,
-            item_code: row.item_code,
-            fab_type: row.fab_type,
-            excel_row: row.excel_row
-        }))
+    // 4. Consolidate duplicate items (same spool + item_code) by summing quantities
+    const consolidatedMap = new Map<string, any>()
+
+    mtoData.forEach(row => {
+        const spoolId = spoolMap.get(row.spool_number) || null
+
+        if (!spoolId && row.spool_number) {
+            spoolsNotFound.add(row.spool_number)
+        }
+
+        // Key: spool_number + item_code (unique combination)
+        const consolidationKey = `${row.spool_number}_${row.item_code}`
+
+        if (consolidatedMap.has(consolidationKey)) {
+            // Item already exists, sum the quantity and round to 1 decimal
+            const existing = consolidatedMap.get(consolidationKey)
+            existing.qty = Math.round((existing.qty + row.qty) * 10) / 10
+        } else {
+            // New item, add to map with rounded quantity
+            consolidatedMap.set(consolidationKey, {
+                revision_id: revisionId,
+                project_id: projectId,
+                company_id: companyId,
+                spool_id: spoolId,
+                line_number: row.line_number,
+                area: row.area,
+                sheet: row.sheet,
+                spool_number: row.spool_number,
+                spool_full_id: row.spool_full_id,
+                piping_class: row.piping_class,
+                rev_number: row.rev_number,
+                qty: Math.round(row.qty * 10) / 10,  // Round to 1 decimal
+                qty_unit: row.qty_unit,
+                item_code: row.item_code,
+                fab_type: row.fab_type,
+                excel_row: row.excel_row
+            })
+        }
+    })
+
+    // 5. Insert consolidated data in batches
+    const consolidatedRows = Array.from(consolidatedMap.values())
+    const BATCH_SIZE = 500
+
+    for (let i = 0; i < consolidatedRows.length; i += BATCH_SIZE) {
+        const batch = consolidatedRows.slice(i, i + BATCH_SIZE)
 
         const { error: insertError } = await supabase
             .from('spools_mto')
-            .insert(rowsToInsert)
+            .insert(batch)
 
         if (insertError) {
             throw new Error(`Error inserting MTO batch: ${insertError.message}`)
         }
+    }
+
+    // Log warnings for spools not found
+    if (spoolsNotFound.size > 0) {
+        console.warn(`[MTO Upload] Warning: ${spoolsNotFound.size} spool(s) not found in spools table:`,
+            Array.from(spoolsNotFound).join(', '))
+        console.warn(`[MTO Upload] These MTO entries will have spool_id = NULL. Consider creating spools first or re-uploading MTO.`)
+    } else {
+        console.log(`[MTO Upload] ✓ All spools successfully linked`)
     }
 }
 

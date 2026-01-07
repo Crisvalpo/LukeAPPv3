@@ -9,6 +9,7 @@ interface RequestItem {
     quantity: string
     spool_id?: string
     isometric_id?: string
+    max_quantity?: number // Added for validation
 }
 
 interface CreateRequestModalProps {
@@ -43,6 +44,18 @@ export default function CreateRequestModal({
 
     function updateItem(index: number, field: 'material_spec' | 'quantity', value: string) {
         const newItems = [...items]
+        const currentItem = newItems[index]
+
+        // Max Quantity Validation Logic
+        if (field === 'quantity' && currentItem.max_quantity !== undefined) {
+            const val = Number(value)
+            if (val > currentItem.max_quantity) {
+                // Option: Clamp or just allow typing but show error later? 
+                // Let's allow typing but clamp if it exceeds implicit strictness, 
+                // or just relying on the max attribute for UI and validation on submit.
+            }
+        }
+
         newItems[index] = { ...newItems[index], [field]: value }
         setItems(newItems)
     }
@@ -63,6 +76,14 @@ export default function CreateRequestModal({
 
         if (validItems.length === 0) {
             setError('Debe incluir al menos un ítem válido')
+            setIsSubmitting(false)
+            return
+        }
+
+        // Check max quantities
+        const exceedsMax = validItems.some(i => i.max_quantity !== undefined && Number(i.quantity) > i.max_quantity)
+        if (exceedsMax) {
+            setError('Algunos ítems exceden la cantidad pendiente máxima.')
             setIsSubmitting(false)
             return
         }
@@ -143,16 +164,24 @@ export default function CreateRequestModal({
                                                 </small>
                                             )}
                                         </div>
-                                        <input
-                                            type="number"
-                                            placeholder="Cant"
-                                            value={item.quantity}
-                                            onChange={e => updateItem(idx, 'quantity', e.target.value)}
-                                            className="input-qty"
-                                            min="0.01"
-                                            step="0.01"
-                                            required
-                                        />
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <input
+                                                type="number"
+                                                placeholder="Cant"
+                                                value={item.quantity}
+                                                onChange={e => updateItem(idx, 'quantity', e.target.value)}
+                                                className={`input-qty ${item.max_quantity !== undefined && Number(item.quantity) > item.max_quantity ? 'input-error' : ''}`}
+                                                min="0.01"
+                                                max={item.max_quantity}
+                                                step="0.01"
+                                                required
+                                            />
+                                            {item.max_quantity !== undefined && (
+                                                <small className="text-xs text-dim">
+                                                    Max: {item.max_quantity}
+                                                </small>
+                                            )}
+                                        </div>
                                         <button
                                             type="button"
                                             className="btn-remove"

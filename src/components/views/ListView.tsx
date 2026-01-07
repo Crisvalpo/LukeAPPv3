@@ -130,6 +130,39 @@ export function ListView<T extends Record<string, any>>({
 function renderCell(item: any, key: string, fieldDef: any) {
     const value = item[key]
 
+    // Special handling for current_week field
+    if (key === 'current_week') {
+        if (!value) {
+            return (
+                <span style={{
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    background: 'rgba(148, 163, 184, 0.1)',
+                    color: '#94a3b8',
+                    border: '1px solid rgba(148, 163, 184, 0.2)',
+                    fontStyle: 'italic'
+                }}>
+                    Sin configurar
+                </span>
+            )
+        }
+        return (
+            <span style={{
+                padding: '0.25rem 0.75rem',
+                borderRadius: '9999px',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                background: 'rgba(59, 130, 246, 0.15)',
+                color: '#3b82f6',
+                border: '1px solid rgba(59, 130, 246, 0.3)'
+            }}>
+                {value}
+            </span>
+        )
+    }
+
     if (!value) return <span style={{ opacity: 0.5 }}>-</span>
 
     switch (fieldDef?.type) {

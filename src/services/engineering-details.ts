@@ -41,49 +41,10 @@ export interface UploadWeldsResult {
 }
 
 /**
- * Check if revision should be auto-marked as SPOOLEADO
- * (Only if no previous revisions for this ISO have been spooled)
+ * REMOVED: Auto-spool logic
+ * Status "Spooleado" is now derived from data_status = 'COMPLETO'
+ * See: Phase 8 Architecture Refactor
  */
-async function shouldAutoSpoolRevision(
-    revisionId: string,
-    supabase: ReturnType<typeof createClient>
-): Promise<boolean> {
-    // Get isometric_id for current revision
-    const { data: revision } = await supabase
-        .from('engineering_revisions')
-        .select('isometric_id')
-        .eq('id', revisionId)
-        .maybeSingle()
-
-    if (!revision) return false
-
-    // Check for previous SPOOLEADO/APLICADO revisions
-    const { data: spooled } = await supabase
-        .from('engineering_revisions')
-        .select('id')
-        .eq('isometric_id', revision.isometric_id)
-        .neq('id', revisionId)
-        .in('revision_status', ['SPOOLEADO', 'APLICADO'])
-        .limit(1)
-
-    // Auto-spool if no previous spooled revisions found
-    return (spooled?.length || 0) === 0
-}
-
-/**
- * Mark revision as SPOOLEADO
- */
-async function markRevisionAsSpooled(
-    revisionId: string,
-    supabase: ReturnType<typeof createClient>
-): Promise<{ success: boolean; error?: string }> {
-    const { error } = await supabase
-        .from('engineering_revisions')
-        .update({ revision_status: 'SPOOLEADO' })
-        .eq('id', revisionId)
-
-    return { success: !error, error: error?.message }
-}
 
 /**
  * Upload Welds for a specific revision
@@ -124,9 +85,9 @@ export async function uploadSpoolsWelds(
             return result
         }
 
-        if (revision.revision_status !== 'VIGENTE' && revision.revision_status !== 'PENDING' && revision.revision_status !== 'SPOOLEADO') {
-            result.errors.push('Revisión no está en estado VIGENTE ni SPOOLEADO')
-            result.message = `La revisión está en estado ${revision.revision_status}, solo se pueden cargar detalles a revisiones VIGENTE o SPOOLEADO`
+        if (revision.revision_status !== 'VIGENTE') {
+            result.errors.push('Revisión no está en estado VIGENTE')
+            result.message = `La revisión está en estado ${revision.revision_status}, solo se pueden cargar detalles a revisiones VIGENTE`
             return result
         }
 
@@ -224,30 +185,17 @@ export async function uploadSpoolsWelds(
             }
         }
 
-        // 7. Check if should auto-spool
-        const shouldAutoSpool = await shouldAutoSpoolRevision(revisionId, supabase)
-
-        if (shouldAutoSpool) {
-            const spoolResult = await markRevisionAsSpooled(revisionId, supabase)
-            result.was_auto_spooled = spoolResult.success
-
-            if (!spoolResult.success) {
-                result.errors.push(`No se pudo marcar como SPOOLEADO: ${spoolResult.error}`)
-            }
-        } else {
-            result.requires_impact_evaluation = true
-        }
+        // 7. REMOVED: Auto-spool logic (now derived from data_status)
+        // The revision will show "SPOOLEADO" badge in UI when data_status = COMPLETO
+        result.was_auto_spooled = false
+        result.requires_impact_evaluation = false
 
         // 8. Success
         result.success = totalInserted > 0
         result.revision_id = revisionId
         result.message = `Se cargaron ${totalInserted} soldaduras en ${uniqueSpools.size} spools`
 
-        if (result.was_auto_spooled) {
-            result.message += '. Revisión marcada como SPOOLEADO automáticamente'
-        } else if (result.requires_impact_evaluation) {
-            result.message += '. IMPORTANTE: Esta revisión requiere evaluación de impactos antes de aplicarse'
-        }
+        // Message already complete, no auto-spool messaging needed
 
         // 9. Update Parent Isometric Timestamp (Touch)
         // Ensure this action floats to the top of the Master View
