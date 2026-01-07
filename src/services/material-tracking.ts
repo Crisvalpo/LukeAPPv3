@@ -119,6 +119,7 @@ export async function fetchMaterialTracking(
         `)
         .eq('request.project_id', projectId)
         .order('created_at', { foreignTable: 'material_requests', ascending: false })
+        .order('id', { ascending: false }) // Fallback sort
         .range(offset, offset + limit - 1)
 
     if (search) {
