@@ -575,6 +575,7 @@ function LocationFormModal({
             type: form.type as any,
             description: form.description || null,
             capacity: form.capacity ? parseInt(form.capacity) : null,
+            parent_location_id: null,
             gps_coords: null,
             custom_metadata: {},
             is_active: true
@@ -622,7 +623,7 @@ function LocationFormModal({
                         <select
                             required
                             value={form.type}
-                            onChange={e => setForm({ ...form, type: e.target.value })}
+                            onChange={e => setForm({ ...form, type: e.target.value as any })}
                         >
                             <option value="workshop">Maestranza</option>
                             <option value="storage">Bodega/Acopio</option>

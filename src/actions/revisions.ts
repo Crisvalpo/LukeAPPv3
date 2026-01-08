@@ -47,4 +47,26 @@ export async function deleteRevisionAction(revisionId: string) {
     return await deleteRevision(revisionId, 'SYSTEM_USER')
 }
 
+export async function updateRevisionModelUrlAction(revisionId: string, url: string) {
+    // Import dynamically to avoid circular dependencies if any, or just import at top if fine.
+    // Ensure we import the service function.
+    const { updateRevisionModelUrl } = await import('@/services/revisions')
+    return await updateRevisionModelUrl(revisionId, url)
+}
+
+export async function updateModelDataAction(revisionId: string, data: any) {
+    const { updateModelData } = await import('@/services/revisions')
+    return await updateModelData(revisionId, data)
+}
+
+export async function getRevisionSpoolsAction(revisionId: string) {
+    const { getRevisionSpools } = await import('@/services/revisions')
+    return await getRevisionSpools(revisionId)
+}
+
+export async function deleteRevisionModelUrlAction(revisionId: string, url: string) {
+    const { deleteRevisionModelUrl } = await import('@/services/revisions')
+    return await deleteRevisionModelUrl(revisionId, url)
+}
+
 

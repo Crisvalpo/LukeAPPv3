@@ -171,16 +171,16 @@ export default function RevisionDetailPage() {
                         >
                             ← Volver a Ingeniería
                         </button>
-                        <h1>Revisión {revision.rev_id}</h1>
+                        <h1>Revisión {revision.rev_code}</h1>
                         <div
                             className="revision-status-badge"
                             style={{
-                                background: `${REVISION_STATUS_LABELS[revision.status]?.color}33`,
-                                color: REVISION_STATUS_LABELS[revision.status]?.color,
-                                border: `1px solid ${REVISION_STATUS_LABELS[revision.status]?.color}66`
+                                background: `${REVISION_STATUS_LABELS[revision.revision_status]?.color}33`,
+                                color: REVISION_STATUS_LABELS[revision.revision_status]?.color,
+                                border: `1px solid ${REVISION_STATUS_LABELS[revision.revision_status]?.color}66`
                             }}
                         >
-                            {REVISION_STATUS_LABELS[revision.status]?.label}
+                            {REVISION_STATUS_LABELS[revision.revision_status]?.label}
                         </div>
                     </div>
                     <p className="dashboard-subtitle">

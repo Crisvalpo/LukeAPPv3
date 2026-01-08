@@ -6,15 +6,17 @@ import RevisionWeldsList from './RevisionWeldsList'
 import RevisionMTOList from './RevisionMTOList'
 import RevisionJointsList from './RevisionJointsList'
 
-
 interface Props {
     revisionId: string
     projectId: string
+    glbModelUrl?: string | null
+    modelData?: any
+    spools?: any[] // Optional spools data for viewer
 }
 
 type TabType = 'SPOOLS' | 'WELDS' | 'MATERIALS' | 'JOINTS'
 
-export default function RevisionMasterView({ revisionId, projectId }: Props) {
+export default function RevisionMasterView({ revisionId, projectId, glbModelUrl, modelData, spools = [] }: Props) {
     const [activeTab, setActiveTab] = useState<TabType>('SPOOLS')
 
     return (

@@ -33,7 +33,7 @@ export default function WeldTypesSettingsPage() {
         setLoading(true)
         const result = await getProjectWeldTypesAction(projectId)
         if (result.success) {
-            setWeldTypes(result.data)
+            setWeldTypes(result.data || [])
         }
         setLoading(false)
     }

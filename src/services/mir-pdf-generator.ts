@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import QRCode from 'qrcode'
 import type { MaterialRequest, MaterialRequestItem } from '@/types'
 
 interface MIRPDFData {
@@ -53,6 +54,14 @@ export async function generateMIRPDF(data: MIRPDFData): Promise<jsPDF> {
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' })
     const { request, items } = data
 
+    // Generate QR Code
+    let qrDataUrl = ''
+    try {
+        qrDataUrl = await QRCode.toDataURL(request.request_number || 'UNKNOWN', { margin: 1, width: 100 })
+    } catch (err) {
+        console.error('Error generating QR', err)
+    }
+
     // Group items by spool for organized display
     const itemsBySpool = groupItemsBySpool(items)
 
@@ -60,7 +69,7 @@ export async function generateMIRPDF(data: MIRPDFData): Promise<jsPDF> {
     const totalPages = calculateTotalPages(itemsBySpool)
 
     // Page 1: Cover page with summary
-    await addCoverPage(doc, request, itemsBySpool, currentPage, totalPages)
+    await addCoverPage(doc, request, itemsBySpool, currentPage, totalPages, qrDataUrl)
 
     // Page 2+: Detail pages (items grouped by spool)
     // Always start details on a new page (page 2)
@@ -97,13 +106,26 @@ async function addCoverPage(
     request: MIRPDFData['request'],
     itemsBySpool: Record<string, MIRPDFData['items']>,
     currentPage: number,
-    totalPages: number
+    totalPages: number,
+    qrDataUrl?: string
 ) {
     const pageWidth = doc.internal.pageSize.getWidth()
     const pageHeight = doc.internal.pageSize.getHeight()
 
     // Logo placeholder (top left)
     await addLogoSection(doc, request.project?.logo_primary_url, request.project?.logo_secondary_url)
+
+    // QR Code (Top Right)
+    if (qrDataUrl) {
+        const qrSize = 25
+        const qrX = pageWidth - qrSize - 10
+        const qrY = 10
+        doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize)
+        // Label below QR
+        doc.setFontSize(8)
+        doc.setFont('helvetica', 'bold')
+        doc.text(request.request_number, qrX + (qrSize / 2), qrY + qrSize + 4, { align: 'center' })
+    }
 
     // Title "MIR (BY LukeAPP)"
     doc.setFontSize(FONTS.title)

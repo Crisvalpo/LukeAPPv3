@@ -78,17 +78,11 @@ Si un usuario no tiene cargo funcional asignado:
 
 ```
 LukeAPP/
-├── apps/
-│   ├── web-core/          → Lobby, Landing, Admin (ONLINE)
-│   ├── field-spool/       → App terreno Spools (OFFLINE-FIRST)
-│   ├── field-qa/          → App terreno QA (OFFLINE-FIRST)
-│   └── field-logistics/   → App terreno Logística (OFFLINE-FIRST)
-├── packages/
-│   ├── domain/            → Modelos de dominio compartidos
-│   ├── sync-engine/       → Motor de sincronización
-│   └── ui/                → Componentes UI compartidos
-└── supabase/
-    └── migrations/        → Schema SQL
+├── src/                   → Web Core (Lobby, Admin, Engineering) [Vanilla CSS]
+├── bodega-app/            → Satellite PWA (Recepcion, Picking) [Tailwind CSS]
+├── supabase/              → Shared Backend Schema
+├── public/                → Shared Assets
+└── ...
 ```
 
 ### Deploys Independientes (Vercel)

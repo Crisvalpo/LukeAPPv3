@@ -85,6 +85,20 @@ Treat Web Core (online) and Field Apps (offline-first) as separate worlds.
 Do not share execution logic between them.
 Only shared domain models and types are allowed.
 
+#### Satellite App Architecture (New Jan 2026)
+- **Web Core (`app.lukeapp.cl`)**: 
+    - Tech: Next.js + Vanilla CSS (Glassmorphism)
+    - Role: Admin, Engineering, Management
+    - State: Online necessary
+
+- **Field Satellites (`bodega.lukeapp.cl`, etc)**:
+    - Tech: Next.js PWA + Tailwind CSS (Mobile First)
+    - Role: Worker, Supervisor
+    - State: Offline First (Service Worker + Local DB)
+    - UX: Big buttons, scanner-ready, dark mode default
+
+**Exception Rule**: While Web Core enforces Vanilla CSS, Satellite Apps MAY use Tailwind CSS for rapid mobile UI development and performance.
+
 ### 4️⃣ Offline-first real (no simulación)
 
 Field applications must be designed as offline-first.

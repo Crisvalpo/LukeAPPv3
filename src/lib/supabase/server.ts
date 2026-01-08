@@ -20,3 +20,20 @@ export async function createClient() {
         }
     )
 }
+
+/**
+ * Creates an admin client with service role for privileged operations
+ * Use ONLY for server-side admin tasks like storage management
+ */
+export function createAdminClient() {
+    return createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        {
+            cookies: {
+                getAll() { return [] },
+                setAll() { },
+            },
+        }
+    )
+}

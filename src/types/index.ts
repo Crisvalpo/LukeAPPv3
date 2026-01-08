@@ -498,6 +498,8 @@ export interface EngineeringRevision {
     iso_number?: string
     welds_count?: number
     spools_count?: number
+    glb_model_url?: string | null
+    model_data?: any
 }
 
 // Phase 6: Weld Type Configuration (Union Types)

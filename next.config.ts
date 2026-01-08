@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Empty turbopack config to silence warning
+  // bodega-app will be deployed separately
+  turbopack: {},
 };
 
 export default nextConfig;

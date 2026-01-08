@@ -172,7 +172,9 @@ export async function getProjectRevisions(projectId: string): Promise<ApiRespons
                 revision_status,
                 transmittal,
                 announcement_date,
-                created_at
+                created_at,
+                glb_model_url,
+                model_data
             `)
             .eq('project_id', projectId)
             .order('created_at', { ascending: false })
@@ -228,6 +230,8 @@ export async function getProjectRevisions(projectId: string): Promise<ApiRespons
                     transmittal: rev.transmittal,
                     announcement_date: rev.announcement_date,
                     created_at: rev.created_at,
+                    glb_model_url: rev.glb_model_url,
+                    model_data: rev.model_data,
                     iso_number: iso?.iso_number || 'N/A',
                     welds_count: count || 0,
                     spools_count: uniqueSpools.size
@@ -414,3 +418,180 @@ export async function deleteRevision(
         }
     }
 }
+
+
+/**
+ * Update the GLB Model URL for a revision
+ */
+export async function updateRevisionModelUrl(
+    revisionId: string,
+    modelUrl: string
+): Promise<ApiResponse<void>> {
+    const supabase = await createClient()
+
+    try {
+        const { error } = await supabase
+            .from('engineering_revisions')
+            .update({ glb_model_url: modelUrl })
+            .eq('id', revisionId)
+
+        if (error) {
+            return {
+                success: false,
+                message: `Error al actualizar modelo URL: ${error.message}`
+            }
+        }
+
+        return {
+            success: true,
+            message: 'Modelo 3D vinculado exitosamente'
+        }
+    } catch (error) {
+        console.error('Error in updateRevisionModelUrl:', error)
+        return {
+            success: false,
+            message: 'Error inesperado al vincular modelo'
+        }
+    }
+}
+
+
+/**
+ * Delete the GLB Model for a revision (Both file and DB ref)
+ */
+export async function deleteRevisionModelUrl(
+    revisionId: string,
+    modelUrl: string
+): Promise<ApiResponse<void>> {
+    const supabase = await createClient()
+
+    try {
+        // 1. Update DB first to prevent UI showing it if file deletion fails (soft fail)
+        const { error: dbError } = await supabase
+            .from('engineering_revisions')
+            .update({
+                glb_model_url: null,
+                model_data: null
+            })
+            .eq('id', revisionId)
+
+        if (dbError) {
+            return {
+                success: false,
+                message: `Error al actualizar base de datos: ${dbError.message}`
+            }
+        }
+
+        // 2. Try to delete the file from storage (requires admin privileges)
+        // Extract filename from URL: .../isometric-models/iso-123-A.glb?token...
+        try {
+            const urlObj = new URL(modelUrl)
+            const pathParts = urlObj.pathname.split('/isometric-models/')
+            if (pathParts.length > 1) {
+                const filePath = decodeURIComponent(pathParts[1])
+
+                // Import admin client for storage deletion
+                const { createAdminClient } = await import('@/lib/supabase/server')
+                const adminClient = createAdminClient()
+
+                const { error: storageError } = await adminClient
+                    .storage
+                    .from('isometric-models')
+                    .remove([filePath])
+
+                if (storageError) {
+                    console.error('Storage deletion failed:', storageError)
+                    console.error('Attempted to delete file path:', filePath)
+                } else {
+                    console.log('Storage file deleted successfully:', filePath)
+                }
+            }
+        } catch (parseError) {
+            console.warn('Could not parse URL for file deletion:', modelUrl)
+        }
+
+        return {
+            success: true,
+            message: 'Modelo 3D eliminado exitosamente'
+        }
+    } catch (error) {
+        console.error('Error in deleteRevisionModelUrl:', error)
+        return {
+            success: false,
+            message: 'Error inesperado al eliminar modelo'
+        }
+    }
+}
+
+
+/**
+ * Update the Model Data JSONB for a revision
+ */
+export async function updateModelData(
+    revisionId: string,
+    data: any
+): Promise<ApiResponse<void>> {
+    const supabase = await createClient()
+
+    try {
+        const { error } = await supabase
+            .from('engineering_revisions')
+            .update({ model_data: data })
+            .eq('id', revisionId)
+
+        if (error) {
+            return {
+                success: false,
+                message: `Error al actualizar datos del modelo: ${error.message}`
+            }
+        }
+
+        return {
+            success: true,
+            message: 'Datos del modelo guardados'
+        }
+    } catch (error) {
+        console.error('Error in updateModelData:', error)
+        return {
+            success: false,
+            message: 'Error inesperado al guardar datos del modelo'
+        }
+    }
+}
+
+/**
+ * Get all spools for a specific revision
+ */
+export async function getRevisionSpools(revisionId: string) {
+    const supabase = await createClient()
+
+    try {
+        const { data, error } = await supabase
+            .from('spools')
+            .select(`
+                id,
+                spool_number,
+                revision,
+                fabrication_status,
+                diameter_inch,
+                material_class
+            `)
+            .eq('revision_id', revisionId)
+            .order('spool_number', { ascending: true })
+
+        if (error) throw error
+
+        return data.map((s: any) => ({
+            id: s.id,
+            name: s.spool_number,
+            status: s.fabrication_status,
+            diametro_pulg: s.diameter_inch,
+            clase: s.material_class,
+            revision: s.revision
+        }))
+    } catch (error) {
+        console.error('Error fetching revision spools:', error)
+        return []
+    }
+}
+
