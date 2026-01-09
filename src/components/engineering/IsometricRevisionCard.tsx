@@ -17,21 +17,28 @@ function IsometricViewerWrapper({
     modelUrl,
     initialModelData,
     isoNumber,
-    onClose
+    projectId,
+    onClose,
+    onSave
 }: {
     revisionId: string
     modelUrl: string
     initialModelData: any
     isoNumber: string
+    projectId: string
     onClose: () => void
+    onSave?: () => void
 }) {
     const [spools, setSpools] = useState<any[]>([])
+    const [structureModels, setStructureModels] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
 
     // Viewer Control State
     const [mode, setMode] = useState<'ORBIT' | 'PAN'>('ORBIT')
     const [speed, setSpeed] = useState(0.5)
+
     const [triggerFit, setTriggerFit] = useState(false)
+    const [showStructure, setShowStructure] = useState(false)
 
     // Selection & Assignment State
     const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -64,19 +71,29 @@ function IsometricViewerWrapper({
     }, [activeSpoolId, assignments])
 
     useEffect(() => {
-        async function fetchSpools() {
+        async function fetchContext() {
             try {
+                // Parallel fetch for spools and structure models
                 const { getRevisionSpoolsAction } = await import('@/actions/revisions')
-                const data = await getRevisionSpoolsAction(revisionId)
-                setSpools(data || [])
+                const { getStructureModelsAction } = await import('@/actions/structure-models')
+
+                const [spoolsData, modelsResult] = await Promise.all([
+                    getRevisionSpoolsAction(revisionId),
+                    getStructureModelsAction(projectId)
+                ])
+
+                setSpools(spoolsData || [])
+                if (modelsResult.success && modelsResult.data) {
+                    setStructureModels(modelsResult.data)
+                }
             } catch (error) {
-                console.error('Error loading spools:', error)
+                console.error('Error loading viewer context:', error)
             } finally {
                 setLoading(false)
             }
         }
-        fetchSpools()
-    }, [revisionId])
+        fetchContext()
+    }, [revisionId, projectId])
 
     const handleDeleteModel = async () => {
         if (confirm('¿Estás seguro de ELIMINAR este modelo 3D permanentemente?')) {
@@ -125,6 +142,7 @@ function IsometricViewerWrapper({
             try {
                 const { updateModelDataAction } = await import('@/actions/revisions')
                 await updateModelDataAction(revisionId, updatedData)
+                if (onSave) onSave()
             } catch (error) {
                 console.error('Failed to save unassignment:', error)
             }
@@ -161,6 +179,7 @@ function IsometricViewerWrapper({
         try {
             const { updateModelDataAction } = await import('@/actions/revisions')
             await updateModelDataAction(revisionId, updatedData)
+            if (onSave) onSave()
         } catch (error) {
             console.error('Failed to save assignment:', error)
         }
@@ -492,6 +511,24 @@ function IsometricViewerWrapper({
                                 🔍
                             </button>
 
+                            {/* Structure Toggle */}
+                            <button
+                                onClick={() => setShowStructure(!showStructure)}
+                                title={showStructure ? "Ocultar Estructuras" : "Mostrar Estructuras"}
+                                style={{
+                                    padding: '4px 8px',
+                                    borderRadius: '4px',
+                                    backgroundColor: showStructure ? '#3b82f6' : 'transparent',
+                                    color: showStructure ? 'white' : '#94a3b8',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '1.1rem',
+                                    marginLeft: '4px'
+                                }}
+                            >
+                                🏗️
+                            </button>
+
                             {/* Delete Button */}
                             <button
                                 onClick={handleDeleteModel}
@@ -556,7 +593,7 @@ function IsometricViewerWrapper({
                                 borderRadius: '4px',
                                 backgroundColor: 'rgba(245, 158, 11, 0.1)'
                             }}>
-                                🖱️ Click en un Spool de la lista para asignar
+                                🖱️ Click en Spool para asignar <span style={{ opacity: 0.7, marginLeft: '8px', fontWeight: 'normal' }}>| Mantén CTRL para sumar</span>
                             </span>
                         )}
                     </div>
@@ -588,7 +625,9 @@ function IsometricViewerWrapper({
                     <IsometricViewer
                         modelUrl={modelUrl}
                         spools={spools}
-                        initialModelData={initialModelData}
+                        structureModels={structureModels}
+                        showStructure={showStructure}
+                        initialModelData={modelData}
                         onSaveData={async (data) => {
                             const { updateModelDataAction } = await import('@/actions/revisions')
                             await updateModelDataAction(revisionId, data)
@@ -603,6 +642,7 @@ function IsometricViewerWrapper({
                         onSelectionChange={setSelectedIds}
                         assignments={assignments}
                         spoolColors={spoolColors}
+                        highlightedIds={highlightedIds}
                     />
                 </div>
             </div>
@@ -650,6 +690,7 @@ export default function IsometricRevisionCard({
         glbUrl: string
         modelData: any
         isoNumber: string
+        projectId: string
     } | null>(null)
 
     // Load fabricability statuses
@@ -943,7 +984,8 @@ export default function IsometricRevisionCard({
                                                                             id: rev.id,
                                                                             glbUrl: rev.glb_model_url!,
                                                                             modelData: rev.model_data,
-                                                                            isoNumber: isoNumber
+                                                                            isoNumber: isoNumber,
+                                                                            projectId: rev.project_id
                                                                         })
                                                                     } else {
                                                                         handleUploadClick(rev.id)
@@ -1036,7 +1078,9 @@ export default function IsometricRevisionCard({
                     modelUrl={viewerModalRevision.glbUrl}
                     initialModelData={viewerModalRevision.modelData}
                     isoNumber={viewerModalRevision.isoNumber}
+                    projectId={viewerModalRevision.project_id}
                     onClose={() => setViewerModalRevision(null)}
+                    onSave={onRefresh}
                 />
             )}
         </div >

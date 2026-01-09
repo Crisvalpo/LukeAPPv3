@@ -19,6 +19,31 @@ interface IsometricViewerProps {
     highlightedIds?: string[] // Ids to highlight (from card selection)
     assignments?: Record<string, string[]> // spoolId -> elementIds
     spoolColors?: Record<string, string> // spoolId -> color
+    // Structure Props
+    structureModels?: any[]
+    showStructure?: boolean
+}
+
+function StructureModel({ url }: { url: string }) {
+    const { scene } = useGLTF(url)
+    const clonedScene = React.useMemo(() => {
+        const clone = scene.clone()
+        // Apply ghost material
+        clone.traverse((child: any) => {
+            if (child.isMesh) {
+                // Save original if needed, but for structure we usually want uniform ghost look
+                // or keep original but transparent
+                child.material = child.material.clone()
+                child.material.transparent = true
+                child.material.opacity = 0.3
+                child.castShadow = false
+                child.receiveShadow = true
+            }
+        })
+        return clone
+    }, [scene])
+
+    return <primitive object={clonedScene} />
 }
 
 function Model({
@@ -241,6 +266,8 @@ function ViewerController({
     const controlsRef = useRef<any>(null)
 
     // Handle Fit View
+    // Handle Fit View - Auto fit on load AND on trigger
+    // Handle Fit View
     useEffect(() => {
         if (triggerFit && targetObject) {
             const box = new THREE.Box3().setFromObject(targetObject)
@@ -295,7 +322,9 @@ export default function IsometricViewer({
     highlightedIds,
     onSelectionChange,
     assignments,
-    spoolColors
+    spoolColors,
+    structureModels = [],
+    showStructure = true
 }: IsometricViewerProps) {
     const [modelScene, setModelScene] = useState<THREE.Object3D | null>(null)
 
@@ -326,6 +355,9 @@ export default function IsometricViewer({
                         assignments={assignments}
                         spoolColors={spoolColors}
                     />
+                    {showStructure && structureModels.map((model, idx) => (
+                        <StructureModel key={model.id || idx} url={model.model_url} />
+                    ))}
                 </React.Suspense>
 
                 <ViewerController

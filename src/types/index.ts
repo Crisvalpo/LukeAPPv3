@@ -502,6 +502,15 @@ export interface EngineeringRevision {
     model_data?: any
 }
 
+export interface StructureModel {
+    id: string
+    project_id: string
+    name: string
+    area: string | null
+    model_url: string
+    created_at: string
+}
+
 // Phase 6: Weld Type Configuration (Union Types)
 export interface WeldTypeConfig {
     id: string

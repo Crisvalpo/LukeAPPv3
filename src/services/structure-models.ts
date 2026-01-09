@@ -1,0 +1,143 @@
+import { SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/client'
+import { ApiResponse, StructureModel } from '@/types'
+
+export async function getProjectStructureModels(projectId: string, client?: SupabaseClient): Promise<ApiResponse<StructureModel[]>> {
+    const supabase = client || createClient()
+    try {
+        const { data, error } = await supabase
+            .from('structure_models')
+            .select('*')
+            .eq('project_id', projectId)
+            .order('created_at', { ascending: false })
+
+        if (error) {
+            console.error('Error fetching structure models:', error)
+            return {
+                success: false,
+                message: `Error al cargar modelos estructurales: ${error.message}`
+            }
+        }
+
+        return {
+            success: true,
+            message: 'Modelos cargados correctamente',
+            data: data
+        }
+    } catch (error) {
+        console.error('Unexpected error fetching structure models:', error)
+        return {
+            success: false,
+            message: `Error inesperado: ${error}`
+        }
+    }
+}
+
+export async function deleteStructureModel(modelId: string, modelUrl: string, client?: SupabaseClient): Promise<ApiResponse<void>> {
+    const supabase = client || createClient()
+    try {
+        // 1. Delete file from storage
+        // Extract path from URL (assuming standard Supabase Storage URL format)
+        // URL: .../storage/v1/object/public/structure-models/filename.glb
+        const urlParts = modelUrl.split('/structure-models/')
+        if (urlParts.length === 2) {
+            const filePath = urlParts[1]
+            const { error: storageError } = await supabase.storage
+                .from('structure-models')
+                .remove([filePath])
+
+            if (storageError) {
+                console.warn('Failed to delete file from storage', storageError)
+                // Continue to delete record even if storage fails (orphan cleanup strategy)
+            }
+        }
+
+        // 2. Delete record from database
+        const { error } = await supabase
+            .from('structure_models')
+            .delete()
+            .eq('id', modelId)
+
+        if (error) {
+            return {
+                success: false,
+                message: 'Error al eliminar el modelo'
+            }
+        }
+
+        return {
+            success: true,
+            message: 'Modelo eliminado correctamente'
+        }
+    } catch (error) {
+        console.error('Error deleting structure model:', error)
+        return {
+            success: false,
+            message: 'Error inesperado al eliminar'
+        }
+    }
+}
+
+export async function createStructureModel(
+    projectId: string,
+    name: string,
+    area: string,
+    file: File,
+    client?: SupabaseClient
+): Promise<ApiResponse<StructureModel>> {
+    const supabase = client || createClient()
+    try {
+        // 1. Upload file
+        const fileExt = 'glb' // Enforce GLB
+        const fileName = `${projectId}_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
+
+        const { error: uploadError, data: uploadData } = await supabase.storage
+            .from('structure-models')
+            .upload(fileName, file)
+
+        if (uploadError) {
+            return {
+                success: false,
+                message: `Error al subir archivo: ${uploadError.message}`
+            }
+        }
+
+        const { data: publicUrlData } = supabase.storage
+            .from('structure-models')
+            .getPublicUrl(fileName)
+
+        // 2. Insert record
+        const { data, error } = await supabase
+            .from('structure_models')
+            .insert({
+                project_id: projectId,
+                name: name,
+                area: area,
+                model_url: publicUrlData.publicUrl
+            })
+            .select()
+            .single()
+
+        if (error) {
+            // Cleanup uploaded file if insert fails
+            await supabase.storage.from('structure-models').remove([fileName])
+            return {
+                success: false,
+                message: `Error al registrar modelo: ${error.message}`
+            }
+        }
+
+        return {
+            success: true,
+            message: 'Modelo creado correctamente',
+            data: data
+        }
+
+    } catch (error) {
+        console.error('Error creating structure model:', error)
+        return {
+            success: false,
+            message: 'Error inesperado al crear modelo'
+        }
+    }
+}

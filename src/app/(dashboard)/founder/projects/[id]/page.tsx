@@ -11,6 +11,7 @@ import EngineeringManager from '@/components/engineering/EngineeringManager'
 import ProcurementManager from '@/components/procurement/ProcurementManager'
 import ProjectLocationsManager from '@/components/projects/ProjectLocationsManager'
 import WeldTypesManager from '@/components/engineering/WeldTypesManager'
+import StructureModelsManager from '@/components/project/StructureModelsManager'
 import ProjectWeekConfigModal from '@/components/project/ProjectWeekConfigModal'
 import ProjectLogosManager from '@/components/common/ProjectLogosManager'
 import '@/styles/dashboard.css'
@@ -34,7 +35,7 @@ export default function ProjectDetailPage() {
     const [project, setProject] = useState<ProjectDetails | null>(null)
     const [invitations, setInvitations] = useState<Invitation[]>([])
     const [activeTab, setActiveTab] = useState<'details' | 'team' | 'engineering' | 'procurement' | 'settings'>('details')
-    const [settingsView, setSettingsView] = useState<'menu' | 'locations' | 'weld-types' | 'logo'>('menu')
+    const [settingsView, setSettingsView] = useState<'menu' | 'locations' | 'weld-types' | 'logo' | 'structure-models'>('menu')
 
     const [isEditing, setIsEditing] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
@@ -597,6 +598,50 @@ export default function ProjectDetailPage() {
                                                 Sube el logo del proyecto para incluirlo en documentos MIR y reportes PDF.
                                             </p>
                                         </div>
+
+                                        <div
+                                            onClick={() => setSettingsView('structure-models')}
+                                            style={{
+                                                background: 'rgba(30, 41, 59, 0.7)',
+                                                backdropFilter: 'blur(10px)',
+                                                border: '1px solid #334155',
+                                                borderRadius: '16px',
+                                                padding: '1.5rem',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s ease',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.transform = 'translateY(-4px)'
+                                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
+                                                e.currentTarget.style.borderColor = '#0ea5e9'
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.transform = 'none'
+                                                e.currentTarget.style.boxShadow = 'none'
+                                                e.currentTarget.style.borderColor = '#334155'
+                                            }}
+                                        >
+                                            <div style={{
+                                                background: 'rgba(14, 165, 233, 0.2)',
+                                                width: '48px',
+                                                height: '48px',
+                                                borderRadius: '12px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                marginBottom: '1rem'
+                                            }}>
+                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                                                    <line x1="12" y1="22.08" x2="12" y2="12" />
+                                                </svg>
+                                            </div>
+                                            <h3 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 600 }}>Modelos Estructurales (BIM)</h3>
+                                            <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                                                Carga modelos 3D de contexto (estructuras, civil) para visualizar junto a las isometrías.
+                                            </p>
+                                        </div>
                                     </div>
                                 ) : settingsView === 'locations' ? (
                                     <ProjectLocationsManager
@@ -634,6 +679,27 @@ export default function ProjectDetailPage() {
                                             />
                                         </div>
                                     </div>
+                                ) : settingsView === 'structure-models' ? (
+                                    <div className="fade-in">
+                                        <button
+                                            onClick={() => setSettingsView('menu')}
+                                            style={{
+                                                padding: '0.75rem 1.25rem',
+                                                background: 'rgba(255, 255, 255, 0.05)',
+                                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                                borderRadius: '8px',
+                                                color: 'white',
+                                                cursor: 'pointer',
+                                                marginBottom: '2rem',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            ← Volver a Configuración
+                                        </button>
+                                        <div style={{ maxWidth: '800px' }}>
+                                            <StructureModelsManager projectId={projectId} />
+                                        </div>
+                                    </div>
                                 ) : null}
                             </div>
                         )}
@@ -651,6 +717,6 @@ export default function ProjectDetailPage() {
                     // Optional: refresh project data if needed
                 }}
             />
-        </div >
+        </div>
     )
 }

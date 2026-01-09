@@ -4,6 +4,11 @@ const nextConfig: NextConfig = {
   // Empty turbopack config to silence warning
   // bodega-app will be deployed separately
   turbopack: {},
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '50mb',
+    },
+  },
 };
 
 export default nextConfig;
