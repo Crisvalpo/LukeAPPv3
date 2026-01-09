@@ -118,8 +118,15 @@ function Model({
                     child.material.transparent = false
                     child.material.opacity = 1
                 } else {
-                    // Reset
-                    child.material = child.userData.originalMaterial
+                    // Reset to Base (Unassigned) -> FORCE GREY
+                    // The user complained that "Base" looks yellow (likely original material).
+                    // We override this to ensure a clean Grey base state.
+                    child.material = child.userData.originalMaterial.clone()
+                    child.material.color.setHex(0xe2e8f0) // Slate-200 (Light neutral grey)
+                    child.material.emissive.setHex(0x000000)
+                    child.material.emissiveIntensity = 0
+                    child.material.transparent = false
+                    child.material.opacity = 1
                 }
 
                 child.material.needsUpdate = true // CRITICAL: Force update for transparency changes

@@ -49,7 +49,7 @@ function IsometricViewerWrapper({
                 } else if (s.status === 'FABRICATED' || s.status === 'DISPATCHED') { // Group Dispatched with Fabricated for now
                     colors[s.id] = '#60a5fa' // Blue-400
                 } else {
-                    colors[s.id] = '#94a3b8' // Slate-400 (Grey)
+                    colors[s.id] = '#facc15' // Yellow-400 (Pending Assigned)
                 }
             }
         })
@@ -255,9 +255,9 @@ function IsometricViewerWrapper({
                             const isDisabled = canAssign && isAssignedToOtherSpool && !isAssignedToThisSpool // Only disable if stealing
 
                             // Determine Base Color based on Status
-                            let baseColor = '#94a3b8' // Default Grey
-                            let baseBg = 'rgba(148, 163, 184, 0.1)'
-                            let baseBorder = '#475569'
+                            let baseColor = '#facc15' // Default Yellow (Pending - Assigned)
+                            let baseBg = 'rgba(250, 204, 21, 0.1)'
+                            let baseBorder = '#eab308'
 
                             if (spool.status === 'INSTALLED') {
                                 baseColor = '#4ade80' // Green
