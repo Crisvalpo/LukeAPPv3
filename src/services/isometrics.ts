@@ -174,3 +174,60 @@ export async function searchIsometrics(
         }
     }
 }
+
+/**
+ * Get all revisions that have a 3D model (GLB) for the BIM Configuration view
+ */
+export async function getRevisionModels(projectId: string): Promise<ApiResponse<any[]>> {
+    const supabase = await createClient()
+
+    try {
+        const { data, error } = await supabase
+            .from('engineering_revisions')
+            .select(`
+                id,
+                rev_code,
+                revision_status,
+                glb_model_url,
+                created_at,
+                isometrics!engineering_revisions_isometric_id_fkey!inner (
+                    iso_number,
+                    area
+                )
+            `)
+            .eq('project_id', projectId)
+            .not('glb_model_url', 'is', null)
+            .order('created_at', { ascending: false })
+
+        if (error) {
+            console.error('getRevisionModels DB error:', error)
+            return {
+                success: false,
+                message: error.message,
+                data: []
+            }
+        }
+
+        // Flatten data structure
+        const models = (data || []).map((rev: any) => ({
+            id: rev.id,
+            name: `${rev.isometrics.iso_number} (Rev ${rev.rev_code})`,
+            area: rev.isometrics.area,
+            model_url: rev.glb_model_url,
+            created_at: rev.created_at,
+            type: 'ISOMETRIC'
+        }))
+
+        return {
+            success: true,
+            data: models
+        }
+    } catch (error) {
+        console.error('Unexpected error in getRevisionModels:', error)
+        return {
+            success: false,
+            message: 'Error inesperado al obtener modelos de revisión',
+            data: []
+        }
+    }
+}

@@ -1,13 +1,17 @@
 import { StructureModel } from '@/types'
-import { Trash2, Box } from 'lucide-react'
+import { Trash2, Box, Eye } from 'lucide-react'
 import { useState } from 'react'
 
 export default function StructureModelCard({
     model,
-    onDelete
+    onDelete,
+    onPreview,
+    readOnly = false
 }: {
     model: StructureModel
     onDelete: (id: string, url: string) => Promise<void>
+    onPreview: (model: StructureModel) => void
+    readOnly?: boolean
 }) {
     const [isDeleting, setIsDeleting] = useState(false)
 
@@ -65,30 +69,58 @@ export default function StructureModelCard({
                 </div>
             </div>
 
-            <button
-                onClick={handleDelete}
-                disabled={isDeleting}
-                title="Eliminar Modelo"
-                style={{
-                    padding: '0.5rem',
-                    color: '#94a3b8',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderRadius: '0.375rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                    e.currentTarget.style.color = '#f87171'
-                    e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'
-                }}
-                onMouseLeave={(e) => {
-                    e.currentTarget.style.color = '#94a3b8'
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                }}
-            >
-                <Trash2 size={16} />
-            </button>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                    onClick={() => onPreview(model)}
+                    title="Vista Previa"
+                    style={{
+                        padding: '0.5rem',
+                        color: '#94a3b8',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        borderRadius: '0.375rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.color = '#60a5fa'
+                        e.currentTarget.style.backgroundColor = 'rgba(96, 165, 250, 0.1)'
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.color = '#94a3b8'
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                    }}
+                >
+                    <Eye size={16} />
+                </button>
+
+                {!readOnly && (
+                    <button
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                        title="Eliminar Modelo"
+                        style={{
+                            padding: '0.5rem',
+                            color: '#94a3b8',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            borderRadius: '0.375rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.color = '#f87171'
+                            e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.color = '#94a3b8'
+                            e.currentTarget.style.backgroundColor = 'transparent'
+                        }}
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                )}
+            </div>
         </div>
     )
 }

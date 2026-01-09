@@ -46,3 +46,8 @@ export async function deleteStructureModelAction(modelId: string, modelUrl: stri
 
     return result
 }
+
+export async function getRevisionModelsAction(projectId: string) {
+    const { getRevisionModels } = await import('@/services/isometrics')
+    return await getRevisionModels(projectId)
+}
