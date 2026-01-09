@@ -1,7 +1,7 @@
-
 'use client'
 
-import { useState, useEffect, Fragment } from 'react'
+import React, { useEffect, useState, useRef, useMemo, Fragment } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import type { EngineeringRevision } from '@/types'
 import { deleteRevisionAction } from '@/actions/revisions'
@@ -11,18 +11,57 @@ import IsometricViewer from './viewer/IsometricViewer'
 import { createClient } from '@/lib/supabase/client'
 import { updateRevisionModelUrlAction } from '@/actions/revisions'
 
-// Wrapper to load spools for viewer
+// Wrapper to load spools for viewer and handle fullscreen portal
 function IsometricViewerWrapper({
     revisionId,
     modelUrl,
-    initialModelData
+    initialModelData,
+    isoNumber,
+    onClose
 }: {
     revisionId: string
     modelUrl: string
     initialModelData: any
+    isoNumber: string
+    onClose: () => void
 }) {
     const [spools, setSpools] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
+
+    // Viewer Control State
+    const [mode, setMode] = useState<'ORBIT' | 'PAN'>('ORBIT')
+    const [speed, setSpeed] = useState(0.5)
+    const [triggerFit, setTriggerFit] = useState(false)
+
+    // Selection & Assignment State
+    const [selectedIds, setSelectedIds] = useState<string[]>([])
+    const [modelData, setModelData] = useState<any>(initialModelData || {})
+
+    // Derived: assignment map and colors
+    const assignments = modelData?.spool_assignments || {}
+    const spoolColors = React.useMemo(() => {
+        const colors: Record<string, string> = {}
+        spools.forEach(s => {
+            if (assignments[s.id] && assignments[s.id].length > 0) {
+                // Color based on Status
+                if (s.status === 'INSTALLED') {
+                    colors[s.id] = '#4ade80' // Green-400
+                } else if (s.status === 'FABRICATED' || s.status === 'DISPATCHED') { // Group Dispatched with Fabricated for now
+                    colors[s.id] = '#60a5fa' // Blue-400
+                } else {
+                    colors[s.id] = '#94a3b8' // Slate-400 (Grey)
+                }
+            }
+        })
+        return colors
+    }, [spools, assignments])
+
+    // Spool Activation State (Highlighting)
+    const [activeSpoolId, setActiveSpoolId] = useState<string | null>(null)
+    const highlightedIds = useMemo(() => {
+        if (!activeSpoolId) return []
+        return assignments[activeSpoolId] || []
+    }, [activeSpoolId, assignments])
 
     useEffect(() => {
         async function fetchSpools() {
@@ -39,31 +78,542 @@ function IsometricViewerWrapper({
         fetchSpools()
     }, [revisionId])
 
-    if (loading) {
-        return (
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
-                color: 'white'
-            }}>
-                Cargando spools...
-            </div>
-        )
+    const handleDeleteModel = async () => {
+        if (confirm('¿Estás seguro de ELIMINAR este modelo 3D permanentemente?')) {
+            try {
+                const { deleteRevisionModelUrlAction } = await import('@/actions/revisions')
+                const res = await deleteRevisionModelUrlAction(revisionId, modelUrl)
+                if (res.success) {
+                    window.location.reload()
+                } else {
+                    alert(res.message)
+                }
+            } catch (error) {
+                console.error('Error deleting model:', error)
+                alert('Error al eliminar el modelo')
+            }
+        }
     }
 
-    return (
-        <IsometricViewer
-            modelUrl={modelUrl}
-            spools={spools}
-            initialModelData={initialModelData}
-            onSaveData={async (data) => {
+    const handleAssignToSpool = async (spoolId: string) => {
+        // Mode 1: Visualization (No active selection in 3D) -> Toggle Highlight
+        if (selectedIds.length === 0) {
+            setActiveSpoolId(prev => prev === spoolId ? null : spoolId)
+            return
+        }
+
+        // Mode 2: Assignment (Items selected in 3D) -> Assign/Unassign logic
+        const currentAssignments = assignments
+        const selectedAreAssignedToTarget = selectedIds.every(id => currentAssignments[spoolId]?.includes(id))
+
+        // CHECK: Are selected items assigned to ANY other spool?
+        const isAssignedToOther = Object.keys(currentAssignments).some(key =>
+            key !== spoolId && currentAssignments[key]?.some((id: string) => selectedIds.includes(id))
+        )
+
+        // 1. UNASSIGN Logic (Toggle off)
+        if (selectedAreAssignedToTarget) {
+            const newAssignments = { ...assignments }
+            newAssignments[spoolId] = newAssignments[spoolId].filter((id: string) => !selectedIds.includes(id))
+
+            // Update State & Persist
+            const updatedData = { ...modelData, spool_assignments: newAssignments }
+            setModelData(updatedData)
+            setSelectedIds([]) // Clear selection after action
+            setActiveSpoolId(null) // Clear highlight
+
+            try {
                 const { updateModelDataAction } = await import('@/actions/revisions')
-                await updateModelDataAction(revisionId, data)
-            }}
-        />
+                await updateModelDataAction(revisionId, updatedData)
+            } catch (error) {
+                console.error('Failed to save unassignment:', error)
+            }
+            return
+        }
+
+        // 2. BLOCK Logic (If assigned to other, prevent move)
+        if (isAssignedToOther) {
+            alert('⚠️ Algunos elementos seleccionados ya pertenecen a otro Spool.\nDebes desasignarlos primero.')
+            return
+        }
+
+        // 3. ASSIGN Logic (Create new assignments)
+        const newAssignments = { ...assignments }
+
+        // Add to target spool
+        newAssignments[spoolId] = [
+            ...(newAssignments[spoolId] || []),
+            ...selectedIds
+        ]
+
+        // Update local state
+        const updatedData = {
+            ...modelData,
+            spool_assignments: newAssignments
+        }
+        setModelData(updatedData)
+
+        // Clear selection to indicate success
+        setSelectedIds([])
+        setActiveSpoolId(null) // Clear highlight
+
+        // Persist
+        try {
+            const { updateModelDataAction } = await import('@/actions/revisions')
+            await updateModelDataAction(revisionId, updatedData)
+        } catch (error) {
+            console.error('Failed to save assignment:', error)
+        }
+    }
+
+    const content = (
+        <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: '#0f172a',
+            zIndex: 100000,
+            display: 'flex',
+            flexDirection: 'row'
+        }}>
+            {/* Sidebar for Viewer Context (Expanded Width for Spools) */}
+            <div style={{
+                width: '300px', // Expanded to show spools
+                backgroundColor: '#1e1e2e',
+                borderRight: '1px solid #334155',
+                display: 'flex',
+                flexDirection: 'column',
+                paddingTop: '0px'
+            }}>
+                {/* Sidebar Header */}
+                <div style={{
+                    padding: '16px',
+                    borderBottom: '1px solid #334155',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px'
+                }}>
+                    <div style={{
+                        width: '32px',
+                        height: '32px',
+                        backgroundColor: '#3b82f6',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontWeight: 'bold',
+                        fontSize: '0.8rem'
+                    }}>
+                        3D
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ color: '#e2e8f0', fontWeight: '500', fontSize: '0.9rem' }}>
+                            Spools ({spools.length})
+                        </span>
+                        {selectedIds.length > 0 && (
+                            <span style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: '600' }}>
+                                {selectedIds.length} elementos seleccionados
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                {/* Spools List */}
+                <div style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
+                    {loading ? (
+                        <div style={{ color: '#94a3b8', textAlign: 'center', marginTop: '20px', fontSize: '0.9rem' }}>
+                            Cargando spools...
+                        </div>
+                    ) : spools.length === 0 ? (
+                        <div style={{ color: '#94a3b8', textAlign: 'center', marginTop: '20px', fontSize: '0.9rem' }}>
+                            No hay spools asociados
+                        </div>
+                    ) : (
+                        spools.map((spool: any) => {
+                            const isAssigned = assignments[spool.id]?.length > 0
+                            const canAssign = selectedIds.length > 0
+
+                            // Check relationship with current selection
+                            // 1. Are ALL selected items assigned to this spool? (Unassign scenario)
+                            const isAssignedToThisSpool = selectedIds.length > 0 && selectedIds.every(id => assignments[spool.id]?.includes(id))
+
+                            // 2. Is this spool currently "Selected" in the 3D model? (i.e. User clicked on a mesh belonging to this spool)
+                            // We check if ANY of the selected IDs belong to this spool
+                            const isSelectedInModel = selectedIds.length > 0 && assignments[spool.id]?.some((id: string) => selectedIds.includes(id))
+
+                            // 2.b Is this spool "Active" (Highlighted via Card Click)?
+                            const isActiveHighlight = activeSpoolId === spool.id
+
+                            // 3. Block Logic: Is it assigned to OTHER spools?
+                            const isAssignedToOtherSpool = canAssign && !isAssignedToThisSpool && Object.keys(assignments).some(key =>
+                                key !== spool.id && assignments[key]?.some((id: string) => selectedIds.includes(id))
+                            )
+
+                            const isDisabled = canAssign && isAssignedToOtherSpool && !isAssignedToThisSpool // Only disable if stealing
+
+                            // Determine Base Color based on Status
+                            let baseColor = '#94a3b8' // Default Grey
+                            let baseBg = 'rgba(148, 163, 184, 0.1)'
+                            let baseBorder = '#475569'
+
+                            if (spool.status === 'INSTALLED') {
+                                baseColor = '#4ade80' // Green
+                                baseBg = 'rgba(74, 222, 128, 0.1)'
+                                baseBorder = '#22c55e'
+                            } else if (spool.status === 'FABRICATED' || spool.status === 'DISPATCHED') {
+                                baseColor = '#60a5fa' // Blue
+                                baseBg = 'rgba(96, 165, 250, 0.1)'
+                                baseBorder = '#3b82f6'
+                            }
+
+                            // Override for Selection Highlight (This Card is "Active")
+                            if (isSelectedInModel) {
+                                baseBg = 'rgba(255, 255, 255, 0.15)' // Bright highlight
+                                baseBorder = baseColor // Keep status color for border but make it pop
+                            } else if (isActiveHighlight) {
+                                // Explicit Card Selection Highlight (Purple)
+                                baseBg = 'rgba(168, 85, 247, 0.15)'
+                                baseBorder = '#a855f7'
+                            }
+
+                            return (
+                                <div
+                                    key={spool.id}
+                                    style={{
+                                        backgroundColor: canAssign
+                                            ? (isAssignedToThisSpool ? 'rgba(239, 68, 68, 0.1)' : (isAssigned ? baseBg : '#2d3b4e'))
+                                            : (isAssigned ? baseBg : '#2d3b4e'),
+                                        marginBottom: '8px',
+                                        borderRadius: '6px',
+                                        padding: '10px',
+                                        // Highlight Border if Selected in Model or Active
+                                        border: isAssigned
+                                            ? (isSelectedInModel || isActiveHighlight ? `2px solid ${baseBorder}` : `1px solid ${baseBorder}`)
+                                            : (isDisabled ? '1px solid #475569' : '1px solid #334155'),
+                                        // Glow effect if Selected or Active
+                                        boxShadow: (isSelectedInModel || isActiveHighlight) ? `0 0 15px ${baseBorder}40` : 'none',
+                                        cursor: isDisabled ? 'not-allowed' : 'pointer',
+                                        opacity: isDisabled ? 0.5 : 1,
+                                        transition: 'all 0.2s ease',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '6px',
+                                        position: 'relative',
+                                        overflow: 'hidden'
+                                    }}
+                                    onClick={() => !isDisabled && handleAssignToSpool(spool.id)}
+                                    // Hover effect logic
+                                    onMouseEnter={(e) => {
+                                        if (canAssign && !isDisabled) {
+                                            if (isAssignedToThisSpool) {
+                                                // Unassign warning hover
+                                                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'
+                                                e.currentTarget.style.borderColor = '#f87171'
+                                            } else {
+                                                // Assign hover
+                                                e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)'
+                                                e.currentTarget.style.borderColor = '#60a5fa'
+                                            }
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        // Reset to base state
+                                        const finalBg = isAssigned ? baseBg : '#2d3b4e'
+                                        e.currentTarget.style.backgroundColor = finalBg
+                                        e.currentTarget.style.borderColor = isAssigned
+                                            ? (isSelectedInModel || isActiveHighlight ? baseBorder : baseBorder)
+                                            : '#334155'
+                                    }}
+                                >
+                                    {/* Action Indicator Overlay */}
+                                    {canAssign && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            right: 0,
+                                            backgroundColor: isDisabled ? '#64748b' : (isAssignedToThisSpool ? '#ef4444' : '#3b82f6'),
+                                            color: 'white',
+                                            fontSize: '0.6rem',
+                                            padding: '2px 6px',
+                                            borderBottomLeftRadius: '6px',
+                                            fontWeight: 'bold'
+                                        }}>
+                                            {isDisabled
+                                                ? 'BLOQUEADO'
+                                                : (isAssignedToThisSpool ? 'DESVINCULAR' : 'ASIGNAR')}
+                                        </div>
+                                    )}
+
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{
+                                            color: isAssigned ? (isActiveHighlight ? '#d8b4fe' : baseColor) : 'white',
+                                            fontWeight: 'bold',
+                                            fontSize: '0.95rem'
+                                        }}>
+                                            {spool.name}
+                                        </span>
+                                        {spool.tag && (
+                                            <span style={{
+                                                fontFamily: 'monospace',
+                                                fontSize: '0.75rem',
+                                                color: '#d8b4fe',
+                                                backgroundColor: 'rgba(126, 34, 206, 0.2)',
+                                                padding: '2px 6px',
+                                                borderRadius: '4px'
+                                            }}>
+                                                {spool.tag}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{
+                                            fontSize: '0.75rem',
+                                            color: isAssigned ? '#cbd5e1' : '#94a3b8'
+                                        }}>
+                                            {isAssigned
+                                                ? (isSelectedInModel ? '✨ Seleccionado' : (isActiveHighlight ? '👁️ Destacado' : `${assignments[spool.id].length} elementos`))
+                                                : 'Sin modelo'}
+                                        </span>
+                                    </div>
+
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                                        {spool.location ? (
+                                            <span style={{
+                                                fontSize: '0.75rem',
+                                                color: '#cbd5e1',
+                                                backgroundColor: 'rgba(255,255,255,0.1)',
+                                                padding: '2px 6px',
+                                                borderRadius: '4px'
+                                            }}>
+                                                📍 {spool.location.code}
+                                            </span>
+                                        ) : (
+                                            <span style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic' }}>
+                                                Sin ubicación
+                                            </span>
+                                        )}
+
+                                        <span style={{
+                                            fontSize: '0.7rem',
+                                            color: spool.status === 'PENDING' ? '#94a3b8' : (spool.status === 'INSTALLED' ? '#4ade80' : '#60a5fa'),
+                                            backgroundColor: 'rgba(0,0,0,0.2)', // Darker badge for contrast
+                                            padding: '2px 8px',
+                                            borderRadius: '99px',
+                                            border: `1px solid ${spool.status === 'PENDING' ? '#475569' : (spool.status === 'INSTALLED' ? '#22c55e' : '#3b82f6')}`
+                                        }}>
+                                            {spool.status || 'PENDIENTE'}
+                                        </span>
+                                    </div>
+                                </div>
+                            )
+                        })
+                    )}
+                </div>
+            </div>
+
+            {/* Main Content Area */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <div style={{
+                    padding: '8px 24px',
+                    borderBottom: '1px solid #334155',
+                    display: 'flex',
+                    justifyContent: 'space-between', // Align items to edges
+                    alignItems: 'center',
+                    backgroundColor: '#1e293b'
+                }}>
+                    {/* Left side: ISO Number and Controls */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                        <span style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
+                            ISO: <strong style={{ color: 'white' }}>{isoNumber}</strong>
+                        </span>
+
+                        {/* Viewer Toolbar Moved to Header */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            backgroundColor: '#0f172a',
+                            padding: '4px',
+                            borderRadius: '8px',
+                            border: '1px solid #334155'
+                        }}>
+                            <button
+                                onClick={() => setMode('PAN')}
+                                title="Mano (Pan)"
+                                style={{
+                                    padding: '4px 8px',
+                                    borderRadius: '4px',
+                                    backgroundColor: mode === 'PAN' ? '#3b82f6' : 'transparent',
+                                    color: mode === 'PAN' ? 'white' : '#94a3b8',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '1.1rem'
+                                }}
+                            >
+                                🤚
+                            </button>
+                            <button
+                                onClick={() => setMode('ORBIT')}
+                                title="Orbita"
+                                style={{
+                                    padding: '4px 8px',
+                                    borderRadius: '4px',
+                                    backgroundColor: mode === 'ORBIT' ? '#3b82f6' : 'transparent',
+                                    color: mode === 'ORBIT' ? 'white' : '#94a3b8',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '1.1rem'
+                                }}
+                            >
+                                🔄
+                            </button>
+                            <button
+                                onClick={() => setTriggerFit(true)}
+                                title="Zoom Fit"
+                                style={{
+                                    padding: '4px 8px',
+                                    borderRadius: '4px',
+                                    backgroundColor: 'transparent',
+                                    color: '#94a3b8',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '1.1rem',
+                                    borderLeft: '1px solid #334155',
+                                    marginLeft: '4px',
+                                    paddingLeft: '12px'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.color = 'white'}
+                                onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
+                            >
+                                🔍
+                            </button>
+
+                            {/* Delete Button */}
+                            <button
+                                onClick={handleDeleteModel}
+                                title="Eliminar Modelo"
+                                style={{
+                                    padding: '4px 8px',
+                                    borderRadius: '4px',
+                                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                    color: '#f87171',
+                                    border: '1px solid #7f1d1d',
+                                    cursor: 'pointer',
+                                    fontSize: '0.9rem',
+                                    marginLeft: '12px'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor = '#ef4444'
+                                    e.currentTarget.style.color = 'white'
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'
+                                    e.currentTarget.style.color = '#f87171'
+                                }}
+                            >
+                                🗑️
+                            </button>
+
+                            {/* Horizontal Speed Slider */}
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                marginLeft: '8px',
+                                borderLeft: '1px solid #334155',
+                                paddingLeft: '8px'
+                            }}>
+                                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>⚡</span>
+                                <input
+                                    type="range"
+                                    min="0.1"
+                                    max="2"
+                                    step="0.1"
+                                    value={speed}
+                                    onChange={(e) => setSpeed(parseFloat(e.target.value))}
+                                    style={{
+                                        width: '80px',
+                                        accentColor: '#3b82f6',
+                                        height: '4px',
+                                        cursor: 'pointer'
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Selection Hint - NO ANIMATION */}
+                        {selectedIds.length > 0 && (
+                            <span style={{
+                                color: '#f59e0b',
+                                fontSize: '0.8rem',
+                                fontWeight: 'bold',
+                                border: '1px solid #f59e0b',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                backgroundColor: 'rgba(245, 158, 11, 0.1)'
+                            }}>
+                                🖱️ Click en un Spool de la lista para asignar
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Right side: Exit Button */}
+                    <button
+                        onClick={onClose}
+                        style={{
+                            padding: '6px 14px',
+                            backgroundColor: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ef4444'}
+                    >
+                        ✕ Salir
+                    </button>
+                </div>
+
+                <div style={{ flex: 1, position: 'relative' }}>
+                    <IsometricViewer
+                        modelUrl={modelUrl}
+                        spools={spools}
+                        initialModelData={initialModelData}
+                        onSaveData={async (data) => {
+                            const { updateModelDataAction } = await import('@/actions/revisions')
+                            await updateModelDataAction(revisionId, data)
+                        }}
+                        // Control Props
+                        mode={mode}
+                        speed={speed}
+                        triggerFit={triggerFit}
+                        onFitComplete={() => setTriggerFit(false)}
+                        // Assignment Props
+                        selectedIds={selectedIds}
+                        onSelectionChange={setSelectedIds}
+                        assignments={assignments}
+                        spoolColors={spoolColors}
+                    />
+                </div>
+            </div>
+        </div>
     )
+
+    // Render Portal
+    if (typeof window === 'object') {
+        return createPortal(content, document.body)
+    }
+    return null
 }
 
 
@@ -191,8 +741,9 @@ export default function IsometricRevisionCard({
 
         setIsUploading(revId)
         try {
-            // 1. Rename file
-            const newFileName = `${isoNumber}-${revCode}.glb`
+            // 1. Rename file (Add random suffix to avoid caching/collision)
+            const uniqueSuffix = Math.random().toString(36).substring(2, 7)
+            const newFileName = `${isoNumber}-${revCode}-${uniqueSuffix}.glb`
 
             // 2. Upload to Supabase Storage
             const supabase = createClient()
@@ -387,7 +938,13 @@ export default function IsometricRevisionCard({
                                                                 onClick={(e) => {
                                                                     e.stopPropagation()
                                                                     if (rev.glb_model_url) {
-                                                                        setShow3DMenu(show3DMenu === rev.id ? null : rev.id)
+                                                                        // Direct Viewer Open
+                                                                        setViewerModalRevision({
+                                                                            id: rev.id,
+                                                                            glbUrl: rev.glb_model_url!,
+                                                                            modelData: rev.model_data,
+                                                                            isoNumber: isoNumber
+                                                                        })
                                                                     } else {
                                                                         handleUploadClick(rev.id)
                                                                     }
@@ -417,86 +974,10 @@ export default function IsometricRevisionCard({
                                                                     e.currentTarget.style.backgroundColor = 'transparent'
                                                                     e.currentTarget.style.color = rev.glb_model_url ? '#22c55e' : '#94a3b8'
                                                                 }}
-                                                                title={rev.glb_model_url ? 'Opciones Modelo 3D' : 'Cargar Modelo 3D'}
+                                                                title={rev.glb_model_url ? 'Ver Modelo 3D' : 'Cargar Modelo 3D'}
                                                             >
                                                                 3D
                                                             </button>
-
-                                                            {/* 3D Menu */}
-                                                            {show3DMenu === rev.id && (
-                                                                <div style={{
-                                                                    position: 'absolute',
-                                                                    top: '100%',
-                                                                    left: 0,
-                                                                    marginTop: '4px',
-                                                                    width: '128px',
-                                                                    backgroundColor: '#1e293b',
-                                                                    border: '1px solid #475569',
-                                                                    borderRadius: '4px',
-                                                                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
-                                                                    zIndex: 50,
-                                                                    display: 'flex',
-                                                                    flexDirection: 'column' as const,
-                                                                    overflow: 'hidden'
-                                                                }}>
-                                                                    <button
-                                                                        style={{
-                                                                            padding: '8px 12px',
-                                                                            textAlign: 'left' as const,
-                                                                            fontSize: '0.75rem',
-                                                                            color: 'white',
-                                                                            backgroundColor: 'transparent',
-                                                                            border: 'none',
-                                                                            cursor: 'pointer',
-                                                                            width: '100%'
-                                                                        }}
-                                                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#334155'}
-                                                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation()
-                                                                            setViewerModalRevision({
-                                                                                id: rev.id,
-                                                                                glbUrl: rev.glb_model_url!,
-                                                                                modelData: rev.model_data,
-                                                                                isoNumber: isoNumber
-                                                                            })
-                                                                            setShow3DMenu(null)
-                                                                        }}
-                                                                    >
-                                                                        👁️ Ver Modelo
-                                                                    </button>
-                                                                    <button
-                                                                        style={{
-                                                                            padding: '8px 12px',
-                                                                            textAlign: 'left' as const,
-                                                                            fontSize: '0.75rem',
-                                                                            color: '#f87171',
-                                                                            backgroundColor: 'transparent',
-                                                                            border: 'none',
-                                                                            borderTop: '1px solid #475569',
-                                                                            cursor: 'pointer',
-                                                                            width: '100%'
-                                                                        }}
-                                                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(127, 29, 29, 0.3)'}
-                                                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                                                        onClick={async (e) => {
-                                                                            e.stopPropagation()
-                                                                            if (confirm('¿Eliminar modelo 3D?')) {
-                                                                                const { deleteRevisionModelUrlAction } = await import('@/actions/revisions')
-                                                                                const res = await deleteRevisionModelUrlAction(rev.id, rev.glb_model_url!)
-                                                                                if (res.success) {
-                                                                                    window.location.reload()
-                                                                                } else {
-                                                                                    alert(res.message)
-                                                                                }
-                                                                            }
-                                                                            setShow3DMenu(null)
-                                                                        }}
-                                                                    >
-                                                                        🗑️ Borrar
-                                                                    </button>
-                                                                </div>
-                                                            )}
                                                         </div>
 
                                                         <button
@@ -548,56 +1029,15 @@ export default function IsometricRevisionCard({
                 )
             }
 
-            {/* Fullscreen 3D Viewer Modal */}
+            {/* Fullscreen 3D Viewer Modal - Portal handled inside Wrapper */}
             {viewerModalRevision && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: '#0f172a',
-                    zIndex: 9999,
-                    display: 'flex',
-                    flexDirection: 'column' as const
-                }}>
-                    <div style={{
-                        padding: '16px 24px',
-                        borderBottom: '1px solid #334155',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        backgroundColor: '#1e293b'
-                    }}>
-                        <h2 style={{ margin: 0, color: 'white', fontSize: '1.25rem' }}>
-                            Visor 3D - {viewerModalRevision.isoNumber}
-                        </h2>
-                        <button
-                            onClick={() => setViewerModalRevision(null)}
-                            style={{
-                                padding: '8px 16px',
-                                backgroundColor: '#ef4444',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '0.875rem',
-                                fontWeight: 'bold'
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
-                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ef4444'}
-                        >
-                            ✕ Cerrar
-                        </button>
-                    </div>
-                    <div style={{ flex: 1, overflow: 'hidden' }}>
-                        <IsometricViewerWrapper
-                            revisionId={viewerModalRevision.id}
-                            modelUrl={viewerModalRevision.glbUrl}
-                            initialModelData={viewerModalRevision.modelData}
-                        />
-                    </div>
-                </div>
+                <IsometricViewerWrapper
+                    revisionId={viewerModalRevision.id}
+                    modelUrl={viewerModalRevision.glbUrl}
+                    initialModelData={viewerModalRevision.modelData}
+                    isoNumber={viewerModalRevision.isoNumber}
+                    onClose={() => setViewerModalRevision(null)}
+                />
             )}
         </div >
     )

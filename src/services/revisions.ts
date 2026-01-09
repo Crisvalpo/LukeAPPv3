@@ -571,10 +571,11 @@ export async function getRevisionSpools(revisionId: string) {
             .select(`
                 id,
                 spool_number,
-                revision,
-                fabrication_status,
-                diameter_inch,
-                material_class
+                management_tag,
+                status,
+                total_welds,
+                current_location_id,
+                location:current_location_id (name, code)
             `)
             .eq('revision_id', revisionId)
             .order('spool_number', { ascending: true })
@@ -584,10 +585,10 @@ export async function getRevisionSpools(revisionId: string) {
         return data.map((s: any) => ({
             id: s.id,
             name: s.spool_number,
-            status: s.fabrication_status,
-            diametro_pulg: s.diameter_inch,
-            clase: s.material_class,
-            revision: s.revision
+            tag: s.management_tag,
+            status: s.status,
+            welds: s.total_welds,
+            location: s.location
         }))
     } catch (error) {
         console.error('Error fetching revision spools:', error)
