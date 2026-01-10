@@ -33,6 +33,34 @@ project-files/
           │   ├── iso-002-B.glb
 ```
 
+### 🚨 IMPORTANT: Automatic Folder Creation
+
+**When creating a new project, you MUST create the base folder structure in Storage:**
+
+```typescript
+// Example: In src/services/projects.ts -> createProject()
+async function ensureProjectStorageFolders(companyId: string, projectId: string) {
+    const supabase = createClient()
+    const basePath = `${companyId}/${projectId}`
+    
+    // Create placeholder files to establish folder structure
+    const folders = ['logos', 'structure-models', 'isometric-models', 'drawings', 'photos']
+    
+    for (const folder of folders) {
+        await supabase.storage
+            .from('project-files')
+            .upload(`${basePath}/${folder}/.keep`, new Blob(['']))
+    }
+}
+```
+
+**This ensures:**
+- ✅ Folders exist before first upload
+- ✅ RLS policies work correctly  
+- ✅ File browsers show proper structure
+- ✅ Cleanup logic has consistent paths
+
+
 ---
 
 ## 📁 Current Legacy Structure (DO NOT USE FOR NEW FILES)
