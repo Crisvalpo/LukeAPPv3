@@ -24,22 +24,12 @@ interface IsometricViewerProps {
     showStructure?: boolean
 }
 
-function StructureModel({ url }: { url: string }) {
+function StructureModel({ url, spatialData }: { url: string, spatialData?: any }) {
     const { scene } = useGLTF(url)
     const clonedScene = React.useMemo(() => {
+        // Clone scene to avoid shared state, but DO NOT modify materials
+        // We want to respect the original GLB exports (transparency, colors, etc)
         const clone = scene.clone()
-        // Apply ghost material
-        clone.traverse((child: any) => {
-            if (child.isMesh) {
-                // Save original if needed, but for structure we usually want uniform ghost look
-                // or keep original but transparent
-                child.material = child.material.clone()
-                child.material.transparent = true
-                child.material.opacity = 0.3
-                child.castShadow = false
-                child.receiveShadow = true
-            }
-        })
         return clone
     }, [scene])
 
@@ -64,7 +54,13 @@ function Model({
     spoolColors?: Record<string, string>
 }) {
     const { scene } = useGLTF(url)
-    const clonedScene = React.useMemo(() => scene.clone(), [scene])
+    const clonedScene = React.useMemo(() => {
+        const clone = scene.clone()
+
+
+
+        return clone
+    }, [scene])
     const [hovered, setHovered] = useState<string | null>(null)
 
     // Derived map for fast assignment lookup: elementId -> color
@@ -230,21 +226,19 @@ function Model({
     }
 
     return (
-        <Center>
-            <primitive
-                object={clonedScene}
-                onClick={handleClick}
-                onPointerOver={handlePointerOver}
-                onPointerOut={handlePointerOut}
-                onPointerMissed={(e: any) => {
-                    // Only clear if not clicking UI (handled by stopPropagation usually)
-                    // But in canvas, missed means background
-                    if (onSelectionChange && !e.shiftKey && !e.ctrlKey) {
-                        onSelectionChange([])
-                    }
-                }}
-            />
-        </Center>
+        <primitive
+            object={clonedScene}
+            onClick={handleClick}
+            onPointerOver={handlePointerOver}
+            onPointerOut={handlePointerOut}
+            onPointerMissed={(e: any) => {
+                // Only clear if not clicking UI (handled by stopPropagation usually)
+                // But in canvas, missed means background
+                if (onSelectionChange && !e.shiftKey && !e.ctrlKey) {
+                    onSelectionChange([])
+                }
+            }}
+        />
     )
 }
 
@@ -264,35 +258,83 @@ function ViewerController({
 }) {
     const { camera, controls, scene } = useThree()
     const controlsRef = useRef<any>(null)
+    const [initialFitDone, setInitialFitDone] = useState(false)
 
-    // Handle Fit View
-    // Handle Fit View - Auto fit on load AND on trigger
-    // Handle Fit View
-    useEffect(() => {
-        if (triggerFit && targetObject) {
-            const box = new THREE.Box3().setFromObject(targetObject)
-            const size = box.getSize(new THREE.Vector3())
-            const center = box.getCenter(new THREE.Vector3())
-            const maxDim = Math.max(size.x, size.y, size.z)
+    // Function to perform global fit
+    const performFit = () => {
+        // Calculate bounding box for ENTIRE scene (isometric + structures)
+        // But exclude Helpers and Lights to focus on Models only
+        const box = new THREE.Box3()
+        let hasMeshes = false
 
-            if (maxDim === 0) return
-
-            const distance = maxDim * 2.5
-
-            // Isometric view from center
-            const direction = new THREE.Vector3(1, 1, 1).normalize()
-            const position = center.clone().add(direction.multiplyScalar(distance))
-
-            camera.position.copy(position)
-            camera.lookAt(center)
-
-            if (controlsRef.current) {
-                controlsRef.current.target.copy(center)
-                controlsRef.current.update()
+        scene.traverse((obj) => {
+            if (obj.type === 'Mesh') {
+                box.expandByObject(obj)
+                hasMeshes = true
             }
+        })
+
+        if (!hasMeshes) return
+
+        const size = box.getSize(new THREE.Vector3())
+        const center = box.getCenter(new THREE.Vector3())
+        const maxDim = Math.max(size.x, size.y, size.z)
+
+        if (maxDim === 0) return
+
+        const distance = maxDim * 2.5
+
+        // Isometric view from center
+        const direction = new THREE.Vector3(1, 1, 1).normalize()
+        const position = center.clone().add(direction.multiplyScalar(distance))
+
+        camera.position.copy(position)
+        camera.lookAt(center)
+
+        if (controlsRef.current) {
+            controlsRef.current.target.copy(center)
+            controlsRef.current.update()
+        }
+    }
+
+    // Handle Manual Fit Trigger
+    useEffect(() => {
+        if (triggerFit) {
+            performFit()
             onFitComplete()
         }
-    }, [triggerFit, targetObject, camera, onFitComplete])
+    }, [triggerFit, scene, camera, onFitComplete])
+
+    // Auto-Fit on Initial Load
+    useEffect(() => {
+        if (scene.userData.initialFitDone) return
+
+        // Check if scene has meshes repeatedly until loaded
+        const checkModels = setInterval(() => {
+            let meshCount = 0
+            scene.traverse((obj) => {
+                if (obj.type === 'Mesh') meshCount++
+            })
+
+            if (meshCount > 0) {
+                // Models are loaded, fit view
+                performFit()
+                scene.userData.initialFitDone = true // Persist fit state on the scene object
+                setInitialFitDone(true) // Keep local state update to force re-render if needed
+                clearInterval(checkModels)
+            }
+        }, 200) // Check every 200ms
+
+        // Safety timeout to stop checking
+        const timeout = setTimeout(() => {
+            clearInterval(checkModels)
+        }, 5000)
+
+        return () => {
+            clearInterval(checkModels)
+            clearTimeout(timeout)
+        }
+    }, [scene])
 
     return (
         <OrbitControls
@@ -356,7 +398,11 @@ export default function IsometricViewer({
                         spoolColors={spoolColors}
                     />
                     {showStructure && structureModels.map((model, idx) => (
-                        <StructureModel key={model.id || idx} url={model.model_url} />
+                        <StructureModel
+                            key={model.id || idx}
+                            url={model.model_url}
+                            spatialData={model}
+                        />
                     ))}
                 </React.Suspense>
 

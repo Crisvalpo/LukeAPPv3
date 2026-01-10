@@ -38,7 +38,9 @@ function IsometricViewerWrapper({
     const [speed, setSpeed] = useState(0.5)
 
     const [triggerFit, setTriggerFit] = useState(false)
-    const [showStructure, setShowStructure] = useState(false)
+    // Structure Visibility State: If empty, show none. If not empty, show selected.
+    const [visibleStructureIds, setVisibleStructureIds] = useState<string[]>([])
+    const [isStructureMenuOpen, setIsStructureMenuOpen] = useState(false)
 
     // Selection & Assignment State
     const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -84,7 +86,10 @@ function IsometricViewerWrapper({
 
                 setSpools(spoolsData || [])
                 if (modelsResult.success && modelsResult.data) {
+                    console.log('🏗️ Structure models loaded:', modelsResult.data)
                     setStructureModels(modelsResult.data)
+                } else {
+                    console.warn('⚠️ No structure models found or error:', modelsResult)
                 }
             } catch (error) {
                 console.error('Error loading viewer context:', error)
@@ -512,22 +517,143 @@ function IsometricViewerWrapper({
                             </button>
 
                             {/* Structure Toggle */}
-                            <button
-                                onClick={() => setShowStructure(!showStructure)}
-                                title={showStructure ? "Ocultar Estructuras" : "Mostrar Estructuras"}
-                                style={{
-                                    padding: '4px 8px',
-                                    borderRadius: '4px',
-                                    backgroundColor: showStructure ? '#3b82f6' : 'transparent',
-                                    color: showStructure ? 'white' : '#94a3b8',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    fontSize: '1.1rem',
-                                    marginLeft: '4px'
-                                }}
-                            >
-                                🏗️
-                            </button>
+                            {/* Structure Toggle & Menu */}
+                            <div style={{ position: 'relative' }}>
+                                <button
+                                    onClick={() => setIsStructureMenuOpen(!isStructureMenuOpen)}
+                                    title="Filtrar Estructuras"
+                                    style={{
+                                        padding: '4px 8px',
+                                        borderRadius: '4px',
+                                        backgroundColor: visibleStructureIds.length > 0 ? '#3b82f6' : 'transparent',
+                                        color: visibleStructureIds.length > 0 ? 'white' : '#94a3b8',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        fontSize: '1.1rem',
+                                        marginLeft: '4px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                    }}
+                                >
+                                    🏗️
+                                    {visibleStructureIds.length > 0 && (
+                                        <span style={{ fontSize: '0.7rem', fontWeight: 'bold' }}>{visibleStructureIds.length}</span>
+                                    )}
+                                </button>
+
+                                {/* Structure Selection Dropdown */}
+                                {isStructureMenuOpen && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '120%',
+                                        right: 0,
+                                        width: '280px',
+                                        maxHeight: '400px',
+                                        overflowY: 'auto',
+                                        backgroundColor: '#1e293b',
+                                        border: '1px solid #334155',
+                                        borderRadius: '8px',
+                                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
+                                        zIndex: 50,
+                                        padding: '8px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '4px'
+                                    }}>
+                                        <div style={{
+                                            padding: '4px 8px',
+                                            fontSize: '0.8rem',
+                                            fontWeight: 'bold',
+                                            color: '#cbd5e1',
+                                            borderBottom: '1px solid #334155',
+                                            marginBottom: '4px',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center'
+                                        }}>
+                                            <span>Capas Disponibles</span>
+                                            {visibleStructureIds.length > 0 && (
+                                                <button
+                                                    onClick={() => setVisibleStructureIds([])}
+                                                    style={{
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        color: '#f87171',
+                                                        fontSize: '0.7rem',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    Ocultar Todo
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {structureModels.length === 0 ? (
+                                            <div style={{ padding: '8px', color: '#64748b', fontSize: '0.8rem', textAlign: 'center' }}>
+                                                No hay modelos de estructura disponibles.
+                                            </div>
+                                        ) : (
+                                            structureModels.map(model => {
+                                                const isVisible = visibleStructureIds.includes(model.id)
+                                                return (
+                                                    <div
+                                                        key={model.id}
+                                                        onClick={() => {
+                                                            setVisibleStructureIds(prev =>
+                                                                isVisible
+                                                                    ? prev.filter(id => id !== model.id)
+                                                                    : [...prev, model.id]
+                                                            )
+                                                        }}
+                                                        style={{
+                                                            padding: '6px 8px',
+                                                            borderRadius: '4px',
+                                                            backgroundColor: isVisible ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+                                                            border: `1px solid ${isVisible ? '#3b82f6' : 'transparent'}`,
+                                                            cursor: 'pointer',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '8px',
+                                                            transition: 'all 0.1s'
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            if (!isVisible) e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            if (!isVisible) e.currentTarget.style.backgroundColor = 'transparent'
+                                                        }}
+                                                    >
+                                                        <div style={{
+                                                            width: '14px',
+                                                            height: '14px',
+                                                            borderRadius: '3px',
+                                                            border: `1px solid ${isVisible ? '#60a5fa' : '#475569'}`,
+                                                            backgroundColor: isVisible ? '#3b82f6' : 'transparent',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            color: 'white',
+                                                            fontSize: '0.7rem'
+                                                        }}>
+                                                            {isVisible && '✓'}
+                                                        </div>
+                                                        <span style={{
+                                                            fontSize: '0.8rem',
+                                                            color: isVisible ? 'white' : '#94a3b8',
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis'
+                                                        }}>
+                                                            {model.name}
+                                                        </span>
+                                                    </div>
+                                                )
+                                            })
+                                        )}
+                                    </div>
+                                )}
+                            </div>
 
                             {/* Delete Button */}
                             <button
@@ -625,8 +751,8 @@ function IsometricViewerWrapper({
                     <IsometricViewer
                         modelUrl={modelUrl}
                         spools={spools}
-                        structureModels={structureModels}
-                        showStructure={showStructure}
+                        structureModels={structureModels.filter(m => visibleStructureIds.includes(m.id))}
+                        showStructure={visibleStructureIds.length > 0}
                         initialModelData={modelData}
                         onSaveData={async (data) => {
                             const { updateModelDataAction } = await import('@/actions/revisions')
@@ -985,7 +1111,7 @@ export default function IsometricRevisionCard({
                                                                             glbUrl: rev.glb_model_url!,
                                                                             modelData: rev.model_data,
                                                                             isoNumber: isoNumber,
-                                                                            projectId: rev.project_id
+                                                                            projectId: rev.project_id // Will be fixed in backend
                                                                         })
                                                                     } else {
                                                                         handleUploadClick(rev.id)
@@ -1078,7 +1204,7 @@ export default function IsometricRevisionCard({
                     modelUrl={viewerModalRevision.glbUrl}
                     initialModelData={viewerModalRevision.modelData}
                     isoNumber={viewerModalRevision.isoNumber}
-                    projectId={viewerModalRevision.project_id}
+                    projectId={viewerModalRevision.projectId}
                     onClose={() => setViewerModalRevision(null)}
                     onSave={onRefresh}
                 />

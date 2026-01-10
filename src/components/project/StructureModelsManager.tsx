@@ -51,19 +51,56 @@ export default function StructureModelsManager({
         e.preventDefault()
         setIsUploading(true)
 
-        const formData = new FormData(e.currentTarget)
-        formData.append('projectId', projectId)
+        try {
+            const formData = new FormData(e.currentTarget)
+            formData.append('projectId', projectId)
 
-        const result = await createStructureModelAction(formData)
+            // Extract spatial metadata on CLIENT-SIDE before upload
+            const fileInput = e.currentTarget.querySelector('input[name="file"]') as HTMLInputElement
+            const file = fileInput?.files?.[0]
 
-        if (result.success) {
-            alert('Modelo estructural cargado')
-            setShowUploadForm(false)
-            loadModels()
-        } else {
-            alert(result.message)
+            if (file) {
+                try {
+                    const { extractGLBMetadataFromFile } = await import('@/lib/glb-metadata-extractor')
+                    const spatialMetadata = await extractGLBMetadataFromFile(file)
+
+                    console.log('✅ Extracted spatial metadata:', spatialMetadata)
+
+                    // Append spatial metadata as form fields
+                    formData.append('position_x', spatialMetadata.position.x.toString())
+                    formData.append('position_y', spatialMetadata.position.y.toString())
+                    formData.append('position_z', spatialMetadata.position.z.toString())
+                    formData.append('rotation_x', spatialMetadata.rotation.x.toString())
+                    formData.append('rotation_y', spatialMetadata.rotation.y.toString())
+                    formData.append('rotation_z', spatialMetadata.rotation.z.toString())
+                    formData.append('scale_x', spatialMetadata.scale.x.toString())
+                    formData.append('scale_y', spatialMetadata.scale.y.toString())
+                    formData.append('scale_z', spatialMetadata.scale.z.toString())
+                    formData.append('metadata', JSON.stringify({
+                        boundingBox: spatialMetadata.boundingBox,
+                        extractedAt: new Date().toISOString()
+                    }))
+                } catch (metadataError) {
+                    console.warn('⚠️  Failed to extract spatial metadata:', metadataError)
+                    // Continue without metadata - server will handle defaults
+                }
+            }
+
+            const result = await createStructureModelAction(formData)
+
+            if (result.success) {
+                alert('Modelo estructural cargado')
+                setShowUploadForm(false)
+                loadModels()
+            } else {
+                alert(result.message)
+            }
+        } catch (error) {
+            console.error('Upload error:', error)
+            alert('Error al cargar modelo')
+        } finally {
+            setIsUploading(false)
         }
-        setIsUploading(false)
     }
 
     const handleDelete = async (id: string, url: string) => {

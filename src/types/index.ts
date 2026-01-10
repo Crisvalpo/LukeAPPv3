@@ -508,7 +508,28 @@ export interface StructureModel {
     name: string
     area: string | null
     model_url: string
+    // Spatial metadata (extracted from GLB)
+    position_x?: number | null
+    position_y?: number | null
+    position_z?: number | null
+    rotation_x?: number | null
+    rotation_y?: number | null
+    rotation_z?: number | null
+    scale_x?: number | null
+    scale_y?: number | null
+    scale_z?: number | null
+    metadata?: Record<string, any> | null  // Additional GLB metadata (bounding box, etc)
     created_at: string
+    updated_at?: string
+}
+
+/**
+ * Spatial transform in Three.js-compatible format
+ */
+export interface SpatialTransform {
+    position: { x: number; y: number; z: number }
+    rotation: { x: number; y: number; z: number }
+    scale: { x: number; y: number; z: number }
 }
 
 // Phase 6: Weld Type Configuration (Union Types)

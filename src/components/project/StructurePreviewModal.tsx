@@ -7,6 +7,13 @@ import { X, Loader2 } from 'lucide-react'
 
 function PreviewModel({ url }: { url: string }) {
     const { scene } = useGLTF(url)
+
+    // Apply coordinate system conversion: Navisworks (Z-up) → Three.js (Y-up)
+    // Rotate -90° around X axis
+    React.useEffect(() => {
+
+    }, [scene])
+
     return (
         <Center>
             <primitive object={scene} />

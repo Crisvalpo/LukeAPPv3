@@ -83,6 +83,18 @@ export async function createStructureModel(
     name: string,
     area: string,
     file: File,
+    spatialData?: {
+        position_x?: number
+        position_y?: number
+        position_z?: number
+        rotation_x?: number
+        rotation_y?: number
+        rotation_z?: number
+        scale_x?: number
+        scale_y?: number
+        scale_z?: number
+        metadata?: any
+    },
     client?: SupabaseClient
 ): Promise<ApiResponse<StructureModel>> {
     const supabase = client || createClient()
@@ -106,15 +118,31 @@ export async function createStructureModel(
             .from('structure-models')
             .getPublicUrl(fileName)
 
-        // 2. Insert record
+        // 2. Insert record with spatial metadata (if provided)
+        const insertData: any = {
+            project_id: projectId,
+            name: name,
+            area: area,
+            model_url: publicUrlData.publicUrl
+        }
+
+        // Add spatial metadata if provided from client-side extraction
+        if (spatialData) {
+            if (spatialData.position_x !== undefined) insertData.position_x = spatialData.position_x
+            if (spatialData.position_y !== undefined) insertData.position_y = spatialData.position_y
+            if (spatialData.position_z !== undefined) insertData.position_z = spatialData.position_z
+            if (spatialData.rotation_x !== undefined) insertData.rotation_x = spatialData.rotation_x
+            if (spatialData.rotation_y !== undefined) insertData.rotation_y = spatialData.rotation_y
+            if (spatialData.rotation_z !== undefined) insertData.rotation_z = spatialData.rotation_z
+            if (spatialData.scale_x !== undefined) insertData.scale_x = spatialData.scale_x
+            if (spatialData.scale_y !== undefined) insertData.scale_y = spatialData.scale_y
+            if (spatialData.scale_z !== undefined) insertData.scale_z = spatialData.scale_z
+            if (spatialData.metadata) insertData.metadata = spatialData.metadata
+        }
+
         const { data, error } = await supabase
             .from('structure_models')
-            .insert({
-                project_id: projectId,
-                name: name,
-                area: area,
-                model_url: publicUrlData.publicUrl
-            })
+            .insert(insertData)
             .select()
             .single()
 
@@ -129,7 +157,9 @@ export async function createStructureModel(
 
         return {
             success: true,
-            message: 'Modelo creado correctamente',
+            message: spatialData
+                ? 'Modelo creado con metadatos espaciales'
+                : 'Modelo creado correctamente',
             data: data
         }
 
