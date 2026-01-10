@@ -41,48 +41,7 @@
     gap: 1rem;
 }
 
-/* Buttons */
-.btn-primary,
-.btn-secondary {
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-    color: white;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
-}
-
-.btn-secondary {
-    background: rgba(30, 41, 59, 0.6);
-    backdrop-filter: blur(12px);
-    color: rgba(226, 232, 240, 0.9);
-    border: 1px solid rgba(148, 163, 184, 0.2);
-}
-
-.btn-secondary:hover {
-    background: rgba(30, 41, 59, 0.8);
-    border-color: rgba(148, 163, 184, 0.3);
-}
-
-.btn-secondary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
+/* Button styles delegated to dashboard.css */
 
 /* Info Banner */
 .info-banner {
@@ -228,35 +187,13 @@
     justify-content: flex-end;
 }
 
-.btn-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 0.5rem;
-    border: none;
-    background: rgba(100, 116, 139, 0.2);
-    color: rgba(226, 232, 240, 0.8);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
+/* Icon buttons delegated to dashboard.css */
+.btn-icon-old-ref {
+    /* Keeping this comment block to indicate where it was removed */
+    display: none;
 }
 
-.btn-icon:hover:not(:disabled) {
-    background: rgba(100, 116, 139, 0.3);
-    transform: scale(1.1);
-}
-
-.btn-icon:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-.btn-danger:hover:not(:disabled) {
-    background: rgba(239, 68, 68, 0.2);
-    color: #ef4444;
-}
+/* Danger buttons now handled by .btn-danger in dashboard.css */
 
 /* Roles Stats Footer */
 .roles-stats {

@@ -2,7 +2,7 @@
 
 :root {
   /* --- Color Palette (Premium Dark / Glassmorphism) --- */
-  
+
   /* HSL Values for manipulation */
   --hue-primary: 215;
   --sat-primary: 90%;
@@ -13,10 +13,11 @@
   --lig-bg: 10%;
 
   /* Backgrounds */
-  --color-bg-app: hsl(var(--hue-bg), var(--sat-bg), var(--lig-bg)); /* Deep dark blue-grey */
+  --color-bg-app: hsl(var(--hue-bg), var(--sat-bg), var(--lig-bg));
+  /* Deep dark blue-grey */
   --color-bg-surface-1: hsl(var(--hue-bg), 15%, 14%);
   --color-bg-surface-2: hsl(var(--hue-bg), 15%, 18%);
-  
+
   /* Glassmorphism */
   --glass-surface: hsla(var(--hue-bg), 15%, 16%, 0.7);
   --glass-border: hsla(0, 0%, 100%, 0.08);
@@ -69,10 +70,25 @@
   /* Transitions */
   --transition-fast: 0.2s ease;
   --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  
+
   /* Elevation */
   --shadow-1: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-2: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-3: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
   --shadow-glow: 0 0 20px var(--color-primary-glow);
 }
+
+/* 
+  === ICON STANDARD ===
+  Use lucide-react for all UI icons.
+  
+  Common mappings:
+  - Actions: Eye (View), Pencil (Edit), Trash2 (Delete), Plus (Add), ArrowLeft (Back)
+  - Stats: Users, Package, BarChart3, Calendar
+  - Status: CheckCircle2 (Success), AlertTriangle (Warning), Hourglass (Pending)
+  - Context: Building2 (Company), FolderKanban (Project)
+  
+  Style:
+  - Stroke Width: Default (2px) or 1.5px for cleaner look in large sizes
+  - Size: 16-18px for buttons, 24px for headers/cards
+*/

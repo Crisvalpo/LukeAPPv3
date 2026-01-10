@@ -490,6 +490,13 @@ export interface EngineeringRevision {
     announcement_date?: string | null
     created_at: string
 
+    // Additional fields found in DB/Usage
+    rev_id?: string
+    status?: string // Alias for revision_status?
+    entity_type?: string
+    approved_at?: string | null
+    announced_at?: string | null
+
     // New status fields (FASE 2A)
     data_status: DataStatusEnum
     material_status: MaterialStatusEnum

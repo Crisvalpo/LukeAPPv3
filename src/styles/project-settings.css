@@ -1,0 +1,104 @@
+/* src/styles/project-settings.css */
+
+.settings-layout {
+    min-height: 100vh;
+    background-color: var(--color-bg-app);
+    color: var(--color-text-main);
+}
+
+.settings-header {
+    background-color: var(--color-bg-surface-1);
+    border-bottom: 1px solid var(--glass-border);
+    backdrop-filter: var(--glass-blur);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.settings-container {
+    max-width: 80rem;
+    /* 7xl equivalent */
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+.settings-nav-top {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.settings-back-btn {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    transition: color var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.settings-back-btn:hover {
+    color: var(--color-primary);
+}
+
+.settings-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.settings-icon {
+    width: 2rem;
+    height: 2rem;
+    color: var(--color-primary);
+}
+
+.settings-title {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-text-main);
+}
+
+/* Tabs */
+.settings-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    /* Scrollbar spacing */
+}
+
+.settings-tab-btn {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    font-size: var(--font-size-sm);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all var(--transition-fast);
+    background: transparent;
+    color: var(--color-text-muted);
+    border: 1px solid transparent;
+}
+
+.settings-tab-btn:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--color-text-main);
+}
+
+.settings-tab-btn.active {
+    background-color: var(--color-primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(var(--hue-primary), var(--sat-primary), var(--lig-primary), 0.3);
+}
+
+/* Content Area */
+.settings-content {
+    max-width: 80rem;
+    margin: 0 auto;
+    padding-top: 2rem;
+}

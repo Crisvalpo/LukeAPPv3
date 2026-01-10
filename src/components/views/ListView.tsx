@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Eye, Pencil, Trash2, HelpCircle, FileX } from 'lucide-react'
 import '@/styles/views/list-view.css'
 import { ViewSchema } from '@/schemas/company' // We can move interface to a shared type file later
 
@@ -47,7 +47,7 @@ export function ListView<T extends Record<string, any>>({
                 </div>
 
                 {onCreate && (
-                    <button onClick={onCreate} className="view-action-button primary">
+                    <button onClick={onCreate} className="btn btn-primary">
                         <Plus size={18} />
                         Nueva {schema.label.singular}
                     </button>
@@ -57,7 +57,7 @@ export function ListView<T extends Record<string, any>>({
             {/* List */}
             {data.length === 0 ? (
                 <div className="view-empty">
-                    <Icon size={48} className="view-empty-icon" />
+                    <FileX size={48} className="view-empty-icon" />
                     <p>No hay {schema.label.plural.toLowerCase()} registradas</p>
                 </div>
             ) : (
@@ -107,12 +107,15 @@ export function ListView<T extends Record<string, any>>({
                                                         border: 'none',
                                                         cursor: 'pointer',
                                                         marginLeft: '0.5rem',
-                                                        fontSize: '1.2rem'
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        color: '#94a3b8'
                                                     }}
+                                                    title={action}
                                                 >
-                                                    {action === 'view' ? '👁️' :
-                                                        action === 'edit' ? '✏️' :
-                                                            action === 'delete' ? '🗑️' : '?'}
+                                                    {action === 'view' ? <Eye size={18} /> :
+                                                        action === 'edit' ? <Pencil size={18} /> :
+                                                            action === 'delete' ? <Trash2 size={18} color="#ef4444" /> : <HelpCircle size={18} />}
                                                 </button>
                                             ))}
                                         </td>

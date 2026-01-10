@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/client'
 import { fetchProjectRevisions } from '@/actions/revisions'
 import type { EngineeringRevision } from '@/types'
 import { REVISION_STATUS_LABELS } from '@/constants'
+import { ClipboardList, Hourglass, CheckCircle2, FileText, Inbox } from 'lucide-react'
 import '@/styles/dashboard.css'
 import '@/styles/revisions.css'
 
@@ -163,7 +164,9 @@ export default function RevisionsPage() {
             {/* Stats Cards */}
             <div className="revisions-stats">
                 <div className="stat-card">
-                    <div className="stat-icon">📋</div>
+                    <div className="stat-icon">
+                        <ClipboardList size={24} />
+                    </div>
                     <div>
                         <div className="stat-value">{stats.total}</div>
                         <div className="stat-label">Total Revisiones</div>
@@ -171,7 +174,9 @@ export default function RevisionsPage() {
                 </div>
 
                 <div className="stat-card stat-warning">
-                    <div className="stat-icon">⏳</div>
+                    <div className="stat-icon">
+                        <Hourglass size={24} />
+                    </div>
                     <div>
                         <div className="stat-value">{stats.pending}</div>
                         <div className="stat-label">Pendientes</div>
@@ -179,7 +184,9 @@ export default function RevisionsPage() {
                 </div>
 
                 <div className="stat-card stat-success">
-                    <div className="stat-icon">✅</div>
+                    <div className="stat-icon">
+                        <CheckCircle2 size={24} />
+                    </div>
                     <div>
                         <div className="stat-value">{stats.applied}</div>
                         <div className="stat-label">Aplicadas</div>
@@ -187,7 +194,9 @@ export default function RevisionsPage() {
                 </div>
 
                 <div className="stat-card stat-info">
-                    <div className="stat-icon">📝</div>
+                    <div className="stat-icon">
+                        <FileText size={24} />
+                    </div>
                     <div>
                         <div className="stat-value">{stats.draft}</div>
                         <div className="stat-label">Borradores</div>
@@ -232,11 +241,12 @@ export default function RevisionsPage() {
                 </div>
             </div>
 
-            {/* Revisions List */}
             <div className="revisions-list">
                 {filteredRevisions.length === 0 ? (
                     <div className="empty-state">
-                        <div className="empty-icon">📭</div>
+                        <div className="empty-icon">
+                            <Inbox size={48} />
+                        </div>
                         <h3>No hay revisiones</h3>
                         <p>
                             {statusFilter === 'ALL'

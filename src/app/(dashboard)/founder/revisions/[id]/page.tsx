@@ -13,6 +13,14 @@ import { createClient } from '@/lib/supabase/client'
 import { fetchRevisionEvents, fetchRevisionImpacts, resolveImpactAction } from '@/actions/revisions'
 import type { EngineeringRevision, RevisionImpact, RevisionEvent } from '@/types'
 import { REVISION_STATUS_LABELS, IMPACT_SEVERITY_LABELS, RESOLUTION_TYPE_LABELS } from '@/constants'
+import {
+    ArrowLeft,
+    BarChart3,
+    AlertTriangle,
+    CheckCircle2,
+    Calendar,
+    Sparkles
+} from 'lucide-react'
 import '@/styles/dashboard.css'
 import '@/styles/revisions.css'
 
@@ -169,7 +177,8 @@ export default function RevisionDetailPage() {
                                 cursor: 'pointer'
                             }}
                         >
-                            ← Volver
+                            <ArrowLeft size={16} />
+                            Volver
                         </button>
                         <h1>Revisión {revision.rev_id}</h1>
                         <div
@@ -192,7 +201,9 @@ export default function RevisionDetailPage() {
             {/* Summary Stats */}
             <div className="revisions-stats">
                 <div className="stat-card">
-                    <div className="stat-icon">📊</div>
+                    <div className="stat-icon">
+                        <BarChart3 size={24} />
+                    </div>
                     <div>
                         <div className="stat-value">{impacts.length}</div>
                         <div className="stat-label">Total Impactos</div>
@@ -200,7 +211,9 @@ export default function RevisionDetailPage() {
                 </div>
 
                 <div className="stat-card stat-warning">
-                    <div className="stat-icon">⚠️</div>
+                    <div className="stat-icon">
+                        <AlertTriangle size={24} />
+                    </div>
                     <div>
                         <div className="stat-value">{unresolvedImpacts.length}</div>
                         <div className="stat-label">Sin Resolver</div>
@@ -208,7 +221,9 @@ export default function RevisionDetailPage() {
                 </div>
 
                 <div className="stat-card stat-success">
-                    <div className="stat-icon">✅</div>
+                    <div className="stat-icon">
+                        <CheckCircle2 size={24} />
+                    </div>
                     <div>
                         <div className="stat-value">{resolvedImpacts.length}</div>
                         <div className="stat-label">Resueltos</div>
@@ -216,7 +231,9 @@ export default function RevisionDetailPage() {
                 </div>
 
                 <div className="stat-card stat-info">
-                    <div className="stat-icon">📅</div>
+                    <div className="stat-icon">
+                        <Calendar size={24} />
+                    </div>
                     <div>
                         <div className="stat-value">
                             {revision.announced_at
@@ -232,11 +249,13 @@ export default function RevisionDetailPage() {
             {/* No Impacts State */}
             {impacts.length === 0 && (
                 <div className="empty-state">
-                    <div className="empty-icon">✨</div>
+                    <div className="empty-icon">
+                        <Sparkles size={48} />
+                    </div>
                     <h3>Sin Impactos Detectados</h3>
                     <p>Esta revisión no generó impactos en la producción existente</p>
-                    <p style={{ marginTop: '0.5rem', color: '#4ade80' }}>
-                        ✅ Puede aplicarse automáticamente
+                    <p style={{ marginTop: '0.5rem', color: '#4ade80', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                        <CheckCircle2 size={16} /> Puede aplicarse automáticamente
                     </p>
                 </div>
             )}
@@ -305,13 +324,14 @@ export default function RevisionDetailPage() {
                     <div className="impacts-grid">
                         {resolvedImpacts.map(impact => (
                             <div key={impact.id} className="impact-card" style={{ opacity: 0.7 }}>
-                                <div className="impact-header">
                                     <div>
                                         <h3 style={{ color: 'white', marginBottom: '0.5rem' }}>
                                             {impact.affected_entity_type}
                                         </h3>
                                     </div>
-                                    <div style={{ fontSize: '1.5rem' }}>✅</div>
+                                    <div style={{ color: '#4ade80' }}>
+                                       <CheckCircle2 size={24} />
+                                    </div>
                                 </div>
 
                                 <div className="impact-details">
@@ -330,100 +350,99 @@ export default function RevisionDetailPage() {
                                 </div>
                             </div>
                         ))}
-                    </div>
-                </>
-            )}
-
+                </div>
             {/* Resolution Modal */}
-            {selectedImpact && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: 'rgba(0, 0, 0, 0.8)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 1000,
-                        padding: '1rem'
-                    }}
-                    onClick={() => setSelectedImpact(null)}
-                >
+            {
+                selectedImpact && (
                     <div
                         style={{
-                            background: 'rgba(15, 23, 42, 0.95)',
-                            backdropFilter: 'blur(20px)',
-                            border: '1px solid rgba(255, 255, 255, 0.2)',
-                            borderRadius: '1rem',
-                            padding: '2rem',
-                            maxWidth: '600px',
-                            width: '100%',
-                            maxHeight: '80vh',
-                            overflowY: 'auto'
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'rgba(0, 0, 0, 0.8)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 1000,
+                            padding: '1rem'
                         }}
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={() => setSelectedImpact(null)}
                     >
-                        <h2 style={{ color: 'white', marginBottom: '1.5rem' }}>
-                            Resolución Estratégica
-                        </h2>
+                        <div
+                            style={{
+                                background: 'rgba(15, 23, 42, 0.95)',
+                                backdropFilter: 'blur(20px)',
+                                border: '1px solid rgba(255, 255, 255, 0.2)',
+                                borderRadius: '1rem',
+                                padding: '2rem',
+                                maxWidth: '600px',
+                                width: '100%',
+                                maxHeight: '80vh',
+                                overflowY: 'auto'
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <h2 style={{ color: 'white', marginBottom: '1.5rem' }}>
+                                Resolución Estratégica
+                            </h2>
 
-                        <div className="form-field">
-                            <label className="form-label">Tipo de Resolución</label>
-                            <select
-                                value={resolutionType}
-                                onChange={(e) => setResolutionType(e.target.value)}
-                                className="form-input"
-                            >
-                                <option value="">Seleccionar...</option>
-                                <option value="REWORK">Rehacer Trabajo</option>
-                                <option value="MATERIAL_RETURN">Devolver Material</option>
-                                <option value="FREE_JOINT">Unión Gratis (Strategic)</option>
-                                <option value="TECHNICAL_EXCEPTION">Excepción Técnica</option>
-                                <option value="CLIENT_APPROVAL">Aprobación Cliente</option>
-                            </select>
-                        </div>
+                            <div className="form-field">
+                                <label className="form-label">Tipo de Resolución</label>
+                                <select
+                                    value={resolutionType}
+                                    onChange={(e) => setResolutionType(e.target.value)}
+                                    className="form-input"
+                                >
+                                    <option value="">Seleccionar...</option>
+                                    <option value="REWORK">Rehacer Trabajo</option>
+                                    <option value="MATERIAL_RETURN">Devolver Material</option>
+                                    <option value="FREE_JOINT">Unión Gratis (Strategic)</option>
+                                    <option value="TECHNICAL_EXCEPTION">Excepción Técnica</option>
+                                    <option value="CLIENT_APPROVAL">Aprobación Cliente</option>
+                                </select>
+                            </div>
 
-                        <div className="form-field">
-                            <label className="form-label">Notas / Justificación</label>
-                            <textarea
-                                value={resolutionNotes}
-                                onChange={(e) => setResolutionNotes(e.target.value)}
-                                className="form-input"
-                                rows={4}
-                                placeholder="Describe la decisión estratégica tomada..."
-                            />
-                        </div>
+                            <div className="form-field">
+                                <label className="form-label">Notas / Justificación</label>
+                                <textarea
+                                    value={resolutionNotes}
+                                    onChange={(e) => setResolutionNotes(e.target.value)}
+                                    className="form-input"
+                                    rows={4}
+                                    placeholder="Describe la decisión estratégica tomada..."
+                                />
+                            </div>
 
-                        <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                            <button
-                                onClick={() => setSelectedImpact(null)}
-                                style={{
-                                    flex: 1,
-                                    padding: '0.75rem',
-                                    background: 'rgba(255, 255, 255, 0.1)',
-                                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                                    color: 'white',
-                                    borderRadius: '0.5rem',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleResolveImpact}
-                                disabled={!resolutionType || isResolving}
-                                className="form-button"
-                                style={{ flex: 1 }}
-                            >
-                                {isResolving ? 'Resolviendo...' : 'Confirmar Resolución'}
-                            </button>
+                            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                                <button
+                                    onClick={() => setSelectedImpact(null)}
+                                    style={{
+                                        flex: 1,
+                                        padding: '0.75rem',
+                                        background: 'rgba(255, 255, 255, 0.1)',
+                                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                                        color: 'white',
+                                        borderRadius: '0.5rem',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleResolveImpact}
+                                    disabled={!resolutionType || isResolving}
+                                    className="form-button"
+                                    style={{ flex: 1 }}
+                                >
+                                    {isResolving ? 'Resolviendo...' : 'Confirmar Resolución'}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
         </div>
     )
 }

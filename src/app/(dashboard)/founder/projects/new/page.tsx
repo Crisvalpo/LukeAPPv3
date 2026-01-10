@@ -161,7 +161,7 @@ export default function NewProjectPage() {
                                 <label htmlFor="code" className="form-label" style={{ marginBottom: 0 }}>
                                     Código Sugerido
                                 </label>
-                                <span style={{ fontSize: '0.75rem', color: '#60a5fa', background: 'rgba(96, 165, 250, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)', background: 'rgba(59, 130, 246, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>
                                     AUTOGENERADO
                                 </span>
                             </div>
@@ -176,8 +176,8 @@ export default function NewProjectPage() {
                                     fontFamily: 'monospace',
                                     letterSpacing: '0.05em',
                                     fontWeight: '700',
-                                    background: 'rgba(15, 23, 42, 0.3)',
-                                    borderColor: 'rgba(96, 165, 250, 0.3)'
+                                    background: 'var(--color-bg-surface-2)',
+                                    borderColor: 'var(--color-primary-glow)'
                                 }}
                                 placeholder="MLP-F2"
                             />
@@ -203,7 +203,7 @@ export default function NewProjectPage() {
                         {/* Contract Details Section */}
                         <div style={{ marginTop: '0.5rem', marginBottom: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
                             <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#94a3b8', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span style={{ width: '4px', height: '16px', background: '#3b82f6', borderRadius: '2px' }}></span>
+                                <span style={{ width: '4px', height: '16px', background: 'var(--color-primary)', borderRadius: '2px' }}></span>
                                 Información Contractual
                             </h3>
 

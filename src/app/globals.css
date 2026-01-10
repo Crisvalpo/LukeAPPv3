@@ -832,3 +832,29 @@ button {
     opacity: 0.6;
   }
 }
+
+/* ===== Global Scrollbar Styling ===== */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-app);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-bg-surface-2);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-bg-app); /* Creates padding effect */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsla(220, 15%, 30%, 1); /* Slightly lighter than surface-2 */
+}
+
+/* Firefox Support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-bg-surface-2) var(--color-bg-app);
+}

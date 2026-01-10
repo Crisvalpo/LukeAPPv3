@@ -1,7 +1,8 @@
 'use client'
 
 import { useParams, useRouter, usePathname } from 'next/navigation'
-import { Settings, MapPin } from 'lucide-react'
+import { Settings, MapPin, ArrowLeft } from 'lucide-react'
+import '@/styles/project-settings.css'
 
 export default function ProjectSettingsLayout({
     children
@@ -19,26 +20,27 @@ export default function ProjectSettingsLayout({
     ]
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="settings-layout">
             {/* Header */}
-            <div className="bg-white border-b border-gray-200 shadow-sm">
-                <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex items-center gap-4 mb-4">
+            <div className="settings-header">
+                <div className="settings-container">
+                    <div className="settings-nav-top">
                         <button
                             onClick={() => router.push(`/founder/projects/${projectId}`)}
-                            className="text-gray-600 hover:text-gray-900 transition-colors"
+                            className="settings-back-btn"
                         >
-                            ← Volver al Proyecto
+                            <ArrowLeft size={16} />
+                            Volver al Proyecto
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        <Settings className="w-8 h-8 text-purple-600" />
-                        <h1 className="text-2xl font-bold text-gray-900">Configuración del Proyecto</h1>
+                    <div className="settings-title-row">
+                        <Settings className="settings-icon" />
+                        <h1 className="settings-title">Configuración del Proyecto</h1>
                     </div>
 
                     {/* Tabs */}
-                    <div className="flex gap-2 mt-4">
+                    <div className="settings-tabs">
                         {tabs.map(tab => {
                             const Icon = tab.icon
                             const isActive = pathname?.includes(tab.id)
@@ -47,12 +49,9 @@ export default function ProjectSettingsLayout({
                                 <button
                                     key={tab.id}
                                     onClick={() => router.push(tab.path)}
-                                    className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isActive
-                                            ? 'bg-purple-600 text-white shadow-md'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        }`}
+                                    className={`settings-tab-btn ${isActive ? 'active' : ''}`}
                                 >
-                                    <Icon className="w-4 h-4" />
+                                    <Icon size={16} />
                                     {tab.label}
                                 </button>
                             )
@@ -62,8 +61,10 @@ export default function ProjectSettingsLayout({
             </div>
 
             {/* Content */}
-            <div className="max-w-7xl mx-auto">
-                {children}
+            <div className="settings-content">
+                <div className="settings-container">
+                    {children}
+                </div>
             </div>
         </div>
     )

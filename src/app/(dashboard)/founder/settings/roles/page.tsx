@@ -5,6 +5,16 @@ import { useRouter } from 'next/navigation';
 import { getCompanyRolesWithStats, cloneStandardRoles, deleteRole } from '@/services/roles';
 import type { CompanyRoleWithStats } from '@/types';
 import RoleEditorModal from '@/components/roles/RoleEditorModal';
+import {
+    Lightbulb,
+    Users,
+    Package,
+    Pencil,
+    Trash2,
+    Plus,
+    ClipboardList,
+    CheckCircle2
+} from 'lucide-react';
 import '@/styles/roles.css';
 
 import { createClient } from '@/lib/supabase/client';
@@ -86,7 +96,11 @@ export default function RolesManagementPage() {
         if (result.success) {
             // Reload roles
             await loadRoles(companyId);
-            alert(`✅ ${result.data?.roles_created || 0} roles estándar clonados correctamente`);
+            // Reload roles
+            await loadRoles(companyId);
+            // alert(`✅ ${result.data?.roles_created || 0} roles estándar clonados correctamente`);
+            // Removing alert for better UX or replacing with toast later. For now just cleaning emoji.
+            alert(`${result.data?.roles_created || 0} roles estándar clonados correctamente`);
         } else {
             alert(`❌ ${result.message}`);
         }
@@ -164,14 +178,22 @@ export default function RolesManagementPage() {
                 <p className="dashboard-subtitle">Configura los roles y permisos de tu empresa</p>
                 <div className="header-actions">
                     <button
-                        className="btn-secondary"
+                        className="btn btn-secondary"
                         onClick={handleCloneStandardRoles}
                         disabled={isCloning || roles.length > 0}
                     >
-                        {isCloning ? 'Clonando...' : '📋 Cargar Roles Estándar'}
+                        {isCloning ? (
+                            'Clonando...'
+                        ) : (
+                            <>
+                                <ClipboardList size={18} />
+                                Cargar Roles Estándar
+                            </>
+                        )}
                     </button>
-                    <button className="btn-primary" onClick={handleCreateRole}>
-                        ➕ Crear Rol Personalizado
+                    <button className="btn btn-primary" onClick={handleCreateRole}>
+                        <Plus size={18} />
+                        Crear Rol Personalizado
                     </button>
                 </div>
             </div>
@@ -179,7 +201,9 @@ export default function RolesManagementPage() {
             {/* Info Banner */}
             {roles.length === 0 && (
                 <div className="info-banner">
-                    <div className="banner-icon">💡</div>
+                    <div className="banner-icon">
+                        <Lightbulb size={24} />
+                    </div>
                     <div className="banner-content">
                         <h3>No tienes roles configurados</h3>
                         <p>
@@ -285,20 +309,24 @@ function RoleCard({ role, onEdit, onDelete }: RoleCardProps) {
 
             <div className="role-stats">
                 <div className="stat">
-                    <span className="stat-icon">👥</span>
+                    <span className="stat-icon">
+                        <Users size={16} />
+                    </span>
                     <span className="stat-text">
                         {role.members_count} {role.members_count === 1 ? 'usuario' : 'usuarios'}
                     </span>
                 </div>
                 <div className="stat">
-                    <span className="stat-icon">📦</span>
+                    <span className="stat-icon">
+                        <Package size={16} />
+                    </span>
                     <span className="stat-text">{moduleCount} módulos</span>
                 </div>
             </div>
 
             <div className="role-card-actions">
                 <button className="btn-icon" onClick={onEdit} title="Editar">
-                    ✏️
+                    <Pencil size={18} />
                 </button>
                 <button
                     className="btn-icon btn-danger"
@@ -312,7 +340,7 @@ function RoleCard({ role, onEdit, onDelete }: RoleCardProps) {
                                 : 'Eliminar'
                     }
                 >
-                    🗑️
+                    <Trash2 size={18} />
                 </button>
             </div>
         </div>

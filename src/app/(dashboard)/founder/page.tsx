@@ -90,7 +90,7 @@ export default function FounderDashboard() {
             <div className="company-header-card">
                 <div className="company-header-content">
                     <div className="company-header-icon">
-                        🏢
+                        <Building2 size={32} color="white" />
                     </div>
                     <div className="company-header-info">
                         <h2 className="company-header-name">{companyData.name}</h2>
@@ -103,7 +103,9 @@ export default function FounderDashboard() {
             {projectCount === 0 ? (
                 /* Empty State - No Projects */
                 <div className="empty-state-container">
-                    <div className="empty-state-icon">📁</div>
+                    <div className="empty-state-icon">
+                        <FolderKanban size={64} strokeWidth={1} />
+                    </div>
                     <h2 className="empty-state-title">¡Bienvenido!</h2>
                     <p className="empty-state-description">
                         Comienza creando tu primer proyecto para {companyData.name}.
@@ -111,9 +113,9 @@ export default function FounderDashboard() {
                     </p>
                     <button
                         onClick={() => router.push('/founder/projects/new')}
-                        className="empty-state-button"
+                        className="btn btn-primary btn-lg"
                     >
-                        🚀 Crear Mi Primer Proyecto
+                        Crear Mi Primer Proyecto
                     </button>
                 </div>
             ) : (
