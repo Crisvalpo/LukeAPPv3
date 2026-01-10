@@ -203,6 +203,56 @@ export async function deleteProjectComplete(
     const supabase = createClient()
 
     try {
+        // ==========================================
+        // STORAGE CLEANUP - Current Structure
+        // ==========================================
+        // TODO: Future structure should be consolidated into single 'project-files' bucket:
+        //   project-files/{company_id}/{project_id}/logos/...
+        //   project-files/{company_id}/{project_id}/structure-models/...
+        //   project-files/{company_id}/{project_id}/isometric-models/...
+        // For now, we clean from 3 separate buckets with different path structures
+
+        const buckets = [
+            { name: 'structure-models', pattern: `${projectId}-` },  // Files: {projectId}-modelname.glb
+            { name: 'isometric-models', pattern: `${projectId}-` },  // Files: {projectId}-isoname.glb
+            { name: 'project-logos', pattern: projectId }             // Folder: {projectId}/filename
+        ]
+
+        for (const bucket of buckets) {
+            try {
+                if (bucket.name === 'project-logos') {
+                    // project-logos uses folder structure: {projectId}/filename
+                    const { data: files } = await supabase.storage
+                        .from(bucket.name)
+                        .list(bucket.pattern, { limit: 1000 })
+
+                    if (files && files.length > 0) {
+                        const filePaths = files.map(f => `${bucket.pattern}/${f.name}`)
+                        await supabase.storage.from(bucket.name).remove(filePaths)
+                    }
+                } else {
+                    // structure-models and isometric-models use: {projectId}-filename.glb
+                    const { data: files } = await supabase.storage
+                        .from(bucket.name)
+                        .list('', { limit: 1000 })
+
+                    if (files && files.length > 0) {
+                        const projectFiles = files.filter(f => f.name.startsWith(bucket.pattern))
+                        if (projectFiles.length > 0) {
+                            const filePaths = projectFiles.map(f => f.name)
+                            await supabase.storage.from(bucket.name).remove(filePaths)
+                        }
+                    }
+                }
+            } catch (storageError) {
+                // Log but don't fail - bucket might not exist or be empty
+                console.warn(`Could not clean ${bucket.name}:`, storageError)
+            }
+        }
+
+        // ==========================================
+        // DATABASE CLEANUP - Call RPC function
+        // ==========================================
         // Call RPC function to delete project and get stats
         const { data: stats, error: rpcError } = await supabase
             .rpc('delete_project_complete', {
