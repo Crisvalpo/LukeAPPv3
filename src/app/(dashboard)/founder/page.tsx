@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { FolderKanban, UserPlus, Users, Building2 } from 'lucide-react'
+import { Users, Building2, Bell, Shield } from 'lucide-react'
 import '@/styles/dashboard.css'
 import '@/styles/founder.css'
 
@@ -17,7 +17,6 @@ export default function FounderDashboard() {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(true)
     const [companyData, setCompanyData] = useState<CompanyInfo | null>(null)
-    const [projectCount, setProjectCount] = useState(0)
 
     useEffect(() => {
         loadFounderData()
@@ -48,16 +47,43 @@ export default function FounderDashboard() {
         }
 
         setCompanyData(memberData.companies as unknown as CompanyInfo)
-
-        // Get projects count
-        const { count } = await supabase
-            .from('projects')
-            .select('id', { count: 'exact', head: true })
-            .eq('company_id', memberData.company_id)
-
-        setProjectCount(count || 0)
         setIsLoading(false)
     }
+
+    const settingsSections = [
+        {
+            title: 'Roles y Permisos',
+            description: 'Configura roles funcionales y permisos de acceso',
+            icon: Users,
+            color: '#f472b6',
+            href: '/founder/settings/roles',
+            available: true
+        },
+        {
+            title: 'Información de Empresa',
+            description: 'Edita nombre, logo y datos de la organización',
+            icon: Building2,
+            color: '#c084fc',
+            href: '/founder/settings/company',
+            available: false
+        },
+        {
+            title: 'Notificaciones',
+            description: 'Preferencias de alertas y comunicaciones',
+            icon: Bell,
+            color: '#60a5fa',
+            href: '/founder/settings/notifications',
+            available: false
+        },
+        {
+            title: 'Seguridad',
+            description: 'Gestión de seguridad y autenticación',
+            icon: Shield,
+            color: '#4ade80',
+            href: '/founder/settings/security',
+            available: false
+        }
+    ]
 
     if (isLoading) {
         return (
@@ -81,92 +107,50 @@ export default function FounderDashboard() {
             <div className="dashboard-header">
                 <div className="dashboard-header-content">
                     <div className="dashboard-accent-line" />
-                    <h1 className="dashboard-title">Dashboard Founder</h1>
+                    <h1 className="dashboard-title">Configuración</h1>
                 </div>
-                <p className="dashboard-subtitle">Gestiona tu empresa y proyectos</p>
+                <p className="dashboard-subtitle">Administra las configuraciones de tu empresa</p>
             </div>
 
-            {/* Company Card */}
-            <div className="company-header-card">
-                <div className="company-header-content">
-                    <div className="company-header-icon">
-                        <Building2 size={32} color="white" />
-                    </div>
-                    <div className="company-header-info">
-                        <h2 className="company-header-name">{companyData.name}</h2>
-                        <p className="company-header-role">Tu Empresa</p>
-                    </div>
-                </div>
+            {/* Content Cards */}
+            <div className="quick-actions-grid" style={{ marginTop: '2rem' }}>
+                {settingsSections.map((section) => {
+                    const Icon = section.icon
+                    return (
+                        <div
+                            key={section.title}
+                            className={`quick-action-card ${!section.available ? 'disabled' : ''}`}
+                            onClick={() => section.available && router.push(section.href)}
+                            style={{
+                                cursor: section.available ? 'pointer' : 'not-allowed',
+                                opacity: section.available ? 1 : 0.6,
+                                position: 'relative'
+                            }}
+                        >
+                            <div className="quick-action-icon">
+                                <Icon size={24} color={section.color} />
+                            </div>
+                            <h3 className="quick-action-title">{section.title}</h3>
+                            <p className="quick-action-description">
+                                {section.description}
+                            </p>
+                            {!section.available && (
+                                <span className="quick-action-badge" style={{
+                                    background: 'rgba(100, 116, 139, 0.2)',
+                                    color: '#94a3b8',
+                                    fontSize: '0.75rem',
+                                    padding: '0.25rem 0.5rem',
+                                    borderRadius: '0.375rem',
+                                    marginTop: '0.5rem',
+                                    display: 'inline-block'
+                                }}>
+                                    Próximamente
+                                </span>
+                            )}
+                        </div>
+                    )
+                })}
             </div>
-
-            {/* Quick Actions */}
-            {projectCount === 0 ? (
-                /* Empty State - No Projects */
-                <div className="empty-state-container">
-                    <div className="empty-state-icon">
-                        <FolderKanban size={64} strokeWidth={1} />
-                    </div>
-                    <h2 className="empty-state-title">¡Bienvenido!</h2>
-                    <p className="empty-state-description">
-                        Comienza creando tu primer proyecto para {companyData.name}.
-                        Podrás invitar administradores y gestionar tu equipo una vez tengas proyectos activos.
-                    </p>
-                    <button
-                        onClick={() => router.push('/founder/projects/new')}
-                        className="btn btn-primary btn-lg"
-                    >
-                        Crear Mi Primer Proyecto
-                    </button>
-                </div>
-            ) : (
-                /* Quick Actions Grid */
-                <div className="quick-actions-grid">
-                    {/* Create Project */}
-                    <div
-                        className="quick-action-card primary"
-                        onClick={() => router.push('/founder/projects/new')}
-                    >
-                        <div className="quick-action-icon">
-                            <FolderKanban size={24} color="#60a5fa" />
-                        </div>
-                        <h3 className="quick-action-title">Crear Proyecto</h3>
-                        <p className="quick-action-description">
-                            Crea un nuevo proyecto para gestionar operaciones
-                        </p>
-                        <span className="quick-action-badge">Acción Principal</span>
-                    </div>
-
-                    {/* Manage Projects */}
-                    <div
-                        className="quick-action-card"
-                        onClick={() => router.push('/founder/projects')}
-                    >
-                        <div className="quick-action-icon">
-                            <FolderKanban size={24} color="#60a5fa" />
-                        </div>
-                        <h3 className="quick-action-title">Mis Proyectos</h3>
-                        <p className="quick-action-description">
-                            Gestiona tus {projectCount} proyecto{projectCount !== 1 ? 's' : ''}
-                        </p>
-                    </div>
-
-
-
-                    {/* Company Settings */}
-                    <div
-                        className="quick-action-card"
-                        onClick={() => router.push('/founder/settings')}
-                    >
-                        <div className="quick-action-icon">
-                            <Building2 size={24} color="#c084fc" />
-                        </div>
-                        <h3 className="quick-action-title">Configuración</h3>
-                        <p className="quick-action-description">
-                            Administra configuraciones de tu empresa
-                        </p>
-                    </div>
-                </div>
-            )}
         </div>
     )
 }

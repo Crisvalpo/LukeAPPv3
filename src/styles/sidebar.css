@@ -18,12 +18,26 @@
 
 /* ===== Sidebar Header ===== */
 .sidebar-header {
-    height: 4rem;
+    min-height: 4rem;
     display: flex;
     align-items: center;
-    padding: 0 1.5rem;
+    justify-content: space-between;
+    padding: 0.75rem 1.5rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     background: rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-brand-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.sidebar-company-name {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    line-height: 1.2;
+    font-weight: 500;
 }
 
 .sidebar-logo {

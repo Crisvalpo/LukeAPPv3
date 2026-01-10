@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
+import DashboardContent from '@/components/layout/DashboardContent'
 
 export default async function DashboardLayout({
     children,
@@ -72,15 +73,17 @@ export default async function DashboardLayout({
                 position: 'relative',
                 background: '#0f172a'
             }}>
-                {/* Page Content */}
-                <div style={{
-                    padding: '2rem',
-                    maxWidth: '80rem',
-                    marginLeft: 'auto',
-                    marginRight: 'auto'
-                }}>
-                    {children}
-                </div>
+                <DashboardContent companyId={memberData.company_id} userRole={role}>
+                    {/* Page Content */}
+                    <div style={{
+                        padding: '2rem',
+                        maxWidth: '80rem',
+                        marginLeft: 'auto',
+                        marginRight: 'auto'
+                    }}>
+                        {children}
+                    </div>
+                </DashboardContent>
             </main>
         </div>
     )

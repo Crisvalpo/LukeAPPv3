@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { getProjectById, updateProject, deleteProject, type Project } from '@/services/projects'
+import { getProjectById, updateProject, type Project } from '@/services/projects'
 import { getPendingInvitations, createInvitation, revokeInvitation, type Invitation } from '@/services/invitations'
-import { Building2, Calendar, FileText, Check, X, Shield, Users, Trash2, Image as ImageIcon } from 'lucide-react'
+import { Building2, Calendar, FileText, Check, X, Shield, Users, Image as ImageIcon } from 'lucide-react'
 import InvitationManager from '@/components/invitations/InvitationManager'
 import EngineeringManager from '@/components/engineering/EngineeringManager'
 import ProcurementManager from '@/components/procurement/ProcurementManager'
@@ -115,43 +115,6 @@ export default function ProjectDetailPage() {
         }
 
         setIsSaving(false)
-    }
-
-    async function handleDelete() {
-        if (!window.confirm('¿Estás seguro de eliminar este proyecto?')) {
-            return
-        }
-
-        setIsSaving(true)
-
-        const result = await deleteProject(projectId)
-
-        if (result.success) {
-            router.push('/founder/projects')
-        } else if (result.requiresForce) {
-            const confirmSpy = window.confirm(
-                `⚠️ EXTINCIÓN TOTAL DETECTADA\n\n` +
-                `Este proyecto tiene ${result.memberCount} usuarios activos asignados.\n` +
-                `Si eliminas el proyecto, estos usuarios serán BORRADOS TOTALMENTE del sistema (Auth + Datos).\n\n` +
-                `¿Confirmas la ELIMINACIÓN MASIVA de usuarios y proyecto?`
-            )
-
-            if (confirmSpy) {
-                const deepResult = await deleteProject(projectId, true)
-                if (deepResult.success) {
-                    alert('Proyecto y todos sus usuarios han sido eliminados.')
-                    router.push('/founder/projects')
-                } else {
-                    alert('Error en borrado profundo: ' + deepResult.message)
-                    setIsSaving(false)
-                }
-            } else {
-                setIsSaving(false)
-            }
-        } else {
-            alert(result.message)
-            setIsSaving(false)
-        }
     }
 
     if (isLoading) {
@@ -382,12 +345,11 @@ export default function ProjectDetailPage() {
                                     </button>
 
                                     <button
-                                        onClick={handleDelete}
-                                        className="action-button delete"
-                                        style={{ width: 'auto', padding: '0.75rem 1.5rem', gap: '0.5rem' }}
+                                        onClick={() => router.push('/founder/projects')}
+                                        className="action-button"
+                                        style={{ width: 'auto', padding: '0.75rem 1.5rem', gap: '0.5rem', background: 'rgba(255,255,255,0.05)' }}
                                     >
-                                        <Trash2 size={18} />
-                                        Eliminar
+                                        Ver Todos los Proyectos
                                     </button>
                                 </div>
                             </div>

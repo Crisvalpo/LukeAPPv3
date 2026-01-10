@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Trash2 } from 'lucide-react'
 
 import { getProjectsByCompany, type Project } from '@/services/projects'
 import { ListView } from '@/components/views/ListView'
 import { ProjectSchema } from '@/schemas/project'
+import DeleteProjectModal from '@/components/modals/DeleteProjectModal'
 import '@/styles/dashboard.css'
 
 interface ProjectWithStats extends Project {
@@ -18,6 +20,12 @@ export default function ProjectsListPage() {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(true)
     const [projects, setProjects] = useState<ProjectWithStats[]>([])
+    const [companyId, setCompanyId] = useState<string | null>(null)
+    const [deleteModal, setDeleteModal] = useState<{
+        projectId: string
+        projectCode: string
+        projectName: string
+    } | null>(null)
 
     useEffect(() => {
         loadProjects()
@@ -36,6 +44,8 @@ export default function ProjectsListPage() {
             .single()
 
         if (!memberData) { router.push('/'); return }
+
+        setCompanyId(memberData.company_id)
 
         const projectsData = await getProjectsByCompany(memberData.company_id)
 
@@ -78,6 +88,13 @@ export default function ProjectsListPage() {
         setIsLoading(false)
     }
 
+    function handleDeleteSuccess() {
+        setDeleteModal(null)
+        // Reload projects after deletion
+        setIsLoading(true)
+        loadProjects()
+    }
+
     if (isLoading) {
         return <div className="dashboard-page"><p style={{ color: 'white', textAlign: 'center' }}>Cargando...</p></div>
     }
@@ -101,9 +118,36 @@ export default function ProjectsListPage() {
                     onCreate={() => router.push('/founder/projects/new')}
                     onAction={(action: string, item: Project) => {
                         if (action === 'view') router.push(`/founder/projects/${item.id}`)
+                        if (action === 'delete') {
+                            setDeleteModal({
+                                projectId: item.id,
+                                projectCode: item.code,
+                                projectName: item.name
+                            })
+                        }
                     }}
+                    customActions={[
+                        {
+                            id: 'delete',
+                            label: 'Eliminar',
+                            icon: Trash2,
+                            color: '#ef4444'
+                        }
+                    ]}
                 />
             </div>
+
+            {/* Delete Modal */}
+            {deleteModal && companyId && (
+                <DeleteProjectModal
+                    projectId={deleteModal.projectId}
+                    projectCode={deleteModal.projectCode}
+                    projectName={deleteModal.projectName}
+                    companyId={companyId}
+                    onClose={() => setDeleteModal(null)}
+                    onSuccess={handleDeleteSuccess}
+                />
+            )}
         </div>
     )
 }

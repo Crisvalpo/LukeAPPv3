@@ -27,6 +27,18 @@ export interface UpdateProjectParams {
     status?: 'planning' | 'active' | 'on_hold' | 'completed' | 'cancelled'
 }
 
+export interface ProjectDeletionStats {
+    project_name: string
+    project_code: string
+    members: number
+    orphan_users: number
+    deleted_auth_users: number
+    isometrics: number
+    spools: number
+    master_views: number
+    revisions: number
+}
+
 /**
  * Get all projects for a company
  */
@@ -178,62 +190,62 @@ export async function updateProject(projectId: string, params: UpdateProjectPara
 }
 
 /**
- * Delete project (only if no members assigned)
+ * Delete project completely (database + storage + orphan auth users)
+ * This will:
+ * 1. Delete users who only belong to this project from auth.users
+ * 2. Delete all files from Storage bucket
+ * 3. Delete all database records via CASCADE
  */
-/**
- * Delete project
- * @param projectId ID of the project
- * @param force If true, performs a DEEP DELETE (removes project AND all assigned users)
- */
-export async function deleteProject(projectId: string, force: boolean = false) {
+export async function deleteProjectComplete(
+    projectId: string,
+    companyId: string
+): Promise<{ success: boolean; stats?: ProjectDeletionStats; error?: string }> {
     const supabase = createClient()
 
     try {
-        if (!force) {
-            // Standard Check: Prevent if has members
-            const { count: membersCount } = await supabase
-                .from('members')
-                .select('id', { count: 'exact', head: true })
-                .eq('project_id', projectId)
+        // Call RPC function to delete project and get stats
+        const { data: stats, error: rpcError } = await supabase
+            .rpc('delete_project_complete', {
+                p_project_id: projectId,
+                p_company_id: companyId
+            })
+            .single()
 
-            if (membersCount && membersCount > 0) {
-                return {
-                    success: false,
-                    message: `No se puede eliminar. El proyecto tiene ${membersCount} miembro(s) asignado(s).`,
-                    requiresForce: true, // Signal to UI to ask for confirmation
-                    memberCount: membersCount
-                }
-            }
+        if (rpcError) throw rpcError
 
-            // Normal delete (safe)
-            const { error } = await supabase
-                .from('projects')
-                .delete()
-                .eq('id', projectId)
+        // Delete all files from Storage bucket for this project
+        // Pattern: company_id/project_id/*
+        const storagePath = `${companyId}/${projectId}`
 
-            if (error) throw error
-        } else {
-            // Force / Deep Delete (Via API)
-            const response = await fetch('/api/admin/projects/delete-deep', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ projectId })
+        // List all files in project folder
+        const { data: files, error: listError } = await supabase.storage
+            .from('project-files')
+            .list(storagePath, {
+                limit: 1000,
+                sortBy: { column: 'name', order: 'asc' }
             })
 
-            const result = await response.json()
-            if (!result.success) throw new Error(result.message)
-            return result
+        if (!listError && files && files.length > 0) {
+            // Delete all files
+            const filePaths = files.map(file => `${storagePath}/${file.name}`)
+            const { error: deleteError } = await supabase.storage
+                .from('project-files')
+                .remove(filePaths)
+
+            if (deleteError) {
+                console.warn('Error deleting some storage files:', deleteError)
+            }
         }
 
         return {
             success: true,
-            message: 'Proyecto eliminado exitosamente'
+            stats: stats as ProjectDeletionStats
         }
     } catch (error: any) {
         console.error('Error deleting project:', error)
         return {
             success: false,
-            message: error.message || 'Error al eliminar proyecto'
+            error: error.message || 'Error al eliminar proyecto'
         }
     }
 }

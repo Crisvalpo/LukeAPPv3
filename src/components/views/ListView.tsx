@@ -11,6 +11,12 @@ interface ListViewProps<T> {
     isLoading?: boolean
     onCreate?: () => void
     onAction?: (action: string, item: T) => void
+    customActions?: Array<{
+        id: string
+        label: string
+        icon: any
+        color?: string
+    }>
 }
 
 export function ListView<T extends Record<string, any>>({
@@ -18,7 +24,8 @@ export function ListView<T extends Record<string, any>>({
     data,
     isLoading,
     onCreate,
-    onAction
+    onAction,
+    customActions
 }: ListViewProps<T>) {
 
     // Derived Values
@@ -95,13 +102,17 @@ export function ListView<T extends Record<string, any>>({
                                         </td>
                                     ))}
 
-                                    {schema.views.list.actions && schema.views.list.actions.length > 0 && (
+                                    {(schema.views.list.actions && schema.views.list.actions.length > 0) || (customActions && customActions.length > 0) ? (
                                         <td style={{ textAlign: 'right' }}>
-                                            {schema.views.list.actions.map(action => (
+                                            {/* Schema-defined actions */}
+                                            {schema.views.list.actions?.map(action => (
                                                 <button
                                                     key={action}
                                                     className="action-link"
-                                                    onClick={() => onAction && onAction(action, item)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        onAction && onAction(action, item)
+                                                    }}
                                                     style={{
                                                         background: 'none',
                                                         border: 'none',
@@ -118,8 +129,34 @@ export function ListView<T extends Record<string, any>>({
                                                             action === 'delete' ? <Trash2 size={18} color="#ef4444" /> : <HelpCircle size={18} />}
                                                 </button>
                                             ))}
+                                            {/* Custom actions */}
+                                            {customActions?.map(action => {
+                                                const Icon = action.icon
+                                                return (
+                                                    <button
+                                                        key={action.id}
+                                                        className="action-link"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            onAction && onAction(action.id, item)
+                                                        }}
+                                                        style={{
+                                                            background: 'none',
+                                                            border: 'none',
+                                                            cursor: 'pointer',
+                                                            marginLeft: '0.5rem',
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            color: action.color || '#94a3b8'
+                                                        }}
+                                                        title={action.label}
+                                                    >
+                                                        <Icon size={18} />
+                                                    </button>
+                                                )
+                                            })}
                                         </td>
-                                    )}
+                                    ) : null}
                                 </tr>
                             ))}
                         </tbody>

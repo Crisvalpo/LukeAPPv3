@@ -272,7 +272,31 @@ export default function LandingPage() {
                     </div>
                 </div>
 
-                {/* Rest of landing content - ALWAYS VISIBLE */}
+                {/* Enterprise CTA - Premium Card (First to invite action) */}
+                <div className="enterprise-conversion-card">
+                    <div className="enterprise-content">
+                        <div className="enterprise-icon">⚙️</div>
+                        <div className="enterprise-text">
+                            <h3 className="text-2xl font-bold text-white mb-2">
+                                ¿Buscas implementar LukeAPP en tu empresa?
+                            </h3>
+                            <p className="text-[var(--color-text-muted)] text-base">
+                                Conoce nuestros planes y elige el que mejor se adapte a tu operación
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => {
+                                const pricingSection = document.getElementById('pricing-section');
+                                pricingSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }}
+                            className="enterprise-cta-btn"
+                        >
+                            Ver Planes
+                        </button>
+                    </div>
+                </div>
+
+                {/* Industries */}
                 <div>
                     <h2 className="landing-section-title">
                         Experiencia Comprobada
@@ -296,27 +320,7 @@ export default function LandingPage() {
                     </div>
                 </div>
 
-                {/* Enterprise CTA - Premium Card */}
-                <div className="enterprise-conversion-card">
-                    <div className="enterprise-content">
-                        <div className="enterprise-icon">⚙️</div>
-                        <div className="enterprise-text">
-                            <h3 className="text-2xl font-bold text-white mb-2">
-                                ¿Buscas implementar LukeAPP en tu empresa?
-                            </h3>
-                            <p className="text-[var(--color-text-muted)] text-base">
-                                Soluciones enterprise para operaciones industriales a gran escala
-                            </p>
-                        </div>
-                        <a
-                            href="mailto:contacto@lukeapp.cl"
-                            className="enterprise-cta-btn"
-                        >
-                            Contactar Ventas
-                        </a>
-                    </div>
-                </div>
-
+                {/* Value Cards */}
                 <div className="value-cards-grid">
                     <ValueCard
                         icon="🔒"
@@ -347,6 +351,110 @@ export default function LandingPage() {
                         delay={400}
                         variant="community"
                     />
+                </div>
+
+                {/* Pricing Section - At the End */}
+                <div id="pricing-section">
+                    <h2 className="landing-section-title">
+                        Planes y Precios
+                    </h2>
+                    <p className="landing-section-subtitle">
+                        Elige el plan que mejor se adapte a las necesidades de tu empresa
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginTop: '3rem' }}>
+                        {/* Starter Plan */}
+                        <div className="glass-panel" style={{ padding: '2rem', textAlign: 'center' }}>
+                            <h3 style={{ color: '#60a5fa', fontSize: '1.5rem', marginBottom: '0.5rem' }}>Starter</h3>
+                            <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '1.5rem' }}>Para pequeños contratistas</p>
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <span style={{ color: 'white', fontSize: '2.5rem', fontWeight: '700' }}>$29.990</span>
+                                <span style={{ color: '#94a3b8', fontSize: '1rem' }}>/mes</span>
+                            </div>
+                            <ul style={{ textAlign: 'left', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '2rem', listStyle: 'none', padding: 0 }}>
+                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ color: '#4ade80' }}>✓</span> Hasta 3 usuarios
+                                </li>
+                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ color: '#4ade80' }}>✓</span> 1 proyecto activo
+                                </li>
+                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ color: '#4ade80' }}>✓</span> Hasta 500 spools
+                                </li>
+                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ color: '#4ade80' }}>✓</span> Soporte por email
+                                </li>
+                            </ul>
+                            <a href="mailto:contacto@lukeapp.cl?subject=Contratar Plan Starter" className="hero-btn hero-btn-secondary" style={{ width: '100%', textDecoration: 'none', textAlign: 'center' }}>
+                                Contactar
+                            </a>
+                        </div>
+
+                        {/* Pro Plan (Featured) */}
+                        <div className="glass-panel" style={{ padding: '2rem', textAlign: 'center', border: '2px solid rgba(96, 165, 250, 0.3)', position: 'relative' }}>
+                            <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(90deg, #60a5fa, #818cf8)', padding: '0.25rem 1rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '600', color: 'white' }}>
+                                RECOMENDADO
+                            </div>
+                            <h3 style={{ color: '#60a5fa', fontSize: '1.5rem', marginBottom: '0.5rem' }}>Pro</h3>
+                            <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '1.5rem' }}>Para PyMEs establecidas</p>
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <span style={{ color: 'white', fontSize: '2.5rem', fontWeight: '700' }}>$99.990</span>
+                                <span style={{ color: '#94a3b8', fontSize: '1rem' }}>/mes</span>
+                            </div>
+                            <ul style={{ textAlign: 'left', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '2rem', listStyle: 'none', padding: 0 }}>
+                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ color: '#4ade80' }}>✓</span> Hasta 10 usuarios
+                                </li>
+                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ color: '#4ade80' }}>✓</span> 5 proyectos simultáneos
+                                </li>
+                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ color: '#4ade80' }}>✓</span> Hasta 5,000 spools
+                                </li>
+                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ color: '#4ade80' }}>✓</span> Soporte prioritario
+                                </li>
+                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ color: '#4ade80' }}>✓</span> Reportes avanzados
+                                </li>
+                            </ul>
+                            <a href="mailto:contacto@lukeapp.cl?subject=Contratar Plan Pro" className="hero-btn hero-btn-primary" style={{ width: '100%', textDecoration: 'none', textAlign: 'center' }}>
+                                Contactar
+                            </a>
+                        </div>
+
+                        {/* Enterprise Plan */}
+                        <div className="glass-panel" style={{ padding: '2rem', textAlign: 'center' }}>
+                            <h3 style={{ color: '#a78bfa', fontSize: '1.5rem', marginBottom: '0.5rem' }}>Enterprise</h3>
+                            <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '1.5rem' }}>Para grandes operaciones</p>
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <span style={{ color: 'white', fontSize: '2.5rem', fontWeight: '700' }}>$299.990</span>
+                                <span style={{ color: '#94a3b8', fontSize: '1rem' }}>/mes</span>
+                            </div>
+                            <ul style={{ textAlign: 'left', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '2rem', listStyle: 'none', padding: 0 }}>
+                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ color: '#4ade80' }}>✓</span> Usuarios ilimitados
+                                </li>
+                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ color: '#4ade80' }}>✓</span> Proyectos ilimitados
+                                </li>
+                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ color: '#4ade80' }}>✓</span> Spools ilimitados
+                                </li>
+                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ color: '#4ade80' }}>✓</span> Soporte dedicado 24/7
+                                </li>
+                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ color: '#4ade80' }}>✓</span> API personalizada
+                                </li>
+                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ color: '#4ade80' }}>✓</span> Onboarding asistido
+                                </li>
+                            </ul>
+                            <a href="mailto:contacto@lukeapp.cl?subject=Contratar Plan Enterprise" className="hero-btn hero-btn-secondary" style={{ width: '100%', textDecoration: 'none', textAlign: 'center' }}>
+                                Contactar Ventas
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="landing-footer">

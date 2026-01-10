@@ -10,13 +10,10 @@ import {
     Users,
     UserPlus,
     Settings,
-    CalendarClock,
-    MapPin,
-    HardHat,
     LogOut,
-    Shield,
     ChevronRight,
-    Package
+    CreditCard,
+    Mail,
 } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
@@ -38,20 +35,34 @@ export default function Sidebar({ role }: SidebarProps) {
     const router = useRouter()
     const [openItems, setOpenItems] = useState<Record<string, boolean>>({})
     const [user, setUser] = useState<{ email?: string } | null>(null)
+    const [companyName, setCompanyName] = useState<string | null>(null)
 
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    // Load user data
+    // Load user and company data
     React.useEffect(() => {
-        async function loadUser() {
+        async function loadData() {
             const { data: { user } } = await supabase.auth.getUser()
             setUser(user)
+
+            if (user && role === 'founder') {
+                const { data: member } = await supabase
+                    .from('members')
+                    .select('companies(name)')
+                    .eq('user_id', user.id)
+                    .maybeSingle()
+
+                if (member?.companies) {
+                    // @ts-ignore - Supabase type inference might be tricky here with join
+                    setCompanyName(member.companies.name)
+                }
+            }
         }
-        loadUser()
-    }, [])
+        loadData()
+    }, [role])
 
     const handleSignOut = async () => {
         await supabase.auth.signOut()
@@ -69,21 +80,21 @@ export default function Sidebar({ role }: SidebarProps) {
         { name: 'Empresas', href: '/staff/companies', icon: Building2 },
         { name: 'Proyectos', href: '/staff/projects', icon: FolderKanban },
         { name: 'Usuarios', href: '/staff/users', icon: Users },
-        { name: 'Invitaciones', href: '/staff/invitations', icon: UserPlus },
+        { name: 'Invitaciones', href: '/staff/invitations', icon: Mail },
+        { name: 'Pagos', href: '/staff/payments', icon: CreditCard },
     ]
 
     // Founder Menu (Company-Level)
     const founderMenu: MenuItem[] = [
-        { name: 'Vista General', href: '/founder', icon: LayoutDashboard },
+        { name: 'Configuración', href: '/founder', icon: Settings },
         { name: 'Proyectos', href: '/founder/projects', icon: FolderKanban },
-        // { name: 'Abastecimiento', href: '/founder/procurement', icon: Package }, // MOVED TO PROJECT DETAILS
+        { name: 'Suscripción', href: '/founder/subscription', icon: CreditCard },
     ]
 
     // Admin Menu (Project-Level)
     const adminMenu: MenuItem[] = [
         { name: 'Vista General', href: '/admin', icon: LayoutDashboard },
         { name: 'Personal', href: '/admin/workforce', icon: Users },
-        // { name: 'Invitaciones', href: '/admin/invitations', icon: UserPlus }, // MOVED TO PROJECT DETAILS
         { name: 'Configuración', href: '/admin/settings', icon: Settings },
     ]
 
@@ -94,7 +105,12 @@ export default function Sidebar({ role }: SidebarProps) {
         <aside className="sidebar">
             {/* Header */}
             <div className="sidebar-header">
-                <span className="sidebar-logo">LukeAPP</span>
+                <div className="sidebar-brand-container">
+                    <span className="sidebar-logo">LukeAPP</span>
+                    {companyName && role === 'founder' && (
+                        <span className="sidebar-company-name">{companyName}</span>
+                    )}
+                </div>
                 <span className={`sidebar-badge ${role === 'super_admin' ? 'staff' : 'management'}`}>
                     {role === 'super_admin' ? 'STAFF' : role.toUpperCase()}
                 </span>

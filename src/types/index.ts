@@ -33,12 +33,62 @@ export const InvitationStatus = {
 
 export type InvitationStatusType = typeof InvitationStatus[keyof typeof InvitationStatus]
 
+export const SubscriptionStatus = {
+    ACTIVE: 'active',
+    PAST_DUE: 'past_due',
+    SUSPENDED: 'suspended'
+} as const
+
+export type SubscriptionStatusType = typeof SubscriptionStatus[keyof typeof SubscriptionStatus]
+
+export const SubscriptionTier = {
+    STARTER: 'starter',
+    PRO: 'pro',
+    ENTERPRISE: 'enterprise'
+} as const
+
+export type SubscriptionTierType = typeof SubscriptionTier[keyof typeof SubscriptionTier]
+
+// ===== SUBSCRIPTION TYPES =====
+
+export interface SubscriptionPlan {
+    id: string
+    name: string
+    price_monthly: number
+    max_users: number
+    max_projects: number
+    max_spools: number | null
+    features: string[]
+    created_at: string
+}
+
+export interface CompanySubscriptionInfo {
+    tier: SubscriptionTierType
+    status: SubscriptionStatusType
+    end_date: string | null
+    suspended_at: string | null
+    deletion_date: string | null
+    days_until_deletion: number | null
+    hours_until_deletion: number | null
+    minutes_until_deletion: number | null
+    current_users: number
+    max_users: number
+    current_projects: number
+    max_projects: number
+    is_active: boolean
+}
+
 // ===== BASE ENTITIES =====
 
 export interface Company {
     id: string
     name: string
     slug: string
+    subscription_status: SubscriptionStatusType
+    subscription_tier: SubscriptionTierType
+    subscription_end_date: string | null
+    suspended_at: string | null
+    payment_instructions: string | null
     created_at: string
     updated_at: string
 }
@@ -80,476 +130,277 @@ export interface Member {
  * Module configuration in permissions
  */
 export interface ModuleConfig {
-    enabled: boolean     // Whether user can see this module
-    is_home?: boolean    // Whether this is the default dashboard
+    can_create: boolean
+    can_read: boolean
+    can_update: boolean
+    can_delete: boolean
 }
 
 /**
- * Resource-level permissions
- */
-export interface ResourcePermissions {
-    view?: boolean
-    create?: boolean
-    edit?: boolean
-    delete?: boolean
-    approve?: boolean
-    reject?: boolean
-    inspect?: boolean
-    request?: boolean
-    status_update?: boolean
-    export?: boolean
-    comment?: boolean
-    adjust?: boolean
-    [key: string]: boolean | undefined  // Allow custom permissions
-}
-
-/**
- * Full permissions structure stored in JSONB
+ * Complete permissions object (JSONB in DB)
  */
 export interface RolePermissions {
-    modules: {
-        dashboard?: ModuleConfig
-        engineering?: ModuleConfig
-        field?: ModuleConfig
-        quality?: ModuleConfig
-        warehouse?: ModuleConfig
-        [key: string]: ModuleConfig | undefined
-    }
-    resources: {
-        [resourceName: string]: ResourcePermissions
-    }
+    isometricos?: ModuleConfig
+    levantamientos?: ModuleConfig
+    lineas?: ModuleConfig
+    materiales?: ModuleConfig
 }
 
 /**
- * Company Role entity (from company_roles table)
+ * CompanyRole - Dynamic, company-defined roles
+ * Each company can create their own roles (e.g., "Jefe de Calidad", "Pañolero")
  */
 export interface CompanyRole {
     id: string
     company_id: string
-    name: string
+    name: string  // E.g., "Jefe de Calidad"
     description: string | null
-    color: string
-    base_role: 'admin' | 'supervisor' | 'worker'  // System role for RLS
     permissions: RolePermissions
-    is_template: boolean
     created_at: string
     updated_at: string
 }
 
-/**
- * Company Role with usage stats
- */
-export interface CompanyRoleWithStats extends CompanyRole {
-    members_count: number
-}
-
-/**
- * Member with full functional role data
- */
-export interface MemberWithFunctionalRole extends Member {
-    company_role?: CompanyRole
-}
-
+// ===== INVITATIONS =====
 
 export interface Invitation {
     id: string
-    email: string
-    token: string
     company_id: string
     project_id: string | null
     role_id: UserRoleType
-    job_title?: string | null  // Custom role label (e.g., "Jefe de Calidad")
     functional_role_id?: string | null  // FK to company_roles
-    status: InvitationStatusType
-    created_at: string
-    expires_at: string | null
-}
-
-// ===== RELATIONS =====
-
-export interface CompanyWithStats extends Company {
-    projects_count: number
-    members_count: number
-}
-
-export interface ProjectWithStats extends Project {
-    members_count: number
-}
-
-export interface InvitationWithRelations extends Invitation {
-    company?: Pick<Company, 'name' | 'slug'>
-    project?: Pick<Project, 'name' | 'code'>
-}
-
-export interface MemberWithRelations extends Member {
-    user?: Pick<User, 'email' | 'full_name' | 'avatar_url'>
-    company?: Pick<Company, 'name' | 'slug'>
-    project?: Pick<Project, 'name' | 'code'>
-}
-
-// ===== API RESPONSES =====
-
-export interface ApiResponse<T = any> {
-    success: boolean
-    message: string
-    data?: T
-}
-
-export interface GlobalStats {
-    totalCompanies: number
-    totalProjects: number
-    totalUsers: number
-    pendingInvitations: number
-}
-
-// ===== FORM DATA =====
-
-export interface CreateCompanyParams {
-    name: string
-    slug: string
-}
-
-export interface UpdateCompanyParams {
-    name?: string
-    slug?: string
-}
-
-export interface CreateProjectParams {
-    name: string
-    code: string
-    description?: string
-    contract_number?: string
-    client_name?: string
-    company_id: string
-}
-
-export interface UpdateProjectParams {
-    name?: string
-    code?: string
-    description?: string
-    status?: ProjectStatusType
-}
-
-export interface CreateInvitationParams {
     email: string
+    inviter_id: string
+    status: InvitationStatusType
+    expires_at: string
+    created_at: string
+}
+
+// View-Like Aggregations
+
+export interface InvitationWithDetails extends Invitation {
+    company_name?: string
+    project_name?: string | null
+    inviter_name?: string | null
+}
+
+// Helper types for invitation workflow
+export interface CreateInvitationParams {
     company_id: string
-    project_id?: string
+    project_id?: string | null
     role_id: UserRoleType
-    job_title?: string  // Custom role label
-    functional_role_id?: string  // Reference to company_roles
+    functional_role_id?: string | null
+    email: string
 }
 
-export interface CreateCompanyRoleParams {
-    company_id: string
-    name: string
-    description?: string
-    color?: string
-    base_role: 'admin' | 'supervisor' | 'worker'
-    permissions: RolePermissions
+// ===== MASTER VIEWS =====
+
+/**
+ * MasterView - Central registry for file uploads (isometrics, line plans, etc.)
+ */
+export interface MasterView {
+    id: string
+    project_id: string
+    category: 'isometricos' | 'planes_lineas' | 'otros'
+    file_name: string
+    file_url: string
+    file_size: number | null
+    uploaded_by: string
+    created_at: string
+    updated_at: string
 }
 
-export interface UpdateCompanyRoleParams {
-    name?: string
-    description?: string
-    color?: string
-    base_role?: 'admin' | 'supervisor' | 'worker'
-    permissions?: RolePermissions
-}
+// ===== ISOMETRICS =====
 
-
-// ===== PHASE 2: REVISION SYSTEM TYPES =====
-
-// Mockup Production Data (Temporary)
+/**
+ * Isometric - Reference to an isometric drawing with lifecycle metadata
+ */
 export interface Isometric {
     id: string
     project_id: string
     company_id: string
-    iso_number: string
-    revision: string
-    description: string | null
-    status: string
+    isometric_id: string  // Business ID (e.g., "ISO-001")
+    rev_id: string  // Revision (e.g., "R0", "R1")
+    file_id: string | null  // FK to master_views
     created_at: string
     updated_at: string
 }
 
+// ===== SPOOLS =====
+
+/**
+ * Spool - A physical assembly unit referenced by an isometric
+ */
 export interface Spool {
     id: string
-    isometric_id: string
     project_id: string
     company_id: string
-    spool_number: string
-    revision: string
-    fabrication_status: 'PENDING' | 'FABRICATED' | 'DISPATCHED' | 'INSTALLED'
-    fabricated_at: string | null
-    dispatched_at: string | null
+    spool_id: string  // Business ID (e.g., "SP-001")
+    isometric_id: string  // FK to isometrics
+    status_id: string | null  // FK to spool_statuses
     created_at: string
     updated_at: string
-}
-
-export interface Weld {
-    id: string
-    spool_id: string
-    project_id: string
-    company_id: string
-    weld_number: string
-    weld_type: string | null
-    status: 'PENDING' | 'EXECUTED' | 'QA_APPROVED' | 'QA_REJECTED'
-    executed_at: string | null
-    executed_by: string | null
-    created_at: string
-    updated_at: string
-}
-
-// Core Revision System
-export const RevisionStatus = {
-    DRAFT: 'DRAFT',
-    PENDING: 'PENDING',
-    APPROVED: 'APPROVED',
-    APPLIED: 'APPLIED',
-    REJECTED: 'REJECTED'
-} as const
-
-export type RevisionStatusType = typeof RevisionStatus[keyof typeof RevisionStatus]
-
-export const RevisionEventType = {
-    CREATED: 'CREATED',
-    ANNOUNCED: 'ANNOUNCED',
-    IMPACT_DETECTED: 'IMPACT_DETECTED',
-    APPROVED: 'APPROVED',
-    APPLIED: 'APPLIED',
-    REJECTED: 'REJECTED',
-    RESOLVED: 'RESOLVED'
-} as const
-
-export type RevisionEventTypeEnum = typeof RevisionEventType[keyof typeof RevisionEventType]
-
-export const ImpactType = {
-    NEW: 'NEW',
-    MODIFIED: 'MODIFIED',
-    REMOVED: 'REMOVED',
-    MATERIAL_CHANGE: 'MATERIAL_CHANGE'
-} as const
-
-export type ImpactTypeEnum = typeof ImpactType[keyof typeof ImpactType]
-
-export const ImpactSeverity = {
-    LOW: 'LOW',
-    MEDIUM: 'MEDIUM',
-    HIGH: 'HIGH',
-    CRITICAL: 'CRITICAL'
-} as const
-
-export type ImpactSeverityEnum = typeof ImpactSeverity[keyof typeof ImpactSeverity]
-
-export const ResolutionType = {
-    REWORK: 'REWORK',
-    MATERIAL_RETURN: 'MATERIAL_RETURN',
-    FREE_JOINT: 'FREE_JOINT',
-    TECHNICAL_EXCEPTION: 'TECHNICAL_EXCEPTION',
-    CLIENT_APPROVAL: 'CLIENT_APPROVAL'
-} as const
-
-export type ResolutionTypeEnum = typeof ResolutionType[keyof typeof ResolutionType]
-
-// ===== MATERIAL CONTROL =====
-
-export const MaterialRequestType = {
-    CLIENT_MIR: 'CLIENT_MIR',
-    CONTRACTOR_PO: 'CONTRACTOR_PO'
-} as const
-
-export type MaterialRequestTypeEnum = typeof MaterialRequestType[keyof typeof MaterialRequestType]
-
-export const MaterialRequestStatus = {
-    DRAFT: 'DRAFT',
-    SUBMITTED: 'SUBMITTED',
-    APPROVED: 'APPROVED',
-    PARTIAL: 'PARTIAL',
-    REJECTED: 'REJECTED',
-    COMPLETED: 'COMPLETED'
-} as const
-
-export type MaterialRequestStatusEnum = typeof MaterialRequestStatus[keyof typeof MaterialRequestStatus]
-
-export const MaterialInstanceStatus = {
-    ISSUED: 'ISSUED',
-    CUT: 'CUT',
-    INSTALLED: 'INSTALLED',
-    SCRAP: 'SCRAP'
-} as const
-
-export type MaterialInstanceStatusEnum = typeof MaterialInstanceStatus[keyof typeof MaterialInstanceStatus]
-
-export const DataStatus = {
-    VACIO: 'VACIO',
-    EN_DESARROLLO: 'EN_DESARROLLO',
-    COMPLETO: 'COMPLETO',
-    BLOQUEADO: 'BLOQUEADO'
-} as const
-
-export type DataStatusEnum = typeof DataStatus[keyof typeof DataStatus]
-
-export const MaterialStatus = {
-    NO_REQUERIDO: 'NO_REQUERIDO',
-    PENDIENTE_COMPRA: 'PENDIENTE_COMPRA',
-    PENDIENTE_APROBACION: 'PENDIENTE_APROBACION',
-    EN_TRANSITO: 'EN_TRANSITO',
-    DISPONIBLE: 'DISPONIBLE',
-    ASIGNADO: 'ASIGNADO'
-} as const
-
-export type MaterialStatusEnum = typeof MaterialStatus[keyof typeof MaterialStatus]
-
-export const SpoolType = {
-    PIPE_STICK: 'PIPE_STICK',
-    SIMPLE: 'SIMPLE',
-    COMPLEX: 'COMPLEX'
-} as const
-
-export type SpoolTypeEnum = typeof SpoolType[keyof typeof SpoolType]
-
-export interface MaterialRequest {
-    id: string
-    project_id: string
-    company_id: string
-    request_number: string
-    request_type: MaterialRequestTypeEnum
-    status: MaterialRequestStatusEnum
-    requested_date: string
-    eta_date: string | null
-    notes: string | null
-    created_at: string
-}
-
-export interface MaterialRequestItem {
-    id: string
-    request_id: string
-    material_spec: string
-    quantity_requested: number
-    quantity_approved: number | null
-    quantity_received: number
-    spool_id: string | null
-    isometric_id: string | null
-    unit_price: number | null
-    created_at: string
-}
-
-export interface MaterialReceipt {
-    id: string
-    request_id: string
-    project_id: string
-    receipt_date: string
-    delivery_note: string | null
-    received_by: string | null
-    notes: string | null
-    created_at: string
-}
-
-export interface MaterialReceiptItem {
-    id: string
-    receipt_id: string
-    request_item_id: string
-    quantity: number
-    batch_id: string | null
-    created_at: string
-}
-
-export interface MaterialInventory {
-    id: string
-    project_id: string
-    company_id: string
-    material_spec: string
-    quantity_available: number
-    quantity_allocated: number
-    location: string | null
-    source_request_id: string | null
-    created_at: string
-}
-
-export interface MaterialInstance {
-    id: string
-    project_id: string
-    company_id: string
-    qr_code: string
-    material_spec: string
-    source_batch_id: string | null
-    spool_id: string | null
-    request_item_id: string | null
-    status: MaterialInstanceStatusEnum
-    created_at: string
-}
-
-export interface EngineeringRevision {
-    id: string
-    isometric_id: string
-    project_id: string
-    company_id: string
-    rev_code: string
-    revision_status: string
-    transmittal?: string | null
-    announcement_date?: string | null
-    created_at: string
-
-    // Additional fields found in DB/Usage
-    rev_id?: string
-    status?: string // Alias for revision_status?
-    entity_type?: string
-    approved_at?: string | null
-    announced_at?: string | null
-
-    // New status fields (FASE 2A)
-    data_status: DataStatusEnum
-    material_status: MaterialStatusEnum
-
-    // Computed/joined fields
-    iso_number?: string
-    welds_count?: number
-    spools_count?: number
-    glb_model_url?: string | null
-    model_data?: any
-}
-
-export interface StructureModel {
-    id: string
-    project_id: string
-    name: string
-    area: string | null
-    model_url: string
-    // Spatial metadata (extracted from GLB)
-    position_x?: number | null
-    position_y?: number | null
-    position_z?: number | null
-    rotation_x?: number | null
-    rotation_y?: number | null
-    rotation_z?: number | null
-    scale_x?: number | null
-    scale_y?: number | null
-    scale_z?: number | null
-    metadata?: Record<string, any> | null  // Additional GLB metadata (bounding box, etc)
-    created_at: string
-    updated_at?: string
 }
 
 /**
- * Spatial transform in Three.js-compatible format
+ * SpoolStatus - Configurable spool workflow statuses per company
  */
-export interface SpatialTransform {
-    position: { x: number; y: number; z: number }
-    rotation: { x: number; y: number; z: number }
-    scale: { x: number; y: number; z: number }
+export interface SpoolStatus {
+    id: string
+    company_id: string
+    name: string  // E.g., "Fabricación", "Listo para Montaje"
+    color: string  // HEX color for UI
+    sequence: number  // Order in workflow
+    is_initial: boolean  // True for starting state
+    is_final: boolean  // True for terminal state
+    created_at: string
+    updated_at: string
 }
 
-// Phase 6: Weld Type Configuration (Union Types)
-export interface WeldTypeConfig {
+// ===== FABRICATION TRACKING =====
+
+/**
+ * FabricationEvent - Records progress in the fabrication workflow
+ */
+export interface FabricationEvent {
+    id: string
+    spool_id: string
+    status_id: string  // FK to spool_statuses
+    notes: string | null
+    created_by: string
+    created_at: string
+}
+
+// ===== WELDS =====
+
+/**
+ * WeldType - Types of welds (configurable per company)
+ */
+export interface WeldType {
+    id: string
+    company_id: string
+    name: string  // E.g., "BW" (Butt Weld), "SW" (Socket Weld)
+    created_at: string
+}
+
+/**
+ * Weld - Represents a weld joint in a spool
+ */
+export interface Weld {
+    id: string
+    spool_id: string
+    weld_id: string  // Business ID (e.g., "W-001")
+    weld_type_id: string  // FK to weld_types
+    created_at: string
+}
+
+/**
+ * WeldQualityTest - Quality control test for a weld
+ */
+export interface WeldQualityTest {
+    id: string
+    weld_id: string
+    test_type: 'visual' | 'radiography' | 'ultrasonic' | 'penetrant' | 'magnetic'
+    result: 'passed' | 'failed' | 'pending'
+    notes: string | null
+    tested_by: string
+    created_at: string
+}
+
+// ===== DISPATCH TRACKING =====
+
+/**
+ * DispatchEvent - Tracks when spools are dispatched to site
+ */
+export interface DispatchEvent {
+    id: string
+    spool_id: string
+    dispatch_date: string
+    destination: string | null
+    notes: string | null
+    created_by: string
+    created_at: string
+}
+
+// ===== REVISIONS (CHANGE MANAGEMENT) =====
+
+/**
+ * EntityType - Types of entities that can have revisions
+ */
+export type RevisionEntityType = 'isometric' | 'line' | 'spool'
+
+/**
+ * RevisionStatusEnum
+ */
+export enum RevisionStatusEnum {
+    PENDING_REVIEW = 'pending_review',
+    ACTIVE = 'active',
+    SUPERSEDED = 'superseded',
+    ARCHIVED = 'archived'
+}
+
+/**
+ * RevisionOccupancyEnum
+ */
+export enum RevisionOccupancyEnum {
+    CURRENT = 'CURRENT',
+    ARCHIVED = 'ARCHIVED'
+}
+
+/**
+ * RevisionEventTypeEnum
+ */
+export enum RevisionEventTypeEnum {
+    CREATION = 'CREATION',
+    FILE_UPLOAD = 'FILE_UPLOAD',
+    STATUS_CHANGE = 'STATUS_CHANGE',
+    APPROVAL = 'APPROVAL',
+    REJECTION = 'REJECTION'
+}
+
+/**
+ * ImpactTypeEnum
+ */
+export enum ImpactTypeEnum {
+    MAJOR_DIMENSION_CHANGE = 'MAJOR_DIMENSION_CHANGE',
+    MINOR_CORRECTION = 'MINOR_CORRECTION',
+    MATERIAL_SUBSTITUTION = 'MATERIAL_SUBSTITUTION',
+    SPEC_CLARIFICATION = 'SPEC_CLARIFICATION'
+}
+
+/**
+ * ImpactSeverityEnum
+ */
+export enum ImpactSeverityEnum {
+    LOW = 'LOW',
+    MEDIUM = 'MEDIUM',
+    HIGH = 'HIGH',
+    CRITICAL = 'CRITICAL'
+}
+
+/**
+ * ResolutionTypeEnum
+ */
+export enum ResolutionTypeEnum {
+    INCORPORATE_AS_IS = 'INCORPORATE_AS_IS',
+    MODIFY_EXISTING = 'MODIFY_EXISTING',
+    REWORK_REQUIRED = 'REWORK_REQUIRED',
+    SCRAP_REPLACE = 'SCRAP_REPLACE'
+}
+
+/**
+ * Revision - Tracks revisions to isometrics, lines, spools, etc.
+ */
+export interface Revision {
     id: string
     project_id: string
     company_id: string
-    type_code: string // BW, SW, TW, FL, GR, etc.
-    type_name_es: string
-    type_name_en?: string | null
-    requires_welder: boolean
-    icon: string
-    color: string
+    rev_id: string  // Business ID (e.g., "R1", "R2")
+    entity_type: RevisionEntityType
+    entity_id: string  // FK to isometrics, lines, spools, etc.
+    status: RevisionStatusEnum
+    occupancy: RevisionOccupancyEnum
+    description: string | null
+    created_by: string
     created_at: string
     updated_at: string
 }
@@ -616,4 +467,103 @@ export interface CreateMaterialReceiptParams {
         quantity: number
         batch_id?: string
     }[]
+}
+
+// ===== PROCUREMENT / MATERIALS =====
+
+/**
+ * MaterialRequestTypeEnum - Type of material request
+ */
+export enum MaterialRequestTypeEnum {
+    PURCHASE = 'PURCHASE',
+    WAREHOUSE = 'WAREHOUSE',
+    TRANSFER = 'TRANSFER'
+}
+
+/**
+ * RequestStatusEnum - Status of material request
+ */
+export enum RequestStatusEnum {
+    DRAFT = 'DRAFT',
+    PENDING = 'PENDING',
+    APPROVED = 'APPROVED',
+    PARTIALLY_RECEIVED = 'PARTIALLY_RECEIVED',
+    FULLY_RECEIVED = 'FULLY_RECEIVED',
+    CANCELLED = 'CANCELLED'
+}
+
+/**
+ * MaterialCatalog - Company-specific material catalog
+ */
+export interface MaterialCatalog {
+    id: string
+    company_id: string
+    part_group: string | null
+    spec_code: string | null
+    size_1: string | null
+    size_2: string | null
+    size_3: string | null
+    size_4: string | null
+    sch: string | null
+    description: string
+    unit: string | null
+    created_at: string
+    updated_at: string
+}
+
+/**
+ * MaterialRequest - Request for materials (purchase/warehouse/transfer)
+ */
+export interface MaterialRequest {
+    id: string
+    project_id: string
+    company_id: string
+    request_type: MaterialRequestTypeEnum
+    status: RequestStatusEnum
+    notes: string | null
+    created_by: string
+    approved_by: string | null
+    approved_at: string | null
+    created_at: string
+    updated_at: string
+}
+
+/**
+ * MaterialRequestItem - Line item in a material request
+ */
+export interface MaterialRequestItem {
+    id: string
+    request_id: string
+    material_spec: string
+    quantity_requested: number
+    quantity_received: number
+    spool_id: string | null
+    isometric_id: string | null
+    notes: string | null
+    created_at: string
+}
+
+/**
+ * MaterialReceipt - Receipt of materials
+ */
+export interface MaterialReceipt {
+    id: string
+    request_id: string
+    delivery_note: string | null
+    received_by: string
+    received_at: string
+    created_at: string
+}
+
+/**
+ * MaterialReceiptItem - Line item in a material receipt
+ */
+export interface MaterialReceiptItem {
+    id: string
+    receipt_id: string
+    request_item_id: string
+    quantity: number
+    batch_id: string | null
+    notes: string | null
+    created_at: string
 }
