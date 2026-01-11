@@ -22,6 +22,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
     const [formData, setFormData] = useState({
         name: '',
         slug: '',
+        subscription_tier: 'starter',
         custom_users_limit: '' as string | number,
         custom_projects_limit: '' as string | number
     })
@@ -42,6 +43,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
             setFormData({
                 name: companyData.name,
                 slug: companyData.slug,
+                subscription_tier: companyData.subscription_tier || 'starter',
                 custom_users_limit: companyData.custom_users_limit ?? '',
                 custom_projects_limit: companyData.custom_projects_limit ?? ''
             })
@@ -275,6 +277,27 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                         </div>
                     </div>
 
+                    <div className="form-field">
+                        <label htmlFor="subscription_tier" className="form-label" style={{ color: '#60a5fa' }}>
+                            Plan de Suscripción *
+                        </label>
+                        <select
+                            id="subscription_tier"
+                            required
+                            disabled={!isEditing}
+                            value={formData.subscription_tier}
+                            onChange={(e) => setFormData({ ...formData, subscription_tier: e.target.value as any })}
+                            className="form-input"
+                            style={{ borderColor: '#60a5fa' }}
+                        >
+                            <option value="starter">Starter</option>
+                            <option value="pro">Pro</option>
+                            <option value="enterprise">Enterprise</option>
+                        </select>
+                        <p className="form-hint">Determina los límites base y el costo.</p>
+                    </div>
+
+
                     {/* Custom Limits Section */}
                     <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                         <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#f59e0b', marginBottom: '1rem' }}>⚡ Límites Personalizados (Overrides)</h3>
@@ -342,7 +365,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                         </div>
                     )}
                 </form>
-            </div>
-        </div>
+            </div >
+        </div >
     )
 }

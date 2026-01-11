@@ -9,6 +9,42 @@ export type Json =
 export type Database = {
     public: {
         Tables: {
+            subscription_plans: {
+                Row: {
+                    created_at: string | null
+                    features: Json | null
+                    id: string
+                    max_projects: number
+                    max_spools: number | null
+                    max_storage_gb: number | null
+                    max_users: number
+                    name: string
+                    price_monthly: number
+                }
+                Insert: {
+                    created_at?: string | null
+                    features?: Json | null
+                    id: string
+                    max_projects: number
+                    max_spools?: number | null
+                    max_storage_gb?: number | null
+                    max_users: number
+                    name: string
+                    price_monthly: number
+                }
+                Update: {
+                    created_at?: string | null
+                    features?: Json | null
+                    id?: string
+                    max_projects?: number
+                    max_spools?: number | null
+                    max_storage_gb?: number | null
+                    max_users?: number
+                    name?: string
+                    price_monthly?: number
+                }
+                Relationships: []
+            }
             companies: {
                 Row: {
                     created_at: string | null
@@ -16,6 +52,7 @@ export type Database = {
                     name: string
                     payment_instructions: string | null
                     slug: string
+                    storage_used_bytes: number | null
                     subscription_end_date: string | null
                     subscription_status:
                     | Database["public"]["Enums"]["subscription_status"]
@@ -32,6 +69,7 @@ export type Database = {
                     name: string
                     payment_instructions?: string | null
                     slug: string
+                    storage_used_bytes?: number | null
                     subscription_end_date?: string | null
                     subscription_status?:
                     | Database["public"]["Enums"]["subscription_status"]
@@ -48,6 +86,7 @@ export type Database = {
                     name?: string
                     payment_instructions?: string | null
                     slug?: string
+                    storage_used_bytes?: number | null
                     subscription_end_date?: string | null
                     subscription_status?:
                     | Database["public"]["Enums"]["subscription_status"]
@@ -66,21 +105,27 @@ export type Database = {
                     created_at: string
                     date: string
                     id: string
-                    spool_count: number
+                    resource_type: string | null
+                    spool_count: number | null
+                    usage_value: number | null
                 }
                 Insert: {
                     company_id: string
                     created_at?: string
                     date?: string
                     id?: string
-                    spool_count: number
+                    resource_type?: string | null
+                    spool_count?: number | null
+                    usage_value?: number | null
                 }
                 Update: {
                     company_id?: string
                     created_at?: string
                     date?: string
                     id?: string
-                    spool_count?: number
+                    resource_type?: string | null
+                    spool_count?: number | null
+                    usage_value?: number | null
                 }
                 Relationships: [
                     {
@@ -193,42 +238,6 @@ export type Database = {
                         referencedColumns: ["id"]
                     },
                 ]
-            }
-            subscription_plans: {
-                Row: {
-                    created_at: string | null
-                    features: Json | null
-                    id: string
-                    max_projects: number
-                    max_spools: number | null
-                    max_storage_gb: number | null
-                    max_users: number
-                    name: string
-                    price_monthly: number
-                }
-                Insert: {
-                    created_at?: string | null
-                    features?: Json | null
-                    id: string
-                    max_projects: number
-                    max_spools?: number | null
-                    max_storage_gb?: number | null
-                    max_users: number
-                    name: string
-                    price_monthly: number
-                }
-                Update: {
-                    created_at?: string | null
-                    features?: Json | null
-                    id?: string
-                    max_projects?: number
-                    max_spools?: number | null
-                    max_storage_gb?: number | null
-                    max_users?: number
-                    name?: string
-                    price_monthly?: number
-                }
-                Relationships: []
             }
             system_notifications: {
                 Row: {

@@ -51,7 +51,6 @@
 }
 
 .sidebar-badge {
-    margin-left: auto;
     font-size: 0.5625rem;
     padding: 0.125rem 0.5rem;
     border-radius: 9999px;
@@ -71,6 +70,30 @@
     background: rgba(59, 130, 246, 0.1);
     color: #93c5fd;
     border-color: rgba(59, 130, 246, 0.2);
+}
+
+/* PLAN TIERS */
+.sidebar-badge.plan-tier {
+    margin-left: 0 !important;
+}
+
+.sidebar-badge.plan-tier.starter {
+    background: rgba(148, 163, 184, 0.1);
+    color: #cbd5e1;
+    border-color: rgba(148, 163, 184, 0.2);
+}
+
+.sidebar-badge.plan-tier.pro {
+    background: rgba(234, 179, 8, 0.1);
+    color: #fde047;
+    border-color: rgba(234, 179, 8, 0.3);
+    box-shadow: 0 2px 5px rgba(234, 179, 8, 0.05);
+}
+
+.sidebar-badge.plan-tier.enterprise {
+    background: rgba(239, 68, 68, 0.1);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.3);
 }
 
 /* ===== Navigation ===== */

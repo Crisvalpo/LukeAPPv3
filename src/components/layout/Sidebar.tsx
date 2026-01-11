@@ -37,6 +37,7 @@ export default function Sidebar({ role }: SidebarProps) {
     const [openItems, setOpenItems] = useState<Record<string, boolean>>({})
     const [user, setUser] = useState<{ email?: string } | null>(null)
     const [companyName, setCompanyName] = useState<string | null>(null)
+    const [planTier, setPlanTier] = useState<string | null>(null)
 
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -49,16 +50,23 @@ export default function Sidebar({ role }: SidebarProps) {
             const { data: { user } } = await supabase.auth.getUser()
             setUser(user)
 
-            if (user && role === 'founder') {
+            if (user && role !== 'super_admin') {
                 const { data: member } = await supabase
                     .from('members')
-                    .select('companies(name)')
+                    .select(`
+                        companies (
+                            name,
+                            subscription_tier
+                        )
+                    `)
                     .eq('user_id', user.id)
                     .maybeSingle()
 
                 if (member?.companies) {
-                    // @ts-ignore - Supabase type inference might be tricky here with join
+                    // @ts-ignore
                     setCompanyName(member.companies.name)
+                    // @ts-ignore
+                    setPlanTier(member.companies.subscription_tier)
                 }
             }
         }
@@ -110,12 +118,21 @@ export default function Sidebar({ role }: SidebarProps) {
                 <div className="sidebar-brand-container">
                     <span className="sidebar-logo">LukeAPP</span>
                     {companyName && role === 'founder' && (
-                        <span className="sidebar-company-name">{companyName}</span>
+                        <div className="flex flex-col">
+                            <span className="sidebar-company-name">{companyName}</span>
+                        </div>
                     )}
                 </div>
-                <span className={`sidebar-badge ${role === 'super_admin' ? 'staff' : 'management'}`}>
-                    {role === 'super_admin' ? 'STAFF' : role.toUpperCase()}
-                </span>
+                <div className="sidebar-badges-row" style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    <span className={`sidebar-badge ${role === 'super_admin' ? 'staff' : 'management'}`}>
+                        {role === 'super_admin' ? 'STAFF' : role.toUpperCase()}
+                    </span>
+                    {planTier && role !== 'super_admin' && (
+                        <span className={`sidebar-badge plan-tier ${planTier}`}>
+                            {planTier.toUpperCase()}
+                        </span>
+                    )}
+                </div>
             </div>
 
             {/* Navigation */}

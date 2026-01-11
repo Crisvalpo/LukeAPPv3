@@ -61,6 +61,7 @@ export default function PlansManager() {
                 price_monthly: tempPlan.price_monthly,
                 max_users: tempPlan.max_users,
                 max_projects: tempPlan.max_projects,
+                max_spools: tempPlan.max_spools,
                 max_storage_gb: tempPlan.max_storage_gb,
                 features: tempPlan.features
             })
@@ -191,6 +192,23 @@ export default function PlansManager() {
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* Max Spools */}
+                                    <div>
+                                        <label className="form-label">Spools</label>
+                                        {isEditing ? (
+                                            <input
+                                                type="number"
+                                                value={currentData.max_spools || 0}
+                                                onChange={(e) => handleInputChange('max_spools', parseInt(e.target.value) || 0)}
+                                                className="form-input"
+                                            />
+                                        ) : (
+                                            <div className="metric-value">
+                                                {(!currentData.max_spools || currentData.max_spools === 999999) ? 'Ilimitado' : currentData.max_spools}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                                 {/* Storage */}
                                 <div>
@@ -199,8 +217,9 @@ export default function PlansManager() {
                                         <div className="input-with-suffix">
                                             <input
                                                 type="number"
-                                                value={currentData.max_storage_gb}
-                                                onChange={(e) => handleInputChange('max_storage_gb', parseInt(e.target.value) || 0)}
+                                                step="0.01"
+                                                value={currentData.max_storage_gb || 0}
+                                                onChange={(e) => handleInputChange('max_storage_gb', parseFloat(e.target.value) || 0)}
                                                 className="form-input"
                                                 style={{ paddingRight: '2.5rem' }}
                                             />

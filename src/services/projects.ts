@@ -101,6 +101,35 @@ export async function createProject(params: CreateProjectParams) {
             }
         }
 
+        // Check Project Limits
+        const { data: company } = await supabase
+            .from('companies')
+            .select(`
+                custom_projects_limit,
+                subscription_plans (
+                    max_projects
+                )
+            `)
+            .eq('id', params.company_id)
+            .single()
+
+        if (company) {
+            // @ts-ignore
+            const maxProjects = company.custom_projects_limit ?? company.subscription_plans?.max_projects ?? 999
+
+            const { count } = await supabase
+                .from('projects')
+                .select('id', { count: 'exact', head: true })
+                .eq('company_id', params.company_id)
+
+            if (count !== null && count >= maxProjects) {
+                return {
+                    success: false,
+                    message: `Límite de proyectos alcanzado (${count}/${maxProjects}). Actualiza tu plan o contacta a soporte.`
+                }
+            }
+        }
+
         const { data, error } = await supabase
             .from('projects')
             .insert({
