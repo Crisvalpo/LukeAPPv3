@@ -23,8 +23,9 @@ export default function CompaniesPage() {
 
     async function loadCompanies() {
         setLoading(true)
-        const data = await getAllCompanies()
-        setCompanies(data)
+        const allCompanies = await getAllCompanies()
+        // Filter out the main system company 'lukeapp-hq'
+        setCompanies(allCompanies.filter(c => c.slug !== 'lukeapp-hq'))
         setLoading(false)
     }
 
@@ -77,10 +78,13 @@ export default function CompaniesPage() {
                         // Ideally, slugs are auto-generated.
                         // For now we will auto-generate it here as we did before.
 
-                        const name = data.name as string
+                        const formData = data as any
+                        const name = formData.name as string
                         const slug = generateSlug(name)
+                        const subscription_tier = formData.subscription_tier
+                        const initial_months = formData.initial_months ? Number(formData.initial_months) : undefined
 
-                        const result = await createCompany({ name, slug })
+                        const result = await createCompany({ name, slug, subscription_tier, initial_months })
 
                         if (result.success) {
                             setSuccess(true)

@@ -52,13 +52,16 @@ export type SubscriptionTierType = typeof SubscriptionTier[keyof typeof Subscrip
 // ===== SUBSCRIPTION TYPES =====
 
 export interface SubscriptionPlan {
-    id: string
+    id: string // 'starter', 'pro', 'enterprise'
     name: string
+    description?: string
     price_monthly: number
     max_users: number
     max_projects: number
     max_spools: number | null
+    max_storage_gb: number
     features: string[]
+    is_active: boolean
     created_at: string
 }
 
@@ -91,6 +94,8 @@ export interface Company {
     payment_instructions: string | null
     created_at: string
     updated_at: string
+    custom_users_limit?: number | null
+    custom_projects_limit?: number | null
 }
 
 export interface Project {
@@ -566,4 +571,53 @@ export interface MaterialReceiptItem {
     batch_id: string | null
     notes: string | null
     created_at: string
+}
+
+// ===== API RESPONSES =====
+
+export interface ApiResponse<T = any> {
+    success: boolean
+    message?: string
+    data?: T
+    error?: any
+}
+
+// ===== STRUCTURE MODELS =====
+
+export interface StructureModel {
+    id: string
+    project_id: string
+    name: string
+    area?: string
+    model_url: string
+    position_x?: number
+    position_y?: number
+    position_z?: number
+    rotation_x?: number
+    rotation_y?: number
+    rotation_z?: number
+    scale_x?: number
+    scale_y?: number
+    scale_z?: number
+    metadata?: any
+    created_at: string
+}
+
+// ===== ENGINEERING REVISIONS =====
+
+export interface EngineeringRevision {
+    id: string
+    isometric_id: string
+    project_id: string
+    company_id: string
+    rev_code: string
+    revision_status: string
+    transmittal?: string
+    announcement_date?: string
+    created_at: string
+    glb_model_url?: string
+    model_data?: any
+    iso_number?: string // Joined
+    welds_count?: number // Counted
+    spools_count?: number // Counted
 }

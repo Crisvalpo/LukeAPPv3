@@ -101,6 +101,20 @@ export function FormView<T extends Record<string, any>>({
                                     placeholder={def.label}
                                     disabled={isSubmitting}
                                 />
+                            ) : def.type === 'select' ? (
+                                <select
+                                    className={`form-input ${errors[key] ? 'has-error' : ''}`}
+                                    value={formData[key as keyof T] as string || ''}
+                                    onChange={(e) => handleChange(key, e.target.value)}
+                                    disabled={isSubmitting}
+                                >
+                                    <option value="" disabled>Seleccionar {def.label}</option>
+                                    {def.options?.map(option => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
                             ) : (
                                 <input
                                     type="text"

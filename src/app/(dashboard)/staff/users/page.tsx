@@ -72,6 +72,12 @@ export default function StaffUsersPage() {
     }
 
     async function handleDeleteMember(memberId: string) {
+        const member = members.find(m => m.id === memberId)
+        if (member?.role_id === 'super_admin') {
+            alert('❌ No se puede eliminar al Super Admin desde la interfaz.')
+            return
+        }
+
         if (!confirm('¿Estás seguro de eliminar este usuario de la empresa? Perderá todos sus accesos.')) {
             return
         }

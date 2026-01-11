@@ -1,0 +1,158 @@
+/* src/styles/staff-payments.css */
+
+.payments-table-container {
+    margin-top: 2rem;
+}
+
+.payments-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.payments-table th {
+    padding: 1rem;
+    text-align: left;
+    color: #94a3b8;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-weight: 600;
+}
+
+.payments-table td {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: #cbd5e1;
+}
+
+.payments-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Specific Columns */
+.company-cell {
+    color: white;
+    font-weight: 500;
+}
+
+.company-cell-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.plan-cell {
+    color: #94a3b8;
+    text-transform: capitalize;
+}
+
+.date-cell {
+    color: #94a3b8;
+    font-family: inherit;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+/* Status Badges */
+.status-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+
+.status-badge-active {
+    color: #4ade80;
+}
+
+.status-badge-past-due {
+    color: #fbbf24;
+}
+
+.status-badge-suspended {
+    color: #ef4444;
+}
+
+/* Modal Styles */
+.payment-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease-out;
+}
+
+.payment-modal-content {
+    max-width: 500px;
+    width: 90%;
+    /* Usage of .card class expected for base styles */
+}
+
+.payment-modal-title {
+    color: white;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.payment-modal-subtitle {
+    color: #94a3b8;
+    margin-bottom: 1.5rem;
+}
+
+.payment-modal-subtitle strong {
+    color: white;
+}
+
+.payment-modal-label {
+    display: block;
+    color: #94a3b8;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.payment-modal-select {
+    width: 100%;
+    padding: 0.75rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    color: white;
+    margin-bottom: 1.5rem;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.payment-modal-select:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+}
+
+.payment-modal-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.payment-modal-btn-confirm {
+    flex: 1;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}

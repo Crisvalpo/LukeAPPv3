@@ -17,6 +17,7 @@ interface Company {
 
 interface ProjectWithStats extends Project {
     members_count: number
+    current_week?: string
 }
 
 export default function StaffProjectsPage() {
@@ -44,7 +45,9 @@ export default function StaffProjectsPage() {
             .order('name')
 
         if (data) {
-            setCompanies(data.map(c => ({ id: c.id, name: c.name, code: c.slug })))
+            // Filter out system companies like lukeapp-hq
+            const filteredCompanies = data.filter(c => c.slug !== 'lukeapp-hq')
+            setCompanies(filteredCompanies.map(c => ({ id: c.id, name: c.name, code: c.slug })))
         }
         setIsLoading(false)
     }

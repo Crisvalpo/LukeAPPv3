@@ -6,6 +6,7 @@ import LogoCanvas from './LogoCanvas'
 
 interface ProjectLogosManagerProps {
     projectId: string
+    companyId: string
     primaryLogoUrl?: string | null
     secondaryLogoUrl?: string | null
     onUpdate: () => void
@@ -15,6 +16,7 @@ type LogoType = 'primary' | 'secondary'
 
 export default function ProjectLogosManager({
     projectId,
+    companyId,
     primaryLogoUrl: initialPrimary,
     secondaryLogoUrl: initialSecondary,
     onUpdate,
@@ -52,21 +54,31 @@ export default function ProjectLogosManager({
         try {
             // Generate filename
             const timestamp = Date.now()
-            const fileName = `${projectId}_${editingLogo}_${timestamp}.png`
+            const fileName = `${editingLogo}_${timestamp}.png`
+
+            // Path: {company_id}/{project_id}/logos/{filename}
+            const storagePath = `${companyId}/${projectId}/logos/${fileName}`
 
             // Delete old logo if exists
             const oldUrl = editingLogo === 'primary' ? primaryLogo : secondaryLogo
             if (oldUrl) {
-                const oldPath = oldUrl.split('/').pop()
-                if (oldPath) {
-                    await supabase.storage.from('project-logos').remove([oldPath])
+                try {
+                    // Try delete from new bucket first
+                    if (oldUrl.includes('/project-files/')) {
+                        const pathParts = oldUrl.split('/project-files/')
+                        if (pathParts.length > 1) {
+                            await supabase.storage.from('project-files').remove([decodeURIComponent(pathParts[1])])
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Error deleting old logo', e)
                 }
             }
 
             // Upload new cropped image
             const { data, error: uploadError } = await supabase.storage
-                .from('project-logos')
-                .upload(fileName, croppedBlob, {
+                .from('project-files')
+                .upload(storagePath, croppedBlob, {
                     cacheControl: '3600',
                     upsert: false,
                 })
@@ -75,8 +87,8 @@ export default function ProjectLogosManager({
 
             // Get public URL
             const { data: { publicUrl } } = supabase.storage
-                .from('project-logos')
-                .getPublicUrl(fileName)
+                .from('project-files')
+                .getPublicUrl(storagePath)
 
             // Update project in database
             const updateData = editingLogo === 'primary'
@@ -130,9 +142,16 @@ export default function ProjectLogosManager({
 
             // Delete from storage
             if (logoUrl) {
-                const path = logoUrl.split('/').pop()
-                if (path) {
-                    await supabase.storage.from('project-logos').remove([path])
+                try {
+                    // Try delete from new bucket first
+                    if (logoUrl.includes('/project-files/')) {
+                        const pathParts = logoUrl.split('/project-files/')
+                        if (pathParts.length > 1) {
+                            await supabase.storage.from('project-files').remove([decodeURIComponent(pathParts[1])])
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Error deleting logo', e)
                 }
             }
 

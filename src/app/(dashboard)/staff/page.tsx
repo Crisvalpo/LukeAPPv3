@@ -37,7 +37,8 @@ export default function StaffDashboard() {
         ])
 
         setStats(statsData)
-        setRecentCompanies(companiesData)
+        // Filter out the system company 'lukeapp-hq'
+        setRecentCompanies(companiesData.filter(c => c.slug !== 'lukeapp-hq'))
         setPendingInvitations(invitationsData.slice(0, 5)) // Last 5
         setIsLoading(false)
     }

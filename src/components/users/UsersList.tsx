@@ -120,13 +120,15 @@ export default function UsersList({ users, onDelete, context }: UsersListProps) 
                                 </td>
                                 {onDelete && (
                                     <td>
-                                        <button
-                                            onClick={() => onDelete(member.id)}
-                                            className="action-button delete"
-                                            title="Eliminar usuario"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
+                                        {member.role_id !== 'super_admin' && (
+                                            <button
+                                                onClick={() => onDelete(member.id)}
+                                                className="action-button delete"
+                                                title="Eliminar usuario"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
                                     </td>
                                 )}
                             </tr>

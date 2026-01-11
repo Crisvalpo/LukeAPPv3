@@ -897,7 +897,7 @@ export default function IsometricRevisionCard({
         setUploadInputRevId(revId === uploadInputRevId ? null : revId)
     }
 
-    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>, revId: string, isoNumber: string, revCode: string) => {
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>, revId: string, isoNumber: string, revCode: string, companyId: string, projectId: string) => {
         const file = event.target.files?.[0]
         if (!file) return
 
@@ -912,12 +912,15 @@ export default function IsometricRevisionCard({
             const uniqueSuffix = Math.random().toString(36).substring(2, 7)
             const newFileName = `${isoNumber}-${revCode}-${uniqueSuffix}.glb`
 
-            // 2. Upload to Supabase Storage
+            // 2. Upload to Supabase Storage (New 'project-files' bucket)
+            // Path: {company_id}/{project_id}/isometric-models/{filename}
+            const storagePath = `${companyId}/${projectId}/isometric-models/${newFileName}`
+
             const supabase = createClient()
             const { data, error: uploadError } = await supabase
                 .storage
-                .from('isometric-models')
-                .upload(newFileName, file, {
+                .from('project-files')
+                .upload(storagePath, file, {
                     cacheControl: '3600',
                     upsert: true
                 })
@@ -930,8 +933,8 @@ export default function IsometricRevisionCard({
             // Get Public URL
             const { data: { publicUrl } } = supabase
                 .storage
-                .from('isometric-models')
-                .getPublicUrl(newFileName)
+                .from('project-files')
+                .getPublicUrl(storagePath)
 
             // 3. Update Revision Record (Server Action)
             const result = await updateRevisionModelUrlAction(revId, publicUrl)
@@ -1165,7 +1168,7 @@ export default function IsometricRevisionCard({
                                                                 type="file"
                                                                 accept=".glb"
                                                                 className="text-xs text-white"
-                                                                onChange={(e) => handleFileChange(e, rev.id, isoNumber, rev.rev_code)}
+                                                                onChange={(e) => handleFileChange(e, rev.id, isoNumber, rev.rev_code, rev.company_id, rev.project_id)}
                                                             />
                                                             <button onClick={() => setUploadInputRevId(null)} style={{ marginLeft: '5px', color: '#ef4444' }}>✕</button>
                                                         </div>

@@ -177,7 +177,9 @@ export default function StaffInvitationsPage() {
                         invitations={invitations}
                         companyName={selectedCompany.name}
                         requireProject={false} // CRITICAL: Disable project requirement
-                        roleOptions={[
+                        roleOptions={selectedCompany.code === 'lukeapp-hq' ? [
+                            { value: 'super_admin', label: 'Super Admin', description: 'Acceso total a la plataforma y todos sus recursos.' }
+                        ] : [
                             { value: 'founder', label: 'Fundador / Dueño', description: 'Acceso total a la empresa, facturación y gestión de proyectos.' }
                         ]}
                         onInvite={handleInvite}

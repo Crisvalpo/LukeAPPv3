@@ -115,7 +115,8 @@ export async function updateCompanySubscription(
 
 export async function registerManualPayment(
     companyId: string,
-    monthsExtension: number
+    monthsExtension: number,
+    newTier?: SubscriptionTierType
 ): Promise<{ success: boolean; error?: string }> {
     const supabase = createClient()
 
@@ -138,14 +139,21 @@ export async function registerManualPayment(
 
     baseDate.setMonth(baseDate.getMonth() + monthsExtension)
 
+    // Prepare update object
+    const updateData: any = {
+        subscription_status: 'active',
+        subscription_end_date: baseDate.toISOString(),
+        suspended_at: null // Clear suspension timestamp when reactivating
+    }
+
+    if (newTier) {
+        updateData.subscription_tier = newTier
+    }
+
     // Update company subscription
     const { error: updateError } = await supabase
         .from('companies')
-        .update({
-            subscription_status: 'active',
-            subscription_end_date: baseDate.toISOString(),
-            suspended_at: null // Clear suspension timestamp when reactivating
-        })
+        .update(updateData)
         .eq('id', companyId)
 
     if (updateError) {
@@ -165,6 +173,7 @@ export interface CompanyWithSubscription {
     subscription_status: SubscriptionStatusType
     subscription_tier: SubscriptionTierType
     subscription_end_date: string | null
+    suspended_at: string | null
     created_at: string
 }
 
@@ -173,7 +182,7 @@ export async function getCompaniesWithSubscription(): Promise<CompanyWithSubscri
 
     const { data, error } = await supabase
         .from('companies')
-        .select('id, name, slug, subscription_status, subscription_tier, subscription_end_date, created_at')
+        .select('id, name, slug, subscription_status, subscription_tier, subscription_end_date, suspended_at, created_at')
         .order('created_at', { ascending: false })
 
     if (error) {

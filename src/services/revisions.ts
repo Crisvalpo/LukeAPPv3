@@ -484,27 +484,31 @@ export async function deleteRevisionModelUrl(
 
         // 2. Try to delete the file from storage (requires admin privileges)
         // Extract filename from URL: .../isometric-models/iso-123-A.glb?token...
+        // 2. Try to delete the file from storage (requires admin privileges)
         try {
             const urlObj = new URL(modelUrl)
-            const pathParts = urlObj.pathname.split('/isometric-models/')
-            if (pathParts.length > 1) {
-                const filePath = decodeURIComponent(pathParts[1])
 
-                // Import admin client for storage deletion
-                const { createAdminClient } = await import('@/lib/supabase/server')
-                const adminClient = createAdminClient()
+            // CASE A: New 'project-files' bucket URL
+            // Path: .../project-files/{company_id}/{project_id}/isometric-models/{filename}
+            if (modelUrl.includes('/project-files/')) {
+                const pathParts = urlObj.pathname.split('/project-files/')
+                if (pathParts.length > 1) {
+                    const filePath = decodeURIComponent(pathParts[1])
 
-                const { error: storageError } = await adminClient
-                    .storage
-                    .from('isometric-models')
-                    .remove([filePath])
+                    const { createAdminClient } = await import('@/lib/supabase/server')
+                    const adminClient = createAdminClient()
 
-                if (storageError) {
-                    console.error('Storage deletion failed:', storageError)
-                    console.error('Attempted to delete file path:', filePath)
-                } else {
-                    console.log('Storage file deleted successfully:', filePath)
+                    const { error: storageError } = await adminClient
+                        .storage
+                        .from('project-files')
+                        .remove([filePath])
+
+                    if (storageError) {
+                        console.error('Storage deletion failed (project-files):', storageError)
+                    }
                 }
+            } else {
+                console.warn('Skipping storage deletion for non-standard URL:', modelUrl)
             }
         } catch (parseError) {
             console.warn('Could not parse URL for file deletion:', modelUrl)

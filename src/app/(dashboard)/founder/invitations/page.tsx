@@ -116,7 +116,7 @@ export default function FounderInvitationsPage() {
                     projects={projects}
                     invitations={invitations}
                     companyName={companyName}
-                    roleOptions={ROLE_OPTIONS}
+                    roleOptions={ROLE_OPTIONS.filter(r => r.value !== 'super_admin' && r.value !== 'founder')} // Double check security
                     onInvite={handleInvite}
                     onRevoke={handleRevoke}
                 />

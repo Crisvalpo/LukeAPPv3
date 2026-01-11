@@ -117,6 +117,33 @@ export async function createProject(params: CreateProjectParams) {
 
         if (error) throw error
 
+        // Create storage folder structure in 'project-files' bucket
+        // This ensures folders exist for future uploads
+        if (data) {
+            try {
+                const basePath = `${params.company_id}/${data.id}`
+                const folders = ['logos', 'structure-models', 'isometric-models', 'drawings', 'photos']
+
+                // Upload a placeholder .keep file to each folder to initialize it
+                // Supabase Storage creates folders on demand when files are uploaded
+                const filePromises = folders.map(folder =>
+                    supabase.storage
+                        .from('project-files')
+                        .upload(`${basePath}/${folder}/.keep`, new Blob(['']), {
+                            upsert: true
+                        })
+                )
+
+                // We don't await this to avoid slowing down the response
+                // It runs in the background
+                Promise.all(filePromises).catch(err =>
+                    console.warn('Error creating storage folders:', err)
+                )
+            } catch (storageError) {
+                console.warn('Error initiating storage folder creation:', storageError)
+            }
+        }
+
         return {
             success: true,
             message: 'Proyecto creado exitosamente',
@@ -204,50 +231,44 @@ export async function deleteProjectComplete(
 
     try {
         // ==========================================
-        // STORAGE CLEANUP - Current Structure
+        // STORAGE CLEANUP - Consolidated Structure
         // ==========================================
-        // TODO: Future structure should be consolidated into single 'project-files' bucket:
-        //   project-files/{company_id}/{project_id}/logos/...
-        //   project-files/{company_id}/{project_id}/structure-models/...
-        //   project-files/{company_id}/{project_id}/isometric-models/...
-        // For now, we clean from 3 separate buckets with different path structures
+        // Bucket: 'project-files'
+        // Structure: {company_id}/{project_id}/...
+        // We attempt to clean the entire project folder.
 
-        const buckets = [
-            { name: 'structure-models', pattern: `${projectId}-` },  // Files: {projectId}-modelname.glb
-            { name: 'isometric-models', pattern: `${projectId}-` },  // Files: {projectId}-isoname.glb
-            { name: 'project-logos', pattern: projectId }             // Folder: {projectId}/filename
-        ]
+        try {
+            const projectPath = `${companyId}/${projectId}`
+            // We need to list contents. Listing at project root might work if files are directly there, 
+            // but usually they are in subfolders.
+            // Known subfolders:
+            const subfolders = ['logos', 'structure-models', 'isometric-models', 'drawings', 'photos']
 
-        for (const bucket of buckets) {
-            try {
-                if (bucket.name === 'project-logos') {
-                    // project-logos uses folder structure: {projectId}/filename
-                    const { data: files } = await supabase.storage
-                        .from(bucket.name)
-                        .list(bucket.pattern, { limit: 1000 })
+            for (const folder of subfolders) {
+                const folderPath = `${projectPath}/${folder}`
+                const { data: files } = await supabase.storage
+                    .from('project-files')
+                    .list(folderPath, { limit: 100 })
 
-                    if (files && files.length > 0) {
-                        const filePaths = files.map(f => `${bucket.pattern}/${f.name}`)
-                        await supabase.storage.from(bucket.name).remove(filePaths)
-                    }
-                } else {
-                    // structure-models and isometric-models use: {projectId}-filename.glb
-                    const { data: files } = await supabase.storage
-                        .from(bucket.name)
-                        .list('', { limit: 1000 })
-
-                    if (files && files.length > 0) {
-                        const projectFiles = files.filter(f => f.name.startsWith(bucket.pattern))
-                        if (projectFiles.length > 0) {
-                            const filePaths = projectFiles.map(f => f.name)
-                            await supabase.storage.from(bucket.name).remove(filePaths)
-                        }
-                    }
+                if (files && files.length > 0) {
+                    const paths = files.map(f => `${folderPath}/${f.name}`)
+                    await supabase.storage.from('project-files').remove(paths)
                 }
-            } catch (storageError) {
-                // Log but don't fail - bucket might not exist or be empty
-                console.warn(`Could not clean ${bucket.name}:`, storageError)
             }
+
+            // Also try cleaning root (for .keep files etc)
+            const { data: rootFiles } = await supabase.storage.from('project-files').list(projectPath)
+            if (rootFiles && rootFiles.length > 0) {
+                const rootPaths = rootFiles
+                    .filter(f => f.name !== '.emptyFolderPlaceholder') // optional filter
+                    .map(f => `${projectPath}/${f.name}`)
+                if (rootPaths.length > 0) {
+                    await supabase.storage.from('project-files').remove(rootPaths)
+                }
+            }
+
+        } catch (storageError) {
+            console.warn('Error cleaning up project-files:', storageError)
         }
 
         // ==========================================

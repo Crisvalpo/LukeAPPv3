@@ -70,6 +70,27 @@ Si un usuario no tiene cargo funcional asignado:
 - Se aplica un perfil funcional genérico según su System Role
 - El sistema nunca bloquea el acceso por falta de configuración
 
+- El sistema nunca bloquea el acceso por falta de configuración
+
+### Políticas de Cuenta (Strict 1:1 Rule)
+
+Para garantizar la seguridad y evitar cuentas compartidas, el sistema impone límites estrictos de asignación:
+
+#### 1. Founders (1 Cuenta = 1 Empresa)
+- Un usuario con rol `founder` **solo puede gestionar una empresa**.
+- Si un Founder necesita gestionar otra empresa, debe usar una cuenta de email diferente o ser desvinculado de la anterior.
+
+#### 2. Staff Operativo (1 Cuenta = 1 Proyecto)
+- Usuarios con roles `admin`, `supervisor` o `worker` **solo pueden pertenecer a un proyecto activo a la vez**.
+- No pueden estar "flotando" entre proyectos ni tener doble militancia.
+
+#### 🏁 Protocolo de Movimiento (Unlink & Invite)
+Para mover a un usuario (ej. Admin) del Proyecto A al Proyecto B:
+1.  **Desvinculación Segura**: El Staff/Founder debe "Eliminar" al usuario del Proyecto A.
+    *   *Nota: Esto NO borra su cuenta Auth, solo quita el acceso.*
+2.  **Nueva Invitación**: Una vez libre, recién puede ser invitado al Proyecto B.
+3.  **Resultado**: El usuario acepta y opera en su nuevo destino con la misma cuenta.
+
 ---
 
 ## 🏗️ Arquitectura

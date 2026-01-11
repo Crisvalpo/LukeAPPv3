@@ -116,11 +116,11 @@ export async function deleteMember(memberId: string): Promise<ApiResponse> {
             throw new Error('Member not found')
         }
 
-        // 2. Call Admin API to delete user account completely
-        const response = await fetch('/api/admin/users/delete', {
+        // 2. Call Admin API to unlink member (Safe Remove)
+        const response = await fetch('/api/admin/members/delete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: member.user_id })
+            body: JSON.stringify({ memberId })
         })
 
         const result = await response.json()
@@ -129,7 +129,7 @@ export async function deleteMember(memberId: string): Promise<ApiResponse> {
             // Handle Config Error (Missing Key)
             if (result.message.includes('CONFIG_ERROR')) {
                 console.warn('⚠️ Server Missing Service Role Key. Falling back to simple member removal.')
-                // Fallback: Just delete the member record
+                // Fallback: Just delete the member record (Client-side attempt)
                 const { error: deleteError } = await supabase
                     .from('members')
                     .delete()
@@ -139,7 +139,7 @@ export async function deleteMember(memberId: string): Promise<ApiResponse> {
 
                 return {
                     success: true,
-                    message: 'Usuario removido de la empresa (Cuenta Auth conservada - Falta Config Servidor)'
+                    message: 'Usuario removido de la empresa (Fallback)'
                 }
             }
             throw new Error(result.message)

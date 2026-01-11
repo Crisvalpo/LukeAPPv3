@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getCompanyById, updateCompany, deleteCompany, getCompanyStats, type Company } from '@/services/companies'
+import { getCompanyById, updateCompany, deleteCompanyCascade, getCompanyStats, type Company } from '@/services/companies'
 import { Building2, Users, FolderKanban, ArrowLeft, Trash2 } from 'lucide-react'
 import '@/styles/dashboard.css'
 import '@/styles/companies.css'
@@ -21,7 +21,9 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
 
     const [formData, setFormData] = useState({
         name: '',
-        slug: ''
+        slug: '',
+        custom_users_limit: '' as string | number,
+        custom_projects_limit: '' as string | number
     })
 
     useEffect(() => {
@@ -37,7 +39,12 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
 
         if (companyData) {
             setCompany(companyData)
-            setFormData({ name: companyData.name, slug: companyData.slug })
+            setFormData({
+                name: companyData.name,
+                slug: companyData.slug,
+                custom_users_limit: companyData.custom_users_limit ?? '',
+                custom_projects_limit: companyData.custom_projects_limit ?? ''
+            })
             setStats(statsData)
         }
 
@@ -50,7 +57,13 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
         setError('')
         setSuccess(false)
 
-        const result = await updateCompany(resolvedParams.id, formData)
+        const updatePayload = {
+            ...formData,
+            custom_users_limit: formData.custom_users_limit === '' ? null : Number(formData.custom_users_limit),
+            custom_projects_limit: formData.custom_projects_limit === '' ? null : Number(formData.custom_projects_limit)
+        }
+
+        const result = await updateCompany(resolvedParams.id, updatePayload)
 
         if (result.success) {
             setSuccess(true)
@@ -64,14 +77,14 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
     }
 
     async function handleDelete() {
-        if (!confirm(`¿Eliminar "${company?.name}"?\n\nEsta acción no se puede deshacer.`)) {
+        if (!confirm(`¿Eliminar "${company?.name}"?\n\nEsta acción intentará eliminar todos los datos de la empresa.\nSolo es posible si la empresa ha estado suspendida por más de 15 días.`)) {
             return
         }
 
         setDeleting(true)
         setError('')
 
-        const result = await deleteCompany(resolvedParams.id)
+        const result = await deleteCompanyCascade(resolvedParams.id)
 
         if (result.success) {
             alert('Empresa eliminada exitosamente')
@@ -95,6 +108,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
 
     function handleNameChange(name: string) {
         setFormData({
+            ...formData,
             name,
             slug: generateSlug(name)
         })
@@ -155,6 +169,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                             </div>
                             <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white' }}>
                                 {stats.projects}
+                                {formData.custom_projects_limit ? <span style={{ fontSize: '1rem', color: '#60a5fa', marginLeft: '0.5rem' }}>/ {formData.custom_projects_limit} (Custom)</span> : null}
                             </div>
                         </div>
                     </div>
@@ -169,6 +184,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                             </div>
                             <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white' }}>
                                 {stats.members}
+                                {formData.custom_users_limit ? <span style={{ fontSize: '1rem', color: '#4ade80', marginLeft: '0.5rem' }}>/ {formData.custom_users_limit} (Custom)</span> : null}
                             </div>
                         </div>
                     </div>
@@ -259,8 +275,50 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                         </div>
                     </div>
 
+                    {/* Custom Limits Section */}
+                    <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                        <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#f59e0b', marginBottom: '1rem' }}>⚡ Límites Personalizados (Overrides)</h3>
+                        <div className="company-form-grid">
+                            <div className="form-field">
+                                <label htmlFor="custom_users_limit" className="form-label" style={{ color: '#fbbf24' }}>
+                                    Máximo Usuarios
+                                </label>
+                                <input
+                                    id="custom_users_limit"
+                                    type="number"
+                                    min="0"
+                                    disabled={!isEditing}
+                                    value={formData.custom_users_limit}
+                                    onChange={(e) => setFormData({ ...formData, custom_users_limit: e.target.value })}
+                                    className="form-input"
+                                    style={{ borderColor: formData.custom_users_limit ? '#f59e0b' : '' }}
+                                    placeholder="Dejar vacío para usar límite del plan"
+                                />
+                                <p className="form-hint">Sobreescribe el límite del Plan</p>
+                            </div>
+
+                            <div className="form-field">
+                                <label htmlFor="custom_projects_limit" className="form-label" style={{ color: '#fbbf24' }}>
+                                    Máximo Proyectos
+                                </label>
+                                <input
+                                    id="custom_projects_limit"
+                                    type="number"
+                                    min="0"
+                                    disabled={!isEditing}
+                                    value={formData.custom_projects_limit}
+                                    onChange={(e) => setFormData({ ...formData, custom_projects_limit: e.target.value })}
+                                    className="form-input"
+                                    style={{ borderColor: formData.custom_projects_limit ? '#f59e0b' : '' }}
+                                    placeholder="Dejar vacío para usar límite del plan"
+                                />
+                                <p className="form-hint">Sobreescribe el límite del Plan</p>
+                            </div>
+                        </div>
+                    </div>
+
                     {isEditing && (
-                        <div style={{ display: 'flex', gap: '1rem' }}>
+                        <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
                             <button type="submit" disabled={submitting} className="form-button">
                                 {submitting ? 'Guardando...' : '💾 Guardar Cambios'}
                             </button>
@@ -268,7 +326,12 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                                 type="button"
                                 onClick={() => {
                                     setIsEditing(false)
-                                    setFormData({ name: company.name, slug: company.slug })
+                                    setFormData({
+                                        name: company.name,
+                                        slug: company.slug,
+                                        custom_users_limit: company.custom_users_limit ?? '',
+                                        custom_projects_limit: company.custom_projects_limit ?? ''
+                                    })
                                     setError('')
                                 }}
                                 className="form-button"

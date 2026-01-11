@@ -635,6 +635,7 @@ export default function ProjectDetailPage() {
                                         <div style={{ maxWidth: '800px' }}>
                                             <ProjectLogosManager
                                                 projectId={projectId}
+                                                companyId={project.company_id}
                                                 primaryLogoUrl={project.logo_primary_url}
                                                 secondaryLogoUrl={project.logo_secondary_url}
                                                 onUpdate={() => loadProject()}

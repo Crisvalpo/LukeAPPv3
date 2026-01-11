@@ -37,19 +37,25 @@ export async function deleteStructureModel(modelId: string, modelUrl: string, cl
     const supabase = client || createClient()
     try {
         // 1. Delete file from storage
-        // Extract path from URL (assuming standard Supabase Storage URL format)
-        // URL: .../storage/v1/object/public/structure-models/filename.glb
-        const urlParts = modelUrl.split('/structure-models/')
-        if (urlParts.length === 2) {
-            const filePath = urlParts[1]
-            const { error: storageError } = await supabase.storage
-                .from('structure-models')
-                .remove([filePath])
+        // Extract path from URL
 
-            if (storageError) {
-                console.warn('Failed to delete file from storage', storageError)
-                // Continue to delete record even if storage fails (orphan cleanup strategy)
+        // CASE A: New 'project-files' bucket URL
+        // URL: .../project-files/{company_id}/{project_id}/structure-models/{filename}
+        if (modelUrl.includes('/project-files/')) {
+            const pathParts = modelUrl.split('/project-files/')
+            if (pathParts.length === 2) {
+                const filePath = pathParts[1]
+                const { error: storageError } = await supabase.storage
+                    .from('project-files')
+                    .remove([filePath])
+
+                if (storageError) {
+                    console.warn('Failed to delete file from project-files storage', storageError)
+                }
             }
+        } else {
+            // If url doesn't match new structure, we assume it's already gone or invalid in new system
+            console.warn('Skipping storage deletion for non-standard URL:', modelUrl)
         }
 
         // 2. Delete record from database
@@ -99,13 +105,31 @@ export async function createStructureModel(
 ): Promise<ApiResponse<StructureModel>> {
     const supabase = client || createClient()
     try {
-        // 1. Upload file
+        // 0. Fetch company_id for the project (needed for new storage path)
+        const { data: projectData, error: projectError } = await supabase
+            .from('projects')
+            .select('company_id')
+            .eq('id', projectId)
+            .single()
+
+        if (projectError || !projectData) {
+            return {
+                success: false,
+                message: 'No se encontró el proyecto para verificar permisos de almacenamiento'
+            }
+        }
+
+        const companyId = projectData.company_id
+
+        // 1. Upload file to NEW consolidated bucket
         const fileExt = 'glb' // Enforce GLB
-        const fileName = `${projectId}_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
+        // Path: {company_id}/{project_id}/structure-models/{filename}
+        const storagePath = `${companyId}/${projectId}/structure-models/${fileName}`
 
         const { error: uploadError, data: uploadData } = await supabase.storage
-            .from('structure-models')
-            .upload(fileName, file)
+            .from('project-files')
+            .upload(storagePath, file)
 
         if (uploadError) {
             return {
@@ -115,8 +139,8 @@ export async function createStructureModel(
         }
 
         const { data: publicUrlData } = supabase.storage
-            .from('structure-models')
-            .getPublicUrl(fileName)
+            .from('project-files')
+            .getPublicUrl(storagePath)
 
         // 2. Insert record with spatial metadata (if provided)
         const insertData: any = {

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
+import { SubscriptionTierType } from '@/types'
 
 export interface Invitation {
     id: string
@@ -6,7 +7,7 @@ export interface Invitation {
     token: string
     company_id: string
     project_id?: string
-    role_id: 'founder' | 'admin' | 'supervisor' | 'worker'
+    role_id: 'super_admin' | 'founder' | 'admin' | 'supervisor' | 'worker'
     status: 'pending' | 'accepted' | 'revoked' | 'expired'
     created_at: string
     expires_at: string
@@ -19,7 +20,7 @@ export interface CreateInvitationParams {
     email: string
     company_id: string
     project_id?: string
-    role_id: 'founder' | 'admin' | 'supervisor' | 'worker'
+    role_id: 'super_admin' | 'founder' | 'admin' | 'supervisor' | 'worker'
     job_title?: string
     functional_role_id?: string  // Reference to company_roles
 }
@@ -38,6 +39,81 @@ export async function createInvitation(params: CreateInvitationParams) {
         }
 
         // Check if company already has a founder (only for founder invitations)
+
+        if (params.role_id === 'super_admin') {
+            // Verify if the inviter is actually a super_admin
+            // This requires checking the 'members' table for the inviter's role in the 'lukeapp-hq' company
+            // OR checks against a known system role.
+            // Since we are inside the service, we can query the inviter's membership.
+
+            const { data: inviterMembership } = await supabase
+                .from('members')
+                .select('role_id, company:companies(slug)')
+                .eq('user_id', user.id)
+                .eq('role_id', 'super_admin')
+                .maybeSingle()
+
+            // Strict check: Must be super_admin AND part of lukeapp-hq (implicitly handled by role usually, but being safe)
+            if (!inviterMembership) {
+                return {
+                    success: false,
+                    message: '⛔ ACCESO DENEGADO: Solo un Super Admin puede invitar a otro Super Admin.'
+                }
+            }
+        }
+
+        // --- SUBSCRIPTION USER LIMIT CHECK ---
+        // Get company subscription tier, current member count, and CUSTOM LIMITS
+        const { data: companyData } = await supabase
+            .from('companies')
+            .select('subscription_tier, custom_users_limit, members(count)')
+            .eq('id', params.company_id)
+            .single()
+
+        if (companyData) {
+            const tierKey = (companyData.subscription_tier as SubscriptionTierType) || 'starter'
+
+            // 1. Get Plan Limits from Database (Platform Mindset)
+            const { data: planData } = await supabase
+                .from('subscription_plans')
+                .select('max_users')
+                .eq('id', tierKey)
+                .single()
+
+            // Fallback to safe defaults if plan not found (shouldn't happen if seeded correctly)
+            const planMaxUsers = planData?.max_users || 3
+
+            // 2. Determine Effective Limit (Override > Plan > Default)
+            const maxUsers = companyData.custom_users_limit ?? planMaxUsers
+
+            const currentMembers = (companyData.members as any)?.[0]?.count || 0
+
+            // Note: The previous query `members(count)` might fail if RLS prevents viewing all members or syntax is slightly off for exact count.
+            // Safer to do a direct count query to be 100% sure.
+            const { count: exactMemberCount } = await supabase
+                .from('members')
+                .select('id', { count: 'exact', head: true })
+                .eq('company_id', params.company_id)
+
+            // Check pending invitations too? Strict limit usually includes occupied seats + pending invites.
+            const { count: pendingCount } = await supabase
+                .from('invitations')
+                .select('id', { count: 'exact', head: true })
+                .eq('company_id', params.company_id)
+                .eq('status', 'pending')
+
+            const totalOccupied = (exactMemberCount || 0) + (pendingCount || 0)
+
+            if (totalOccupied >= maxUsers) {
+                return {
+                    success: false,
+                    message: `⛔ LÍMITE DE PLAN: Tu plan ${tierKey} permite máximo ${maxUsers} usuarios. (Actual: ${totalOccupied} entre miembros e invitaciones).`,
+                    limitReached: true
+                }
+            }
+        }
+        // -------------------------------------
+
         if (params.role_id === 'founder') {
             const { count } = await supabase
                 .from('members')
@@ -78,7 +154,46 @@ export async function createInvitation(params: CreateInvitationParams) {
             .maybeSingle()
 
         if (existingUser) {
-            // User exists in auth, check if already a member
+            // STRICT LIMITS ENFORCEMENT
+
+            // 1. Founder Limit: One Company per User
+            if (params.role_id === 'founder') {
+                const { data: isFounderElsewhere } = await supabase
+                    .from('members')
+                    .select('company:companies(name)')
+                    .eq('user_id', existingUser.id)
+                    .eq('role_id', 'founder')
+                    .maybeSingle()
+
+                if (isFounderElsewhere) {
+                    return {
+                        success: false,
+                        message: `⛔ LÍMITE: Este usuario ya es Founder de ${(isFounderElsewhere.company as any)?.name}. Una cuenta Founder solo puede gestionar una empresa.`,
+                        hasFounder: true
+                    }
+                }
+            }
+
+            // 2. Operational Limit: One Project per User (Admin, Supervisor, Worker)
+            // If they have ANY role in ANY company, they are "taken" unless we want to allow cross-company?
+            // User requirement: "cuentas de admin supervisor worker un proyecto"
+            // This implies they shouldn't be in multiple projects.
+            if (['admin', 'supervisor', 'worker'].includes(params.role_id)) {
+                const { data: isBusy } = await supabase
+                    .from('members')
+                    .select('project:projects(name), company:companies(name)')
+                    .eq('user_id', existingUser.id)
+                    .maybeSingle()
+
+                if (isBusy) {
+                    return {
+                        success: false,
+                        message: `⛔ LÍMITE: Este usuario ya pertenece a un proyecto en ${(isBusy.company as any)?.name}. Debe ser desvinculado antes de unirse a otro.`
+                    }
+                }
+            }
+
+            // Original Check: Already a member of THIS company (redundant if strict limits work, but safe to keep)
             const { data: existingMember } = await supabase
                 .from('members')
                 .select('id, role_id')

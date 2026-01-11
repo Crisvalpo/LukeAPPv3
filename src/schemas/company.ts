@@ -9,11 +9,12 @@ export interface ViewSchema<T> {
     }
     icon: any
     fields: Record<keyof T | string, {
-        type: 'text' | 'date' | 'number' | 'status'
+        type: 'text' | 'date' | 'number' | 'status' | 'select'
         label: string
         icon?: any
         readOnly?: boolean
         required?: boolean
+        options?: { label: string; value: string }[]
     }>
     views: {
         list: {
@@ -40,6 +41,27 @@ export const CompanySchema: ViewSchema<Company> = {
             type: 'text',
             label: 'Slug',
             readOnly: true
+        },
+        subscription_tier: {
+            type: 'select',
+            label: 'Plan de Suscripción',
+            required: true,
+            options: [
+                { label: 'Starter', value: 'starter' },
+                { label: 'Pro', value: 'pro' },
+                { label: 'Enterprise', value: 'enterprise' }
+            ]
+        },
+        initial_months: {
+            type: 'select',
+            label: 'Meses Pagados (Inicial)',
+            required: true,
+            options: [
+                { label: '1 Mes', value: '1' },
+                { label: '3 Meses', value: '3' },
+                { label: '6 Meses', value: '6' },
+                { label: '12 Meses', value: '12' }
+            ]
         },
         created_at: {
             type: 'date',
