@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import DashboardContent from '@/components/layout/DashboardContent'
+import QuotaLimitBanner from '@/components/dashboard/QuotaLimitBanner'
 
 export default async function DashboardLayout({
     children,
@@ -74,6 +75,9 @@ export default async function DashboardLayout({
                 background: '#0f172a'
             }}>
                 <DashboardContent companyId={memberData.company_id} userRole={role}>
+                    {/* 🚨 QUOTA BANNER */}
+                    <QuotaLimitBanner companyId={memberData.company_id} roleId={role} />
+
                     {/* Page Content */}
                     <div style={{
                         padding: '2rem',

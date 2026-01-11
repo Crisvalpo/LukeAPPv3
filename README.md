@@ -450,6 +450,27 @@ El Lobby **NO es un selector libre de proyectos**.
 - Fundación del proyecto
 
 ### 🔄 Fase 2: Ingeniería y Carga de Datos (Próxima)
+...
+
+---
+
+## 🚀 Mejoras Futuras y Visión
+
+### Justicia en Cuotas de Ingeniería (Fair Quota System)
+Actualmente, el límite de spools cuenta el total histórico.
+**Mejora planificada:** Implementar cuota basada en **"Spools Activos"**.
+- Spools en proyectos `completed` o `archived` -> cuentan solo para Storage (GB), no para la cuota operativa.
+- Incentiva el cierre de proyectos antiguos.
+- Permite escalar clientes sin penalización por historial.
+
+---
+
+## 📄 Licencia
+Privado - Todos los derechos reservados
+
+---
+
+**Última actualización**: Fase 1 completada - 25/12/2025
 
 **Objetivo**: Permitir que Oficina Técnica cargue la información de ingeniería que luego consumirán las apps de terreno.
 

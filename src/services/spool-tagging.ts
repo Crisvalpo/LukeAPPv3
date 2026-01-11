@@ -193,6 +193,80 @@ async function createTag(
 }
 
 /**
+ * Check spool quota with 3-Strike System
+ * Returns TRUE if operation should be BLOCKED
+ */
+async function validateSpoolQuotaWithStrikes(
+    companyId: string,
+    newSpoolsCount: number,
+    supabaseClient: ReturnType<typeof createClient>
+): Promise<void> {
+    // 1. Get company subscription tier
+    const { data: company } = await supabaseClient
+        .from('companies')
+        .select('subscription_tier')
+        .eq('id', companyId)
+        .single();
+
+    const tier = company?.subscription_tier || 'starter';
+
+    // 2. Get plan limits
+    const { data: plan } = await supabaseClient
+        .from('subscription_plans')
+        .select('max_spools')
+        .eq('id', tier)
+        .single();
+
+    const maxSpools = plan?.max_spools;
+
+    // 3. If unlimited or null, proceed
+    if (!maxSpools || maxSpools === 999999) return;
+
+    // 4. Get all project IDs
+    const { data: projects } = await supabaseClient
+        .from('projects')
+        .select('id')
+        .eq('company_id', companyId);
+
+    const projectIds = projects?.map(p => p.id) || [];
+    if (projectIds.length === 0) return;
+
+    // 5. Count existing spools
+    const { count: currentCount } = await supabaseClient
+        .from('spools')
+        .select('id', { count: 'exact', head: true })
+        .in('project_id', projectIds);
+
+    const current = currentCount || 0;
+
+    // 6. Check if quota exceeded
+    if (current + newSpoolsCount > maxSpools) {
+        // QUOTA EXCEEDED - Invoke 3-Strike Logic
+
+        // Import dynamically to avoid circular deps if any (though currently safe)
+        const { registerQuotaStrike } = await import('./quota');
+
+        const totalStrikes = await registerQuotaStrike(
+            companyId,
+            current + newSpoolsCount,
+            maxSpools,
+            supabaseClient
+        )
+
+        // STRIKE 3: BLOCK OPERATION
+        if (totalStrikes >= 3) {
+            throw new Error(
+                `⛔ OPERACIÓN BLOQUEADA: Se ha excedido la cuota de spools (${maxSpools}) por 3 días distintos. ` +
+                `Contacta a administración para ampliar tu plan.`
+            );
+        }
+
+        // STRIKE 1 & 2: ALLOW but warn (Email queued by registerQuotaStrike)
+        console.warn(`⚠️ Warning: Quota exceed strike #${totalStrikes} recorded.`);
+    }
+}
+
+/**
  * Main function: Auto-assign tags to spools
  */
 export async function assignSpoolTags(
@@ -204,6 +278,11 @@ export async function assignSpoolTags(
 ): Promise<Map<string, string>> {
     const supabase = supabaseClient || createClient()
     const tagAssignments = new Map<string, string>()
+
+    // Check 3-Strike Quota System
+    // Will THROW if strike 3 is reached
+    // Will silently register strike/queue email if strike 1 or 2
+    await validateSpoolQuotaWithStrikes(companyId, spools.length, supabase)
 
     // 1. Get Isometric ID (assuming all spools belong to same ISO for this batch, or logic handles mix)
     // The previous service call iterates by Revision, so ISOs might be mixed? 

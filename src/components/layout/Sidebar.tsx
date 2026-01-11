@@ -14,6 +14,7 @@ import {
     ChevronRight,
     CreditCard,
     Mail,
+    Tag,
 } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
@@ -78,6 +79,7 @@ export default function Sidebar({ role }: SidebarProps) {
     const staffMenu: MenuItem[] = [
         { name: 'Vista General', href: '/staff', icon: LayoutDashboard },
         { name: 'Empresas', href: '/staff/companies', icon: Building2 },
+        { name: 'Planes', href: '/staff/plans', icon: Tag },
         { name: 'Proyectos', href: '/staff/projects', icon: FolderKanban },
         { name: 'Usuarios', href: '/staff/users', icon: Users },
         { name: 'Invitaciones', href: '/staff/invitations', icon: Mail },

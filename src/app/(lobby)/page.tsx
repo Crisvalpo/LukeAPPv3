@@ -22,6 +22,7 @@ export default function LandingPage() {
     const [error, setError] = useState<string | null>(null);
 
     const [userCount, setUserCount] = useState<number | null>(null);
+    const [plans, setPlans] = useState<any[]>([]);
     const router = useRouter();
     const supabase = createClient();
 
@@ -36,6 +37,22 @@ export default function LandingPage() {
         };
 
         fetchUserCount();
+    }, []);
+
+    // Fetch subscription plans for pricing section
+    useEffect(() => {
+        const fetchPlans = async () => {
+            const { data, error } = await supabase
+                .from('subscription_plans')
+                .select('*')
+                .order('price_monthly', { ascending: true });
+
+            if (!error && data) {
+                setPlans(data);
+            }
+        };
+
+        fetchPlans();
     }, []);
 
 
@@ -362,98 +379,75 @@ export default function LandingPage() {
                         Elige el plan que mejor se adapte a las necesidades de tu empresa
                     </p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginTop: '3rem' }}>
-                        {/* Starter Plan */}
-                        <div className="glass-panel" style={{ padding: '2rem', textAlign: 'center' }}>
-                            <h3 style={{ color: '#60a5fa', fontSize: '1.5rem', marginBottom: '0.5rem' }}>Starter</h3>
-                            <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '1.5rem' }}>Para pequeños contratistas</p>
-                            <div style={{ marginBottom: '1.5rem' }}>
-                                <span style={{ color: 'white', fontSize: '2.5rem', fontWeight: '700' }}>$29.990</span>
-                                <span style={{ color: '#94a3b8', fontSize: '1rem' }}>/mes</span>
-                            </div>
-                            <ul style={{ textAlign: 'left', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '2rem', listStyle: 'none', padding: 0 }}>
-                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ color: '#4ade80' }}>✓</span> Hasta 3 usuarios
-                                </li>
-                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ color: '#4ade80' }}>✓</span> 1 proyecto activo
-                                </li>
-                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ color: '#4ade80' }}>✓</span> Hasta 500 spools
-                                </li>
-                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ color: '#4ade80' }}>✓</span> Soporte por email
-                                </li>
-                            </ul>
-                            <a href="mailto:contacto@lukeapp.cl?subject=Contratar Plan Starter" className="hero-btn hero-btn-secondary" style={{ width: '100%', textDecoration: 'none', textAlign: 'center' }}>
-                                Contactar
-                            </a>
-                        </div>
+                        {plans.map((plan, index) => {
+                            const isPro = plan.id === 'pro';
+                            const isEnterprise = plan.id === 'enterprise';
+                            const titleColor = isEnterprise ? '#a78bfa' : '#60a5fa';
 
-                        {/* Pro Plan (Featured) */}
-                        <div className="glass-panel" style={{ padding: '2rem', textAlign: 'center', border: '2px solid rgba(96, 165, 250, 0.3)', position: 'relative' }}>
-                            <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(90deg, #60a5fa, #818cf8)', padding: '0.25rem 1rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '600', color: 'white' }}>
-                                RECOMENDADO
-                            </div>
-                            <h3 style={{ color: '#60a5fa', fontSize: '1.5rem', marginBottom: '0.5rem' }}>Pro</h3>
-                            <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '1.5rem' }}>Para PyMEs establecidas</p>
-                            <div style={{ marginBottom: '1.5rem' }}>
-                                <span style={{ color: 'white', fontSize: '2.5rem', fontWeight: '700' }}>$99.990</span>
-                                <span style={{ color: '#94a3b8', fontSize: '1rem' }}>/mes</span>
-                            </div>
-                            <ul style={{ textAlign: 'left', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '2rem', listStyle: 'none', padding: 0 }}>
-                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ color: '#4ade80' }}>✓</span> Hasta 10 usuarios
-                                </li>
-                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ color: '#4ade80' }}>✓</span> 5 proyectos simultáneos
-                                </li>
-                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ color: '#4ade80' }}>✓</span> Hasta 5,000 spools
-                                </li>
-                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ color: '#4ade80' }}>✓</span> Soporte prioritario
-                                </li>
-                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ color: '#4ade80' }}>✓</span> Reportes avanzados
-                                </li>
-                            </ul>
-                            <a href="mailto:contacto@lukeapp.cl?subject=Contratar Plan Pro" className="hero-btn hero-btn-primary" style={{ width: '100%', textDecoration: 'none', textAlign: 'center' }}>
-                                Contactar
-                            </a>
-                        </div>
+                            return (
+                                <div
+                                    key={plan.id}
+                                    className="glass-panel"
+                                    style={{
+                                        padding: '2rem',
+                                        textAlign: 'center',
+                                        border: isPro ? '2px solid rgba(96, 165, 250, 0.3)' : undefined,
+                                        position: 'relative'
+                                    }}
+                                >
+                                    {isPro && (
+                                        <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(90deg, #60a5fa, #818cf8)', padding: '0.25rem 1rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '600', color: 'white' }}>
+                                            RECOMENDADO
+                                        </div>
+                                    )}
+                                    <h3 style={{ color: titleColor, fontSize: '1.5rem', marginBottom: '0.5rem' }}>{plan.name}</h3>
+                                    <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+                                        {plan.id === 'starter' && 'Para pequeños contratistas'}
+                                        {plan.id === 'pro' && 'Para PyMEs establecidas'}
+                                        {plan.id === 'enterprise' && 'Para grandes operaciones'}
+                                    </p>
+                                    <div style={{ marginBottom: '1.5rem' }}>
+                                        <span style={{ color: 'white', fontSize: '2.5rem', fontWeight: '700' }}>
+                                            ${Number(plan.price_monthly).toLocaleString('es-CL')}
+                                        </span>
+                                        <span style={{ color: '#94a3b8', fontSize: '1rem' }}>/mes</span>
+                                    </div>
+                                    <ul style={{ textAlign: 'left', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '2rem', listStyle: 'none', padding: 0 }}>
+                                        {/* Always show numeric limits first */}
+                                        <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <span style={{ color: '#4ade80' }}>✓</span> Hasta {plan.max_users === 999999 ? 'ilimitados' : plan.max_users} usuarios
+                                        </li>
+                                        <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <span style={{ color: '#4ade80' }}>✓</span> {plan.max_projects === 999999 ? 'Proyectos ilimitados' : `${plan.max_projects} proyecto${plan.max_projects !== 1 ? 's' : ''}`}
+                                        </li>
+                                        {plan.max_spools && (
+                                            <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <span style={{ color: '#4ade80' }}>✓</span> {plan.max_spools === 999999 ? 'Spools ilimitados' : `Hasta ${plan.max_spools.toLocaleString('es-CL')} spools`}
+                                            </li>
+                                        )}
+                                        {plan.max_storage_gb && (
+                                            <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <span style={{ color: '#4ade80' }}>✓</span> {plan.max_storage_gb === 999999 ? 'Almacenamiento ilimitado' : `${plan.max_storage_gb} GB`}
+                                            </li>
+                                        )}
 
-                        {/* Enterprise Plan */}
-                        <div className="glass-panel" style={{ padding: '2rem', textAlign: 'center' }}>
-                            <h3 style={{ color: '#a78bfa', fontSize: '1.5rem', marginBottom: '0.5rem' }}>Enterprise</h3>
-                            <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '1.5rem' }}>Para grandes operaciones</p>
-                            <div style={{ marginBottom: '1.5rem' }}>
-                                <span style={{ color: 'white', fontSize: '2.5rem', fontWeight: '700' }}>$299.990</span>
-                                <span style={{ color: '#94a3b8', fontSize: '1rem' }}>/mes</span>
-                            </div>
-                            <ul style={{ textAlign: 'left', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '2rem', listStyle: 'none', padding: 0 }}>
-                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ color: '#4ade80' }}>✓</span> Usuarios ilimitados
-                                </li>
-                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ color: '#4ade80' }}>✓</span> Proyectos ilimitados
-                                </li>
-                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ color: '#4ade80' }}>✓</span> Spools ilimitados
-                                </li>
-                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ color: '#4ade80' }}>✓</span> Soporte dedicado 24/7
-                                </li>
-                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ color: '#4ade80' }}>✓</span> API personalizada
-                                </li>
-                                <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ color: '#4ade80' }}>✓</span> Onboarding asistido
-                                </li>
-                            </ul>
-                            <a href="mailto:contacto@lukeapp.cl?subject=Contratar Plan Enterprise" className="hero-btn hero-btn-secondary" style={{ width: '100%', textDecoration: 'none', textAlign: 'center' }}>
-                                Contactar Ventas
-                            </a>
-                        </div>
+                                        {/* Then show additional qualitative features */}
+                                        {plan.features && Array.isArray(plan.features) && plan.features.map((feature: string, i: number) => (
+                                            <li key={`feature-${i}`} style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <span style={{ color: '#4ade80' }}>✓</span> {feature}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <a
+                                        href={`mailto:contacto@lukeapp.cl?subject=Contratar Plan ${plan.name}`}
+                                        className={isPro ? 'hero-btn hero-btn-primary' : 'hero-btn hero-btn-secondary'}
+                                        style={{ width: '100%', textDecoration: 'none', textAlign: 'center' }}
+                                    >
+                                        Contactar
+                                    </a>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -462,7 +456,7 @@ export default function LandingPage() {
                         🚀 Construido con <span className="text-[var(--color-primary)]">Next.js</span> y <span className="text-[var(--color-success)]">Supabase</span>
                     </p>
                 </div>
-            </div>
-        </main>
+            </div >
+        </main >
     );
 }
