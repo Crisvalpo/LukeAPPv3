@@ -1,6 +1,6 @@
 'use server'
 
-import { getProjectRevisions, getRevisionEvents, deleteRevision } from '@/services/revisions'
+import { getProjectRevisions, getRevisionEvents, deleteRevision, deleteRevisionPdfUrl, deleteRevisionModelUrl } from '@/services/revisions'
 import { getRevisionImpacts, resolveImpact as resolveImpactService } from '@/services/impact-detection'
 
 export async function fetchProjectRevisions(projectId: string) {
@@ -70,3 +70,18 @@ export async function deleteRevisionModelUrlAction(revisionId: string, url: stri
 }
 
 
+
+export async function updateRevisionPdfUrlAction(revisionId: string, url: string) {
+    const { updateRevisionPdfUrl } = await import('@/services/revisions')
+    return await updateRevisionPdfUrl(revisionId, url)
+}
+
+export async function deleteRevisionPdfUrlAction(revisionId: string, url: string) {
+    const { deleteRevisionPdfUrl } = await import('@/services/revisions')
+    return await deleteRevisionPdfUrl(revisionId, url)
+}
+
+export async function deleteRevisionModelAction(revisionId: string, modelUrl: string) {
+    const { deleteRevisionModelUrl } = await import('@/services/revisions')
+    return await deleteRevisionModelUrl(revisionId, modelUrl)
+}

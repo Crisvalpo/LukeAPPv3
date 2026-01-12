@@ -62,7 +62,8 @@ export async function searchIsometrics(
                     project_id,
                     company_id,
                     glb_model_url,
-                    model_data
+                    model_data,
+                    pdf_url
                 )
             `)
             .eq('project_id', projectId)
@@ -135,7 +136,8 @@ export async function searchIsometrics(
                 welds_count: r.welds_count,
                 spools_count: r.spools_count,
                 glb_model_url: r.glb_model_url,
-                model_data: r.model_data
+                model_data: r.model_data,
+                pdf_url: r.pdf_url
             }))
 
             return {

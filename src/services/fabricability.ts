@@ -109,7 +109,7 @@ export async function calculateMaterialStatus(
     // 1. Get MTO items for this revision directly
     const { data: mtoItems } = await supabase
         .from('spools_mto')
-        .select('material_spec, quantity')
+        .select('item_code, qty')
         .eq('revision_id', revisionId)
 
     if (!mtoItems || mtoItems.length === 0) return 'NO_REQUERIDO'
@@ -123,11 +123,11 @@ export async function calculateMaterialStatus(
 
     if (!revision) return 'NO_REQUERIDO'
 
-    // 3. Aggregate Requirements by material_spec
+    // 3. Aggregate Requirements by item_code (maps to material_spec in inventory)
     const requirements = new Map<string, number>()
     mtoItems.forEach(item => {
-        const current = requirements.get(item.material_spec) || 0
-        requirements.set(item.material_spec, current + Number(item.quantity))
+        const current = requirements.get(item.item_code) || 0
+        requirements.set(item.item_code, current + Number(item.qty))
     })
 
     // 4. Check Inventory for each requirement
@@ -283,7 +283,7 @@ export async function analyzeRevisionFabricability(
     // 3. Get All MTO Items for this Revision
     const { data: mtoItems } = await supabase
         .from('spools_mto')
-        .select('spool_id, item_code, quantity, material_spec') // Assuming item_code maps to material_spec or we use material_spec directly
+        .select('spool_id, item_code, qty') // item_code maps to material_spec in inventory
         .eq('revision_id', revisionId)
 
     if (!mtoItems || mtoItems.length === 0) {
@@ -299,13 +299,8 @@ export async function analyzeRevisionFabricability(
     }
 
     // 4. Get Inventory for relevant items
-    // We strictly use material_spec (or item_code if distinct). Assuming material_spec is the key.
-    // Note: spools_mto schema has `item_code` and `material_spec` might not exist or be synonymous. 
-    // Checking schema 0029: spools_mto has `item_code` but not `material_spec`?
-    // Wait, let's verify. 0029 says: `item_code TEXT NOT NULL`.
-    // 0027 inventory says: `material_spec TEXT NOT NULL`.
-    // We assume item_code in MTO === material_spec in Inventory.
-    const requiredSpecs = Array.from(new Set(mtoItems.map(i => i.item_code || i.material_spec)))
+    // item_code in spools_mto maps to material_spec in material_inventory
+    const requiredSpecs = Array.from(new Set(mtoItems.map(i => i.item_code)))
 
     const { data: inventory } = await supabase
         .from('material_inventory')
@@ -340,9 +335,9 @@ export async function analyzeRevisionFabricability(
         // Aggregate requirements for this spool
         const requirements = new Map<string, number>()
         spoolItems.forEach(item => {
-            const spec = item.item_code || item.material_spec
+            const spec = item.item_code
             const current = requirements.get(spec) || 0
-            requirements.set(spec, current + Number(item.quantity))
+            requirements.set(spec, current + Number(item.qty))
         })
 
         for (const [spec, qty] of requirements.entries()) {

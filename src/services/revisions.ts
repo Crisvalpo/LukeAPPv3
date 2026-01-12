@@ -170,10 +170,10 @@ export async function getProjectRevisions(projectId: string): Promise<ApiRespons
                 company_id,
                 rev_code,
                 revision_status,
-                transmittal,
                 announcement_date,
                 created_at,
                 glb_model_url,
+                pdf_url,
                 model_data
             `)
             .eq('project_id', projectId)
@@ -231,6 +231,7 @@ export async function getProjectRevisions(projectId: string): Promise<ApiRespons
                     announcement_date: rev.announcement_date,
                     created_at: rev.created_at,
                     glb_model_url: rev.glb_model_url,
+                    pdf_url: rev.pdf_url,
                     model_data: rev.model_data,
                     iso_number: iso?.iso_number || 'N/A',
                     welds_count: count || 0,
@@ -600,3 +601,107 @@ export async function getRevisionSpools(revisionId: string) {
     }
 }
 
+
+/**
+ * Update the PDF URL for a revision
+ */
+export async function updateRevisionPdfUrl(
+    revisionId: string,
+    pdfUrl: string
+): Promise<ApiResponse<void>> {
+    const supabase = await createClient()
+
+    try {
+        const { error } = await supabase
+            .from('engineering_revisions')
+            .update({ pdf_url: pdfUrl })
+            .eq('id', revisionId)
+
+        if (error) {
+            return {
+                success: false,
+                message: `Error al actualizar PDF URL: ${error.message}`
+            }
+        }
+
+        return {
+            success: true,
+            message: 'PDF vinculado exitosamente'
+        }
+    } catch (error) {
+        console.error('Error in updateRevisionPdfUrl:', error)
+        return {
+            success: false,
+            message: 'Error inesperado al vincular PDF'
+        }
+    }
+}
+
+
+/**
+ * Delete the PDF for a revision (Both file and DB ref)
+ */
+export async function deleteRevisionPdfUrl(
+    revisionId: string,
+    pdfUrl: string
+): Promise<ApiResponse<void>> {
+    const supabase = await createClient()
+
+    try {
+        // 1. Update DB first to prevent UI showing it if file deletion fails (soft fail)
+        const { error: dbError } = await supabase
+            .from('engineering_revisions')
+            .update({
+                pdf_url: null
+            })
+            .eq('id', revisionId)
+
+        if (dbError) {
+            return {
+                success: false,
+                message: `Error al actualizar base de datos: ${dbError.message}`
+            }
+        }
+
+        // 2. Try to delete the file from storage (requires admin privileges)
+        try {
+            const urlObj = new URL(pdfUrl)
+
+            // CASE A: New 'project-files' bucket URL
+            // Path: .../project-files/{company_id}/{project_id}/isometric-models/{filename}
+            if (pdfUrl.includes('/project-files/')) {
+                const pathParts = urlObj.pathname.split('/project-files/')
+                if (pathParts.length > 1) {
+                    const filePath = decodeURIComponent(pathParts[1])
+
+                    const { createAdminClient } = await import('@/lib/supabase/server')
+                    const adminClient = createAdminClient()
+
+                    const { error: storageError } = await adminClient
+                        .storage
+                        .from('project-files')
+                        .remove([filePath])
+
+                    if (storageError) {
+                        console.error('Storage deletion failed (project-files):', storageError)
+                    }
+                }
+            } else {
+                console.warn('Skipping storage deletion for non-standard URL:', pdfUrl)
+            }
+        } catch (parseError) {
+            console.warn('Could not parse URL for file deletion:', pdfUrl)
+        }
+
+        return {
+            success: true,
+            message: 'PDF eliminado exitosamente'
+        }
+    } catch (error) {
+        console.error('Unexpected error in deleteRevisionPdfUrl:', error)
+        return {
+            success: false,
+            message: 'Error inesperado al eliminar PDF'
+        }
+    }
+}

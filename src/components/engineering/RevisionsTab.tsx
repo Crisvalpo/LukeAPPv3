@@ -52,6 +52,7 @@ export default function RevisionsTab({ projectId }: RevisionsTabProps) {
     }, [debouncedSearch, statusFilter, projectId])
 
     const loadData = async (offsetPage: number, isReset: boolean) => {
+        console.log('[RevisionsTab] loadData called:', { offsetPage, isReset })
         setIsLoading(true)
         try {
             const result = await searchIsometricsAction(

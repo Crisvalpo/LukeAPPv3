@@ -83,6 +83,9 @@ export interface CompanySubscriptionInfo {
     current_storage_gb: number
     max_storage_gb: number
     is_active: boolean
+    // New fields for plan limits vs overrides
+    plan_max_users?: number
+    plan_max_projects?: number
 }
 
 // ===== BASE ENTITIES =====
@@ -620,6 +623,7 @@ export interface EngineeringRevision {
     announcement_date?: string
     created_at: string
     glb_model_url?: string
+    pdf_url?: string
     model_data?: any
     iso_number?: string // Joined
     welds_count?: number // Counted

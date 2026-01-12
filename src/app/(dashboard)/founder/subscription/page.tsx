@@ -176,6 +176,11 @@ export default function FounderSubscriptionPage() {
                             <h3 className="subscription-usage-title">Usuarios</h3>
                             <p className="subscription-usage-stats">
                                 {subscriptionInfo.current_users} / {subscriptionInfo.max_users}
+                                {subscriptionInfo.plan_max_users && subscriptionInfo.max_users > subscriptionInfo.plan_max_users && (
+                                    <span style={{ fontSize: '0.75rem', color: '#fbbf24', display: 'block' }}>
+                                        ⚡ Incluye {subscriptionInfo.max_users - subscriptionInfo.plan_max_users} extra
+                                    </span>
+                                )}
                             </p>
                         </div>
                     </div>
@@ -197,6 +202,11 @@ export default function FounderSubscriptionPage() {
                             <h3 className="subscription-usage-title">Proyectos</h3>
                             <p className="subscription-usage-stats">
                                 {subscriptionInfo.current_projects} / {subscriptionInfo.max_projects}
+                                {subscriptionInfo.plan_max_projects && subscriptionInfo.max_projects > subscriptionInfo.plan_max_projects && (
+                                    <span style={{ fontSize: '0.75rem', color: '#fbbf24', display: 'block' }}>
+                                        ⚡ Incluye {subscriptionInfo.max_projects - subscriptionInfo.plan_max_projects} extra
+                                    </span>
+                                )}
                             </p>
                         </div>
                     </div>

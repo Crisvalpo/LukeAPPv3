@@ -9,7 +9,8 @@ import { calculateDataStatus, calculateMaterialStatus, isFabricable, type DataSt
 import RevisionMasterView from './RevisionMasterView'
 import IsometricViewer from './viewer/IsometricViewer'
 import { createClient } from '@/lib/supabase/client'
-import { updateRevisionModelUrlAction } from '@/actions/revisions'
+import { updateRevisionModelUrlAction, updateRevisionPdfUrlAction, deleteRevisionPdfUrlAction, deleteRevisionModelAction } from '@/actions/revisions'
+import { FileText, Trash2, ExternalLink } from 'lucide-react'
 
 // Wrapper to load spools for viewer and handle fullscreen portal
 function IsometricViewerWrapper({
@@ -46,6 +47,9 @@ function IsometricViewerWrapper({
     const [selectedIds, setSelectedIds] = useState<string[]>([])
     const [modelData, setModelData] = useState<any>(initialModelData || {})
 
+
+
+    // PDF Handlers (Keep existing)
     // Derived: assignment map and colors
     const assignments = modelData?.spool_assignments || {}
     const spoolColors = React.useMemo(() => {
@@ -804,12 +808,172 @@ export default function IsometricRevisionCard({
     onRefresh
 }: IsometricRevisionCardProps) {
     const router = useRouter()
+
+    // PDF Upload State
+    const pdfInputRef = useRef<HTMLInputElement>(null)
+    const [uploadingPdfRevId, setUploadingPdfRevId] = useState<string | null>(null)
+
+    // 3D Model Upload State (Refactored)
+    const modelInputRef = useRef<HTMLInputElement>(null)
+    const [uploadingModelRevId, setUploadingModelRevId] = useState<string | null>(null)
+
+    // Actions Menu State
+    const [openMenuRevId, setOpenMenuRevId] = useState<string | null>(null)
+
+    // 3D Model Handlers
+    const handleModelUploadClick = (revId: string) => {
+        modelInputRef.current?.setAttribute('data-target-rev-id', revId)
+        modelInputRef.current?.click()
+    }
+
+    const handleModelFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        const targetRevId = e.target.getAttribute('data-target-rev-id')
+
+        if (!file || !targetRevId) return
+
+        setUploadingModelRevId(targetRevId)
+        const rev = revisions.find(r => r.id === targetRevId)
+
+        if (!rev) {
+            setUploadingModelRevId(null)
+            return
+        }
+
+        try {
+            const supabase = createClient()
+            const fileName = `model-${targetRevId}-${Date.now()}.glb`
+            const filePath = `${rev.company_id}/${rev.project_id}/isometric-models/${fileName}`
+
+            // 1. Upload to Storage
+            const { error: uploadError } = await supabase.storage
+                .from('project-files')
+                .upload(filePath, file)
+
+            if (uploadError) throw uploadError
+
+            // 2. Get Public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('project-files')
+                .getPublicUrl(filePath)
+
+            // 3. Update DB
+            const res = await updateRevisionModelUrlAction(targetRevId, publicUrl)
+            if (!res.success) throw new Error(res.message)
+
+            // 4. Success Feedback
+            alert('✅ Modelo 3D cargado exitosamente')
+            router.refresh()
+            if (onRefresh) onRefresh()
+        } catch (error: any) {
+            console.error('Error uploading 3D model:', error)
+            alert('Error al subir modelo: ' + (error.message || 'Error desconocido'))
+        } finally {
+            setUploadingModelRevId(null)
+            if (modelInputRef.current) modelInputRef.current.value = ''
+        }
+    }
+
+    const handlePdfUploadClick = (revId: string) => {
+        // Store the target revision for the next file selection
+        pdfInputRef.current?.setAttribute('data-target-rev-id', revId)
+        pdfInputRef.current?.click()
+    }
+
+    const handlePdfFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        const targetRevId = e.target.getAttribute('data-target-rev-id')
+
+        if (!file || !targetRevId) {
+            // User cancelled or no target
+            return
+        }
+
+        // NOW set loading state (file was selected)
+        setUploadingPdfRevId(targetRevId)
+
+        const rev = revisions.find(r => r.id === targetRevId)
+        if (!rev) {
+            setUploadingPdfRevId(null)
+            return
+        }
+
+        try {
+            const supabase = createClient()
+            const fileName = `pdf-${targetRevId}-${Date.now()}.pdf`
+            const filePath = `${rev.company_id}/${rev.project_id}/isometric-pdfs/${fileName}`
+
+            // 1. Upload to Storage (Using project-files bucket)
+            const { error: uploadError } = await supabase.storage
+                .from('project-files')
+                .upload(filePath, file)
+
+            if (uploadError) throw uploadError
+
+            // 2. Get URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('project-files')
+                .getPublicUrl(filePath)
+
+            // 3. Update DB
+            const res = await updateRevisionPdfUrlAction(targetRevId, publicUrl)
+            if (!res.success) throw new Error(res.message)
+
+            // 4. Success feedback
+            alert('✅ PDF cargado exitosamente')
+            router.refresh() // Force server-side data refresh
+            if (onRefresh) onRefresh()
+        } catch (error: any) {
+            console.error('Error uploading PDF:', error)
+            alert('Error al subir PDF: ' + (error.message || 'Error desconocido'))
+        } finally {
+            setUploadingPdfRevId(null)
+            if (pdfInputRef.current) pdfInputRef.current.value = ''
+        }
+    }
+
+    const handleDeleteModel = async (revId: string, modelUrl: string) => {
+        if (!confirm('¿Estás seguro de eliminar el modelo 3D? Esta acción no se puede deshacer.')) {
+            setOpenMenuRevId(null)
+            return
+        }
+
+        try {
+            const res = await deleteRevisionModelAction(revId, modelUrl)
+            if (!res.success) {
+                alert(res.message || 'Error al eliminar modelo')
+                return
+            }
+            alert('✅ Modelo 3D eliminado exitosamente')
+            router.refresh()
+            if (onRefresh) onRefresh()
+        } catch (error: any) {
+            console.error('Error deleting model:', error)
+            alert('Error al eliminar modelo: ' + (error.message || 'Error desconocido'))
+        } finally {
+            setOpenMenuRevId(null)
+        }
+    }
+
+    const handleDeletePdf = async (revId: string, pdfUrl: string) => {
+        if (!confirm('¿Eliminar este PDF?')) return
+        try {
+            const res = await deleteRevisionPdfUrlAction(revId, pdfUrl)
+            if (res.success) {
+                router.refresh() // Force server-side data refresh
+                if (onRefresh) onRefresh()
+            } else {
+                alert(res.message)
+            }
+        } catch (error) {
+            console.error('Error deleting PDF:', error)
+            alert('Error al eliminar PDF')
+        }
+    }
     const [isExpanded, setIsExpanded] = useState(false)
     const [openRevId, setOpenRevId] = useState<string | null>(null)
     const [isDeleting, setIsDeleting] = useState<string | null>(null)
-    const [isUploading, setIsUploading] = useState<string | null>(null)
     const [revisionStatuses, setRevisionStatuses] = useState<Record<string, { data: DataStatus; material: MaterialStatus; fabricable: boolean }>>({})
-    const [uploadInputRevId, setUploadInputRevId] = useState<string | null>(null)
     const [show3DMenu, setShow3DMenu] = useState<string | null>(null)
     const [viewerModalRevision, setViewerModalRevision] = useState<{
         id: string
@@ -893,67 +1057,7 @@ export default function IsometricRevisionCard({
         }
     }
 
-    const handleUploadClick = (revId: string) => {
-        setUploadInputRevId(revId === uploadInputRevId ? null : revId)
-    }
 
-    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>, revId: string, isoNumber: string, revCode: string, companyId: string, projectId: string) => {
-        const file = event.target.files?.[0]
-        if (!file) return
-
-        if (!file.name.toLowerCase().endsWith('.glb')) {
-            alert('Solo se permiten archivos .glb')
-            return
-        }
-
-        setIsUploading(revId)
-        try {
-            // 1. Rename file (Add random suffix to avoid caching/collision)
-            const uniqueSuffix = Math.random().toString(36).substring(2, 7)
-            const newFileName = `${isoNumber}-${revCode}-${uniqueSuffix}.glb`
-
-            // 2. Upload to Supabase Storage (New 'project-files' bucket)
-            // Path: {company_id}/{project_id}/isometric-models/{filename}
-            const storagePath = `${companyId}/${projectId}/isometric-models/${newFileName}`
-
-            const supabase = createClient()
-            const { data, error: uploadError } = await supabase
-                .storage
-                .from('project-files')
-                .upload(storagePath, file, {
-                    cacheControl: '3600',
-                    upsert: true
-                })
-
-            if (uploadError) {
-                console.error('Supabase Upload Error:', uploadError)
-                throw new Error(uploadError.message)
-            }
-
-            // Get Public URL
-            const { data: { publicUrl } } = supabase
-                .storage
-                .from('project-files')
-                .getPublicUrl(storagePath)
-
-            // 3. Update Revision Record (Server Action)
-            const result = await updateRevisionModelUrlAction(revId, publicUrl)
-
-            if (!result.success) {
-                throw new Error(result.message)
-            }
-
-            alert('Modelo subido exitosamente')
-            setUploadInputRevId(null)
-            if (onRefresh) onRefresh()
-
-        } catch (error) {
-            console.error('Error uploading model:', error)
-            alert('Error al subir el modelo')
-        } finally {
-            setIsUploading(null)
-        }
-    }
 
     return (
         <div className="isometric-card">
@@ -1020,7 +1124,7 @@ export default function IsometricRevisionCard({
                                         <th>F. Anuncio</th>
                                         <th>Uniones</th>
                                         <th>Spools</th>
-                                        <th style={{ textAlign: 'right' }}>Acciones</th>
+                                        <th style={{ textAlign: 'center' }}>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1084,14 +1188,14 @@ export default function IsometricRevisionCard({
                                                 </td>
                                                 <td><strong>{rev.welds_count || 0}</strong></td>
                                                 <td><strong>{rev.spools_count || 0}</strong></td>
-                                                <td style={{ textAlign: 'right' }}>
-                                                    <div className="action-group">
+                                                <td style={{ textAlign: 'center' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                                        {/* Expand/Collapse */}
                                                         <button
                                                             className="btn-icon-secondary"
                                                             onClick={() => setOpenRevId(openRevId === rev.id ? null : rev.id)}
                                                             title="Ver detalles"
                                                             style={{
-                                                                marginRight: '5px',
                                                                 transform: openRevId === rev.id ? 'rotate(180deg)' : 'rotate(0deg)',
                                                                 transition: 'transform 0.2s ease',
                                                                 color: 'white',
@@ -1101,78 +1205,260 @@ export default function IsometricRevisionCard({
                                                             ▼
                                                         </button>
 
-                                                        {/* Upload / View Model Button */}
-                                                        {/* 3D Model Status/Action Button */}
+                                                        {/* 3D Model Button */}
+                                                        {/* 3D Model Button */}
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                if (uploadingModelRevId === rev.id) return
+                                                                if (rev.glb_model_url) {
+                                                                    // Direct Viewer Open
+                                                                    setViewerModalRevision({
+                                                                        id: rev.id,
+                                                                        glbUrl: rev.glb_model_url!,
+                                                                        modelData: rev.model_data,
+                                                                        isoNumber: isoNumber,
+                                                                        projectId: rev.project_id
+                                                                    })
+                                                                } else {
+                                                                    handleModelUploadClick(rev.id)
+                                                                }
+                                                            }}
+                                                            style={{
+                                                                fontFamily: 'monospace',
+                                                                fontSize: '0.75rem',
+                                                                fontWeight: 'bold',
+                                                                padding: '4px 8px',
+                                                                borderRadius: '4px',
+                                                                border: 'none',
+                                                                cursor: uploadingModelRevId === rev.id ? 'wait' : 'pointer',
+                                                                transition: 'all 0.2s ease',
+                                                                color: uploadingModelRevId === rev.id ? '#fbbf24' : (rev.glb_model_url ? '#22c55e' : '#94a3b8'),
+                                                                backgroundColor: uploadingModelRevId === rev.id ? 'rgba(251, 191, 36, 0.1)' : 'transparent',
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '4px',
+                                                                opacity: uploadingModelRevId === rev.id ? 0.7 : 1
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                if (rev.glb_model_url) {
+                                                                    e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.1)'
+                                                                } else {
+                                                                    e.currentTarget.style.backgroundColor = 'rgba(71, 85, 105, 0.5)'
+                                                                    e.currentTarget.style.color = '#cbd5e1'
+                                                                }
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.backgroundColor = 'transparent'
+                                                                e.currentTarget.style.color = rev.glb_model_url ? '#22c55e' : '#94a3b8'
+                                                            }}
+                                                            title={uploadingModelRevId === rev.id ? 'Cargando Modelo...' : (rev.glb_model_url ? 'Ver Modelo 3D' : 'Cargar Modelo 3D')}
+                                                            disabled={uploadingModelRevId === rev.id}
+                                                        >
+                                                            {uploadingModelRevId === rev.id ? (
+                                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                                                    <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>⏳</span>
+                                                                </span>
+                                                            ) : (
+                                                                '3D'
+                                                            )}
+                                                        </button>
+
+                                                        {/* PDF Button */}
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                if (uploadingPdfRevId === rev.id) return
+                                                                if (rev.pdf_url) {
+                                                                    window.open(rev.pdf_url, '_blank')
+                                                                } else {
+                                                                    handlePdfUploadClick(rev.id)
+                                                                }
+                                                            }}
+                                                            style={{
+                                                                fontFamily: 'monospace',
+                                                                fontSize: '0.75rem',
+                                                                fontWeight: 'bold',
+                                                                padding: '4px 8px',
+                                                                borderRadius: '4px',
+                                                                border: 'none',
+                                                                cursor: uploadingPdfRevId === rev.id ? 'wait' : 'pointer',
+                                                                transition: 'all 0.2s ease',
+                                                                color: uploadingPdfRevId === rev.id ? '#fbbf24' : (rev.pdf_url ? '#22c55e' : '#94a3b8'),
+                                                                backgroundColor: uploadingPdfRevId === rev.id ? 'rgba(251, 191, 36, 0.1)' : 'transparent',
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '4px',
+                                                                opacity: uploadingPdfRevId === rev.id ? 0.7 : 1
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                if (rev.pdf_url) {
+                                                                    e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.1)'
+                                                                } else {
+                                                                    e.currentTarget.style.backgroundColor = 'rgba(71, 85, 105, 0.5)'
+                                                                    e.currentTarget.style.color = '#cbd5e1'
+                                                                }
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.backgroundColor = 'transparent'
+                                                                e.currentTarget.style.color = rev.pdf_url ? '#22c55e' : '#94a3b8'
+                                                            }}
+                                                            title={uploadingPdfRevId === rev.id ? 'Cargando PDF...' : (rev.pdf_url ? 'Ver PDF' : 'Cargar PDF')}
+                                                            disabled={uploadingPdfRevId === rev.id}
+                                                        >
+                                                            {uploadingPdfRevId === rev.id ? (
+                                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                                                    <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>⏳</span>
+                                                                </span>
+                                                            ) : (
+                                                                <FileText size={14} />
+                                                            )}
+                                                        </button>
+
+                                                        {/* Options Menu Button */}
                                                         <div style={{ position: 'relative', display: 'inline-block' }}>
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation()
-                                                                    if (rev.glb_model_url) {
-                                                                        // Direct Viewer Open
-                                                                        setViewerModalRevision({
-                                                                            id: rev.id,
-                                                                            glbUrl: rev.glb_model_url!,
-                                                                            modelData: rev.model_data,
-                                                                            isoNumber: isoNumber,
-                                                                            projectId: rev.project_id // Will be fixed in backend
-                                                                        })
-                                                                    } else {
-                                                                        handleUploadClick(rev.id)
-                                                                    }
+                                                                    setOpenMenuRevId(openMenuRevId === rev.id ? null : rev.id)
                                                                 }}
                                                                 style={{
                                                                     fontFamily: 'monospace',
-                                                                    fontSize: '0.75rem',
+                                                                    fontSize: '1rem',
                                                                     fontWeight: 'bold',
                                                                     padding: '4px 8px',
                                                                     borderRadius: '4px',
                                                                     border: 'none',
                                                                     cursor: 'pointer',
                                                                     transition: 'all 0.2s ease',
-                                                                    color: rev.glb_model_url ? '#22c55e' : '#94a3b8',
-                                                                    backgroundColor: 'transparent',
-                                                                    marginRight: '5px'
+                                                                    color: '#94a3b8',
+                                                                    backgroundColor: openMenuRevId === rev.id ? 'rgba(71, 85, 105, 0.3)' : 'transparent'
                                                                 }}
                                                                 onMouseEnter={(e) => {
-                                                                    if (rev.glb_model_url) {
-                                                                        e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.1)'
-                                                                    } else {
-                                                                        e.currentTarget.style.backgroundColor = 'rgba(71, 85, 105, 0.5)'
-                                                                        e.currentTarget.style.color = '#cbd5e1'
-                                                                    }
+                                                                    e.currentTarget.style.backgroundColor = 'rgba(71, 85, 105, 0.5)'
+                                                                    e.currentTarget.style.color = '#cbd5e1'
                                                                 }}
                                                                 onMouseLeave={(e) => {
-                                                                    e.currentTarget.style.backgroundColor = 'transparent'
-                                                                    e.currentTarget.style.color = rev.glb_model_url ? '#22c55e' : '#94a3b8'
+                                                                    if (openMenuRevId !== rev.id) {
+                                                                        e.currentTarget.style.backgroundColor = 'transparent'
+                                                                    }
+                                                                    e.currentTarget.style.color = '#94a3b8'
                                                                 }}
-                                                                title={rev.glb_model_url ? 'Ver Modelo 3D' : 'Cargar Modelo 3D'}
+                                                                title="Más opciones"
                                                             >
-                                                                3D
+                                                                ⋮
                                                             </button>
-                                                        </div>
 
-                                                        <button
-                                                            className="btn-icon-danger"
-                                                            onClick={() => handleDelete(rev.id, rev.rev_code)}
-                                                            disabled={isDeleting === rev.id}
-                                                            title="Eliminar Revisión"
-                                                        >
-                                                            {isDeleting === rev.id ? '...' : '🗑️'}
-                                                        </button>
+                                                            {/* Dropdown Menu */}
+                                                            {openMenuRevId === rev.id && (
+                                                                <div
+                                                                    style={{
+                                                                        position: 'absolute',
+                                                                        top: '100%',
+                                                                        right: 0,
+                                                                        marginTop: '4px',
+                                                                        background: '#1e293b',
+                                                                        border: '1px solid #475569',
+                                                                        borderRadius: '8px',
+                                                                        boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                                                                        zIndex: 1000,
+                                                                        minWidth: '180px',
+                                                                        overflow: 'hidden'
+                                                                    }}
+                                                                >
+                                                                    {/* Delete PDF */}
+                                                                    {rev.pdf_url && (
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation()
+                                                                                setOpenMenuRevId(null)
+                                                                                handleDeletePdf(rev.id, rev.pdf_url!)
+                                                                            }}
+                                                                            style={{
+                                                                                width: '100%',
+                                                                                padding: '10px 16px',
+                                                                                border: 'none',
+                                                                                background: 'transparent',
+                                                                                color: '#ef4444',
+                                                                                textAlign: 'left',
+                                                                                cursor: 'pointer',
+                                                                                fontSize: '0.875rem',
+                                                                                display: 'flex',
+                                                                                alignItems: 'center',
+                                                                                gap: '8px',
+                                                                                transition: 'background 0.15s'
+                                                                            }}
+                                                                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                                                                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                                                        >
+                                                                            🗑️ Eliminar PDF
+                                                                        </button>
+                                                                    )}
+
+                                                                    {/* Delete 3D Model */}
+                                                                    {rev.glb_model_url && (
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation()
+                                                                                setOpenMenuRevId(null)
+                                                                                handleDeleteModel(rev.id, rev.glb_model_url!)
+                                                                            }}
+                                                                            style={{
+                                                                                width: '100%',
+                                                                                padding: '10px 16px',
+                                                                                border: 'none',
+                                                                                background: 'transparent',
+                                                                                color: '#ef4444',
+                                                                                textAlign: 'left',
+                                                                                cursor: 'pointer',
+                                                                                fontSize: '0.875rem',
+                                                                                display: 'flex',
+                                                                                alignItems: 'center',
+                                                                                gap: '8px',
+                                                                                transition: 'background 0.15s'
+                                                                            }}
+                                                                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                                                                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                                                        >
+                                                                            🗑️ Eliminar Modelo 3D
+                                                                        </button>
+                                                                    )}
+
+                                                                    {/* Delete Revision */}
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation()
+                                                                            setOpenMenuRevId(null)
+                                                                            handleDelete(rev.id, rev.rev_code)
+                                                                        }}
+                                                                        disabled={isDeleting === rev.id}
+                                                                        style={{
+                                                                            width: '100%',
+                                                                            padding: '10px 16px',
+                                                                            border: 'none',
+                                                                            background: 'transparent',
+                                                                            color: '#ef4444',
+                                                                            textAlign: 'left',
+                                                                            cursor: isDeleting === rev.id ? 'not-allowed' : 'pointer',
+                                                                            fontSize: '0.875rem',
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            gap: '8px',
+                                                                            transition: 'background 0.15s',
+                                                                            opacity: isDeleting === rev.id ? 0.5 : 1
+                                                                        }}
+                                                                        onMouseEnter={(e) => !isDeleting && (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)')}
+                                                                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                                                        title="Eliminar Revisión"
+                                                                    >
+                                                                        {isDeleting === rev.id ? '⏳ Eliminando...' : '🗑️ Eliminar Revisión'}
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
 
-                                                    {/* Hidden File Input (conditionally rendered) */}
-                                                    {uploadInputRevId === rev.id && (
-                                                        <div style={{ position: 'absolute', right: '40px', marginTop: '30px', background: '#1e293b', padding: '5px', borderRadius: '4px', border: '1px solid #334155', zIndex: 50 }}>
-                                                            <input
-                                                                type="file"
-                                                                accept=".glb"
-                                                                className="text-xs text-white"
-                                                                onChange={(e) => handleFileChange(e, rev.id, isoNumber, rev.rev_code, rev.company_id, rev.project_id)}
-                                                            />
-                                                            <button onClick={() => setUploadInputRevId(null)} style={{ marginLeft: '5px', color: '#ef4444' }}>✕</button>
-                                                        </div>
-                                                    )}
+
                                                 </td>
                                             </tr>
                                             {openRevId === rev.id && (
@@ -1199,6 +1485,23 @@ export default function IsometricRevisionCard({
                     </div>
                 )
             }
+
+            {/* Hidden PDF Input */}
+            <input
+                type="file"
+                ref={pdfInputRef}
+                style={{ display: 'none' }}
+                accept="application/pdf"
+                onChange={handlePdfFileChange}
+            />
+            {/* Hidden 3D Model Input */}
+            <input
+                type="file"
+                ref={modelInputRef}
+                style={{ display: 'none' }}
+                accept=".glb"
+                onChange={handleModelFileChange}
+            />
 
             {/* Fullscreen 3D Viewer Modal - Portal handled inside Wrapper */}
             {viewerModalRevision && (
