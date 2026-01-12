@@ -398,7 +398,7 @@ export default function MaterialCatalogManager({ projectId, companyId }: Props) 
                                         fileInputRef.current?.click()
                                     }}
                                 >
-                                    <Upload size={14} /> Importar (Excel)
+                                    <Download size={14} /> Importar (Excel)
                                 </button>
                                 <button
                                     className="dropdown-item"
@@ -407,7 +407,7 @@ export default function MaterialCatalogManager({ projectId, companyId }: Props) 
                                         handleExport()
                                     }}
                                 >
-                                    <Download size={14} /> Exportar (Excel)
+                                    <Upload size={14} /> Exportar (Excel)
                                 </button>
                                 <div className="dropdown-divider" />
                                 <button

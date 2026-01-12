@@ -136,9 +136,12 @@ export default function LandingPage() {
                         {viewState === 'hero' && (
                             <>
                                 <div className="space-y-6">
-                                    <h1 className="hero-title">
-                                        Bienvenido a <span className="text-gradient">LukeAPP</span>
-                                    </h1>
+                                    <div className="text-center">
+                                        <div className="text-lg md:text-xl text-[var(--color-text-muted)] mb-2">Bienvenido a</div>
+                                        <h1 className="hero-title">
+                                            <span className="text-gradient">LukeAPP</span> <span style={{ fontStyle: 'italic', fontWeight: 300, color: 'white' }}>Piping</span>
+                                        </h1>
+                                    </div>
                                     <p className="text-[var(--color-text-muted)] text-xl md:text-2xl">
                                         Tu plataforma de gestión moderna y segura. Comienza tu viaje hoy.
                                     </p>

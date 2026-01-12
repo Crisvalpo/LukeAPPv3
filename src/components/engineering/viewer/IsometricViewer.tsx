@@ -171,8 +171,38 @@ function Model({
         })
     }, [clonedScene])
 
-    const handleClick = (e: any) => {
+    // Custom click handling refs
+    const clickStartRef = useRef<{ x: number, y: number, time: number } | null>(null)
+
+    const handlePointerDown = (e: any) => {
         e.stopPropagation()
+        clickStartRef.current = {
+            x: e.clientX,
+            y: e.clientY,
+            time: Date.now()
+        }
+    }
+
+    const handlePointerUp = (e: any) => {
+        e.stopPropagation()
+        if (!clickStartRef.current) return
+
+        const { x, y, time } = clickStartRef.current
+        const deltaX = Math.abs(e.clientX - x)
+        const deltaY = Math.abs(e.clientY - y)
+        const duration = Date.now() - time
+
+        // Relaxed threshold for "Click": 10px movement, 500ms duration
+        // This ensures minor shakes while holding Ctrl don't cancel the click
+        if (deltaX < 10 && deltaY < 10 && duration < 500) {
+            handleSelection(e)
+        }
+
+        clickStartRef.current = null
+    }
+
+    const handleSelection = (e: any) => {
+        // e.stopPropagation() // Already handled in Up/Down
         if (!onSelectionChange) return
 
         // Get the mesh that was clicked
@@ -196,8 +226,6 @@ function Model({
 
         if (groupIds) {
             // Smart Group Selection: Select the whole spool
-            // If the group is already fully selected, maybe deselect it?
-            // For now, just SELECT the group as requested.
             newSelection = groupIds
         } else {
             // Standard Single/Multi Selection Logic
@@ -228,7 +256,8 @@ function Model({
     return (
         <primitive
             object={clonedScene}
-            onClick={handleClick}
+            onPointerDown={handlePointerDown}
+            onPointerUp={handlePointerUp}
             onPointerOver={handlePointerOver}
             onPointerOut={handlePointerOut}
             onPointerMissed={(e: any) => {

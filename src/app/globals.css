@@ -509,17 +509,17 @@ button {
 }
 
 .hero-title {
-  font-size: 3rem;
-  line-height: 1.1;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: 2.25rem;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   color: white;
   margin-bottom: 1rem;
 }
 
 @media (min-width: 768px) {
   .hero-title {
-    font-size: 4rem;
+    font-size: 3rem;
   }
 }
 
@@ -846,11 +846,13 @@ button {
 ::-webkit-scrollbar-thumb {
   background: var(--color-bg-surface-2);
   border-radius: var(--radius-full);
-  border: 2px solid var(--color-bg-app); /* Creates padding effect */
+  border: 2px solid var(--color-bg-app);
+  /* Creates padding effect */
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsla(220, 15%, 30%, 1); /* Slightly lighter than surface-2 */
+  background: hsla(220, 15%, 30%, 1);
+  /* Slightly lighter than surface-2 */
 }
 
 /* Firefox Support */
