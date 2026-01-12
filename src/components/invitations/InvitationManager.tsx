@@ -119,6 +119,18 @@ export default function InvitationManager({
         alert('Link copiado al portapapeles')
     }
 
+    const waMessage = (() => {
+        const contextName = fixedProjectId
+            ? projects.find(p => p.id === fixedProjectId)?.name
+            : (formData.project_id
+                ? projects.find(p => p.id === formData.project_id)?.name
+                : companyName || 'nuestro equipo')
+
+        return `🚀 Hola! Te estoy invitando a colaborar en *${contextName}* usando LukeAPP.\n\nPara aceptar la invitación y crear tu cuenta, entra aquí:\n👉 ${invitationLink}`
+    })()
+
+    const waLink = `https://wa.me/?text=${encodeURIComponent(waMessage)}`
+
     return (
         <div className="invitations-split-view" style={{
             display: 'grid',
@@ -164,7 +176,7 @@ export default function InvitationManager({
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                             <a
-                                href={`https://wa.me/?text=${encodeURIComponent(`Te invito a unirte a ${companyName || 'nuestro equipo'}.\n\nRegistrate aquí:\n${invitationLink}`)}`}
+                                href={waLink}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="form-button"
@@ -406,18 +418,7 @@ export default function InvitationManager({
                                             </div>
                                         </td>
                                         <td style={{ padding: '1rem' }}>
-                                            {requireProject ? (
-                                                <span style={{
-                                                    padding: '0.25rem 0.5rem',
-                                                    borderRadius: '999px',
-                                                    background: 'rgba(59, 130, 246, 0.1)',
-                                                    color: '#60a5fa',
-                                                    fontSize: '0.75rem',
-                                                    border: '1px solid rgba(59, 130, 246, 0.2)'
-                                                }}>
-                                                    {(inv as any).project?.code || 'PROJECT'}
-                                                </span>
-                                            ) : (
+                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                 <span style={{
                                                     padding: '0.25rem 0.5rem',
                                                     borderRadius: '999px',
@@ -425,11 +426,18 @@ export default function InvitationManager({
                                                     color: '#c084fc',
                                                     fontSize: '0.75rem',
                                                     border: '1px solid rgba(168, 85, 247, 0.2)',
-                                                    textTransform: 'uppercase'
+                                                    textTransform: 'uppercase',
+                                                    width: 'fit-content'
                                                 }}>
-                                                    {inv.role_id}
+                                                    {roleOptions.find(r => r.value === inv.role_id)?.label || inv.role_id}
                                                 </span>
-                                            )}
+                                                {/* Show Project Code if not in project context (optional, but good context) */}
+                                                {!requireProject && (inv as any).project && (
+                                                    <span style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '4px' }}>
+                                                        {(inv as any).project.code}
+                                                    </span>
+                                                )}
+                                            </div>
                                             {/* Show Job Title if available */}
                                             {/* We need to update Invitation interface to include job_title to show it here properly, but for now just showing basic role tag */}
                                         </td>

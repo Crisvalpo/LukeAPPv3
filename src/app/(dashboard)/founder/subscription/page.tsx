@@ -101,6 +101,8 @@ export default function FounderSubscriptionPage() {
     const currentPlan = plans.find((p) => p.id === subscriptionInfo.tier)
     const usersPct = getUsagePercentage(subscriptionInfo.current_users, subscriptionInfo.max_users)
     const projectsPct = getUsagePercentage(subscriptionInfo.current_projects, subscriptionInfo.max_projects)
+    const spoolsPct = getUsagePercentage(subscriptionInfo.current_spools, subscriptionInfo.max_spools)
+    const storagePct = getUsagePercentage(subscriptionInfo.current_storage_gb, subscriptionInfo.max_storage_gb)
 
     return (
         <div className="dashboard-page">
@@ -202,6 +204,54 @@ export default function FounderSubscriptionPage() {
                         <div
                             className={`subscription-progress-fill ${projectsPct > 80 ? 'subscription-progress-fill-warning' : 'subscription-progress-fill-projects'}`}
                             style={{ width: `${projectsPct}%` }}
+                        />
+                    </div>
+                </div>
+
+                {/* Spools */}
+                <div className="subscription-usage-card">
+                    <div className="subscription-usage-header">
+                        <div className="subscription-usage-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2">
+                                <circle cx="12" cy="12" r="10" />
+                                <path d="M8 12h8M12 8v8" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 className="subscription-usage-title">Spools</h3>
+                            <p className="subscription-usage-stats">
+                                {subscriptionInfo.current_spools} / {subscriptionInfo.max_spools}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="subscription-progress-bar">
+                        <div
+                            className={`subscription-progress-fill ${getUsagePercentage(subscriptionInfo.current_spools, subscriptionInfo.max_spools) > 80 ? 'subscription-progress-fill-warning' : 'subscription-progress-fill-success'}`}
+                            style={{ width: `${getUsagePercentage(subscriptionInfo.current_spools, subscriptionInfo.max_spools)}%` }}
+                        />
+                    </div>
+                </div>
+
+                {/* Storage */}
+                <div className="subscription-usage-card">
+                    <div className="subscription-usage-header">
+                        <div className="subscription-usage-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2">
+                                <rect x="4" y="4" width="16" height="16" rx="2" />
+                                <path d="M4 10h16M4 14h16" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 className="subscription-usage-title">Almacenamiento</h3>
+                            <p className="subscription-usage-stats">
+                                {subscriptionInfo.current_storage_gb.toFixed(2)} / {subscriptionInfo.max_storage_gb} GB
+                            </p>
+                        </div>
+                    </div>
+                    <div className="subscription-progress-bar">
+                        <div
+                            className={`subscription-progress-fill ${getUsagePercentage(subscriptionInfo.current_storage_gb, subscriptionInfo.max_storage_gb) > 80 ? 'subscription-progress-fill-warning' : 'subscription-progress-fill-storage'}`}
+                            style={{ width: `${getUsagePercentage(subscriptionInfo.current_storage_gb, subscriptionInfo.max_storage_gb)}%` }}
                         />
                     </div>
                 </div>

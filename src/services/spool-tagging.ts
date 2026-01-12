@@ -248,6 +248,7 @@ async function validateSpoolQuotaWithStrikes(
 
         const totalStrikes = await registerQuotaStrike(
             companyId,
+            'spool',  // Add missing resourceType parameter
             current + newSpoolsCount,
             maxSpools,
             supabaseClient

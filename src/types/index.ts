@@ -78,6 +78,10 @@ export interface CompanySubscriptionInfo {
     max_users: number
     current_projects: number
     max_projects: number
+    current_spools: number
+    max_spools: number
+    current_storage_gb: number
+    max_storage_gb: number
     is_active: boolean
 }
 

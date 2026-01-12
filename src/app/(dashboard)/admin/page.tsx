@@ -133,6 +133,14 @@ export default function AdminDashboard() {
                             • {projectData.company_name}
                         </p>
                     </div>
+                    <button
+                        onClick={() => router.push(`/admin/projects/${projectData.id}`)}
+                        className="action-button"
+                        style={{ marginLeft: 'auto', background: 'var(--color-primary)', border: 'none' }}
+                    >
+                        <Settings size={18} />
+                        Gestión Avanzada
+                    </button>
                 </div>
             </div>
 

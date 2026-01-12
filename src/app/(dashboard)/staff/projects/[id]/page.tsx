@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { getProjectById, deleteProject, type Project } from '@/services/projects'
+import { getProjectById, deleteProjectComplete, type Project } from '@/services/projects'
 import { ArrowLeft, FileText, Trash2, LayoutDashboard, AlertTriangle } from 'lucide-react'
 import '@/styles/dashboard.css'
 import '@/styles/companies.css'
@@ -33,40 +33,27 @@ export default function StaffProjectDetailPage() {
     }
 
     async function handleDelete() {
-        if (!window.confirm('¿Estás seguro de eliminar este proyecto?')) {
+        if (!project) return
+
+        if (!window.confirm(`⚠️ ESTÁS A PUNTO DE ELIMINAR EL PROYECTO "${project.name}"\n\n` +
+            `Esta acción es IRREVERSIBLE y eliminará:\n` +
+            `- Todos los usuarios vinculados.\n` +
+            `- Todos los archivos en Storage (modelos, planos, etc).\n` +
+            `- Todos los registros de Base de Datos.\n\n` +
+            `¿Confirmas la eliminación TOTAL?`)) {
             return
         }
 
         setIsDeleting(true)
 
-        // 1. Attempt standard delete
-        const result = await deleteProject(projectId)
+        // Call the complete deletion service
+        const result = await deleteProjectComplete(projectId, project.company_id)
 
         if (result.success) {
+            alert(`Proyecto eliminado exitosamente.\n\nStats:\nMiembros: ${result.stats?.members || 0}\nArchivos: Limpiados`)
             router.push('/staff/projects')
-        } else if (result.requiresForce) {
-            // 2. Ask for Force Delete
-            const confirmSpy = window.confirm(
-                `⚠️ EXTINCIÓN TOTAL DETECTADA\n\n` +
-                `Este proyecto tiene ${result.memberCount} usuarios activos asignados.\n` +
-                `Si eliminas el proyecto, estos usuarios serán BORRADOS TOTALMENTE del sistema (Auth + Datos).\n\n` +
-                `¿Confirmas la ELIMINACIÓN MASIVA de usuarios y proyecto?`
-            )
-
-            if (confirmSpy) {
-                const deepResult = await deleteProject(projectId, true) // Force = true
-                if (deepResult.success) {
-                    alert('Proyecto y todos sus usuarios han sido eliminados.')
-                    router.push('/staff/projects')
-                } else {
-                    alert('Error en borrado profundo: ' + deepResult.message)
-                    setIsDeleting(false)
-                }
-            } else {
-                setIsDeleting(false)
-            }
         } else {
-            alert(result.message)
+            alert('Error eliminando proyecto: ' + (result.error || 'Error desconocido'))
             setIsDeleting(false)
         }
     }

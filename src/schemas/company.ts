@@ -71,8 +71,7 @@ export const CompanySchema: ViewSchema<Company> = {
     },
     views: {
         list: {
-            columns: ['name', 'slug', 'created_at'],
-            actions: ['view']
+            columns: ['name', 'slug', 'created_at']
         }
     }
 }

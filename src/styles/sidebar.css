@@ -31,6 +31,8 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    min-height: 2.25rem;
+    /* Reserve space for Logo + Potential Subtitle */
 }
 
 .sidebar-company-name {

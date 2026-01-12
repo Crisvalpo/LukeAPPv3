@@ -22,6 +22,10 @@ import '@/styles/sidebar.css'
 
 interface SidebarProps {
     role: 'super_admin' | 'founder' | 'admin' | string
+    companyName?: string | null
+    planTier?: string | null
+    userEmail?: string | null
+    functionalRoleName?: string | null
 }
 
 type MenuItem = {
@@ -31,47 +35,15 @@ type MenuItem = {
     subitems?: { name: string; href: string; icon: React.ElementType }[]
 }
 
-export default function Sidebar({ role }: SidebarProps) {
+export default function Sidebar({ role, companyName, planTier, userEmail, functionalRoleName }: SidebarProps) {
     const pathname = usePathname()
     const router = useRouter()
     const [openItems, setOpenItems] = useState<Record<string, boolean>>({})
-    const [user, setUser] = useState<{ email?: string } | null>(null)
-    const [companyName, setCompanyName] = useState<string | null>(null)
-    const [planTier, setPlanTier] = useState<string | null>(null)
 
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
-
-    // Load user and company data
-    React.useEffect(() => {
-        async function loadData() {
-            const { data: { user } } = await supabase.auth.getUser()
-            setUser(user)
-
-            if (user && role !== 'super_admin') {
-                const { data: member } = await supabase
-                    .from('members')
-                    .select(`
-                        companies (
-                            name,
-                            subscription_tier
-                        )
-                    `)
-                    .eq('user_id', user.id)
-                    .maybeSingle()
-
-                if (member?.companies) {
-                    // @ts-ignore
-                    setCompanyName(member.companies.name)
-                    // @ts-ignore
-                    setPlanTier(member.companies.subscription_tier)
-                }
-            }
-        }
-        loadData()
-    }, [role])
 
     const handleSignOut = async () => {
         await supabase.auth.signOut()
@@ -88,9 +60,6 @@ export default function Sidebar({ role }: SidebarProps) {
         { name: 'Vista General', href: '/staff', icon: LayoutDashboard },
         { name: 'Empresas', href: '/staff/companies', icon: Building2 },
         { name: 'Planes', href: '/staff/plans', icon: Tag },
-        { name: 'Proyectos', href: '/staff/projects', icon: FolderKanban },
-        { name: 'Usuarios', href: '/staff/users', icon: Users },
-        { name: 'Invitaciones', href: '/staff/invitations', icon: Mail },
         { name: 'Pagos', href: '/staff/payments', icon: CreditCard },
     ]
 
@@ -117,15 +86,17 @@ export default function Sidebar({ role }: SidebarProps) {
             <div className="sidebar-header">
                 <div className="sidebar-brand-container">
                     <span className="sidebar-logo">LukeAPP</span>
-                    {companyName && role === 'founder' && (
-                        <div className="flex flex-col">
+                    {companyName && role !== 'super_admin' && (
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
                             <span className="sidebar-company-name">{companyName}</span>
                         </div>
                     )}
                 </div>
-                <div className="sidebar-badges-row" style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <div className="sidebar-badges-row" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
                     <span className={`sidebar-badge ${role === 'super_admin' ? 'staff' : 'management'}`}>
-                        {role === 'super_admin' ? 'STAFF' : role.toUpperCase()}
+                        {role === 'super_admin' ? 'STAFF' :
+                            role === 'founder' ? 'FOUNDER' :
+                                functionalRoleName ? functionalRoleName.toUpperCase() : role.toUpperCase()}
                     </span>
                     {planTier && role !== 'super_admin' && (
                         <span className={`sidebar-badge plan-tier ${planTier}`}>
@@ -185,14 +156,13 @@ export default function Sidebar({ role }: SidebarProps) {
                 })}
             </nav>
 
-            {/* Footer */}
             <div className="sidebar-footer">
                 <div className="sidebar-user-info">
                     <div className="sidebar-user-avatar">
-                        {user?.email?.[0]?.toUpperCase() || '?'}
+                        {userEmail?.[0]?.toUpperCase() || '?'}
                     </div>
                     <div className="sidebar-user-details">
-                        <div className="sidebar-user-email">{user?.email || 'Usuario'}</div>
+                        <div className="sidebar-user-email">{userEmail || 'Usuario'}</div>
                         <div className="sidebar-user-role">
                             {role === 'super_admin' && '⚡ Super Admin'}
                             {role === 'founder' && '🏢 Founder'}

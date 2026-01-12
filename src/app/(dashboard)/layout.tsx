@@ -48,7 +48,15 @@ export default async function DashboardLayout({
     // Querying 'members' table as verified source of truth
     const { data: memberData, error: memberError } = await supabase
         .from('members')
-        .select('role_id, company_id, project_id')
+        .select(`
+            role_id, 
+            company_id, 
+            project_id,
+            functional_role_id,
+            company_roles (
+                name
+            )
+        `)
         .eq('user_id', user.id)
         .maybeSingle()
 
@@ -60,10 +68,31 @@ export default async function DashboardLayout({
     // role_id from validated member
     const role = memberData.role_id
 
+    // Extract functional role name if exists
+    // @ts-ignore - company_roles is a joined object, not array
+    const functionalRoleName = memberData.company_roles?.name || null
+
+    // 3. Fetch company details for non-staff users (for Sidebar header)
+    let companyName: string | null = null
+    let planTier: string | null = null
+
+    if (role !== 'super_admin' && memberData.company_id) {
+        const { data: companyData } = await supabase
+            .from('companies')
+            .select('name, subscription_tier')
+            .eq('id', memberData.company_id)
+            .single()
+
+        if (companyData) {
+            companyName = companyData.name
+            planTier = companyData.subscription_tier
+        }
+    }
+
     return (
         <div style={{ display: 'flex', height: '100vh', background: '#0f172a', color: '#f1f5f9', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
             {/* Left Sidebar (Fixed) - Role Aware */}
-            <Sidebar role={role} />
+            <Sidebar role={role} companyName={companyName} planTier={planTier} userEmail={user.email} functionalRoleName={functionalRoleName} />
 
             {/* Main Content Area (Scrollable) */}
             <main style={{
