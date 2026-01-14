@@ -194,16 +194,33 @@ export default function ProjectLogosManager({
     return (
         <div className="logos-manager">
             {/* Header */}
-            <div className="manager-header">
-                <div className="header-left">
+            <div style={{ marginBottom: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     {onBack && (
-                        <button onClick={onBack} className="btn-back" title="Volver a Configuración">
+                        <button
+                            onClick={onBack}
+                            title="Volver a Configuración"
+                            style={{
+                                background: 'rgba(255,255,255,0.05)',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                color: 'white',
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                padding: 0
+                            }}
+                        >
                             <ArrowLeft size={20} />
                         </button>
                     )}
                     <div>
-                        <h2>Logos del Proyecto</h2>
-                        <p className="description">
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'white', margin: 0, lineHeight: '1.2' }}>Logos del Proyecto</h2>
+                        <p style={{ fontSize: '0.9rem', color: '#94a3b8', margin: 0 }}>
                             Configura hasta dos logos para incluir en los documentos MIR. Usa el editor integrado para ajustar el recorte y zoom.
                         </p>
                     </div>
