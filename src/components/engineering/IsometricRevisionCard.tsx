@@ -167,6 +167,7 @@ function IsometricViewerWrapper({
     // Unassigned Joints Panel State
     const [showJointsPanel, setShowJointsPanel] = useState(false)
     const [refreshTrigger, setRefreshTrigger] = useState(0)
+    const [unassignedJointsCount, setUnassignedJointsCount] = useState<number | null>(null)
 
     // Separate function to refresh weld types config
     const refreshWeldTypesConfig = async () => {
@@ -197,16 +198,23 @@ function IsometricViewerWrapper({
                 const { getStructureModelsAction } = await import('@/actions/structure-models')
                 const supabase = createClient()
 
-                const [spoolsData, modelsResult, weldTypesResult] = await Promise.all([
+                const [spoolsData, modelsResult, weldTypesResult, jointsCountResult] = await Promise.all([
                     getRevisionSpoolsAction(revisionId),
                     getStructureModelsAction(projectId),
                     supabase
                         .from('project_weld_type_config')
                         .select('type_code, requires_welder, icon, color, type_name_es')
-                        .eq('project_id', projectId)
+                        .eq('project_id', projectId),
+                    supabase
+                        .from('spools_joints')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('revision_id', revisionId)
+                        .is('spool_id', null)
                 ])
 
                 setSpools(spoolsData || [])
+                setUnassignedJointsCount(jointsCountResult.count ?? 0)
+
                 if (modelsResult.success && modelsResult.data) {
                     setStructureModels(modelsResult.data)
                 } else {
@@ -404,6 +412,11 @@ function IsometricViewerWrapper({
             if (res.success) {
                 // Refresh unassigned list
                 setRefreshTrigger(prev => prev + 1)
+                setUnassignedJointsCount(prev => {
+                    const next = (prev || 0) - 1
+                    if (next <= 0) setShowJointsPanel(false)
+                    return next < 0 ? 0 : next
+                })
                 // Force refresh of spool's expanded content if open (clear cache)
                 setJointsMap(prev => {
                     const next = { ...prev }
@@ -540,6 +553,17 @@ function IsometricViewerWrapper({
                             return (
                                 <div
                                     key={spool.id}
+                                    onDragOver={(e) => {
+                                        e.preventDefault()
+                                        e.dataTransfer.dropEffect = 'move'
+                                        e.currentTarget.style.border = '2px dashed #3b82f6'
+                                    }}
+                                    onDragLeave={(e) => {
+                                        e.currentTarget.style.border = isAssigned
+                                            ? (isSelectedInModel || isActiveHighlight ? `2px solid ${baseBorder}` : `1px solid ${baseBorder}`)
+                                            : (isDisabled ? '1px solid #475569' : '1px solid #334155')
+                                    }}
+                                    onDrop={(e) => handleJointDrop(e, spool.id)}
                                     style={{
                                         backgroundColor: canAssign
                                             ? (isAssignedToThisSpool ? 'rgba(239, 68, 68, 0.1)' : (isAssigned ? baseBg : '#2d3b4e'))
@@ -967,26 +991,47 @@ function IsometricViewerWrapper({
 
 
                         {/* Unassigned Joints Toggle */}
-                        <button
-                            onClick={() => setShowJointsPanel(!showJointsPanel)}
-                            title={showJointsPanel ? "Ocultar Juntas" : "Asignar Juntas"}
-                            style={{
-                                background: showJointsPanel ? '#3b82f6' : 'transparent',
-                                color: showJointsPanel ? 'white' : '#94a3b8',
-                                border: '1px solid #334155',
-                                borderRadius: '4px',
-                                width: '32px',
-                                height: '32px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                cursor: 'pointer',
-                                fontSize: '1.2rem',
-                                marginLeft: '8px'
-                            }}
-                        >
-                            <Wrench size={16} />
-                        </button>
+                        {(unassignedJointsCount ?? 0) > 0 && (
+                            <button
+                                onClick={() => setShowJointsPanel(!showJointsPanel)}
+                                title={showJointsPanel ? "Ocultar Juntas" : `Asignar Juntas (${unassignedJointsCount})`}
+                                style={{
+                                    background: showJointsPanel ? '#3b82f6' : 'transparent',
+                                    color: showJointsPanel ? 'white' : '#94a3b8',
+                                    border: '1px solid #334155',
+                                    borderRadius: '4px',
+                                    width: '32px',
+                                    height: '32px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    fontSize: '1.2rem',
+                                    marginLeft: '8px',
+                                    position: 'relative'
+                                }}
+                            >
+                                <Wrench size={16} />
+                                {/* Badge */}
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '-4px',
+                                    right: '-4px',
+                                    backgroundColor: '#ef4444',
+                                    color: 'white',
+                                    fontSize: '0.6rem',
+                                    fontWeight: 'bold',
+                                    borderRadius: '99px',
+                                    padding: '0 4px',
+                                    height: '14px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    {unassignedJointsCount}
+                                </div>
+                            </button>
+                        )}
 
                         {/* Layout Toggle (Only if PDF exists) */}
                         {pdfUrl && (
