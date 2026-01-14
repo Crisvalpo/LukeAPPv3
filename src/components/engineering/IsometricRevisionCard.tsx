@@ -8,11 +8,12 @@ import { deleteRevisionAction } from '@/actions/revisions'
 import { calculateDataStatus, calculateMaterialStatus, isFabricable, type DataStatus, type MaterialStatus } from '@/services/fabricability'
 import RevisionMasterView from './RevisionMasterView'
 import IsometricViewer from './viewer/IsometricViewer'
-import WeldCompactCard from './viewer/WeldCompactCard'
 import WeldDetailModal from './viewer/WeldDetailModal'
+import SpoolExpandedContent from './viewer/SpoolExpandedContent'
+import UnassignedJointsPanel from './viewer/UnassignedJointsPanel'
+import { assignJointToSpoolAction } from '@/actions/joints'
+import { FileText, Trash2, ExternalLink, Box, Wrench } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { updateRevisionModelUrlAction, updateRevisionPdfUrlAction, deleteRevisionPdfUrlAction, deleteRevisionModelAction } from '@/actions/revisions'
-import { FileText, Trash2, ExternalLink, Box } from 'lucide-react'
 
 // Wrapper to load spools for viewer and handle fullscreen portal
 function IsometricViewerWrapper({
@@ -121,6 +122,8 @@ function IsometricViewerWrapper({
     // Welds Expansion State
     const [expandedSpoolId, setExpandedSpoolId] = useState<string | null>(null)
     const [weldsMap, setWeldsMap] = useState<Record<string, any[]>>({})
+    const [jointsMap, setJointsMap] = useState<Record<string, any[]>>({}) // New: Bolts/Joints
+    const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({}) // New: Loading state per spool
     const [selectedWeldForDetail, setSelectedWeldForDetail] = useState<any | null>(null)
     const [weldTypesConfig, setWeldTypesConfig] = useState<Record<string, any>>({})
 
@@ -160,6 +163,10 @@ function IsometricViewerWrapper({
         if (!activeSpoolId) return []
         return assignments[activeSpoolId] || []
     }, [activeSpoolId, assignments])
+
+    // Unassigned Joints Panel State
+    const [showJointsPanel, setShowJointsPanel] = useState(false)
+    const [refreshTrigger, setRefreshTrigger] = useState(0)
 
     // Separate function to refresh weld types config
     const refreshWeldTypesConfig = async () => {
@@ -262,28 +269,51 @@ function IsometricViewerWrapper({
         // Expand
         setExpandedSpoolId(spoolId)
 
-        // If welds already cached, don't refetch
-        if (weldsMap[spoolId]) return
+        // If data already cached, don't refetch
+        if (weldsMap[spoolId] && jointsMap[spoolId]) return
 
-        // Fetch welds for this spool
+        setLoadingMap(prev => ({ ...prev, [spoolId]: true }))
+
         try {
             const supabase = createClient()
-            const { data, error } = await supabase
-                .from('spools_welds')
-                .select('*')
-                .eq('revision_id', revisionId)
-                .eq('spool_number', spoolNumber)
-                .order('weld_number')
 
-            if (!error && data) {
-                setWeldsMap(prev => ({ ...prev, [spoolId]: data }))
-            } else if (error) {
-                console.error('Error loading welds:', error)
-                setWeldsMap(prev => ({ ...prev, [spoolId]: [] }))
-            }
+            // Parallel Fetch: Welds & Joints
+            // Note: Welds currently linked by revision_id + spool_number (Legacy?)
+            // Joints are linked by spool_id if assigned, or we might need fallback logic? 
+            // For now, assuming spool_id is reliable for Joints as per schema.
+            // Actually, let's use the same pattern for Welds to be safe (rev + spool_number) 
+            // and assume Joints use spool_id or typical keys.
+            // Checking schema implies spools_joints are linked via spool_id if processed.
+
+            const [weldsRes, jointsRes] = await Promise.all([
+                supabase
+                    .from('spools_welds')
+                    .select('*')
+                    .eq('revision_id', revisionId)
+                    .eq('spool_number', spoolNumber)
+                    .order('weld_number'),
+                supabase
+                    .from('spools_joints')
+                    .select('*')
+                    .eq('revision_id', revisionId)
+                    // Try matching by spool_id first (ideal)
+                    // If that fails in future users might want number matching, but for now ID is safest if populated.
+                    .eq('spool_id', spoolId)
+                    .order('flanged_joint_number', { ascending: true })
+            ])
+
+            setWeldsMap(prev => ({ ...prev, [spoolId]: weldsRes.data || [] }))
+            setJointsMap(prev => ({ ...prev, [spoolId]: jointsRes.data || [] }))
+
+            if (weldsRes.error) console.error('Error fetching welds:', weldsRes.error)
+            if (jointsRes.error) console.error('Error fetching joints:', jointsRes.error)
+
         } catch (error) {
-            console.error('Error fetching welds:', error)
+            console.error('Error loading spool details:', error)
             setWeldsMap(prev => ({ ...prev, [spoolId]: [] }))
+            setJointsMap(prev => ({ ...prev, [spoolId]: [] }))
+        } finally {
+            setLoadingMap(prev => ({ ...prev, [spoolId]: false }))
         }
     }
 
@@ -357,6 +387,36 @@ function IsometricViewerWrapper({
             if (onSave) onSave()
         } catch (error) {
             console.error('Failed to save assignment:', error)
+        }
+    }
+
+    // Drop Handler for assigning Joints to Spools
+    const handleJointDrop = async (e: React.DragEvent, spoolId: string) => {
+        e.preventDefault()
+        e.stopPropagation()
+        const jointId = e.dataTransfer.getData('jointId')
+        const jointNumber = e.dataTransfer.getData('jointNumber')
+
+        if (!jointId) return
+
+        if (confirm(`¿Asignar junta ${jointNumber} a este spool?`)) {
+            const res = await assignJointToSpoolAction(jointId, spoolId)
+            if (res.success) {
+                // Refresh unassigned list
+                setRefreshTrigger(prev => prev + 1)
+                // Force refresh of spool's expanded content if open (clear cache)
+                setJointsMap(prev => {
+                    const next = { ...prev }
+                    delete next[spoolId] // Remove from cache to force refetch on next expand
+                    return next
+                })
+                // Also trigger expand refresh immediately if currently expanded
+                if (expandedSpoolId === spoolId) {
+                    handleToggleExpand(spoolId, '') // Refetch
+                }
+            } else {
+                alert('Error al asignar: ' + res.message)
+            }
         }
     }
 
@@ -638,58 +698,20 @@ function IsometricViewerWrapper({
 
                                     {/* Expandable Welds List */}
                                     {expandedSpoolId === spool.id && (
-                                        <div style={{
-                                            marginTop: '12px',
-                                            paddingTop: '12px',
-                                            borderTop: '1px solid #334155',
-                                            maxHeight: '300px',
-                                            overflowY: 'auto'
-                                        }}>
-                                            {weldsMap[spool.id] === undefined ? (
-                                                <div style={{
-                                                    color: '#94a3b8',
-                                                    fontSize: '0.8rem',
-                                                    textAlign: 'center',
-                                                    padding: '8px'
-                                                }}>
-                                                    Cargando uniones...
-                                                </div>
-                                            ) : weldsMap[spool.id].length === 0 ? (
-                                                <div style={{
-                                                    color: '#64748b',
-                                                    fontSize: '0.8rem',
-                                                    textAlign: 'center',
-                                                    padding: '8px',
-                                                    fontStyle: 'italic'
-                                                }}>
-                                                    No hay uniones para este spool
-                                                </div>
-                                            ) : (
-                                                weldsMap[spool.id].map((weld: any) => (
-                                                    <WeldCompactCard
-                                                        key={weld.id}
-                                                        weld={{
-                                                            ...weld,
-                                                            spool_number: spool.name,
-                                                            iso_number: isoNumber
-                                                        }}
-                                                        weldTypeConfig={weldTypesConfig[weld.type_weld]}
-                                                        onClick={() => {
-                                                            console.log('🔥 Weld clicked:', weld.weld_number)
-                                                            const weldData = {
-                                                                ...weld,
-                                                                spool_number: spool.name,
-                                                                spool_id: spool.id,
-                                                                iso_number: isoNumber,
-                                                                project_id: projectId
-                                                            }
-                                                            console.log('📦 Setting weld data:', weldData)
-                                                            setSelectedWeldForDetail(weldData)
-                                                        }}
-                                                    />
-                                                ))
-                                            )}
-                                        </div>
+                                        <SpoolExpandedContent
+                                            spool={spool}
+                                            isoNumber={isoNumber}
+                                            projectId={projectId}
+                                            welds={weldsMap[spool.id] || []}
+                                            joints={jointsMap[spool.id] || []}
+                                            weldTypesConfig={weldTypesConfig}
+                                            loading={loadingMap[spool.id] || false}
+                                            onWeldClick={(weldData) => {
+                                                console.log('🔥 Weld clicked:', weldData.weld_number)
+                                                console.log('📦 Setting weld data:', weldData)
+                                                setSelectedWeldForDetail(weldData)
+                                            }}
+                                        />
                                     )}
                                 </div>
                             )
@@ -943,6 +965,29 @@ function IsometricViewerWrapper({
                             </div>
                         </div>
 
+
+                        {/* Unassigned Joints Toggle */}
+                        <button
+                            onClick={() => setShowJointsPanel(!showJointsPanel)}
+                            title={showJointsPanel ? "Ocultar Juntas" : "Asignar Juntas"}
+                            style={{
+                                background: showJointsPanel ? '#3b82f6' : 'transparent',
+                                color: showJointsPanel ? 'white' : '#94a3b8',
+                                border: '1px solid #334155',
+                                borderRadius: '4px',
+                                width: '32px',
+                                height: '32px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                fontSize: '1.2rem',
+                                marginLeft: '8px'
+                            }}
+                        >
+                            <Wrench size={16} />
+                        </button>
+
                         {/* Layout Toggle (Only if PDF exists) */}
                         {pdfUrl && (
                             <button
@@ -1005,6 +1050,8 @@ function IsometricViewerWrapper({
                     </button>
                 </div>
 
+
+
                 <div
                     ref={containerRef}
                     style={{
@@ -1014,6 +1061,24 @@ function IsometricViewerWrapper({
                         flexDirection: layout === 'SPLIT_HORIZONTAL' ? 'column' : 'row',
                         overflow: 'hidden'
                     }}>
+                    {/* Unassigned Joints Overlay Panel (Global) */}
+                    {showJointsPanel && (
+                        <div style={{
+                            position: 'absolute',
+                            left: 0,
+                            top: 0,
+                            bottom: 0,
+                            zIndex: 60,
+                            boxShadow: '4px 0 15px rgba(0,0,0,0.5)'
+                        }}>
+                            <UnassignedJointsPanel
+                                revisionId={revisionId}
+                                onClose={() => setShowJointsPanel(false)}
+                                refreshTrigger={refreshTrigger}
+                            />
+                        </div>
+                    )}
+
                     {/* 3D Viewer Container */}
                     <div style={{
                         flex: layout === 'FULL' ? 1 : 'none', // If full take all, else rely heavily on width/height
@@ -1023,6 +1088,8 @@ function IsometricViewerWrapper({
                         borderBottom: layout === 'SPLIT_HORIZONTAL' ? '1px solid #334155' : 'none',
                         borderRight: layout === 'SPLIT_VERTICAL' ? '1px solid #334155' : 'none',
                     }}>
+
+
                         <IsometricViewer
                             modelUrl={modelUrl}
                             spools={spools}
