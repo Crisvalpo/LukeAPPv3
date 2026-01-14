@@ -81,6 +81,9 @@ export async function updateWeldStatusAction(payload: UpdateWeldStatusPayload) {
         // 4. Log History
         // Only log if status changed or it's a significant update (like adding notes)
         if (currentWeld.execution_status !== status || executionNotes) {
+            const userName = user.user_metadata?.full_name || user.user_metadata?.nombre || user.email || 'Usuario'
+            const details = executionNotes || (status === 'EXECUTED' ? `Soldador: ${welderStamp}` : '')
+
             const { error: historyError } = await supabase
                 .from('weld_status_history')
                 .insert({
@@ -89,7 +92,7 @@ export async function updateWeldStatusAction(payload: UpdateWeldStatusPayload) {
                     previous_status: currentWeld.execution_status || 'PENDING',
                     new_status: status,
                     changed_by: user.id,
-                    comments: executionNotes || (status === 'EXECUTED' ? `Soldador: ${welderStamp}` : null)
+                    comments: `Usuario: ${userName} | ${details}`.trim()
                 })
 
             if (historyError) {
@@ -126,7 +129,7 @@ export async function updateWeldStatusAction(payload: UpdateWeldStatusPayload) {
                 const validShopWelds = shopWelds.filter(w => w.execution_status !== 'DELETED')
 
                 if (validShopWelds.length > 0) {
-                    const executedCount = validShopWelds.filter(w => w.execution_status === 'EXECUTED').length
+                    const executedCount = validShopWelds.filter(w => ['EXECUTED', 'REWORK'].includes(w.execution_status)).length
                     const isFullyFabricated = executedCount === validShopWelds.length
                     const isPartiallyFabricated = executedCount > 0 && !isFullyFabricated
 

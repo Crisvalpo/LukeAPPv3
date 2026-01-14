@@ -32,8 +32,8 @@ export default function WeldDetailModal({ weld, weldTypeConfig, onClose, onUpdat
     // 1. STATE MANAGEMENT
     // ----------------------------------------------------------------------
     const [status, setStatus] = useState((weld as any).execution_status || 'PENDING')
-    const [welder, setWelder] = useState((weld as any).welder_stamp || '')
-    const [supportWelder, setSupportWelder] = useState((weld as any).support_welder_id || '')
+    const [welder, setWelder] = useState('')
+    const [supportWelder, setSupportWelder] = useState('')
     const [notes, setNotes] = useState((weld as any).execution_notes || '')
 
     // UI State
@@ -52,7 +52,7 @@ export default function WeldDetailModal({ weld, weldTypeConfig, onClose, onUpdat
     // Computed Values
     const currentWeld = updatedData ? { ...weld, ...updatedData } : weld
     const effectiveStatus = (updatedData ? updatedData.execution_status : (weld as any).execution_status) || 'PENDING'
-    const isReadOnly = effectiveStatus === 'EXECUTED'
+    const isReadOnly = effectiveStatus === 'EXECUTED' || effectiveStatus === 'DELETED'
     const weldIcon = weldTypeConfig?.icon || '🔥'
 
     const MOCK_WELDERS = ['W-01', 'W-02', 'W-03', 'W-04', 'W-05']
@@ -103,10 +103,11 @@ export default function WeldDetailModal({ weld, weldTypeConfig, onClose, onUpdat
         if (status === 'PENDING') return false
         if (missingName && !currentUserName.trim()) return false
 
-        if (status === 'EXECUTED') {
+        if (status === 'EXECUTED' || status === 'REWORK') {
             if (weldTypeConfig?.requires_welder !== false && !welder) return false
         }
         if (status === 'REWORK' && !notes) return false
+        if (status === 'DELETED' && !notes) return false
 
         // Logical Transitions
         if ((effectiveStatus === 'EXECUTED' || effectiveStatus === 'REWORK') && status === 'PENDING') return false
@@ -135,8 +136,9 @@ export default function WeldDetailModal({ weld, weldTypeConfig, onClose, onUpdat
 
             // Validations
             if (missingName && !currentUserName.trim()) { throw new Error('Nombre requerido') }
-            if (status === 'EXECUTED' && weldTypeConfig?.requires_welder !== false && !welder) { throw new Error('Soldador requerido') }
+            if ((status === 'EXECUTED' || status === 'REWORK') && weldTypeConfig?.requires_welder !== false && !welder) { throw new Error('Soldador requerido') }
             if (status === 'REWORK' && !notes) { throw new Error('Motivo de retrabajo requerido') }
+            if (status === 'DELETED' && !notes) { throw new Error('Motivo de eliminación requerido') }
 
             const now = new Date().toISOString()
             const payload = {
@@ -165,7 +167,7 @@ export default function WeldDetailModal({ weld, weldTypeConfig, onClose, onUpdat
 
             if (onUpdate) onUpdate({ ...weld, ...payload })
 
-            setTimeout(() => setSaveSuccess(false), 3000)
+            // setTimeout(() => setSaveSuccess(false), 3000) // User requested to keep 'Saved' state visible
 
         } catch (error: any) {
             console.error(error)
@@ -227,23 +229,54 @@ export default function WeldDetailModal({ weld, weldTypeConfig, onClose, onUpdat
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                         <div style={{ fontSize: '2rem' }}>{weldIcon}</div>
                         <div>
-                            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>
-                                {currentWeld.weld_number}
-                            </h2>
-                            {currentWeld.type_weld && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, lineHeight: 1 }}>
+                                    {currentWeld.weld_number}
+                                </h2>
+                                {/* Current Status Badge */}
                                 <span style={{
-                                    fontSize: '0.875rem',
-                                    fontWeight: 600,
-                                    color: weldTypeConfig?.color || '#60a5fa',
-                                    backgroundColor: `${weldTypeConfig?.color || '#60a5fa'}20`,
-                                    padding: '2px 8px',
-                                    borderRadius: '4px',
-                                    marginTop: '4px',
-                                    display: 'inline-block'
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase',
+                                    padding: '4px 10px',
+                                    borderRadius: '99px',
+                                    backgroundColor: effectiveStatus === 'EXECUTED' ? 'rgba(74, 222, 128, 0.1)' :
+                                        (effectiveStatus === 'REWORK' ? 'rgba(16, 185, 129, 0.1)' :
+                                            (effectiveStatus === 'DELETED' ? 'rgba(148, 163, 184, 0.1)' : 'rgba(96, 165, 250, 0.1)')),
+                                    color: effectiveStatus === 'EXECUTED' ? '#4ade80' :
+                                        (effectiveStatus === 'REWORK' ? '#10b981' :
+                                            (effectiveStatus === 'DELETED' ? '#94a3b8' : '#60a5fa')),
+                                    border: `1px solid ${effectiveStatus === 'EXECUTED' ? '#22c55e' :
+                                        (effectiveStatus === 'REWORK' ? '#10b981' :
+                                            (effectiveStatus === 'DELETED' ? '#475569' : '#3b82f6'))}`
                                 }}>
-                                    {currentWeld.type_weld}
+                                    {{
+                                        'PENDING': 'PENDIENTE',
+                                        'EXECUTED': 'EJECUTADA',
+                                        'REWORK': 'RETRABAJO',
+                                        'DELETED': 'ELIMINADA'
+                                    }[effectiveStatus as string] || effectiveStatus}
                                 </span>
-                            )}
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+                                <span style={{ color: '#94a3b8', fontSize: '0.9rem', fontFamily: 'monospace' }}>
+                                    {currentWeld.iso_number}
+                                </span>
+                                {currentWeld.type_weld && (
+                                    <span style={{
+                                        fontSize: '0.75rem',
+                                        fontWeight: 600,
+                                        color: weldTypeConfig?.color || '#60a5fa',
+                                        backgroundColor: `${weldTypeConfig?.color || '#60a5fa'}20`,
+                                        padding: '1px 6px',
+                                        borderRadius: '4px',
+                                        border: `1px solid ${weldTypeConfig?.color || '#60a5fa'}40`
+                                    }}>
+                                        {currentWeld.type_weld}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
                     <button onClick={onClose} style={{
@@ -278,14 +311,17 @@ export default function WeldDetailModal({ weld, weldTypeConfig, onClose, onUpdat
                         {isReadOnly && (
                             <div style={{
                                 padding: '12px',
-                                backgroundColor: 'rgba(251, 191, 36, 0.1)',
-                                border: '1px solid #fbbf24',
+                                backgroundColor: effectiveStatus === 'DELETED' ? 'rgba(71, 85, 105, 0.3)' : 'rgba(251, 191, 36, 0.1)',
+                                border: `1px solid ${effectiveStatus === 'DELETED' ? '#475569' : '#fbbf24'}`,
                                 borderRadius: '8px',
-                                color: '#fbbf24',
+                                color: effectiveStatus === 'DELETED' ? '#cbd5e1' : '#fbbf24',
                                 marginBottom: '20px',
                                 fontSize: '0.9rem'
                             }}>
-                                <strong>🔒 Soldadura Completada.</strong> Solo se permiten cambios a RETRABAJO o ELIMINADA.
+                                {effectiveStatus === 'DELETED'
+                                    ? <span><strong>🔒 Unión Eliminada.</strong> Esta acción es definitiva.</span>
+                                    : <span><strong>🔒 Soldadura Completada.</strong> Solo se permiten cambios a RETRABAJO o ELIMINADA.</span>
+                                }
                             </div>
                         )}
 
@@ -314,33 +350,42 @@ export default function WeldDetailModal({ weld, weldTypeConfig, onClose, onUpdat
                             <StatusButton
                                 active={status === 'EXECUTED'}
                                 onClick={() => setStatus('EXECUTED')}
-                                disabled={isReadOnly || effectiveStatus === 'REWORK'}
+                                disabled={effectiveStatus === 'EXECUTED' || effectiveStatus === 'REWORK' || effectiveStatus === 'DELETED'}
                                 color="#4ade80"
                                 label="EJECUTADA"
                             />
                             <StatusButton
                                 active={status === 'REWORK'}
-                                onClick={() => setStatus('REWORK')}
-                                disabled={effectiveStatus === 'PENDING'}
-                                color="#f87171"
+                                onClick={() => {
+                                    setStatus('REWORK')
+                                    if (effectiveStatus === 'EXECUTED') {
+                                        setWelder('')
+                                        setSupportWelder('')
+                                    }
+                                }}
+                                disabled={effectiveStatus === 'PENDING' || effectiveStatus === 'DELETED'}
+                                color="#10b981"
                                 label="RETRABAJO"
                             />
                             <StatusButton
                                 active={status === 'DELETED'}
                                 onClick={() => setStatus('DELETED')}
+                                disabled={effectiveStatus === 'DELETED'}
                                 color="#94a3b8"
                                 label="ELIMINADA"
                             />
                         </div>
 
                         {/* Conditional Inputs */}
-                        {status === 'EXECUTED' && weldTypeConfig?.requires_welder !== false && (
+                        {(status === 'EXECUTED' || status === 'REWORK') && weldTypeConfig?.requires_welder !== false && (
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
                                 <div>
-                                    <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '0.85rem' }}>Soldador *</label>
+                                    <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '0.85rem' }}>
+                                        {status === 'REWORK' ? 'Soldador (Retrabajo) *' : 'Soldador *'}
+                                    </label>
                                     <Select
                                         value={welder}
-                                        onChange={e => {
+                                        onChange={(e: any) => {
                                             setWelder(e.target.value)
                                             if (supportWelder === e.target.value) setSupportWelder('')
                                         }}
@@ -352,7 +397,7 @@ export default function WeldDetailModal({ weld, weldTypeConfig, onClose, onUpdat
                                     <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '0.85rem' }}>Apoyo</label>
                                     <Select
                                         value={supportWelder}
-                                        onChange={e => setSupportWelder(e.target.value)}
+                                        onChange={(e: any) => setSupportWelder(e.target.value)}
                                         options={MOCK_WELDERS.filter(w => w !== welder)}
                                         placeholder="Ninguno"
                                     />
@@ -382,6 +427,28 @@ export default function WeldDetailModal({ weld, weldTypeConfig, onClose, onUpdat
                             </div>
                         )}
 
+                        {status === 'DELETED' && (
+                            <div style={{ marginBottom: '20px' }}>
+                                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '0.85rem' }}>Motivo de Eliminación *</label>
+                                <textarea
+                                    value={notes}
+                                    onChange={e => setNotes(e.target.value)}
+                                    placeholder="Explique la razón de eliminar esta unión..."
+                                    rows={3}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px',
+                                        backgroundColor: '#0f172a',
+                                        border: '1px solid #475569',
+                                        borderRadius: '6px',
+                                        color: 'white',
+                                        resize: 'vertical',
+                                        fontFamily: 'inherit'
+                                    }}
+                                />
+                            </div>
+                        )}
+
                         <button
                             onClick={handleSave}
                             disabled={!canSave || saving}
@@ -407,9 +474,6 @@ export default function WeldDetailModal({ weld, weldTypeConfig, onClose, onUpdat
                         <InfoItem label="Schedule" value={currentWeld.sch || '-'} />
                         <InfoItem label="Destino" value={currentWeld.destination || '-'} highlight={currentWeld.destination === 'FIELD'} />
                         <InfoItem label="Spool" value={currentWeld.spool_number} />
-                        <div style={{ gridColumn: '1 / -1' }}>
-                            <InfoItem label="Isométrico" value={currentWeld.iso_number} />
-                        </div>
                     </div>
 
                     {/* History */}
@@ -523,26 +587,58 @@ function WeldHistoryList({ weldId, triggerRefresh }: { weldId: string, triggerRe
                     const userMatch = record.comments?.match(/Usuario:\s*(.+?)(?:\s*\||$)/i)
                     const userName = userMatch ? userMatch[1].trim() : 'Usuario'
 
+                    // Robustly clean the comment
+                    let cleanComment = record.comments || ''
+                    if (cleanComment.match(/^Usuario:/i)) {
+                        const pipeIndex = cleanComment.indexOf('|')
+                        if (pipeIndex !== -1) {
+                            cleanComment = cleanComment.substring(pipeIndex + 1).trim()
+                        } else {
+                            cleanComment = '' // Just user tag found
+                        }
+                    }
+
                     return (
                         <div key={record.id} style={{
-                            display: 'flex',
-                            gap: '12px',
-                            fontSize: '0.85rem',
-                            padding: '12px',
+                            padding: '8px 12px',
                             backgroundColor: '#1e293b',
-                            borderRadius: '8px'
+                            borderRadius: '8px',
+                            fontSize: '0.85rem',
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            alignItems: 'baseline',
+                            gap: '6px',
+                            borderLeft: `3px solid ${record.new_status === 'EXECUTED' ? '#4ade80' :
+                                (record.new_status === 'REWORK' ? '#10b981' :
+                                    (record.new_status === 'DELETED' ? '#94a3b8' : '#334155'))}`
                         }}>
-                            <div style={{ color: '#64748b', whiteSpace: 'nowrap' }}>
+                            <span style={{ color: '#64748b', fontSize: '0.75rem', marginRight: '4px' }}>
                                 {new Date(record.changed_at).toLocaleDateString('es-CL')} {new Date(record.changed_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                            <div>
-                                <div style={{ marginBottom: '4px' }}>
-                                    <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{userName}</span>
-                                    <span style={{ margin: '0 8px', color: '#64748b' }}>cambió a</span>
-                                    <span style={{ fontWeight: 600, color: record.new_status === 'EXECUTED' ? '#4ade80' : '#e2e8f0' }}>{record.new_status}</span>
-                                </div>
-                                {record.comments && <div style={{ color: '#94a3b8', fontStyle: 'italic' }}>"{record.comments}"</div>}
-                            </div>
+                            </span>
+
+                            <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{userName}</span>
+
+                            <span style={{ color: '#64748b' }}>cambió a</span>
+
+                            <span style={{
+                                fontWeight: 700,
+                                color: record.new_status === 'EXECUTED' ? '#4ade80' :
+                                    (record.new_status === 'REWORK' ? '#10b981' :
+                                        (record.new_status === 'DELETED' ? '#94a3b8' : '#e2e8f0'))
+                            }}>
+                                {{
+                                    'PENDING': 'PENDIENTE',
+                                    'EXECUTED': 'EJECUTADA',
+                                    'REWORK': 'RETRABAJO',
+                                    'DELETED': 'ELIMINADA'
+                                }[record.new_status as string] || record.new_status}
+                            </span>
+
+                            {cleanComment && (
+                                <span style={{ color: '#94a3b8', fontStyle: 'italic', marginLeft: '4px' }}>
+                                    — {cleanComment}
+                                </span>
+                            )}
                         </div>
                     )
                 })}

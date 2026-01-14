@@ -589,7 +589,16 @@ function IsometricViewerWrapper({
                                                 borderRadius: '99px',
                                                 border: `1px solid ${spool.status === 'PENDING' ? '#475569' : (spool.status === 'INSTALLED' ? '#22c55e' : '#3b82f6')}`
                                             }}>
-                                                {spool.status || 'PENDIENTE'}
+                                                {{
+                                                    'PENDING': 'PENDIENTE',
+                                                    'IN_FABRICATION': 'EN FABRICACIÓN',
+                                                    'FABRICATED': 'FABRICADO',
+                                                    'PAINTING': 'PINTURA',
+                                                    'SHIPPED': 'DESPACHADO',
+                                                    'DELIVERED': 'ENTREGADO',
+                                                    'INSTALLED': 'INSTALADO',
+                                                    'COMPLETED': 'COMPLETADO'
+                                                }[spool.status as string] || spool.status || 'PENDIENTE'}
                                             </span>
 
                                             {/* Expand Button (Repositioned) */}
@@ -1114,7 +1123,7 @@ function IsometricViewerWrapper({
                             // Valid Shop Welds (Not Deleted)
                             const validShopWelds = shopWelds.filter((w: any) => w.execution_status !== 'DELETED')
 
-                            const executedCount = validShopWelds.filter((w: any) => w.execution_status === 'EXECUTED').length
+                            const executedCount = validShopWelds.filter((w: any) => ['EXECUTED', 'REWORK'].includes(w.execution_status)).length
                             const isFullyFabricated = validShopWelds.length > 0 && executedCount === validShopWelds.length
                             const isPartiallyFabricated = executedCount > 0 && !isFullyFabricated
 
@@ -1123,7 +1132,7 @@ function IsometricViewerWrapper({
                                     // 1. Upgrade to FABRICATED
                                     if (isFullyFabricated) {
                                         // Prevents upgrading if already in higher status
-                                        if (['PENDING', 'IN_FABRICATION', undefined].includes(s.status)) {
+                                        if (['PENDING', 'IN_FABRICATION', null, undefined].includes(s.status)) {
                                             return { ...s, status: 'FABRICATED' }
                                         }
                                     }

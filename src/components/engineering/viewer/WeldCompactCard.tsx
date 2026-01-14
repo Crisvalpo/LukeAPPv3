@@ -58,7 +58,7 @@ export default function WeldCompactCard({ weld, weldTypeConfig, onClick }: WeldC
         const s = (weld as any).execution_status || 'PENDING'
         switch (s) {
             case 'EXECUTED': return { bg: 'rgba(74, 222, 128, 0.2)', text: '#4ade80', border: '#22c55e' }
-            case 'REWORK': return { bg: 'rgba(239, 68, 68, 0.2)', text: '#f87171', border: '#ef4444' }
+            case 'REWORK': return { bg: 'rgba(16, 185, 129, 0.2)', text: '#10b981', border: '#10b981' }
             case 'DELETED': return { bg: 'rgba(148, 163, 184, 0.2)', text: '#94a3b8', border: '#475569' }
             default: return { bg: 'rgba(59, 130, 246, 0.15)', text: '#60a5fa', border: '#3b82f6' } // Pending (Blueish default)
         }
