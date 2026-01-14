@@ -655,13 +655,18 @@ function IsometricViewerWrapper({
                                                             iso_number: isoNumber
                                                         }}
                                                         weldTypeConfig={weldTypesConfig[weld.type_weld]}
-                                                        onClick={() => setSelectedWeldForDetail({
-                                                            ...weld,
-                                                            spool_number: spool.name,
-                                                            spool_id: spool.id, // Inject spool_id for efficient update
-                                                            iso_number: isoNumber,
-                                                            project_id: projectId // CRITICAL: Required for history logging
-                                                        })}
+                                                        onClick={() => {
+                                                            console.log('🔥 Weld clicked:', weld.weld_number)
+                                                            const weldData = {
+                                                                ...weld,
+                                                                spool_number: spool.name,
+                                                                spool_id: spool.id,
+                                                                iso_number: isoNumber,
+                                                                project_id: projectId
+                                                            }
+                                                            console.log('📦 Setting weld data:', weldData)
+                                                            setSelectedWeldForDetail(weldData)
+                                                        }}
                                                     />
                                                 ))
                                             )}

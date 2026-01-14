@@ -68,7 +68,10 @@ export default function WeldCompactCard({ weld, weldTypeConfig, onClick }: WeldC
 
     return (
         <div
-            onClick={onClick}
+            onClick={(e) => {
+                e.stopPropagation() // Prevent event from bubbling to parent spool card
+                onClick()
+            }}
             style={{
                 display: 'flex',
                 alignItems: 'center',

@@ -618,6 +618,10 @@ function WeldHistoryList({ weldId, triggerRefresh }: { weldId: string, triggerRe
                     const welderMatch = record.comments?.match(/Soldador:\s*([A-Z0-9-]+)/i)
                     const welderStamp = welderMatch ? welderMatch[1] : null
 
+                    // Extract user name from comments (format: "... | Usuario: [Name]")
+                    const userMatch = record.comments?.match(/Usuario:\s*(.+?)(?:\s*\||$)/i)
+                    const userName = userMatch ? userMatch[1].trim() : 'Usuario'
+
                     return (
                         <div key={record.id} style={{ display: 'flex', gap: '12px', fontSize: '0.85rem' }}>
                             <div style={{ color: '#64748b', minWidth: '120px' }}>
@@ -632,7 +636,7 @@ function WeldHistoryList({ weldId, triggerRefresh }: { weldId: string, triggerRe
                             <div style={{ flex: 1 }}>
                                 <div style={{ marginBottom: '4px' }}>
                                     <span style={{ color: '#cbd5e1', fontWeight: 'bold' }}>
-                                        {record.user?.raw_user_meta_data?.full_name || record.user?.email || 'Usuario'}
+                                        {userName}
                                     </span>
                                     <span style={{ margin: '0 6px', color: '#475569' }}>→</span>
                                     <span style={{

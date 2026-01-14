@@ -214,17 +214,14 @@ export async function getWeldHistoryAction(weldId: string) {
     try {
         const { data, error } = await supabase
             .from('weld_status_history')
-            .select(`
-                *,
-                user:changed_by (
-                    email,
-                    raw_user_meta_data
-                )
-            `)
+            .select('*')
             .eq('weld_id', weldId)
             .order('changed_at', { ascending: false })
 
         if (error) throw error
+
+        // Note: User information is embedded in the 'comments' field
+        // Format: "Soldador: W-01 | Usuario: [name]"
         return { success: true, data }
     } catch (error: any) {
         console.error('Error fetching weld history:', error)
