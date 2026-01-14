@@ -671,52 +671,22 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
                                         onBack={() => setSettingsView('menu')}
                                     />
                                 ) : settingsView === 'logo' ? (
-                                    <div>
-                                        <button
-                                            onClick={() => setSettingsView('menu')}
-                                            style={{
-                                                padding: '0.75rem 1.25rem',
-                                                background: 'rgba(255, 255, 255, 0.05)',
-                                                border: '1px solid rgba(255, 255, 255, 0.1)',
-                                                borderRadius: '8px',
-                                                color: 'white',
-                                                cursor: 'pointer',
-                                                marginBottom: '2rem',
-                                                transition: 'all 0.2s'
-                                            }}
-                                        >
-                                            ← Volver a Configuración
-                                        </button>
-                                        <div style={{ maxWidth: '800px' }}>
-                                            <ProjectLogosManager
-                                                projectId={projectId}
-                                                companyId={project.company_id}
-                                                primaryLogoUrl={project.logo_primary_url}
-                                                secondaryLogoUrl={project.logo_secondary_url}
-                                                onUpdate={() => loadProject()}
-                                            />
-                                        </div>
+                                    <div style={{ maxWidth: '800px' }}>
+                                        <ProjectLogosManager
+                                            projectId={projectId}
+                                            companyId={project.company_id}
+                                            primaryLogoUrl={project.logo_primary_url}
+                                            secondaryLogoUrl={project.logo_secondary_url}
+                                            onUpdate={() => loadProject()}
+                                            onBack={() => setSettingsView('menu')}
+                                        />
                                     </div>
                                 ) : settingsView === 'structure-models' ? (
-                                    <div className="fade-in">
-                                        <button
-                                            onClick={() => setSettingsView('menu')}
-                                            style={{
-                                                padding: '0.75rem 1.25rem',
-                                                background: 'rgba(255, 255, 255, 0.05)',
-                                                border: '1px solid rgba(255, 255, 255, 0.1)',
-                                                borderRadius: '8px',
-                                                color: 'white',
-                                                cursor: 'pointer',
-                                                marginBottom: '2rem',
-                                                transition: 'all 0.2s'
-                                            }}
-                                        >
-                                            ← Volver a Configuración
-                                        </button>
-                                        <div style={{ maxWidth: '800px' }}>
-                                            <StructureModelsManager projectId={projectId} />
-                                        </div>
+                                    <div className="fade-in" style={{ maxWidth: '800px' }}>
+                                        <StructureModelsManager
+                                            projectId={projectId}
+                                            onBack={() => setSettingsView('menu')}
+                                        />
                                     </div>
                                 ) : null}
                             </div>
