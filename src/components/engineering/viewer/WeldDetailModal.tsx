@@ -28,21 +28,55 @@ interface WeldDetailModalProps {
 }
 
 export default function WeldDetailModal({ weld, weldTypeConfig, onClose, onUpdate }: WeldDetailModalProps) {
+    // ----------------------------------------------------------------------
+    // 1. STATE MANAGEMENT
+    // ----------------------------------------------------------------------
     const [status, setStatus] = useState((weld as any).execution_status || 'PENDING')
     const [welder, setWelder] = useState((weld as any).welder_stamp || '')
     const [supportWelder, setSupportWelder] = useState((weld as any).support_welder_id || '')
     const [notes, setNotes] = useState((weld as any).execution_notes || '')
+
+    // UI State
     const [saving, setSaving] = useState(false)
     const [saveSuccess, setSaveSuccess] = useState(false)
     const [updatedData, setUpdatedData] = useState<any>(null)
     const [refreshHistoryToken, setRefreshHistoryToken] = useState(0)
+
+    // User Identity State
     const [currentUserName, setCurrentUserName] = useState<string>('')
     const [missingName, setMissingName] = useState(false)
 
+    // Portal Mounting State
+    const [mounted, setMounted] = useState(false)
+
+    // Computed Values
     const currentWeld = updatedData ? { ...weld, ...updatedData } : weld
     const effectiveStatus = (updatedData ? updatedData.execution_status : (weld as any).execution_status) || 'PENDING'
+    const isReadOnly = effectiveStatus === 'EXECUTED'
+    const weldIcon = weldTypeConfig?.icon || '🔥'
 
-    // Fetch user details on mount
+    const MOCK_WELDERS = ['W-01', 'W-02', 'W-03', 'W-04', 'W-05']
+
+    // ----------------------------------------------------------------------
+    // 2. EFFECTS
+    // ----------------------------------------------------------------------
+
+    // Handle Client-Side Mounting
+    useEffect(() => {
+        setMounted(true)
+        return () => setMounted(false)
+    }, [])
+
+    // Close on Escape
+    useEffect(() => {
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose()
+        }
+        document.addEventListener('keydown', handleEscape)
+        return () => document.removeEventListener('keydown', handleEscape)
+    }, [onClose])
+
+    // Check User Identity
     useEffect(() => {
         const checkUser = async () => {
             const { createClient } = await import('@/lib/supabase/client')
@@ -60,29 +94,21 @@ export default function WeldDetailModal({ weld, weldTypeConfig, onClose, onUpdat
         checkUser()
     }, [])
 
-    // Read-Only Mode Detection
-    const isReadOnly = effectiveStatus === 'EXECUTED'
+    // ----------------------------------------------------------------------
+    // 3. LOGIC & HANDLERS
+    // ----------------------------------------------------------------------
 
-    // Validation
     const isFormValid = () => {
-        // CRITICAL: Block re-execution of already executed welds
         if (isReadOnly && status === 'EXECUTED') return false
-
-        // Pending is not a target status
         if (status === 'PENDING') return false
-
-        // Identity Check
         if (missingName && !currentUserName.trim()) return false
 
-        // Status Specific Checks
         if (status === 'EXECUTED') {
             if (weldTypeConfig?.requires_welder !== false && !welder) return false
         }
-        if (status === 'REWORK') {
-            if (!notes) return false
-        }
+        if (status === 'REWORK' && !notes) return false
 
-        // Transition Checks
+        // Logical Transitions
         if ((effectiveStatus === 'EXECUTED' || effectiveStatus === 'REWORK') && status === 'PENDING') return false
         if (effectiveStatus === 'REWORK' && status === 'EXECUTED') return false
 
@@ -97,12 +123,7 @@ export default function WeldDetailModal({ weld, weldTypeConfig, onClose, onUpdat
         try {
             const { updateWeldStatusAction } = await import('@/actions/welds')
 
-            if (missingName && !currentUserName.trim()) {
-                alert('Por favor ingresa tu nombre para el registro histórico.')
-                setSaving(false)
-                return
-            }
-
+            // Update user name if missing
             if (missingName && currentUserName.trim()) {
                 const { createClient } = await import('@/lib/supabase/client')
                 const supabase = createClient()
@@ -112,38 +133,21 @@ export default function WeldDetailModal({ weld, weldTypeConfig, onClose, onUpdat
                 setMissingName(false)
             }
 
-            if (status === 'EXECUTED' && weldTypeConfig?.requires_welder !== false && !welder) {
-                alert('Debes seleccionar un soldador (Raíz)')
-                setSaving(false)
-                return
-            }
-
-            if (status === 'REWORK' && !notes) {
-                alert('Debes indicar el motivo del retrabajo')
-                setSaving(false)
-                return
-            }
-
-            if ((effectiveStatus === 'EXECUTED' || effectiveStatus === 'REWORK') && status === 'PENDING') {
-                alert('No se puede volver a PENDIENTE una soldadura EJECUTADA o en RETRABAJO.')
-                setSaving(false)
-                return
-            }
-
-            if (effectiveStatus === 'REWORK' && status === 'EXECUTED') {
-                alert('No se puede marcar como EJECUTADA una soldadura en RETRABAJO.')
-                setSaving(false)
-                return
-            }
+            // Validations
+            if (missingName && !currentUserName.trim()) { throw new Error('Nombre requerido') }
+            if (status === 'EXECUTED' && weldTypeConfig?.requires_welder !== false && !welder) { throw new Error('Soldador requerido') }
+            if (status === 'REWORK' && !notes) { throw new Error('Motivo de retrabajo requerido') }
 
             const now = new Date().toISOString()
-            setUpdatedData({
+            const payload = {
                 execution_status: status,
                 welder_stamp: welder,
                 support_welder_id: supportWelder,
                 execution_notes: notes,
                 executed_at: now
-            })
+            }
+
+            setUpdatedData(payload)
 
             const result = await updateWeldStatusAction({
                 weldId: weld.id,
@@ -159,412 +163,324 @@ export default function WeldDetailModal({ weld, weldTypeConfig, onClose, onUpdat
             setSaveSuccess(true)
             setRefreshHistoryToken(prev => prev + 1)
 
-            if (onUpdate) {
-                onUpdate({
-                    ...weld,
-                    execution_status: status,
-                    welder_stamp: welder,
-                    support_welder_id: supportWelder,
-                    execution_notes: notes,
-                    executed_at: now
-                })
-            }
+            if (onUpdate) onUpdate({ ...weld, ...payload })
 
             setTimeout(() => setSaveSuccess(false), 3000)
 
-        } catch (error) {
+        } catch (error: any) {
             console.error(error)
-            alert('Error al guardar')
+            alert(error.message || 'Error al guardar')
             setUpdatedData(null)
         } finally {
             setSaving(false)
         }
     }
 
-    const weldIcon = weldTypeConfig?.icon
+    // ----------------------------------------------------------------------
+    // 4. RENDERING
+    // ----------------------------------------------------------------------
 
-    // Close on Escape
-    useEffect(() => {
-        const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose()
-        }
-        document.addEventListener('keydown', handleEscape)
-        return () => document.removeEventListener('keydown', handleEscape)
-    }, [onClose])
+    if (!mounted) return null
+    if (typeof window === 'undefined') return null
+    const container = document.body
+    if (!container) return null
 
-    // Mock Welders
-    const MOCK_WELDERS = ['W-01', 'W-02', 'W-03', 'W-04', 'W-05']
-
-    const content = (
+    return createPortal(
         <div style={{
             position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            inset: 0,
+            zIndex: 110000,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 9999,
-            backdropFilter: 'blur(4px)'
-        }}>
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(4px)',
+            fontFamily: 'system-ui, -apple-system, sans-serif'
+        }}
+            onClick={(e) => {
+                if (e.target === e.currentTarget) onClose()
+            }}>
             <div style={{
-                backgroundColor: '#0f172a',
-                borderRadius: '12px',
-                maxWidth: '800px',
                 width: '90%',
+                maxWidth: '800px',
                 maxHeight: '90vh',
                 display: 'flex',
                 flexDirection: 'column',
+                backgroundColor: '#0f172a',
+                borderRadius: '12px',
                 border: '1px solid #334155',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
-            }}>
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                color: '#f8fafc',
+                overflow: 'hidden'
+            }}
+                onClick={e => e.stopPropagation()}
+            >
                 {/* Header */}
                 <div style={{
                     padding: '20px 24px',
                     borderBottom: '1px solid #334155',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between'
+                    justifyContent: 'space-between',
+                    backgroundColor: '#1e293b'
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span style={{ fontSize: '1.5rem' }}>{weldIcon}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ fontSize: '2rem' }}>{weldIcon}</div>
                         <div>
-                            <h2 style={{
-                                margin: 0,
-                                color: '#e2e8f0',
-                                fontSize: '1.5rem',
-                                fontWeight: 'bold'
-                            }}>
+                            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>
                                 {currentWeld.weld_number}
                             </h2>
                             {currentWeld.type_weld && (
                                 <span style={{
-                                    display: 'inline-block',
-                                    marginTop: '4px',
-                                    backgroundColor: weldTypeConfig?.color
-                                        ? `${weldTypeConfig.color}20`
-                                        : 'rgba(59, 130, 246, 0.15)',
+                                    fontSize: '0.875rem',
+                                    fontWeight: 600,
                                     color: weldTypeConfig?.color || '#60a5fa',
-                                    padding: '2px 10px',
+                                    backgroundColor: `${weldTypeConfig?.color || '#60a5fa'}20`,
+                                    padding: '2px 8px',
                                     borderRadius: '4px',
-                                    fontSize: '0.85rem',
-                                    fontWeight: '600',
-                                    border: `1px solid ${weldTypeConfig?.color || '#3b82f6'}`
+                                    marginTop: '4px',
+                                    display: 'inline-block'
                                 }}>
                                     {currentWeld.type_weld}
                                 </span>
                             )}
                         </div>
                     </div>
-                    <button
-                        onClick={onClose}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            color: '#94a3b8',
-                            fontSize: '1.5rem',
-                            cursor: 'pointer',
-                            padding: '4px 8px',
-                            borderRadius: '4px'
-                        }}
-                    >
-                        ✕
+                    <button onClick={onClose} style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#94a3b8',
+                        cursor: 'pointer',
+                        padding: '8px'
+                    }}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
                     </button>
                 </div>
 
-                {/* Content */}
-                <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
-                    {/* Execution Form */}
-                    <section style={{
-                        backgroundColor: '#1a2332',
+                {/* Scrollable Content */}
+                <div style={{ padding: '24px', overflowY: 'auto' }}>
+
+                    {/* Execution Card */}
+                    <div style={{
+                        backgroundColor: '#1a2234',
+                        border: '1px solid #2d3b4e',
                         borderRadius: '12px',
                         padding: '20px',
-                        border: '1px solid #2d3b4e',
-                        marginBottom: '20px'
+                        marginBottom: '24px'
                     }}>
-                        <h3 style={{
-                            fontSize: '0.9rem',
-                            fontWeight: '600',
-                            color: '#94a3b8',
-                            marginBottom: '16px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px'
-                        }}>
-                            <span style={{ fontSize: '1.2rem' }}>⚡</span>
-                            Registro de Ejecución
-                        </h3>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', color: '#94a3b8', fontWeight: 600 }}>
+                            <span>⚡ Registro de Ejecución</span>
+                        </div>
 
-                        {/* Lock Banner */}
+                        {/* Lock Warning */}
                         {isReadOnly && (
                             <div style={{
-                                marginBottom: '16px',
-                                padding: '12px 14px',
-                                backgroundColor: 'rgba(251,191,36,0.1)',
-                                border: '1.5px solid #fbbf24',
+                                padding: '12px',
+                                backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                                border: '1px solid #fbbf24',
                                 borderRadius: '8px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '10px'
+                                color: '#fbbf24',
+                                marginBottom: '20px',
+                                fontSize: '0.9rem'
                             }}>
-                                <span style={{ fontSize: '1.3rem' }}>🔒</span>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ color: '#fbbf24', fontWeight: '600', fontSize: '0.85rem', marginBottom: '2px' }}>Soldadura Completada</div>
-                                    <div style={{ color: '#cbd5e1', fontSize: '0.75rem' }}>Esta unión ya fue registrada como ejecutada. Solo se permiten cambios a <strong>RETRABAJO</strong> o <strong>ELIMINADA</strong>.</div>
-                                </div>
+                                <strong>🔒 Soldadura Completada.</strong> Solo se permiten cambios a RETRABAJO o ELIMINADA.
                             </div>
                         )}
 
-                        {/* Identity Check */}
+                        {/* Name Input */}
                         {missingName && (
-                            <div style={{
-                                marginBottom: '16px',
-                                padding: '12px',
-                                backgroundColor: 'rgba(251,191,36,0.1)',
-                                border: '1px solid #fbbf24',
-                                borderRadius: '6px'
-                            }}>
-                                <label style={{ display: 'block', fontSize: '0.85rem', color: '#fbbf24', marginBottom: '8px' }}>⚠️ Tu nombre no está registrado. Por favor ingrésalo para continuar:</label>
+                            <div style={{ marginBottom: '20px' }}>
+                                <label style={{ display: 'block', marginBottom: '8px', color: '#fbbf24', fontSize: '0.9rem' }}>⚠️ Ingresa tu nombre completo:</label>
                                 <input
-                                    type="text"
-                                    placeholder="Ej: Juan Pérez"
                                     value={currentUserName}
-                                    onChange={(e) => setCurrentUserName(e.target.value)}
+                                    onChange={e => setCurrentUserName(e.target.value)}
+                                    placeholder="Nombre Apellido"
                                     style={{
                                         width: '100%',
                                         padding: '10px',
-                                        backgroundColor: '#1e293b',
+                                        backgroundColor: '#0f172a',
                                         border: '1px solid #fbbf24',
                                         borderRadius: '6px',
-                                        color: 'white',
-                                        fontSize: '0.9rem'
+                                        color: 'white'
                                     }}
                                 />
                             </div>
                         )}
 
-                        {/* Status Actions */}
-                        <div style={{ marginBottom: '16px' }}>
-                            <label style={{ display: 'block', fontSize: '0.85rem', color: '#94a3b8', marginBottom: '8px' }}>Estado</label>
-                            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                                {/* EXECUTED Button */}
-                                <button
-                                    onClick={() => setStatus('EXECUTED')}
-                                    disabled={isReadOnly || effectiveStatus === 'REWORK'}
-                                    style={{
-                                        flex: '1 0 140px',
-                                        padding: '12px 16px',
-                                        backgroundColor: status === 'EXECUTED' ? '#4ade80' : 'transparent',
-                                        color: status === 'EXECUTED' ? '#1e293b' : (isReadOnly ? '#64748b' : '#4ade80'),
-                                        border: `2px solid ${status === 'EXECUTED' ? '#4ade80' : '#334155'}`,
-                                        borderRadius: '8px',
-                                        cursor: (isReadOnly || effectiveStatus === 'REWORK') ? 'not-allowed' : 'pointer',
-                                        fontSize: '0.85rem',
-                                        fontWeight: '600',
-                                        opacity: (isReadOnly || effectiveStatus === 'REWORK') ? 0.3 : 1
-                                    }}
-                                >
-                                    EJECUTADA
-                                </button>
-
-                                {/* REWORK & DELETED Buttons */}
-                                {[
-                                    { id: 'REWORK', label: 'RETRABAJO', color: '#f87171', disabled: effectiveStatus === 'PENDING' },
-                                    { id: 'DELETED', label: 'ELIMINADA', color: '#94a3b8' }
-                                ].map(opt => (
-                                    <button
-                                        key={opt.id}
-                                        onClick={() => setStatus(opt.id)}
-                                        disabled={opt.disabled}
-                                        style={{
-                                            flex: '1 0 140px',
-                                            padding: '12px 16px',
-                                            borderRadius: '8px',
-                                            border: `2px solid ${status === opt.id ? opt.color : '#334155'}`,
-                                            backgroundColor: status === opt.id ? opt.color : 'transparent',
-                                            color: status === opt.id ? '#1e293b' : (opt.disabled ? '#64748b' : opt.color),
-                                            cursor: opt.disabled ? 'not-allowed' : 'pointer',
-                                            fontWeight: '600',
-                                            fontSize: '0.85rem',
-                                            opacity: opt.disabled ? 0.3 : 1
-                                        }}
-                                    >
-                                        {opt.label}
-                                    </button>
-                                ))}
-                            </div>
+                        {/* Status Buttons */}
+                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px' }}>
+                            <StatusButton
+                                active={status === 'EXECUTED'}
+                                onClick={() => setStatus('EXECUTED')}
+                                disabled={isReadOnly || effectiveStatus === 'REWORK'}
+                                color="#4ade80"
+                                label="EJECUTADA"
+                            />
+                            <StatusButton
+                                active={status === 'REWORK'}
+                                onClick={() => setStatus('REWORK')}
+                                disabled={effectiveStatus === 'PENDING'}
+                                color="#f87171"
+                                label="RETRABAJO"
+                            />
+                            <StatusButton
+                                active={status === 'DELETED'}
+                                onClick={() => setStatus('DELETED')}
+                                color="#94a3b8"
+                                label="ELIMINADA"
+                            />
                         </div>
 
-                        {/* Welder Selection */}
-                        {status === 'EXECUTED' && (weldTypeConfig?.requires_welder !== false) && (
-                            <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
-                                <div style={{ flex: 1 }}>
-                                    <label style={{ display: 'block', fontSize: '0.85rem', color: '#94a3b8', marginBottom: '8px' }}>Soldador *</label>
-                                    <select
+                        {/* Conditional Inputs */}
+                        {status === 'EXECUTED' && weldTypeConfig?.requires_welder !== false && (
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '0.85rem' }}>Soldador *</label>
+                                    <Select
                                         value={welder}
-                                        onChange={(e) => {
+                                        onChange={e => {
                                             setWelder(e.target.value)
                                             if (supportWelder === e.target.value) setSupportWelder('')
                                         }}
-                                        style={{
-                                            width: '100%',
-                                            padding: '10px',
-                                            backgroundColor: '#1e293b',
-                                            border: '1px solid #334155',
-                                            borderRadius: '6px',
-                                            color: 'white',
-                                            fontSize: '0.9rem'
-                                        }}
-                                    >
-                                        <option value="">Seleccionar...</option>
-                                        {MOCK_WELDERS.map(w => (
-                                            <option key={w} value={w}>{w}</option>
-                                        ))}
-                                    </select>
+                                        options={MOCK_WELDERS}
+                                        placeholder="Seleccionar..."
+                                    />
                                 </div>
-                                <div style={{ flex: 1 }}>
-                                    <label style={{ display: 'block', fontSize: '0.85rem', color: '#94a3b8', marginBottom: '8px' }}>Apoyo</label>
-                                    <select
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '0.85rem' }}>Apoyo</label>
+                                    <Select
                                         value={supportWelder}
-                                        onChange={(e) => setSupportWelder(e.target.value)}
-                                        style={{
-                                            width: '100%',
-                                            padding: '10px',
-                                            backgroundColor: '#1e293b',
-                                            border: '1px solid #334155',
-                                            borderRadius: '6px',
-                                            color: 'white',
-                                            fontSize: '0.9rem'
-                                        }}
-                                    >
-                                        <option value="">Ninguno</option>
-                                        {MOCK_WELDERS.filter(w => w !== welder).map(w => (
-                                            <option key={w} value={w}>{w}</option>
-                                        ))}
-                                    </select>
+                                        onChange={e => setSupportWelder(e.target.value)}
+                                        options={MOCK_WELDERS.filter(w => w !== welder)}
+                                        placeholder="Ninguno"
+                                    />
                                 </div>
                             </div>
                         )}
 
-                        {/* Rework Reason */}
                         {status === 'REWORK' && (
-                            <div style={{ marginBottom: '16px' }}>
-                                <label style={{ display: 'block', fontSize: '0.85rem', color: '#94a3b8', marginBottom: '8px' }}>Motivo de Retrabajo *</label>
+                            <div style={{ marginBottom: '20px' }}>
+                                <label style={{ display: 'block', marginBottom: '8px', color: '#f87171', fontSize: '0.85rem' }}>Motivo *</label>
                                 <select
                                     value={notes}
-                                    onChange={(e) => setNotes(e.target.value)}
+                                    onChange={e => setNotes(e.target.value)}
                                     style={{
                                         width: '100%',
                                         padding: '10px',
-                                        backgroundColor: '#1e293b',
-                                        border: '1px solid #334155',
+                                        backgroundColor: '#0f172a',
+                                        border: '1px solid #f87171',
                                         borderRadius: '6px',
-                                        color: '#f87171',
-                                        fontSize: '0.9rem'
+                                        color: '#f87171'
                                     }}
                                 >
-                                    <option value="">Seleccionar Motivo...</option>
-                                    <option value="ERROR_CONTRATISTA">Error Contratista (Ejecución)</option>
-                                    <option value="ERROR_INGENIERIA">Error Ingeniería (Interferencia/Diseño)</option>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="ERROR_CONTRATISTA">Error Contratista</option>
+                                    <option value="ERROR_INGENIERIA">Error Ingeniería</option>
                                 </select>
                             </div>
                         )}
 
-                        {/* Save Button */}
                         <button
                             onClick={handleSave}
-                            disabled={saving || (!canSave && !saveSuccess)}
+                            disabled={!canSave || saving}
                             style={{
                                 width: '100%',
                                 padding: '12px',
-                                backgroundColor: saveSuccess ? '#10b981' : ((saving || !canSave) ? '#334155' : '#3b82f6'),
-                                color: (saving || !canSave) && !saveSuccess ? '#94a3b8' : 'white',
+                                backgroundColor: saveSuccess ? '#10b981' : (canSave && !saving ? '#3b82f6' : '#334155'),
+                                color: 'white',
                                 border: 'none',
                                 borderRadius: '6px',
-                                fontWeight: 'bold',
-                                cursor: (saving || (!canSave && !saveSuccess)) ? 'not-allowed' : 'pointer',
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                gap: '8px',
-                                opacity: (saving || !canSave) && !saveSuccess ? 0.6 : 1,
-                                fontSize: '0.9rem'
+                                fontWeight: 600,
+                                cursor: canSave && !saving ? 'pointer' : 'not-allowed',
+                                transition: 'background-color 0.2s'
                             }}
                         >
-                            {saving ? 'Guardando...' : (saveSuccess ? '✅ ¡Guardado Exitosamente!' : '💾 Guardar Cambios')}
+                            {saving ? 'Guardando...' : (saveSuccess ? '✅ Guardado' : '💾 Guardar Cambios')}
                         </button>
-                    </section>
+                    </div>
 
-                    {/* Basic Information */}
-                    <section style={{ marginBottom: '24px' }}>
-                        <h3 style={{
-                            color: '#cbd5e1',
-                            fontSize: '0.9rem',
-                            fontWeight: '600',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em',
-                            marginBottom: '12px'
-                        }}>
-                            Información Básica
-                        </h3>
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(2, 1fr)',
-                            gap: '16px'
-                        }}>
-                            <InfoField label="Diámetro (NPS)" value={currentWeld.nps ? (currentWeld.nps.endsWith('"') ? currentWeld.nps : `${currentWeld.nps}"`) : '-'} />
-                            <InfoField label="Schedule" value={currentWeld.sch || '-'} />
-                            <InfoField
-                                label="Destino"
-                                value={currentWeld.destination?.toUpperCase() === 'F' || currentWeld.destination?.toUpperCase() === 'FIELD' ? 'FIELD' : 'SHOP'}
-                                highlight={currentWeld.destination?.toUpperCase() === 'F' ? '#f97316' : '#3b82f6'}
-                            />
-                            <InfoField label="Spool" value={currentWeld.spool_number} />
+                    {/* Info Grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '24px' }}>
+                        <InfoItem label="Diámetro" value={currentWeld.nps || '-'} />
+                        <InfoItem label="Schedule" value={currentWeld.sch || '-'} />
+                        <InfoItem label="Destino" value={currentWeld.destination || '-'} highlight={currentWeld.destination === 'FIELD'} />
+                        <InfoItem label="Spool" value={currentWeld.spool_number} />
+                        <div style={{ gridColumn: '1 / -1' }}>
+                            <InfoItem label="Isométrico" value={currentWeld.iso_number} />
                         </div>
-                        <div style={{ marginTop: '16px' }}>
-                            <InfoField label="Isométrico" value={currentWeld.iso_number} fullWidth />
-                        </div>
-                    </section>
+                    </div>
 
-                    {/* History Section */}
-                    <section>
-                        <WeldHistoryList weldId={weld.id} triggerRefresh={refreshHistoryToken} />
-                    </section>
+                    {/* History */}
+                    <WeldHistoryList weldId={weld.id} triggerRefresh={refreshHistoryToken} />
+
                 </div>
             </div>
-        </div>
+        </div>,
+        container
     )
-
-    return typeof document !== 'undefined' ? createPortal(content, document.body) : null
 }
 
-// Helper Components
-function InfoField({ label, value, highlight, fullWidth }: {
-    label: string
-    value: string
-    highlight?: string
-    fullWidth?: boolean
-}) {
+// ----------------------------------------------------------------------
+// 5. HELPER COMPONENTS
+// ----------------------------------------------------------------------
+
+function StatusButton({ active, disabled, onClick, color, label }: any) {
     return (
-        <div style={{ gridColumn: fullWidth ? '1 / -1' : undefined }}>
-            <div style={{
-                fontSize: '0.75rem',
-                color: '#94a3b8',
-                marginBottom: '4px',
-                fontWeight: '500'
-            }}>
-                {label}
-            </div>
-            <div style={{
-                fontSize: '0.95rem',
-                color: highlight || '#e2e8f0',
-                fontWeight: highlight ? '600' : '400',
-                padding: '8px 12px',
+        <button
+            onClick={onClick}
+            disabled={disabled}
+            style={{
+                flex: 1,
+                padding: '10px',
+                backgroundColor: active ? color : 'transparent',
+                border: `2px solid ${active ? color : '#334155'}`,
+                color: active ? '#1e293b' : (disabled ? '#475569' : color),
+                borderRadius: '8px',
+                fontWeight: 600,
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                opacity: disabled ? 0.5 : 1
+            }}
+        >
+            {label}
+        </button>
+    )
+}
+
+function Select({ value, onChange, options, placeholder }: any) {
+    return (
+        <select
+            value={value}
+            onChange={onChange}
+            style={{
+                width: '100%',
+                padding: '10px',
                 backgroundColor: '#0f172a',
+                border: '1px solid #334155',
                 borderRadius: '6px',
-                border: '1px solid #1e293b'
+                color: 'white'
+            }}
+        >
+            <option value="">{placeholder}</option>
+            {options.map((opt: string) => (
+                <option key={opt} value={opt}>{opt}</option>
+            ))}
+        </select>
+    )
+}
+
+function InfoItem({ label, value, highlight }: any) {
+    return (
+        <div>
+            <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px' }}>{label}</div>
+            <div style={{
+                padding: '8px 12px',
+                backgroundColor: '#1e293b',
+                borderRadius: '6px',
+                border: '1px solid #334155',
+                color: highlight ? '#fbbf24' : '#e2e8f0',
+                fontWeight: highlight ? 600 : 400
             }}>
                 {value}
             </div>
@@ -587,7 +503,7 @@ function WeldHistoryList({ weldId, triggerRefresh }: { weldId: string, triggerRe
                     setHistory(res.data || [])
                 }
             } catch (error) {
-                console.error('Failed to load history', error)
+                console.error(error)
             } finally {
                 if (mounted) setLoading(false)
             }
@@ -596,76 +512,36 @@ function WeldHistoryList({ weldId, triggerRefresh }: { weldId: string, triggerRe
         return () => { mounted = false }
     }, [weldId, triggerRefresh])
 
-    if (loading && history.length === 0) return <div style={{ padding: '10px', color: '#64748b', fontSize: '0.8rem' }}>Cargando historial...</div>
-
-    // Empty state
-    if (history.length === 0) {
-        return (
-            <div style={{ marginTop: '24px', borderTop: '1px solid #334155', paddingTop: '16px' }}>
-                <h4 style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '12px', textTransform: 'uppercase' }}>Reportes Asociados</h4>
-                <div style={{ padding: '16px', textAlign: 'center', color: '#64748b', fontSize: '0.8rem', backgroundColor: '#0f172a', borderRadius: '6px', border: '1px dashed #334155' }}>
-                    Sin cambios registrados aún
-                </div>
-            </div>
-        )
-    }
+    if (loading) return <div style={{ textAlign: 'center', padding: '20px', color: '#64748b' }}>Cargando historial...</div>
+    if (!history.length) return <div style={{ textAlign: 'center', padding: '20px', color: '#64748b', border: '1px dashed #334155', borderRadius: '8px' }}>Sin historial</div>
 
     return (
-        <div style={{ marginTop: '24px', borderTop: '1px solid #334155', paddingTop: '16px' }}>
-            <h4 style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '12px', textTransform: 'uppercase' }}>Reportes Asociados</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {history.map((record) => {
-                    const welderMatch = record.comments?.match(/Soldador:\s*([A-Z0-9-]+)/i)
-                    const welderStamp = welderMatch ? welderMatch[1] : null
-
-                    // Extract user name from comments (format: "... | Usuario: [Name]")
+        <div style={{ marginTop: '24px' }}>
+            <h4 style={{ color: '#94a3b8', fontSize: '0.85rem', textTransform: 'uppercase', marginBottom: '12px' }}>Historial</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {history.map(record => {
                     const userMatch = record.comments?.match(/Usuario:\s*(.+?)(?:\s*\||$)/i)
                     const userName = userMatch ? userMatch[1].trim() : 'Usuario'
 
                     return (
-                        <div key={record.id} style={{ display: 'flex', gap: '12px', fontSize: '0.85rem' }}>
-                            <div style={{ color: '#64748b', minWidth: '120px' }}>
-                                {new Date(record.changed_at).toLocaleString('es-CL', {
-                                    day: '2-digit',
-                                    month: '2-digit',
-                                    year: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                })}
+                        <div key={record.id} style={{
+                            display: 'flex',
+                            gap: '12px',
+                            fontSize: '0.85rem',
+                            padding: '12px',
+                            backgroundColor: '#1e293b',
+                            borderRadius: '8px'
+                        }}>
+                            <div style={{ color: '#64748b', whiteSpace: 'nowrap' }}>
+                                {new Date(record.changed_at).toLocaleDateString('es-CL')} {new Date(record.changed_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
                             </div>
-                            <div style={{ flex: 1 }}>
+                            <div>
                                 <div style={{ marginBottom: '4px' }}>
-                                    <span style={{ color: '#cbd5e1', fontWeight: 'bold' }}>
-                                        {userName}
-                                    </span>
-                                    <span style={{ margin: '0 6px', color: '#475569' }}>→</span>
-                                    <span style={{
-                                        color: record.new_status === 'EXECUTED' ? '#4ade80' :
-                                            record.new_status === 'REWORK' ? '#f87171' :
-                                                record.new_status === 'PENDING' ? '#fbbf24' :
-                                                    record.new_status === 'DELETED' ? '#94a3b8' : '#cbd5e1',
-                                        fontWeight: 'bold'
-                                    }}>
-                                        {record.new_status}
-                                    </span>
-                                    {welderStamp && (
-                                        <span style={{ marginLeft: '8px', color: '#60a5fa', fontSize: '0.8rem' }}>
-                                            👷 {welderStamp}
-                                        </span>
-                                    )}
+                                    <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{userName}</span>
+                                    <span style={{ margin: '0 8px', color: '#64748b' }}>cambió a</span>
+                                    <span style={{ fontWeight: 600, color: record.new_status === 'EXECUTED' ? '#4ade80' : '#e2e8f0' }}>{record.new_status}</span>
                                 </div>
-                                {record.comments && !welderMatch && (
-                                    <div style={{
-                                        backgroundColor: 'rgba(255,255,255,0.05)',
-                                        padding: '6px 10px',
-                                        borderRadius: '4px',
-                                        color: '#e2e8f0',
-                                        fontStyle: 'italic',
-                                        borderLeft: '2px solid #475569'
-                                    }}>
-                                        "{record.comments}"
-                                    </div>
-                                )}
+                                {record.comments && <div style={{ color: '#94a3b8', fontStyle: 'italic' }}>"{record.comments}"</div>}
                             </div>
                         </div>
                     )
