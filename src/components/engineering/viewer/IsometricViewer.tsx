@@ -19,6 +19,7 @@ interface IsometricViewerProps {
     highlightedIds?: string[] // Ids to highlight (from card selection)
     assignments?: Record<string, string[]> // spoolId -> elementIds
     spoolColors?: Record<string, string> // spoolId -> color
+    spoolStatuses?: Record<string, string> // spoolId -> status
     // Structure Props
     structureModels?: any[]
     showStructure?: boolean
@@ -43,7 +44,8 @@ function Model({
     highlightedIds = [],
     onSelectionChange,
     assignments = {},
-    spoolColors = {}
+    spoolColors = {},
+    spoolStatuses = {}
 }: {
     url: string,
     onLoad?: (scene: THREE.Group) => void
@@ -52,6 +54,7 @@ function Model({
     onSelectionChange?: (ids: string[]) => void
     assignments?: Record<string, string[]>
     spoolColors?: Record<string, string>
+    spoolStatuses?: Record<string, string>
 }) {
     const { scene } = useGLTF(url)
     const clonedScene = React.useMemo(() => {
@@ -74,6 +77,25 @@ function Model({
         })
         return map
     }, [assignments, spoolColors])
+
+    // Derived map for fast assignment lookup: elementId -> status
+    const elementStatusMap = React.useMemo(() => {
+        const map: Record<string, string> = {}
+        Object.entries(assignments).forEach(([spoolId, elementIds]) => {
+            const status = spoolStatuses[spoolId] || 'PENDING'
+            elementIds.forEach(id => {
+                map[id] = status
+            })
+        })
+        return map
+    }, [assignments, spoolStatuses])
+
+    // DEBUG: Log unique statuses found to verify transparency logic
+    useEffect(() => {
+        const uniqueStatuses = Array.from(new Set(Object.values(elementStatusMap)))
+        console.log('[IsometricViewer] Unique Spool Statuses:', uniqueStatuses)
+        console.log('[IsometricViewer] Full Status Map Sample:', Object.entries(elementStatusMap).slice(0, 5))
+    }, [elementStatusMap])
 
     // Effect: Apply materials based on selection and assignment
     useEffect(() => {
@@ -136,8 +158,18 @@ function Model({
                     child.material.color.set(assignedColor)
                     child.material.emissive.setHex(0x000000)
                     child.material.emissiveIntensity = 0
-                    child.material.transparent = false
-                    child.material.opacity = 1
+
+                    // Conditional Transparency: Valid for 'PENDING' and 'IN_FABRICATION'
+                    const status = elementStatusMap[id]
+                    if (status === 'PENDING' || status === 'IN_FABRICATION') {
+                        child.material.transparent = true
+                        child.material.opacity = 0.2 // 80% Transparency
+                        child.material.depthWrite = true
+                    } else {
+                        // Solid for confirmed statuses
+                        child.material.transparent = false
+                        child.material.opacity = 1
+                    }
                 } else {
                     // Reset to Base (Unassigned) -> FORCE GREY
                     // The user complained that "Base" looks yellow (likely original material).
@@ -394,10 +426,13 @@ export default function IsometricViewer({
     onSelectionChange,
     assignments,
     spoolColors,
+    spoolStatuses,
     structureModels = [],
     showStructure = true
 }: IsometricViewerProps) {
     const [modelScene, setModelScene] = useState<THREE.Object3D | null>(null)
+
+    console.log('[IsometricViewer] Version check: Conditional Transparency Logic v3') // Debug log
 
     return (
         <div style={{
@@ -425,6 +460,7 @@ export default function IsometricViewer({
                         onSelectionChange={onSelectionChange}
                         assignments={assignments}
                         spoolColors={spoolColors}
+                        spoolStatuses={spoolStatuses}
                     />
                     {showStructure && structureModels.map((model, idx) => (
                         <StructureModel

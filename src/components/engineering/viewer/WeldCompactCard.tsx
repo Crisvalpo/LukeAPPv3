@@ -1,5 +1,7 @@
 'use client'
 
+import { Check, X } from 'lucide-react'
+
 interface WeldCompactCardProps {
     weld: {
         id: string
@@ -57,14 +59,17 @@ export default function WeldCompactCard({ weld, weldTypeConfig, onClick }: WeldC
     const getStatusColor = () => {
         const s = (weld as any).execution_status || 'PENDING'
         switch (s) {
-            case 'EXECUTED': return { bg: 'rgba(74, 222, 128, 0.2)', text: '#4ade80', border: '#22c55e' }
-            case 'REWORK': return { bg: 'rgba(16, 185, 129, 0.2)', text: '#10b981', border: '#10b981' }
-            case 'DELETED': return { bg: 'rgba(148, 163, 184, 0.2)', text: '#94a3b8', border: '#475569' }
-            default: return { bg: 'rgba(59, 130, 246, 0.15)', text: '#60a5fa', border: '#3b82f6' } // Pending (Blueish default)
+            case 'EXECUTED': return { bg: 'rgba(74, 222, 128, 0.2)', text: '#4ade80', border: '#22c55e', fill: '#22c55e' }
+            case 'REWORK': return { bg: 'rgba(16, 185, 129, 0.2)', text: '#10b981', border: '#10b981', fill: '#10b981' }
+            case 'DELETED': return { bg: 'rgba(239, 68, 68, 0.2)', text: '#f87171', border: '#ef4444', fill: '#ef4444' }
+            default: return { bg: 'rgba(59, 130, 246, 0.15)', text: '#60a5fa', border: '#3b82f6', fill: '#3b82f6' } // Pending (Blueish default)
         }
     }
     const statusColor = getStatusColor()
     const statusLabel = ((weld as any).execution_status || 'PENDIENTE').substring(0, 3)
+
+    const isExecuted = (weld as any).execution_status === 'EXECUTED' || (weld as any).execution_status === 'REWORK'
+    const isDeleted = (weld as any).execution_status === 'DELETED'
 
     return (
         <div
@@ -122,12 +127,19 @@ export default function WeldCompactCard({ weld, weldTypeConfig, onClick }: WeldC
 
             {/* Status Button Indicator */}
             <div style={{
-                width: '12px',
-                height: '12px',
+                width: '18px',
+                height: '18px',
                 borderRadius: '50%',
-                backgroundColor: statusColor.text,
-                boxShadow: `0 0 8px ${statusColor.text}40`
-            }} />
+                backgroundColor: statusColor.fill,
+                boxShadow: `0 0 8px ${statusColor.text}40`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#1a1d2e' // Dark icon color for contrast against bright fill
+            }}>
+                {isExecuted && <Check size={12} strokeWidth={4} />}
+                {isDeleted && <X size={12} strokeWidth={4} />}
+            </div>
         </div>
     )
 }

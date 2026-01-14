@@ -146,6 +146,14 @@ function IsometricViewerWrapper({
         return colors
     }, [spools])
 
+    const spoolStatuses = React.useMemo(() => {
+        const statuses: Record<string, string> = {}
+        spools.forEach(s => {
+            statuses[s.id] = s.status || 'PENDING'
+        })
+        return statuses
+    }, [spools])
+
     // Spool Activation State (Highlighting)
     const [activeSpoolId, setActiveSpoolId] = useState<string | null>(null)
     const highlightedIds = useMemo(() => {
@@ -577,8 +585,10 @@ function IsometricViewerWrapper({
                                         )}
 
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            {/* Isometric Box Icon */}
-                                            <Box size={14} color="#94a3b8" />
+                                            {/* Isometric Box Icon - Only if assigned */}
+                                            {isAssigned && (
+                                                <Box size={14} color="#94a3b8" />
+                                            )}
 
                                             {/* Status Badge */}
                                             <span style={{
@@ -1033,6 +1043,7 @@ function IsometricViewerWrapper({
                             onSelectionChange={setSelectedIds}
                             assignments={assignments}
                             spoolColors={spoolColors}
+                            spoolStatuses={spoolStatuses}
                             highlightedIds={highlightedIds}
                         />
                     </div>
