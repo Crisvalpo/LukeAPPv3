@@ -247,7 +247,16 @@ export async function analyzeRevisionFabricability(
         .single()
 
     if (!revision) {
-        throw new Error('Revision not found')
+        // Return safe failure object instead of throwing
+        return {
+            revision_id: revisionId,
+            is_fully_fabricable: false,
+            total_spools: 0,
+            fabricable_spools_count: 0,
+            fabricable_spools: [],
+            blocked_spools: [],
+            blocking_reason: 'Revisión no encontrada o sin acceso'
+        }
     }
 
     if (revision.revision_status !== 'VIGENTE') {

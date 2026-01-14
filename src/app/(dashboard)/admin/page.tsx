@@ -10,6 +10,7 @@ import '@/styles/founder.css'
 
 interface ProjectInfo extends Project {
     company_name: string
+    current_week?: string | null
 }
 
 export default function AdminDashboard() {
@@ -46,6 +47,8 @@ export default function AdminDashboard() {
                     description,
                     status,
                     company_id,
+                    start_date,
+                    week_end_day,
                     created_at,
                     updated_at,
                     companies (
@@ -63,9 +66,22 @@ export default function AdminDashboard() {
         }
 
         const project = memberData.projects as any
+        let currentWeek: string | null = null
+
+        // Calculate project week if start_date is set
+        if (project.start_date) {
+            const { data: weekData } = await supabase
+                .rpc('calculate_project_week', {
+                    p_project_id: project.id,
+                    p_date: new Date().toISOString().split('T')[0]
+                })
+            currentWeek = weekData ? `Semana ${weekData}` : null
+        }
+
         const projectInfo: ProjectInfo = {
             ...project,
-            company_name: project.companies?.name || 'N/A'
+            company_name: project.companies?.name || 'N/A',
+            current_week: currentWeek
         }
 
         setProjectData(projectInfo)
@@ -111,7 +127,13 @@ export default function AdminDashboard() {
             </div>
 
             {/* Project Card */}
-            <div className="company-header-card" style={{ marginBottom: '2rem' }}>
+            <div
+                className="company-header-card"
+                style={{ marginBottom: '2rem', cursor: 'pointer', transition: 'transform 0.2s' }}
+                onClick={() => router.push(`/admin/projects/${projectData.id}?tab=details&action=edit`)}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
+            >
                 <div className="company-header-content">
                     <div className="company-header-icon">
                         📁
@@ -131,23 +153,32 @@ export default function AdminDashboard() {
                                 {projectData.code}
                             </span>
                             • {projectData.company_name}
+                            {projectData.current_week && (
+                                <>
+                                    <span style={{ color: '#64748b' }}>•</span>
+                                    <span style={{
+                                        padding: '0.25rem 0.5rem',
+                                        background: 'rgba(168, 85, 247, 0.1)',
+                                        border: '1px solid rgba(168, 85, 247, 0.3)',
+                                        borderRadius: '0.25rem',
+                                        fontSize: '0.75rem',
+                                        fontWeight: '600',
+                                        color: '#c084fc'
+                                    }}>
+                                        {projectData.current_week}
+                                    </span>
+                                </>
+                            )}
                         </p>
                     </div>
-                    <button
-                        onClick={() => router.push(`/admin/projects/${projectData.id}`)}
-                        className="action-button"
-                        style={{ marginLeft: 'auto', background: 'var(--color-primary)', border: 'none' }}
-                    >
-                        <Settings size={18} />
-                        Gestión Avanzada
-                    </button>
                 </div>
             </div>
 
             {/* Stats Section */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+            < div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }
+            }>
                 {/* Members Count */}
-                <div className="company-form-container" style={{ padding: '1.5rem' }}>
+                < div className="company-form-container" style={{ padding: '1.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
                         <div style={{
                             width: '3rem',
@@ -170,10 +201,10 @@ export default function AdminDashboard() {
                             </div>
                         </div>
                     </div>
-                </div>
+                </div >
 
                 {/* Project Status */}
-                <div className="company-form-container" style={{ padding: '1.5rem' }}>
+                < div className="company-form-container" style={{ padding: '1.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
                         <div style={{
                             width: '3rem',
@@ -200,15 +231,15 @@ export default function AdminDashboard() {
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                </div >
+            </div >
 
             {/* Quick Actions */}
             <div className="quick-actions-grid">
                 {/* Workforce Management */}
                 <div
                     className="quick-action-card"
-                    onClick={() => alert('Módulo en desarrollo - Fase 2')}
+                    onClick={() => router.push(`/admin/projects/${projectData.id}?tab=team`)}
                     style={{ cursor: 'pointer' }}
                 >
                     <div className="quick-action-icon">
@@ -218,13 +249,12 @@ export default function AdminDashboard() {
                     <p className="quick-action-description">
                         Administra turnos, cuadrillas y asistencia
                     </p>
-                    <span className="quick-action-badge disabled">Próximamente</span>
                 </div>
 
                 {/* Configuration */}
-                <div
+                < div
                     className="quick-action-card"
-                    onClick={() => alert('Módulo en desarrollo - Fase 2')}
+                    onClick={() => router.push(`/admin/projects/${projectData.id}?tab=settings`)}
                     style={{ cursor: 'pointer' }}
                 >
                     <div className="quick-action-icon">
@@ -234,21 +264,22 @@ export default function AdminDashboard() {
                     <p className="quick-action-description">
                         Configura parámetros del proyecto
                     </p>
-                    <span className="quick-action-badge disabled">Próximamente</span>
-                </div>
-            </div>
+                </div >
+            </div >
 
             {/* Project Info */}
-            {projectData.description && (
-                <div className="company-form-container" style={{ padding: '1.5rem', marginTop: '2rem' }}>
-                    <h3 style={{ fontSize: '1.125rem', fontWeight: '700', color: 'white', marginBottom: '0.75rem' }}>
-                        Descripción del Proyecto
-                    </h3>
-                    <p style={{ fontSize: '0.875rem', color: '#94a3b8', lineHeight: '1.6' }}>
-                        {projectData.description}
-                    </p>
-                </div>
-            )}
-        </div>
+            {
+                projectData.description && (
+                    <div className="company-form-container" style={{ padding: '1.5rem', marginTop: '2rem' }}>
+                        <h3 style={{ fontSize: '1.125rem', fontWeight: '700', color: 'white', marginBottom: '0.75rem' }}>
+                            Descripción del Proyecto
+                        </h3>
+                        <p style={{ fontSize: '0.875rem', color: '#94a3b8', lineHeight: '1.6' }}>
+                            {projectData.description}
+                        </p>
+                    </div>
+                )
+            }
+        </div >
     )
 }

@@ -9,6 +9,12 @@ export interface Project {
     status: 'planning' | 'active' | 'on_hold' | 'completed' | 'cancelled'
     created_at: string
     updated_at: string
+    start_date?: string
+    week_end_day?: number
+    logo_primary_url?: string | null
+    logo_secondary_url?: string | null
+    logo_primary_crop?: any
+    logo_secondary_crop?: any
 }
 
 export interface CreateProjectParams {

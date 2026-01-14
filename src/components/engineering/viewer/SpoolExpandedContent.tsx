@@ -14,6 +14,7 @@ interface SpoolExpandedContentProps {
     weldTypesConfig: any
     loading: boolean
     onWeldClick: (weld: any) => void
+    onJointClick?: (joint: any) => void
 }
 
 export default function SpoolExpandedContent({
@@ -24,7 +25,8 @@ export default function SpoolExpandedContent({
     joints,
     weldTypesConfig,
     loading,
-    onWeldClick
+    onWeldClick,
+    onJointClick
 }: SpoolExpandedContentProps) {
     const [activeTab, setActiveTab] = useState<'WELDS' | 'JOINTS'>('WELDS')
 
@@ -58,29 +60,32 @@ export default function SpoolExpandedContent({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '8px',
-                    backgroundColor: isActive ? '#334155' : 'transparent', // Selected vs Unselected bg
+                    gap: '6px',
+                    backgroundColor: 'transparent',
                     border: 'none',
-                    borderBottom: isActive ? '2px solid #3b82f6' : '2px solid transparent',
-                    color: isActive ? 'white' : '#94a3b8',
-                    padding: '10px 4px',
+                    borderBottom: isActive ? '2px solid #3b82f6' : '1px solid #334155',
+                    color: isActive ? '#3b82f6' : '#64748b',
+                    padding: '6px 4px',
                     cursor: 'pointer',
-                    fontSize: '0.85rem',
-                    fontWeight: 500,
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
                     transition: 'all 0.2s',
-                    position: 'relative'
+                    position: 'relative',
+                    opacity: isActive ? 1 : 0.8
                 }}
             >
-                <Icon size={16} color={isActive ? '#f59e0b' : '#94a3b8'} />
+                <Icon size={14} />
                 <span>{label}</span>
                 {count > 0 && (
                     <span style={{
-                        backgroundColor: isActive ? 'rgba(59, 130, 246, 0.3)' : 'rgba(148, 163, 184, 0.2)',
-                        padding: '1px 6px',
-                        borderRadius: '99px',
-                        fontSize: '0.7rem',
+                        backgroundColor: isActive ? '#3b82f6' : '#334155',
+                        color: 'white',
+                        padding: '0 5px',
+                        borderRadius: '4px',
+                        fontSize: '0.65rem',
                         marginLeft: '4px',
-                        color: isActive ? '#93c5fd' : '#cbd5e1'
+                        minWidth: '16px',
+                        textAlign: 'center'
                     }}>
                         {count}
                     </span>
@@ -90,13 +95,17 @@ export default function SpoolExpandedContent({
     }
 
     return (
-        <div>
+        <div style={{
+            marginTop: '8px',
+            borderTop: '1px solid #334155',
+            marginLeft: '-10px',
+            marginRight: '-10px',
+            width: 'calc(100% + 20px)'
+        }}>
             {/* Tabs Header */}
             <div style={{
                 display: 'flex',
-                backgroundColor: '#1e293b',
-                borderBottom: '1px solid #334155',
-                marginBottom: '8px'
+                marginBottom: '0' // Connect directly to content
             }}>
                 <TabButton
                     id="WELDS"
@@ -113,7 +122,7 @@ export default function SpoolExpandedContent({
             </div>
 
             {/* Content Area */}
-            <div style={{ padding: '0 8px 8px 8px' }}>
+            <div style={{ padding: '8px 4px 4px 4px' }}>
 
                 {/* WELDS TAB */}
                 {activeTab === 'WELDS' && (
@@ -169,6 +178,7 @@ export default function SpoolExpandedContent({
                                 <JointCompactCard
                                     key={joint.id}
                                     joint={joint}
+                                    onClick={() => onJointClick && onJointClick(joint)}
                                 />
                             ))
                         )}

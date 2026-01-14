@@ -73,8 +73,7 @@ export default function Sidebar({ role, companyName, planTier, userEmail, functi
     // Admin Menu (Project-Level)
     const adminMenu: MenuItem[] = [
         { name: 'Vista General', href: '/admin', icon: LayoutDashboard },
-        { name: 'Personal', href: '/admin/workforce', icon: Users },
-        { name: 'Configuración', href: '/admin/settings', icon: Settings },
+        { name: 'Proyectos', href: '/admin/projects', icon: FolderKanban },
     ]
 
     const isManagement = ['founder', 'admin'].includes(role)

@@ -8,6 +8,7 @@ import { deleteRevisionAction } from '@/actions/revisions'
 import { calculateDataStatus, calculateMaterialStatus, isFabricable, type DataStatus, type MaterialStatus } from '@/services/fabricability'
 import RevisionMasterView from './RevisionMasterView'
 import IsometricViewer from './viewer/IsometricViewer'
+import JointDetailModal from './viewer/JointDetailModal'
 import WeldDetailModal from './viewer/WeldDetailModal'
 import SpoolExpandedContent from './viewer/SpoolExpandedContent'
 import UnassignedJointsPanel from './viewer/UnassignedJointsPanel'
@@ -125,6 +126,7 @@ function IsometricViewerWrapper({
     const [jointsMap, setJointsMap] = useState<Record<string, any[]>>({}) // New: Bolts/Joints
     const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({}) // New: Loading state per spool
     const [selectedWeldForDetail, setSelectedWeldForDetail] = useState<any | null>(null)
+    const [selectedJointForDetail, setSelectedJointForDetail] = useState<any | null>(null)
     const [weldTypesConfig, setWeldTypesConfig] = useState<Record<string, any>>({})
 
 
@@ -735,6 +737,7 @@ function IsometricViewerWrapper({
                                                 console.log('📦 Setting weld data:', weldData)
                                                 setSelectedWeldForDetail(weldData)
                                             }}
+                                            onJointClick={(joint) => setSelectedJointForDetail(joint)}
                                         />
                                     )}
                                 </div>
@@ -1276,6 +1279,32 @@ function IsometricViewerWrapper({
                                 return s
                             }))
                         }
+                    }}
+                />
+            )}
+
+            {/* Joint Detail Modal */}
+            {selectedJointForDetail && (
+                <JointDetailModal
+                    joint={{ ...selectedJointForDetail, project_id: projectId, iso_number: isoNumber }}
+                    onClose={() => setSelectedJointForDetail(null)}
+                    onUpdate={(updatedJoint) => {
+                        setRefreshTrigger(prev => prev + 1)
+                        // Optimistic Update for Joints Map
+                        const spoolId = updatedJoint.spool_id
+                        if (spoolId && jointsMap[spoolId]) {
+                            const updatedJoints = jointsMap[spoolId].map((j: any) =>
+                                j.id === updatedJoint.id ? { ...j, ...updatedJoint } : j
+                            )
+                            setJointsMap(prev => ({
+                                ...prev,
+                                [spoolId]: updatedJoints
+                            }))
+                        }
+                    }}
+                    onUnassign={() => {
+                        setRefreshTrigger(prev => prev + 1)
+                        setUnassignedJointsCount(prev => (prev ?? 0) + 1)
                     }}
                 />
             )}

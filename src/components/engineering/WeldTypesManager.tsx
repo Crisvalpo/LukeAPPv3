@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { getProjectWeldTypesAction, updateWeldTypeAction } from '@/actions/weld-types'
+import { ArrowLeft } from 'lucide-react'
 import type { WeldTypeConfig } from '@/types'
 
 interface WeldTypesManagerProps {
@@ -90,14 +91,18 @@ export default function WeldTypesManager({ projectId, onBack }: WeldTypesManager
 
     return (
         <div className="weld-types-container">
-            {onBack && (
-                <button onClick={onBack} className="back-button">
-                    ← Volver
-                </button>
-            )}
-
             <div className="section-header">
-                <h2>Tipos de Unión</h2>
+                <div className="header-left">
+                    {onBack && (
+                        <button onClick={onBack} className="back-button" title="Volver a Configuración">
+                            <ArrowLeft size={20} />
+                        </button>
+                    )}
+                    <div>
+                        <h2>Tipos de Unión</h2>
+                        <p className="section-subtitle">Configura qué uniones requieren soldador y sus colores.</p>
+                    </div>
+                </div>
             </div>
 
             <div className="info-banner">
@@ -141,52 +146,68 @@ export default function WeldTypesManager({ projectId, onBack }: WeldTypesManager
                 ))}
             </div>
 
-            {showModal && editingType && (
-                <WeldTypeEditModal
-                    weldType={editingType}
-                    onSave={handleSave}
-                    onCancel={() => {
-                        setShowModal(false)
-                        setEditingType(null)
-                    }}
-                    saving={saving}
-                />
-            )}
+            {
+                showModal && editingType && (
+                    <WeldTypeEditModal
+                        weldType={editingType}
+                        onSave={handleSave}
+                        onCancel={() => {
+                            setShowModal(false)
+                            setEditingType(null)
+                        }}
+                        saving={saving}
+                    />
+                )
+            }
 
             <style jsx>{`
                 .weld-types-container {
                     padding: 0;
                 }
 
+                .section-header {
+                    margin-bottom: 2rem;
+                }
+
+                .header-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                }
+
                 .back-button {
-                    background: transparent;
+                    background: rgba(255,255,255,0.05);
                     border: 1px solid rgba(255,255,255,0.1);
-                    color: var(--text-color);
-                    padding: 0.5rem 1rem;
-                    border-radius: 8px;
+                    color: white;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                     cursor: pointer;
-                    margin-bottom: 1.5rem;
                     transition: all 0.2s;
+                    padding: 0;
                 }
 
                 .back-button:hover {
-                    background: rgba(255,255,255,0.05);
+                    background: rgba(255,255,255,0.1);
+                    transform: translateX(-2px);
                     border-color: rgba(255,255,255,0.2);
-                }
-
-                .section-header {
-                    margin-bottom: 1.5rem;
                 }
 
                 .section-header h2 {
                     font-size: 1.5rem;
-                    margin: 0 0 0.5rem 0;
-                    color: var(--text-color);
+                    font-weight: 700;
+                    margin: 0;
+                    color: white;
+                    line-height: 1.2;
                 }
 
                 .section-subtitle {
-                    color: var(--text-muted);
+                    color: #94a3b8;
                     margin: 0;
+                    font-size: 0.9rem;
                 }
 
                 .info-banner {
@@ -307,7 +328,7 @@ export default function WeldTypesManager({ projectId, onBack }: WeldTypesManager
                     color: var(--text-muted);
                 }
             `}</style>
-        </div>
+        </div >
     )
 }
 

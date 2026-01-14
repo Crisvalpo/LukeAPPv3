@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Upload, Image as ImageIcon, Check } from 'lucide-react'
+import { Upload, Image as ImageIcon, Check, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import ImageEditor, { type CropSettings } from './ImageEditor'
 import LogoCanvas from './LogoCanvas'
@@ -10,6 +10,7 @@ interface ProjectLogosManagerProps {
     primaryLogoUrl?: string | null
     secondaryLogoUrl?: string | null
     onUpdate: () => void
+    onBack?: () => void
 }
 
 type LogoType = 'primary' | 'secondary'
@@ -20,12 +21,19 @@ export default function ProjectLogosManager({
     primaryLogoUrl: initialPrimary,
     secondaryLogoUrl: initialSecondary,
     onUpdate,
+    onBack,
 }: ProjectLogosManagerProps) {
     const supabase = createClient()
 
     const [primaryLogo, setPrimaryLogo] = useState<string | null>(initialPrimary || null)
     const [secondaryLogo, setSecondaryLogo] = useState<string | null>(initialSecondary || null)
     const [editingLogo, setEditingLogo] = useState<LogoType | null>(null)
+
+    // Effect to sync state when props change (e.g. after parent reload)
+    React.useEffect(() => {
+        setPrimaryLogo(initialPrimary || null)
+        setSecondaryLogo(initialSecondary || null)
+    }, [initialPrimary, initialSecondary])
     const [tempImageUrl, setTempImageUrl] = useState<string | null>(null)
     const [isUploading, setIsUploading] = useState(false)
 
@@ -185,10 +193,22 @@ export default function ProjectLogosManager({
 
     return (
         <div className="logos-manager">
-            <h2>Logos del Proyecto</h2>
-            <p className="description">
-                Configura hasta dos logos para incluir en los documentos MIR. Usa el editor integrado para ajustar el recorte y zoom.
-            </p>
+            {/* Header */}
+            <div className="manager-header">
+                <div className="header-left">
+                    {onBack && (
+                        <button onClick={onBack} className="btn-back" title="Volver a Configuración">
+                            <ArrowLeft size={20} />
+                        </button>
+                    )}
+                    <div>
+                        <h2>Logos del Proyecto</h2>
+                        <p className="description">
+                            Configura hasta dos logos para incluir en los documentos MIR. Usa el editor integrado para ajustar el recorte y zoom.
+                        </p>
+                    </div>
+                </div>
+            </div>
 
             {/* Cards Grid */}
             <div className="logos-grid">
@@ -308,7 +328,22 @@ function LogoCard({ title, subtitle, logoUrl, onFileSelect, onRemove, isUploadin
             <div className="card-body">
                 {logoUrl ? (
                     <div className="logo-preview">
-                        <img src={logoUrl} alt={title} />
+                        <img
+                            key={logoUrl}
+                            src={logoUrl}
+                            alt={title}
+                            onLoad={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.opacity = '1';
+                            }}
+                            onError={(e) => {
+                                console.error('Error loading logo image:', logoUrl);
+                                const target = e.target as HTMLImageElement;
+                                target.style.opacity = '0.5';
+                                target.style.border = '1px solid red';
+                            }}
+                            style={{ opacity: 0, transition: 'opacity 0.3s' }}
+                        />
                         <div className="logo-actions">
                             <button
                                 onClick={() => fileInputRef.current?.click()}
@@ -347,6 +382,63 @@ function LogoCard({ title, subtitle, logoUrl, onFileSelect, onRemove, isUploadin
             />
 
             <style jsx>{`
+        .logos-manager {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+
+        .manager-header {
+          margin-bottom: 0.5rem;
+        }
+
+        .header-left {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        .btn-back {
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.1);
+          color: white;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s;
+          padding: 0;
+        }
+
+        .btn-back:hover {
+          background: rgba(255,255,255,0.1);
+          transform: translateX(-2px);
+          border-color: rgba(255,255,255,0.2);
+        }
+
+        h2 {
+          color: white;
+          font-size: 1.5rem;
+          font-weight: 700;
+          margin: 0;
+          line-height: 1.2;
+        }
+
+        .description {
+          color: #94a3b8;
+          font-size: 0.9rem;
+          margin: 0;
+        }
+
+        .logos-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 1.5rem;
+        }
+
         .logo-card {
           background: rgba(30, 41, 59, 0.7);
           border: 1px solid rgba(255, 255, 255, 0.1);

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { getProjectById, updateProject, type Project } from '@/services/projects'
 import { getPendingInvitations, createInvitation, revokeInvitation, type Invitation } from '@/services/invitations'
 import { Building2, Calendar, FileText, Check, X, Shield, Users, Image as ImageIcon } from 'lucide-react'
@@ -36,7 +36,7 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
     const [isLoading, setIsLoading] = useState(true)
     const [project, setProject] = useState<ProjectDetails | null>(null)
     const [invitations, setInvitations] = useState<Invitation[]>([])
-    const [activeTab, setActiveTab] = useState<'details' | 'team' | 'engineering' | 'procurement' | 'settings'>('details')
+    const [activeTab, setActiveTab] = useState<'details' | 'team' | 'engineering' | 'procurement' | 'settings'>('engineering')
     const [settingsView, setSettingsView] = useState<'menu' | 'locations' | 'weld-types' | 'logo' | 'structure-models'>('menu')
 
     const [isEditing, setIsEditing] = useState(false)
@@ -54,15 +54,30 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
 
     const canEdit = ['founder', 'admin'].includes(role)
 
+    const searchParams = useSearchParams()
+
     useEffect(() => {
         loadProject()
-    }, [projectId])
+
+        // Handle tab selection via URL
+        const tabParam = searchParams.get('tab')
+        if (tabParam && ['details', 'team', 'engineering', 'procurement', 'settings'].includes(tabParam)) {
+            setActiveTab(tabParam as any)
+        }
+
+        // Handle action param
+        const actionParam = searchParams.get('action')
+        if (actionParam === 'edit' && canEdit) {
+            setIsEditing(true)
+        }
+    }, [projectId, searchParams, canEdit])
 
     async function loadProject() {
         if (!projectId) return
 
         const data = await getProjectById(projectId)
         if (data) {
+            console.log('Project loaded:', data.name, { primary: data.logo_primary_url, secondary: data.logo_secondary_url })
             setProject(data)
             setEditForm({
                 name: data.name,
@@ -77,6 +92,13 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
         }
         setIsLoading(false)
     }
+
+    // Refresh project when entering logo view to ensure consistency
+    useEffect(() => {
+        if (settingsView === 'logo') {
+            loadProject()
+        }
+    }, [settingsView])
 
     async function handleInvite(data: any) {
         if (!project) return { success: false, message: 'Proyecto no cargado' }
@@ -99,6 +121,14 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
         loadProject()
     }
 
+    function exitEditMode() {
+        if (role === 'admin') {
+            router.push('/admin')
+        } else {
+            setIsEditing(false)
+        }
+    }
+
     async function handleSave() {
         if (!canEdit) return
         setIsSaving(true)
@@ -114,7 +144,7 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
 
         if (result.success) {
             setProject(result.data as any)
-            setIsEditing(false)
+            exitEditMode()
         } else {
             setError(result.message)
         }
@@ -224,7 +254,7 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
                                 Guardar Cambios
                             </button>
                             <button
-                                onClick={() => setIsEditing(false)}
+                                onClick={exitEditMode}
                                 className="form-button"
                                 style={{ background: 'rgba(255,255,255,0.05)' }}
                                 disabled={isSaving}
@@ -235,83 +265,104 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
                     </div>
                 ) : (
                     <div>
-                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', overflowX: 'auto' }}>
-                            <button
-                                onClick={() => setActiveTab('details')}
-                                style={{
-                                    padding: '0.75rem 1rem',
-                                    background: 'transparent',
-                                    border: 'none',
-                                    borderBottom: activeTab === 'details' ? '2px solid var(--color-primary)' : '2px solid transparent',
-                                    color: activeTab === 'details' ? 'white' : '#94a3b8',
-                                    fontWeight: activeTab === 'details' ? 600 : 400,
-                                    cursor: 'pointer',
-                                    whiteSpace: 'nowrap'
-                                }}
-                            >
-                                Detalles
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('team')}
-                                style={{
-                                    padding: '0.75rem 1rem',
-                                    background: 'transparent',
-                                    border: 'none',
-                                    borderBottom: activeTab === 'team' ? '2px solid var(--color-primary)' : '2px solid transparent',
-                                    color: activeTab === 'team' ? 'white' : '#94a3b8',
-                                    fontWeight: activeTab === 'team' ? 600 : 400,
-                                    cursor: 'pointer',
-                                    whiteSpace: 'nowrap'
-                                }}
-                            >
-                                Equipo & Invitaciones
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('engineering')}
-                                style={{
-                                    padding: '0.75rem 1rem',
-                                    background: 'transparent',
-                                    border: 'none',
-                                    borderBottom: activeTab === 'engineering' ? '2px solid var(--color-primary)' : '2px solid transparent',
-                                    color: activeTab === 'engineering' ? 'white' : '#94a3b8',
-                                    fontWeight: activeTab === 'engineering' ? 600 : 400,
-                                    cursor: 'pointer',
-                                    whiteSpace: 'nowrap'
-                                }}
-                            >
-                                Ingeniería
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('procurement')}
-                                style={{
-                                    padding: '0.75rem 1rem',
-                                    background: 'transparent',
-                                    border: 'none',
-                                    borderBottom: activeTab === 'procurement' ? '2px solid var(--color-primary)' : '2px solid transparent',
-                                    color: activeTab === 'procurement' ? 'white' : '#94a3b8',
-                                    fontWeight: activeTab === 'procurement' ? 600 : 400,
-                                    cursor: 'pointer',
-                                    whiteSpace: 'nowrap'
-                                }}
-                            >
-                                Abastecimiento
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('settings')}
-                                style={{
-                                    padding: '0.75rem 1rem',
-                                    background: 'transparent',
-                                    border: 'none',
-                                    borderBottom: activeTab === 'settings' ? '2px solid var(--color-primary)' : '2px solid transparent',
-                                    color: activeTab === 'settings' ? 'white' : '#94a3b8',
-                                    fontWeight: activeTab === 'settings' ? 600 : 400,
-                                    cursor: 'pointer',
-                                    whiteSpace: 'nowrap'
-                                }}
-                            >
-                                Configuración
-                            </button>
-                        </div>
+                        {/* Hide Navbar for Admins in Settings Mode */}
+                        {!(role === 'admin' && activeTab === 'settings') && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', overflowX: 'auto' }}>
+                                {/* Left Side: Work Modules */}
+                                <div style={{ display: 'flex', gap: '1rem' }}>
+                                    {!(role === 'admin' && activeTab === 'team') && (
+                                        <>
+                                            <button
+                                                onClick={() => setActiveTab('engineering')}
+                                                style={{
+                                                    padding: '0.75rem 1rem',
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    borderBottom: activeTab === 'engineering' ? '2px solid var(--color-primary)' : '2px solid transparent',
+                                                    color: activeTab === 'engineering' ? 'white' : '#94a3b8',
+                                                    fontWeight: activeTab === 'engineering' ? 600 : 400,
+                                                    cursor: 'pointer',
+                                                    whiteSpace: 'nowrap'
+                                                }}
+                                            >
+                                                Ingeniería
+                                            </button>
+                                            <button
+                                                onClick={() => setActiveTab('procurement')}
+                                                style={{
+                                                    padding: '0.75rem 1rem',
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    borderBottom: activeTab === 'procurement' ? '2px solid var(--color-primary)' : '2px solid transparent',
+                                                    color: activeTab === 'procurement' ? 'white' : '#94a3b8',
+                                                    fontWeight: activeTab === 'procurement' ? 600 : 400,
+                                                    cursor: 'pointer',
+                                                    whiteSpace: 'nowrap'
+                                                }}
+                                            >
+                                                Abastecimiento
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Right Side: Management & Settings */}
+                                <div style={{ display: 'flex', gap: '1rem' }}>
+                                    {(role === 'founder' || activeTab === 'details') && (
+                                        <button
+                                            onClick={() => setActiveTab('details')}
+                                            style={{
+                                                padding: '0.75rem 1rem',
+                                                background: 'transparent',
+                                                border: 'none',
+                                                borderBottom: activeTab === 'details' ? '2px solid var(--color-primary)' : '2px solid transparent',
+                                                color: activeTab === 'details' ? 'white' : '#94a3b8',
+                                                fontWeight: activeTab === 'details' ? 600 : 400,
+                                                cursor: 'pointer',
+                                                whiteSpace: 'nowrap'
+                                            }}
+                                        >
+                                            Detalles
+                                        </button>
+                                    )}
+                                    {(role === 'founder' || activeTab === 'team') && (
+                                        <button
+                                            onClick={() => setActiveTab('team')}
+                                            style={{
+                                                padding: '0.75rem 1rem',
+                                                background: 'transparent',
+                                                border: 'none',
+                                                borderBottom: activeTab === 'team' ? '2px solid var(--color-primary)' : '2px solid transparent',
+                                                color: activeTab === 'team' ? 'white' : '#94a3b8',
+                                                fontWeight: activeTab === 'team' ? 600 : 400,
+                                                cursor: 'pointer',
+                                                whiteSpace: 'nowrap'
+                                            }}
+                                        >
+                                            Equipo & Invitaciones
+                                        </button>
+                                    )}
+                                    {/* Config Tab only visible for Founder or if actively selected (though if navbar hidden this is moot for admin) */}
+                                    {(role === 'founder') && (
+                                        <button
+                                            onClick={() => setActiveTab('settings')}
+                                            style={{
+                                                padding: '0.75rem 1rem',
+                                                background: 'transparent',
+                                                border: 'none',
+                                                borderBottom: activeTab === 'settings' ? '2px solid var(--color-primary)' : '2px solid transparent',
+                                                color: activeTab === 'settings' ? 'white' : '#94a3b8',
+                                                fontWeight: activeTab === 'settings' ? 600 : 400,
+                                                cursor: 'pointer',
+                                                whiteSpace: 'nowrap'
+                                            }}
+                                        >
+                                            Configuración
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         {activeTab === 'details' && (
                             <div style={{ padding: '1rem' }} className="fade-in">
