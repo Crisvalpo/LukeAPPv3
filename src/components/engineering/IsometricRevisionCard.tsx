@@ -8,9 +8,11 @@ import { deleteRevisionAction } from '@/actions/revisions'
 import { calculateDataStatus, calculateMaterialStatus, isFabricable, type DataStatus, type MaterialStatus } from '@/services/fabricability'
 import RevisionMasterView from './RevisionMasterView'
 import IsometricViewer from './viewer/IsometricViewer'
+import WeldCompactCard from './viewer/WeldCompactCard'
+import WeldDetailModal from './viewer/WeldDetailModal'
 import { createClient } from '@/lib/supabase/client'
 import { updateRevisionModelUrlAction, updateRevisionPdfUrlAction, deleteRevisionPdfUrlAction, deleteRevisionModelAction } from '@/actions/revisions'
-import { FileText, Trash2, ExternalLink } from 'lucide-react'
+import { FileText, Trash2, ExternalLink, Box } from 'lucide-react'
 
 // Wrapper to load spools for viewer and handle fullscreen portal
 function IsometricViewerWrapper({
@@ -19,6 +21,7 @@ function IsometricViewerWrapper({
     initialModelData,
     isoNumber,
     projectId,
+    pdfUrl,
     onClose,
     onSave
 }: {
@@ -27,6 +30,7 @@ function IsometricViewerWrapper({
     initialModelData: any
     isoNumber: string
     projectId: string
+    pdfUrl?: string | null
     onClose: () => void
     onSave?: () => void
 }) {
@@ -43,9 +47,82 @@ function IsometricViewerWrapper({
     const [visibleStructureIds, setVisibleStructureIds] = useState<string[]>([])
     const [isStructureMenuOpen, setIsStructureMenuOpen] = useState(false)
 
+    // Layout State (FULL | SPLIT_HORIZONTAL | SPLIT_VERTICAL)
+    // Default to FULL as requested
+    const [layout, setLayout] = useState<'FULL' | 'SPLIT_HORIZONTAL' | 'SPLIT_VERTICAL'>('FULL')
+
+    // Split Ratio State (0.1 to 0.9, default 0.5)
+    const [splitRatio, setSplitRatio] = useState(0.5)
+    // Ref for the container to calculate percentages
+    const containerRef = useRef<HTMLDivElement>(null)
+    const isDraggingRef = useRef(false)
+    const [isDragging, setIsDragging] = useState(false) // Trigger re-render for pointerEvents
+
+    // Cycle Layout: FULL -> SPLIT_HORIZONTAL -> SPLIT_VERTICAL -> FULL
+    const toggleLayout = () => {
+        if (!pdfUrl) return
+        setLayout(prev => {
+            if (prev === 'FULL') return 'SPLIT_HORIZONTAL'
+            if (prev === 'SPLIT_HORIZONTAL') return 'SPLIT_VERTICAL'
+            return 'FULL' // from VERTICAL or others
+        })
+        // Reset ratio on toggle for better UX? Or keep it? Keeping it for now.
+    }
+
+    // Resizing Logic
+    const handleMouseDown = (e: React.MouseEvent) => {
+        e.preventDefault()
+        isDraggingRef.current = true
+        setIsDragging(true)
+        document.addEventListener('mousemove', handleMouseMove)
+        document.addEventListener('mouseup', handleMouseUp)
+    }
+
+    const handleMouseMove = (e: MouseEvent) => {
+        if (!isDraggingRef.current || !containerRef.current) return
+
+        const rect = containerRef.current.getBoundingClientRect()
+        let newRatio = 0.5
+
+        if (layout === 'SPLIT_HORIZONTAL') {
+            const offsetY = e.clientY - rect.top
+            newRatio = offsetY / rect.height
+        } else if (layout === 'SPLIT_VERTICAL') {
+            const offsetX = e.clientX - rect.left
+            newRatio = offsetX / rect.width
+        }
+
+        // Clamp ratio between 10% and 90%
+        if (newRatio < 0.1) newRatio = 0.1
+        if (newRatio > 0.9) newRatio = 0.9
+
+        setSplitRatio(newRatio)
+    }
+
+    const handleMouseUp = () => {
+        isDraggingRef.current = false
+        setIsDragging(false)
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    // Cleanup listeners on unmount
+    useEffect(() => {
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove)
+            document.removeEventListener('mouseup', handleMouseUp)
+        }
+    }, [])
+
     // Selection & Assignment State
     const [selectedIds, setSelectedIds] = useState<string[]>([])
     const [modelData, setModelData] = useState<any>(initialModelData || {})
+
+    // Welds Expansion State
+    const [expandedSpoolId, setExpandedSpoolId] = useState<string | null>(null)
+    const [weldsMap, setWeldsMap] = useState<Record<string, any[]>>({})
+    const [selectedWeldForDetail, setSelectedWeldForDetail] = useState<any | null>(null)
+    const [weldTypesConfig, setWeldTypesConfig] = useState<Record<string, any>>({})
 
 
 
@@ -55,19 +132,19 @@ function IsometricViewerWrapper({
     const spoolColors = React.useMemo(() => {
         const colors: Record<string, string> = {}
         spools.forEach(s => {
-            if (assignments[s.id] && assignments[s.id].length > 0) {
-                // Color based on Status
-                if (s.status === 'INSTALLED') {
-                    colors[s.id] = '#4ade80' // Green-400
-                } else if (s.status === 'FABRICATED' || s.status === 'DISPATCHED') { // Group Dispatched with Fabricated for now
-                    colors[s.id] = '#60a5fa' // Blue-400
-                } else {
-                    colors[s.id] = '#facc15' // Yellow-400 (Pending Assigned)
-                }
+            // Color based on Status
+            if (s.status === 'INSTALLED') {
+                colors[s.id] = '#4ade80' // Green-400
+            } else if (s.status === 'FABRICATED' || s.status === 'DISPATCHED') {
+                colors[s.id] = '#3b82f6' // Blue-500 (Stronger Blue for Finished)
+            } else if (s.status === 'IN_FABRICATION') {
+                colors[s.id] = '#38bdf8' // Sky-400 (Light Blue for In Progress)
+            } else {
+                colors[s.id] = '#facc15' // Yellow-400 (Pending/Default)
             }
         })
         return colors
-    }, [spools, assignments])
+    }, [spools])
 
     // Spool Activation State (Highlighting)
     const [activeSpoolId, setActiveSpoolId] = useState<string | null>(null)
@@ -76,24 +153,58 @@ function IsometricViewerWrapper({
         return assignments[activeSpoolId] || []
     }, [activeSpoolId, assignments])
 
+    // Separate function to refresh weld types config
+    const refreshWeldTypesConfig = async () => {
+        try {
+            const supabase = createClient()
+            const { data } = await supabase
+                .from('project_weld_type_config')
+                .select('type_code, requires_welder, icon, color, type_name_es')
+                .eq('project_id', projectId)
+
+            if (data) {
+                const configMap: Record<string, any> = {}
+                data.forEach((config: any) => {
+                    configMap[config.type_code] = config
+                })
+                setWeldTypesConfig(configMap)
+            }
+        } catch (error) {
+            console.error('Error refreshing weld types config:', error)
+        }
+    }
+
     useEffect(() => {
         async function fetchContext() {
             try {
-                // Parallel fetch for spools and structure models
+                // Parallel fetch for spools, structure models, and weld types config
                 const { getRevisionSpoolsAction } = await import('@/actions/revisions')
                 const { getStructureModelsAction } = await import('@/actions/structure-models')
+                const supabase = createClient()
 
-                const [spoolsData, modelsResult] = await Promise.all([
+                const [spoolsData, modelsResult, weldTypesResult] = await Promise.all([
                     getRevisionSpoolsAction(revisionId),
-                    getStructureModelsAction(projectId)
+                    getStructureModelsAction(projectId),
+                    supabase
+                        .from('project_weld_type_config')
+                        .select('type_code, requires_welder, icon, color, type_name_es')
+                        .eq('project_id', projectId)
                 ])
 
                 setSpools(spoolsData || [])
                 if (modelsResult.success && modelsResult.data) {
-                    console.log('🏗️ Structure models loaded:', modelsResult.data)
                     setStructureModels(modelsResult.data)
                 } else {
                     console.warn('⚠️ No structure models found or error:', modelsResult)
+                }
+
+                // Build weld types config map
+                if (weldTypesResult.data) {
+                    const configMap: Record<string, any> = {}
+                    weldTypesResult.data.forEach((config: any) => {
+                        configMap[config.type_code] = config
+                    })
+                    setWeldTypesConfig(configMap)
                 }
             } catch (error) {
                 console.error('Error loading viewer context:', error)
@@ -103,6 +214,18 @@ function IsometricViewerWrapper({
         }
         fetchContext()
     }, [revisionId, projectId])
+
+    // Auto-refresh weld config when window becomes visible (after user edits config in another tab)
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                refreshWeldTypesConfig()
+            }
+        }
+
+        document.addEventListener('visibilitychange', handleVisibilityChange)
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }, [projectId])
 
     const handleDeleteModel = async () => {
         if (confirm('¿Estás seguro de ELIMINAR este modelo 3D permanentemente?')) {
@@ -118,6 +241,41 @@ function IsometricViewerWrapper({
                 console.error('Error deleting model:', error)
                 alert('Error al eliminar el modelo')
             }
+        }
+    }
+
+    const handleToggleExpand = async (spoolId: string, spoolNumber: string) => {
+        // Toggle collapse
+        if (expandedSpoolId === spoolId) {
+            setExpandedSpoolId(null)
+            return
+        }
+
+        // Expand
+        setExpandedSpoolId(spoolId)
+
+        // If welds already cached, don't refetch
+        if (weldsMap[spoolId]) return
+
+        // Fetch welds for this spool
+        try {
+            const supabase = createClient()
+            const { data, error } = await supabase
+                .from('spools_welds')
+                .select('*')
+                .eq('revision_id', revisionId)
+                .eq('spool_number', spoolNumber)
+                .order('weld_number')
+
+            if (!error && data) {
+                setWeldsMap(prev => ({ ...prev, [spoolId]: data }))
+            } else if (error) {
+                console.error('Error loading welds:', error)
+                setWeldsMap(prev => ({ ...prev, [spoolId]: [] }))
+            }
+        } catch (error) {
+            console.error('Error fetching welds:', error)
+            setWeldsMap(prev => ({ ...prev, [spoolId]: [] }))
         }
     }
 
@@ -283,7 +441,7 @@ function IsometricViewerWrapper({
                             const isDisabled = canAssign && isAssignedToOtherSpool && !isAssignedToThisSpool // Only disable if stealing
 
                             // Determine Base Color based on Status
-                            let baseColor = '#facc15' // Default Yellow (Pending - Assigned)
+                            let baseColor = '#facc15' // Default Yellow (Pending)
                             let baseBg = 'rgba(250, 204, 21, 0.1)'
                             let baseBorder = '#eab308'
 
@@ -292,9 +450,13 @@ function IsometricViewerWrapper({
                                 baseBg = 'rgba(74, 222, 128, 0.1)'
                                 baseBorder = '#22c55e'
                             } else if (spool.status === 'FABRICATED' || spool.status === 'DISPATCHED') {
-                                baseColor = '#60a5fa' // Blue
-                                baseBg = 'rgba(96, 165, 250, 0.1)'
-                                baseBorder = '#3b82f6'
+                                baseColor = '#3b82f6' // Blue-500
+                                baseBg = 'rgba(59, 130, 246, 0.1)'
+                                baseBorder = '#2563eb'
+                            } else if (spool.status === 'IN_FABRICATION') {
+                                baseColor = '#38bdf8' // Sky-400
+                                baseBg = 'rgba(56, 189, 248, 0.1)'
+                                baseBorder = '#0ea5e9'
                             }
 
                             // Override for Selection Highlight (This Card is "Active")
@@ -397,17 +559,6 @@ function IsometricViewerWrapper({
                                         )}
                                     </div>
 
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{
-                                            fontSize: '0.75rem',
-                                            color: isAssigned ? '#cbd5e1' : '#94a3b8'
-                                        }}>
-                                            {isAssigned
-                                                ? (isSelectedInModel ? '✨ Seleccionado' : (isActiveHighlight ? '👁️ Destacado' : `${assignments[spool.id].length} elementos`))
-                                                : 'Sin modelo'}
-                                        </span>
-                                    </div>
-
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
                                         {spool.location ? (
                                             <span style={{
@@ -425,17 +576,97 @@ function IsometricViewerWrapper({
                                             </span>
                                         )}
 
-                                        <span style={{
-                                            fontSize: '0.7rem',
-                                            color: spool.status === 'PENDING' ? '#94a3b8' : (spool.status === 'INSTALLED' ? '#4ade80' : '#60a5fa'),
-                                            backgroundColor: 'rgba(0,0,0,0.2)', // Darker badge for contrast
-                                            padding: '2px 8px',
-                                            borderRadius: '99px',
-                                            border: `1px solid ${spool.status === 'PENDING' ? '#475569' : (spool.status === 'INSTALLED' ? '#22c55e' : '#3b82f6')}`
-                                        }}>
-                                            {spool.status || 'PENDIENTE'}
-                                        </span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            {/* Isometric Box Icon */}
+                                            <Box size={14} color="#94a3b8" />
+
+                                            {/* Status Badge */}
+                                            <span style={{
+                                                fontSize: '0.7rem',
+                                                color: spool.status === 'PENDING' ? '#94a3b8' : (spool.status === 'INSTALLED' ? '#4ade80' : '#60a5fa'),
+                                                backgroundColor: 'rgba(0,0,0,0.2)',
+                                                padding: '2px 8px',
+                                                borderRadius: '99px',
+                                                border: `1px solid ${spool.status === 'PENDING' ? '#475569' : (spool.status === 'INSTALLED' ? '#22c55e' : '#3b82f6')}`
+                                            }}>
+                                                {spool.status || 'PENDIENTE'}
+                                            </span>
+
+                                            {/* Expand Button (Repositioned) */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleToggleExpand(spool.id, spool.name)
+                                                }}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    padding: 0,
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    color: '#94a3b8',
+                                                    transition: 'color 0.2s',
+                                                    marginLeft: '4px'
+                                                }}
+                                                onMouseEnter={(e) => e.currentTarget.style.color = 'white'}
+                                                onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
+                                            >
+                                                {expandedSpoolId === spool.id ? '▼' : '▶'}
+                                            </button>
+                                        </div>
                                     </div>
+
+                                    {/* Expandable Welds List */}
+                                    {expandedSpoolId === spool.id && (
+                                        <div style={{
+                                            marginTop: '12px',
+                                            paddingTop: '12px',
+                                            borderTop: '1px solid #334155',
+                                            maxHeight: '300px',
+                                            overflowY: 'auto'
+                                        }}>
+                                            {weldsMap[spool.id] === undefined ? (
+                                                <div style={{
+                                                    color: '#94a3b8',
+                                                    fontSize: '0.8rem',
+                                                    textAlign: 'center',
+                                                    padding: '8px'
+                                                }}>
+                                                    Cargando uniones...
+                                                </div>
+                                            ) : weldsMap[spool.id].length === 0 ? (
+                                                <div style={{
+                                                    color: '#64748b',
+                                                    fontSize: '0.8rem',
+                                                    textAlign: 'center',
+                                                    padding: '8px',
+                                                    fontStyle: 'italic'
+                                                }}>
+                                                    No hay uniones para este spool
+                                                </div>
+                                            ) : (
+                                                weldsMap[spool.id].map((weld: any) => (
+                                                    <WeldCompactCard
+                                                        key={weld.id}
+                                                        weld={{
+                                                            ...weld,
+                                                            spool_number: spool.name,
+                                                            iso_number: isoNumber
+                                                        }}
+                                                        weldTypeConfig={weldTypesConfig[weld.type_weld]}
+                                                        onClick={() => setSelectedWeldForDetail({
+                                                            ...weld,
+                                                            spool_number: spool.name,
+                                                            spool_id: spool.id, // Inject spool_id for efficient update
+                                                            iso_number: isoNumber,
+                                                            project_id: projectId // CRITICAL: Required for history logging
+                                                        })}
+                                                    />
+                                                ))
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             )
                         })
@@ -659,31 +890,7 @@ function IsometricViewerWrapper({
                                 )}
                             </div>
 
-                            {/* Delete Button */}
-                            <button
-                                onClick={handleDeleteModel}
-                                title="Eliminar Modelo"
-                                style={{
-                                    padding: '4px 8px',
-                                    borderRadius: '4px',
-                                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                                    color: '#f87171',
-                                    border: '1px solid #7f1d1d',
-                                    cursor: 'pointer',
-                                    fontSize: '0.9rem',
-                                    marginLeft: '12px'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.backgroundColor = '#ef4444'
-                                    e.currentTarget.style.color = 'white'
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'
-                                    e.currentTarget.style.color = '#f87171'
-                                }}
-                            >
-                                🗑️
-                            </button>
+
 
                             {/* Horizontal Speed Slider */}
                             <div style={{
@@ -711,6 +918,29 @@ function IsometricViewerWrapper({
                                 />
                             </div>
                         </div>
+
+                        {/* Layout Toggle (Only if PDF exists) */}
+                        {pdfUrl && (
+                            <button
+                                onClick={toggleLayout}
+                                title={layout === 'FULL' ? 'Ver PDF y Modelo' : (layout === 'SPLIT_HORIZONTAL' ? 'Dividir Verticalmente' : 'Solo Modelo 3D')}
+                                style={{
+                                    background: '#3b82f6',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    width: '32px',
+                                    height: '32px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    fontSize: '1.2rem'
+                                }}
+                            >
+                                {layout === 'FULL' ? '📄' : (layout === 'SPLIT_HORIZONTAL' ? '◫' : '⊟')}
+                            </button>
+                        )}
 
                         {/* Selection Hint - NO ANIMATION */}
                         {selectedIds.length > 0 && (
@@ -751,31 +981,167 @@ function IsometricViewerWrapper({
                     </button>
                 </div>
 
-                <div style={{ flex: 1, position: 'relative' }}>
-                    <IsometricViewer
-                        modelUrl={modelUrl}
-                        spools={spools}
-                        structureModels={structureModels.filter(m => visibleStructureIds.includes(m.id))}
-                        showStructure={visibleStructureIds.length > 0}
-                        initialModelData={modelData}
-                        onSaveData={async (data) => {
-                            const { updateModelDataAction } = await import('@/actions/revisions')
-                            await updateModelDataAction(revisionId, data)
-                        }}
-                        // Control Props
-                        mode={mode}
-                        speed={speed}
-                        triggerFit={triggerFit}
-                        onFitComplete={() => setTriggerFit(false)}
-                        // Assignment Props
-                        selectedIds={selectedIds}
-                        onSelectionChange={setSelectedIds}
-                        assignments={assignments}
-                        spoolColors={spoolColors}
-                        highlightedIds={highlightedIds}
-                    />
+                <div
+                    ref={containerRef}
+                    style={{
+                        flex: 1,
+                        position: 'relative',
+                        display: 'flex',
+                        flexDirection: layout === 'SPLIT_HORIZONTAL' ? 'column' : 'row',
+                        overflow: 'hidden'
+                    }}>
+                    {/* 3D Viewer Container */}
+                    <div style={{
+                        flex: layout === 'FULL' ? 1 : 'none', // If full take all, else rely heavily on width/height
+                        height: layout === 'SPLIT_HORIZONTAL' ? `${splitRatio * 100}%` : '100%',
+                        width: layout === 'SPLIT_VERTICAL' ? `${splitRatio * 100}%` : '100%',
+                        position: 'relative',
+                        borderBottom: layout === 'SPLIT_HORIZONTAL' ? '1px solid #334155' : 'none',
+                        borderRight: layout === 'SPLIT_VERTICAL' ? '1px solid #334155' : 'none',
+                    }}>
+                        <IsometricViewer
+                            modelUrl={modelUrl}
+                            spools={spools}
+                            structureModels={structureModels.filter(m => visibleStructureIds.includes(m.id))}
+                            showStructure={visibleStructureIds.length > 0}
+                            initialModelData={modelData}
+                            onSaveData={async (data) => {
+                                const { updateModelDataAction } = await import('@/actions/revisions')
+                                await updateModelDataAction(revisionId, data)
+                            }}
+                            // Control Props
+                            mode={mode}
+                            speed={speed}
+                            triggerFit={triggerFit}
+                            onFitComplete={() => setTriggerFit(false)}
+                            // Assignment Props
+                            selectedIds={selectedIds}
+                            onSelectionChange={setSelectedIds}
+                            assignments={assignments}
+                            spoolColors={spoolColors}
+                            highlightedIds={highlightedIds}
+                        />
+                    </div>
+
+                    {/* Resizer Handle */}
+                    {layout !== 'FULL' && (
+                        <div
+                            onMouseDown={handleMouseDown}
+                            style={{
+                                width: layout === 'SPLIT_VERTICAL' ? '8px' : '100%',
+                                height: layout === 'SPLIT_HORIZONTAL' ? '8px' : '100%',
+                                cursor: layout === 'SPLIT_VERTICAL' ? 'col-resize' : 'row-resize',
+                                backgroundColor: '#0f172a',
+                                borderLeft: layout === 'SPLIT_VERTICAL' ? '1px solid #334155' : 'none',
+                                borderRight: layout === 'SPLIT_VERTICAL' ? '1px solid #334155' : 'none',
+                                borderTop: layout === 'SPLIT_HORIZONTAL' ? '1px solid #334155' : 'none',
+                                borderBottom: layout === 'SPLIT_HORIZONTAL' ? '1px solid #334155' : 'none',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                zIndex: 50 // Above viewer/pdf
+                            }}
+                        >
+                            {/* Visual Handle Dot */}
+                            <div style={{
+                                width: layout === 'SPLIT_VERTICAL' ? '4px' : '32px',
+                                height: layout === 'SPLIT_HORIZONTAL' ? '4px' : '32px',
+                                backgroundColor: '#475569',
+                                borderRadius: '99px'
+                            }} />
+                        </div>
+                    )}
+
+                    {/* PDF Viewer (Only if not FULL) */}
+                    {layout !== 'FULL' && pdfUrl && (
+                        <div style={{
+                            flex: 1, // Take remaining space
+                            position: 'relative',
+                            background: '#1e293b'
+                        }}>
+                            <iframe
+                                src={pdfUrl}
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    border: 'none',
+                                    // Disable pointer events during drag so dragging over iframe works
+                                    pointerEvents: isDragging ? 'none' : 'auto'
+                                }}
+                                title="Plan PDF"
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
+
+            {/* Weld Detail Modal */}
+            {selectedWeldForDetail && (
+                <WeldDetailModal
+                    weld={selectedWeldForDetail}
+                    weldTypeConfig={weldTypesConfig[selectedWeldForDetail.type_weld]}
+                    onClose={() => setSelectedWeldForDetail(null)}
+                    onUpdate={(updatedWeld) => {
+                        const spoolId = updatedWeld.spool_id
+                        if (spoolId && weldsMap[spoolId]) {
+                            // 1. Update Weld in Cache
+                            const updatedWelds = weldsMap[spoolId].map((w: any) =>
+                                w.id === updatedWeld.id ? { ...w, ...updatedWeld } : w
+                            )
+
+                            setWeldsMap(prev => ({
+                                ...prev,
+                                [spoolId]: updatedWelds
+                            }))
+
+                            // 2. Check Spool Status Change (Optimistic)
+                            // Robust Filter: Everything NOT Field is Shop.
+                            const isField = (dest: string | null) => {
+                                if (!dest) return false
+                                const d = dest.toUpperCase()
+                                return d === 'FIELD' || d === 'CAMPO' || d === 'F' || d === 'SITE'
+                            }
+
+                            const allWeldsForSpool = updatedWelds || []
+                            // Filter Shop Welds (Not Field)
+                            const shopWelds = allWeldsForSpool.filter((w: any) => !isField(w.destination))
+
+                            // Valid Shop Welds (Not Deleted)
+                            const validShopWelds = shopWelds.filter((w: any) => w.execution_status !== 'DELETED')
+
+                            const executedCount = validShopWelds.filter((w: any) => w.execution_status === 'EXECUTED').length
+                            const isFullyFabricated = validShopWelds.length > 0 && executedCount === validShopWelds.length
+                            const isPartiallyFabricated = executedCount > 0 && !isFullyFabricated
+
+                            setSpools(prevSpools => prevSpools.map(s => {
+                                if (s.id === spoolId) {
+                                    // 1. Upgrade to FABRICATED
+                                    if (isFullyFabricated) {
+                                        // Prevents upgrading if already in higher status
+                                        if (['PENDING', 'IN_FABRICATION', undefined].includes(s.status)) {
+                                            return { ...s, status: 'FABRICATED' }
+                                        }
+                                    }
+                                    // 2. Set to IN_FABRICATION
+                                    else if (isPartiallyFabricated) {
+                                        // Allow upgrading from PENDING or downgrading from FABRICATED
+                                        if (['PENDING', 'FABRICATED', undefined].includes(s.status)) {
+                                            return { ...s, status: 'IN_FABRICATION' }
+                                        }
+                                    }
+                                    // 3. Downgrade to PENDING
+                                    else {
+                                        if (['IN_FABRICATION', 'FABRICATED'].includes(s.status)) {
+                                            return { ...s, status: 'PENDING' }
+                                        }
+                                    }
+                                }
+                                return s
+                            }))
+                        }
+                    }}
+                />
+            )}
         </div>
     )
 
@@ -981,6 +1347,7 @@ export default function IsometricRevisionCard({
         modelData: any
         isoNumber: string
         projectId: string
+        pdfUrl?: string | null
     } | null>(null)
 
     // Load fabricability statuses
@@ -1218,7 +1585,8 @@ export default function IsometricRevisionCard({
                                                                         glbUrl: rev.glb_model_url!,
                                                                         modelData: rev.model_data,
                                                                         isoNumber: isoNumber,
-                                                                        projectId: rev.project_id
+                                                                        projectId: rev.project_id,
+                                                                        pdfUrl: rev.pdf_url
                                                                     })
                                                                 } else {
                                                                     handleModelUploadClick(rev.id)
@@ -1395,6 +1763,8 @@ export default function IsometricRevisionCard({
                                                                         </button>
                                                                     )}
 
+
+
                                                                     {/* Delete 3D Model */}
                                                                     {rev.glb_model_url && (
                                                                         <button
@@ -1511,6 +1881,7 @@ export default function IsometricRevisionCard({
                     initialModelData={viewerModalRevision.modelData}
                     isoNumber={viewerModalRevision.isoNumber}
                     projectId={viewerModalRevision.projectId}
+                    pdfUrl={viewerModalRevision.pdfUrl}
                     onClose={() => setViewerModalRevision(null)}
                     onSave={onRefresh}
                 />

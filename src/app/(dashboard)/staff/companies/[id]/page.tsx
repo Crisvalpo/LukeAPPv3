@@ -16,6 +16,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
     const [deleting, setDeleting] = useState(false)
+    const [clearingStrikes, setClearingStrikes] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState(false)
     const [company, setCompany] = useState<Company | null>(null)
@@ -102,6 +103,37 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
         }
 
         setDeleting(false)
+    }
+
+    async function handleClearStrikes() {
+        if (!confirm('¿Limpiar todos los avisos de cuota para esta empresa?\\n\\nEsto eliminará el banner de advertencia.')) {
+            return
+        }
+
+        setClearingStrikes(true)
+        setError('')
+
+        try {
+            const { createClient } = await import('@/lib/supabase/client')
+            const supabase = createClient()
+
+            const { data, error: rpcError } = await supabase.rpc('clear_company_quota_strikes', {
+                p_company_id: resolvedParams.id
+            })
+
+            if (rpcError) throw rpcError
+
+            if (data?.success) {
+                alert(`✅ ${data.message}\\n\\nLos avisos de cuota han sido eliminados.`)
+            } else {
+                alert('❌ No se pudieron limpiar los avisos')
+            }
+        } catch (err: any) {
+            alert(`Error: ${err.message}`)
+            setError(err.message)
+        }
+
+        setClearingStrikes(false)
     }
 
     function generateSlug(name: string) {
@@ -330,6 +362,45 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                             </select>
                             <p className="form-hint">Determina los límites base y el costo.</p>
                         </div>
+
+                        {/* Clear Quota Strikes Button */}
+                        {!isEditing && (
+                            <div style={{
+                                padding: '1rem',
+                                background: 'rgba(249, 115, 22, 0.1)',
+                                border: '1px solid rgba(249, 115, 22, 0.3)',
+                                borderRadius: '0.5rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '1rem'
+                            }}>
+                                <div>
+                                    <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#fb923c', marginBottom: '0.25rem' }}>
+                                        ⚠️ Limpiar Avisos de Cuota
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                        Elimina strikes acumulados y borra el banner de advertencia
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleClearStrikes}
+                                    disabled={clearingStrikes}
+                                    className="action-button"
+                                    style={{
+                                        fontSize: '0.875rem',
+                                        padding: '0.5rem 1rem',
+                                        background: 'rgba(249, 115, 22, 0.2)',
+                                        borderColor: '#f97316',
+                                        color: '#fb923c',
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                >
+                                    {clearingStrikes ? '⏳ Limpiando...' : '🧹 Limpiar Avisos'}
+                                </button>
+                            </div>
+                        )}
 
 
                         {/* Custom Limits Section */}
