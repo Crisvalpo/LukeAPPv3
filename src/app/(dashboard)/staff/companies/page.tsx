@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getAllCompanies, createCompany, type Company } from '@/services/companies'
-import { Building2 } from 'lucide-react'
+import { Icons } from '@/components/ui/Icons'
+import { Heading, Text } from '@/components/ui/Typography'
 import { ListView } from '@/components/views/ListView'
 import { FormView } from '@/components/views/FormView'
 import { CompanySchema } from '@/schemas/company'
@@ -45,7 +46,7 @@ export default function CompaniesPage() {
     if (loading) {
         return (
             <div className="dashboard-page">
-                <p style={{ color: 'white', textAlign: 'center' }}>Cargando...</p>
+                <Text size="base" style={{ textAlign: 'center' }}>Cargando...</Text>
             </div>
         )
     }
@@ -56,27 +57,25 @@ export default function CompaniesPage() {
             <div className="dashboard-header">
                 <div className="dashboard-header-content">
                     <div className="dashboard-accent-line" />
-                    <h1 className="dashboard-title">Gestión de Empresas</h1>
+                    <Heading level={1} className="dashboard-title">Gestión de Empresas</Heading>
                 </div>
-                <p className="dashboard-subtitle">Administra las empresas que utilizan la plataforma</p>
+                <Text size="base" className="dashboard-subtitle">Administra las empresas que utilizan la plataforma</Text>
             </div>
 
             {/* Actions Bar */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
+            <div className="actions-bar">
                 {!showCreateForm ? (
                     <button
                         onClick={() => setShowCreateForm(true)}
-                        className="action-button"
-                        style={{ width: 'auto', padding: '0.75rem 1.5rem', gap: '0.5rem' }}
+                        className="action-button btn btn-primary"
                     >
-                        <Building2 size={20} />
+                        <Icons.Company size={20} />
                         Nueva Empresa
                     </button>
                 ) : (
                     <button
                         onClick={() => setShowCreateForm(false)}
-                        className="action-button"
-                        style={{ width: 'auto', padding: '0.75rem 1.5rem', gap: '0.5rem', background: 'rgba(255,255,255,0.05)' }}
+                        className="action-button btn btn-secondary"
                     >
                         Cancelar
                     </button>
@@ -85,7 +84,7 @@ export default function CompaniesPage() {
 
             {/* Form Section */}
             {showCreateForm && (
-                <div className="company-form-container" style={{ marginBottom: '2rem' }}>
+                <div className="company-form-container">
                     <FormView
                         schema={CompanySchema}
                         title="Nueva Empresa"
@@ -120,13 +119,13 @@ export default function CompaniesPage() {
                     />
                     {/* Success Message outside form or custom handling */}
                     {success && (
-                        <div className="company-success" style={{ marginTop: '1rem' }}>
-                            <h3 className="company-success-title">✅ Empresa creada exitosamente</h3>
-                            <p className="company-success-text">La lista se ha actualizado.</p>
+                        <div className="company-success">
+                            <Heading level={3} className="company-success-title">✅ Empresa creada exitosamente</Heading>
+                            <Text size="sm" className="company-success-text">La lista se ha actualizado.</Text>
                         </div>
                     )}
                     {error && (
-                        <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '0.5rem', color: '#f87171' }}>
+                        <div className="error-message">
                             {error}
                         </div>
                     )}
@@ -134,7 +133,7 @@ export default function CompaniesPage() {
             )}
 
             {/* Companies List */}
-            <div style={{ marginTop: '2rem' }}>
+            <div className="companies-list-wrapper">
                 <ListView
                     schema={CompanySchema}
                     data={companies}

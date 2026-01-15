@@ -10,17 +10,21 @@
 }
 
 .payments-table th {
-    padding: 1rem;
+    padding: var(--spacing-4);
     text-align: left;
-    color: #94a3b8;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--glass-border);
     font-weight: 600;
 }
 
+.payments-table .th-center {
+    text-align: center;
+}
+
 .payments-table td {
-    padding: 1rem;
+    padding: var(--spacing-4);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    color: #cbd5e1;
+    color: var(--color-text-muted);
 }
 
 .payments-table tr:last-child td {
@@ -29,50 +33,75 @@
 
 /* Specific Columns */
 .company-cell {
-    color: white;
+    color: var(--color-text-main);
     font-weight: 500;
 }
 
 .company-cell-content {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--spacing-2);
+}
+
+.company-icon {
+    color: var(--color-primary);
 }
 
 .plan-cell {
-    color: #94a3b8;
+    color: var(--color-text-muted);
     text-transform: capitalize;
 }
 
 .date-cell {
-    color: #94a3b8;
+    color: var(--color-text-muted);
     font-family: inherit;
 }
 
 .actions-cell {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--spacing-2);
     justify-content: center;
+}
+
+/* Countdown Badge */
+.countdown-badge {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    padding: 0 var(--spacing-2);
+}
+
+/* Danger Button Outline */
+.btn-danger-outline {
+    color: var(--color-error);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger-outline:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--color-error);
 }
 
 /* Status Badges */
 .status-badge {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--spacing-2);
     font-weight: 500;
 }
 
 .status-badge-active {
-    color: #4ade80;
+    color: var(--color-success);
 }
 
 .status-badge-past-due {
-    color: #fbbf24;
+    color: var(--color-warning);
 }
 
 .status-badge-suspended {
-    color: #ef4444;
+    color: var(--color-error);
 }
 
 /* Modal Styles */
@@ -98,48 +127,48 @@
 }
 
 .payment-modal-title {
-    color: white;
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
+    color: var(--color-text-main);
+    margin-bottom: var(--spacing-4);
+    font-size: var(--font-size-2xl);
     font-weight: 600;
 }
 
 .payment-modal-subtitle {
-    color: #94a3b8;
-    margin-bottom: 1.5rem;
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-6);
 }
 
 .payment-modal-subtitle strong {
-    color: white;
+    color: var(--color-text-main);
 }
 
 .payment-modal-label {
     display: block;
-    color: #94a3b8;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-2);
+    font-size: var(--font-size-sm);
 }
 
 .payment-modal-select {
     width: 100%;
-    padding: 0.75rem;
-    background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 0.5rem;
-    color: white;
-    margin-bottom: 1.5rem;
+    padding: var(--spacing-3);
+    background: var(--color-bg-surface-2);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-main);
+    margin-bottom: var(--spacing-6);
     outline: none;
-    transition: all 0.2s;
+    transition: all var(--transition-fast);
 }
 
 .payment-modal-select:focus {
-    border-color: #60a5fa;
-    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px var(--color-primary-glow);
 }
 
 .payment-modal-actions {
     display: flex;
-    gap: 0.75rem;
+    gap: var(--spacing-3);
 }
 
 .payment-modal-btn-confirm {

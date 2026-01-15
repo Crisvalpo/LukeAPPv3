@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCompaniesWithSubscription, registerManualPayment, updateCompanySubscription, type CompanyWithSubscription } from '@/services/subscriptions'
 import { deleteCompanyCascade } from '@/services/companies'
-import { Building2, CheckCircle, AlertTriangle, Ban, CreditCard, Trash2, Clock } from 'lucide-react'
+import { Icons } from '@/components/ui/Icons'
+import { Heading, Text } from '@/components/ui/Typography'
 import '@/styles/dashboard.css'
 import '@/styles/staff-payments.css'
+import '@/styles/tables.css'
 
 export default function StaffPaymentsPage() {
     const router = useRouter()
@@ -128,11 +130,11 @@ export default function StaffPaymentsPage() {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'active':
-                return <span className="status-badge status-badge-active"><CheckCircle size={16} /> Activo</span>
+                return <span className="status-badge status-badge-active"><Icons.Success size={16} /> Activo</span>
             case 'past_due':
-                return <span className="status-badge status-badge-past-due"><AlertTriangle size={16} /> Vencido</span>
+                return <span className="status-badge status-badge-past-due"><Icons.Warning size={16} /> Vencido</span>
             case 'suspended':
-                return <span className="status-badge status-badge-suspended"><Ban size={16} /> Suspendido</span>
+                return <span className="status-badge status-badge-suspended"><Icons.Failed size={16} /> Suspendido</span>
             default:
                 return status
         }
@@ -141,7 +143,7 @@ export default function StaffPaymentsPage() {
     if (isLoading) {
         return (
             <div className="dashboard-page">
-                <p style={{ color: 'white', textAlign: 'center' }}>Cargando...</p>
+                <Text size="base" style={{ textAlign: 'center' }}>Cargando...</Text>
             </div>
         )
     }
@@ -152,103 +154,104 @@ export default function StaffPaymentsPage() {
             <div className="dashboard-header">
                 <div className="dashboard-header-content">
                     <div className="dashboard-accent-line" />
-                    <h1 className="dashboard-title">Gestión de Pagos</h1>
+                    <Heading level={1} className="dashboard-title">Gestión de Pagos</Heading>
                 </div>
-                <p className="dashboard-subtitle">Administra suscripciones y pagos manuales de empresas</p>
+                <Text size="base" className="dashboard-subtitle">Administra suscripciones y pagos manuales de empresas</Text>
             </div>
 
             {/* Companies Table */}
-            <div className="card payments-table-container">
-                <table className="payments-table">
-                    <thead>
-                        <tr>
-                            <th>Empresa</th>
-                            <th>Plan</th>
-                            <th>Estado</th>
-                            <th>Vencimiento</th>
-                            <th style={{ textAlign: 'center' }}>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {companies.map((company) => {
-                            const isSuspended = company.subscription_status === 'suspended'
-                            const daysSuspended = getDaysSuspended(company.suspended_at)
-                            const canDelete = isSuspended && daysSuspended >= 15
-                            const daysRemaining = 15 - daysSuspended
+            <div className="card">
+                <div className="data-table-wrapper">
+                    <table className="data-table">
+                        <thead>
+                            <tr>
+                                <th>Empresa</th>
+                                <th>Plan</th>
+                                <th>Estado</th>
+                                <th>Vencimiento</th>
+                                <th className="th-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {companies.map((company) => {
+                                const isSuspended = company.subscription_status === 'suspended'
+                                const daysSuspended = getDaysSuspended(company.suspended_at)
+                                const canDelete = isSuspended && daysSuspended >= 15
+                                const daysRemaining = 15 - daysSuspended
 
-                            return (
-                                <tr key={company.id}>
-                                    <td className="company-cell">
-                                        <div className="company-cell-content">
-                                            <Building2 size={18} color="#60a5fa" />
-                                            {company.name}
-                                        </div>
-                                    </td>
-                                    <td className="plan-cell">
-                                        {company.subscription_tier}
-                                    </td>
-                                    <td>{getStatusBadge(company.subscription_status)}</td>
-                                    <td className="date-cell">
-                                        {company.subscription_end_date
-                                            ? new Date(company.subscription_end_date).toLocaleDateString('es-ES')
-                                            : 'Sin límite'}
-                                    </td>
-                                    <td>
-                                        <div className="actions-cell">
-                                            {/* Delete Option (Visual indicator only until enabled) */}
-                                            {isSuspended && (
-                                                canDelete ? (
+                                return (
+                                    <tr key={company.id}>
+                                        <td className="company-cell">
+                                            <div className="company-cell-content">
+                                                <Icons.Company size={18} className="company-icon" />
+                                                {company.name}
+                                            </div>
+                                        </td>
+                                        <td className="plan-cell">
+                                            {company.subscription_tier}
+                                        </td>
+                                        <td>{getStatusBadge(company.subscription_status)}</td>
+                                        <td className="date-cell">
+                                            {company.subscription_end_date
+                                                ? new Date(company.subscription_end_date).toLocaleDateString('es-ES')
+                                                : 'Sin límite'}
+                                        </td>
+                                        <td>
+                                            <div className="actions-cell">
+                                                {/* Delete Option (Visual indicator only until enabled) */}
+                                                {isSuspended && (
+                                                    canDelete ? (
+                                                        <button
+                                                            onClick={() => handleDeleteCompany(company.id)}
+                                                            className="btn btn-sm btn-icon btn-danger-outline"
+                                                            title="Eliminar Definitivamente"
+                                                            disabled={isProcessing}
+                                                        >
+                                                            <Icons.Delete size={16} />
+                                                        </button>
+                                                    ) : (
+                                                        <div className="countdown-badge" title={`Desbloqueo en ${daysRemaining} días`}>
+                                                            <Icons.Clock size={14} /> {daysRemaining}d
+                                                        </div>
+                                                    )
+                                                )}
+
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedCompany(company)
+                                                        setSelectedTier(company.subscription_tier)
+                                                    }}
+                                                    className="btn btn-sm btn-primary"
+                                                    disabled={isProcessing}
+                                                >
+                                                    <Icons.Document size={14} /> Registrar Pago
+                                                </button>
+
+                                                {isSuspended ? (
                                                     <button
-                                                        onClick={() => handleDeleteCompany(company.id)}
-                                                        className="btn btn-sm btn-icon"
-                                                        style={{ color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)' }}
-                                                        title="Eliminar Definitivamente"
+                                                        onClick={() => handleActivateCompany(company.id)}
+                                                        className="btn btn-sm btn-success"
                                                         disabled={isProcessing}
                                                     >
-                                                        <Trash2 size={16} />
+                                                        Reactivar
                                                     </button>
                                                 ) : (
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#94a3b8', fontSize: '0.75rem', padding: '0 0.5rem' }} title={`Desbloqueo en ${daysRemaining} días`}>
-                                                        <Clock size={14} /> {daysRemaining}d
-                                                    </div>
-                                                )
-                                            )}
-
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedCompany(company)
-                                                    setSelectedTier(company.subscription_tier)
-                                                }}
-                                                className="btn btn-sm btn-primary"
-                                                disabled={isProcessing}
-                                            >
-                                                <CreditCard size={14} /> Registrar Pago
-                                            </button>
-
-                                            {isSuspended ? (
-                                                <button
-                                                    onClick={() => handleActivateCompany(company.id)}
-                                                    className="btn btn-sm btn-success"
-                                                    disabled={isProcessing}
-                                                >
-                                                    Reactivar
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    onClick={() => handleSuspendCompany(company.id)}
-                                                    className="btn btn-sm btn-danger"
-                                                    disabled={isProcessing}
-                                                >
-                                                    Suspender
-                                                </button>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            )
-                        })}
-                    </tbody>
-                </table>
+                                                    <button
+                                                        onClick={() => handleSuspendCompany(company.id)}
+                                                        className="btn btn-sm btn-danger"
+                                                        disabled={isProcessing}
+                                                    >
+                                                        Suspender
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )
+                            })}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* Payment Modal */}
@@ -261,10 +264,10 @@ export default function StaffPaymentsPage() {
                         className="card payment-modal-content"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <h2 className="payment-modal-title">Registrar Pago Manual</h2>
-                        <p className="payment-modal-subtitle">
+                        <Heading level={2} className="payment-modal-title">Registrar Pago Manual</Heading>
+                        <Text size="base" className="payment-modal-subtitle">
                             Empresa: <strong>{selectedCompany.name}</strong>
-                        </p>
+                        </Text>
 
                         <label className="payment-modal-label">
                             Extender servicio por:
@@ -280,7 +283,7 @@ export default function StaffPaymentsPage() {
                             <option value={12}>12 meses</option>
                         </select>
 
-                        <label className="payment-modal-label" style={{ marginTop: '1rem' }}>
+                        <label className="payment-modal-label" style={{ marginTop: 'var(--spacing-4)' }}>
                             Plan de Suscripción:
                         </label>
                         <select

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ColorSwatch } from './ColorSwatch'
+import '@/styles/tables.css'
 import styles from './styleguide.module.css'
 
 export const metadata = {
@@ -406,6 +407,77 @@ export default function StyleGuidePage() {
                     }}>
                         Info
                     </Badge>
+                </div>
+            </section>
+
+            {/* Tables Section */}
+            <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>📊 Tablas</h2>
+                <p className={styles.sectionDesc}>
+                    Estilos unificados para tablas de datos. Usar <code>.data-table</code> para tabla base.
+                </p>
+
+                <div className={styles.preview}>
+                    <div className="data-table-wrapper">
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>EMPRESA</th>
+                                    <th>PROYECTOS</th>
+                                    <th>MIEMBROS</th>
+                                    <th>CREADA</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style={{ color: 'var(--color-text-main)', fontWeight: 500 }}>Promet</td>
+                                    <td>5</td>
+                                    <td>12</td>
+                                    <td style={{ color: 'var(--color-text-muted)' }}>11/1/2026</td>
+                                </tr>
+                                <tr>
+                                    <td style={{ color: 'var(--color-text-main)', fontWeight: 500 }}>Salfa</td>
+                                    <td>3</td>
+                                    <td>8</td>
+                                    <td style={{ color: 'var(--color-text-muted)' }}>11/1/2026</td>
+                                </tr>
+                                <tr>
+                                    <td style={{ color: 'var(--color-text-main)', fontWeight: 500 }}>Eimisa</td>
+                                    <td>7</td>
+                                    <td>15</td>
+                                    <td style={{ color: 'var(--color-text-muted)' }}>11/1/2026</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div className={styles.codeBlock}>
+                    <code>{`<div className="data-table-wrapper">
+  <table className="data-table">
+    <thead>
+      <tr>
+        <th>EMPRESA</th>
+        <th>PROYECTOS</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Promet</td>
+        <td>5</td>
+      </tr>
+    </tbody>
+  </table>
+</div>`}</code>
+                </div>
+
+                <div className={styles.usageNote}>
+                    <strong>Variantes:</strong>
+                    <ul style={{ margin: '0.5rem 0', paddingLeft: '1.5rem', color: 'var(--color-text-muted)' }}>
+                        <li><code>.data-table--compact</code> - Menor padding</li>
+                        <li><code>.data-table--spacious</code> - Mayor padding</li>
+                    </ul>
+                    <strong>Importar estilos:</strong> <code>import '@/styles/tables.css'</code>
                 </div>
             </section>
 

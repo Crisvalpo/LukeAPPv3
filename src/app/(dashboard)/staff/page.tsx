@@ -10,6 +10,8 @@ import DashboardWidget from '@/components/dashboard/DashboardWidget'
 import '@/styles/dashboard.css'
 import '@/styles/companies.css'
 import '@/styles/invitations.css'
+import '@/styles/staff-dashboard.css'
+import '@/styles/tables.css'
 
 export default function StaffDashboard() {
     const router = useRouter()
@@ -46,7 +48,7 @@ export default function StaffDashboard() {
     if (isLoading) {
         return (
             <div className="dashboard-page">
-                <p style={{ color: 'white', textAlign: 'center' }}>Cargando...</p>
+                <p className="loading-text">Cargando...</p>
             </div>
         )
     }
@@ -63,7 +65,7 @@ export default function StaffDashboard() {
             </div>
 
             {/* Stats Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+            <div className="stats-grid">
                 <StatCard
                     title="Empresas"
                     value={stats.totalCompanies}
@@ -108,8 +110,8 @@ export default function StaffDashboard() {
                 isEmpty={recentCompanies.length === 0}
                 emptyMessage="No hay empresas registradas"
             >
-                <div className="companies-table-wrapper">
-                    <table className="companies-table">
+                <div className="data-table-wrapper">
+                    <table className="data-table">
                         <thead>
                             <tr>
                                 <th>Empresa</th>
@@ -123,7 +125,7 @@ export default function StaffDashboard() {
                                 <tr
                                     key={company.id}
                                     onClick={() => router.push(`/staff/companies/${company.id}`)}
-                                    style={{ cursor: 'pointer' }}
+                                    className="clickable-row"
                                 >
                                     <td>
                                         <div className="company-name">{company.name}</div>
@@ -148,8 +150,8 @@ export default function StaffDashboard() {
                     title="Invitaciones Pendientes"
                     onAction={() => router.push('/staff/invitations')}
                 >
-                    <div className="invitations-table-wrapper">
-                        <table className="invitations-table">
+                    <div className="data-table-wrapper">
+                        <table className="data-table">
                             <thead>
                                 <tr>
                                     <th>Email</th>

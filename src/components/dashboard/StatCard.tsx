@@ -2,6 +2,7 @@
 
 import { LucideIcon } from 'lucide-react'
 import '@/styles/dashboard.css'
+import '@/styles/staff-dashboard.css'
 
 interface StatCardProps {
     title: string
@@ -35,26 +36,16 @@ export default function StatCard({
     const theme = colorMap[color] || colorMap['blue']
 
     return (
-        <div className="company-form-container" style={{ padding: '1.5rem', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                <div style={{
-                    width: '3rem',
-                    height: '3rem',
-                    background: theme.iconBg,
-                    border: `1px solid ${theme.border}`,
-                    borderRadius: '0.75rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
-                }}>
+        <div className="company-form-container stat-card">
+            <div className="stat-card__header">
+                <div className={`stat-card__icon stat-card__icon--${color}`}>
                     <Icon size={24} color={theme.text} />
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div className="stat-card__content">
+                    <div className="stat-card__title">
                         {title}
                     </div>
-                    <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white', lineHeight: 1 }}>
+                    <div className="stat-card__value">
                         {value}
                     </div>
                 </div>
@@ -64,18 +55,7 @@ export default function StatCard({
                 <button
                     onClick={!disabled ? onClick : undefined}
                     disabled={disabled}
-                    style={{
-                        width: '100%',
-                        padding: '0.5rem',
-                        background: disabled ? `${theme.bg.replace('0.1', '0.05')}` : theme.bg,
-                        border: `1px solid ${disabled ? theme.border.replace('0.3', '0.1') : theme.border}`,
-                        borderRadius: '0.5rem',
-                        color: disabled ? '#64748b' : theme.text,
-                        fontSize: '0.875rem',
-                        cursor: disabled ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.2s',
-                        textAlign: 'center'
-                    }}
+                    className={`stat-card__button stat-card__button--${color}`}
                 >
                     {disabled ? 'Próximamente' : buttonText}
                 </button>
