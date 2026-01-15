@@ -62,25 +62,9 @@ export default function CompaniesPage() {
                 <Text size="base" className="dashboard-subtitle">Administra las empresas que utilizan la plataforma</Text>
             </div>
 
-            {/* Actions Bar */}
-            <div className="actions-bar">
-                {!showCreateForm ? (
-                    <button
-                        onClick={() => setShowCreateForm(true)}
-                        className="action-button btn btn-primary"
-                    >
-                        <Icons.Company size={20} />
-                        Nueva Empresa
-                    </button>
-                ) : (
-                    <button
-                        onClick={() => setShowCreateForm(false)}
-                        className="action-button btn btn-secondary"
-                    >
-                        Cancelar
-                    </button>
-                )}
-            </div>
+            {/* Actions Bar removed - integrated into ListView */}
+
+            {/* Form Section */}
 
             {/* Form Section */}
             {showCreateForm && (
@@ -89,6 +73,7 @@ export default function CompaniesPage() {
                         schema={CompanySchema}
                         title="Nueva Empresa"
                         description="Registra una nueva empresa en el sistema"
+                        onCancel={() => setShowCreateForm(false)}
                         onSubmit={async (data: Partial<Company>) => {
                             setSubmitting(true)
                             setError('')
@@ -138,6 +123,7 @@ export default function CompaniesPage() {
                     schema={CompanySchema}
                     data={companies}
                     isLoading={loading}
+                    onCreate={!showCreateForm ? () => setShowCreateForm(true) : undefined}
                     onAction={(action: string, item: Company) => {
                         if (action === 'view') router.push(`/staff/companies/${item.id}`)
                     }}

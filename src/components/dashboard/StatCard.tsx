@@ -38,9 +38,6 @@ export default function StatCard({
     return (
         <div className="company-form-container stat-card">
             <div className="stat-card__header">
-                <div className={`stat-card__icon stat-card__icon--${color}`}>
-                    <Icon size={24} color={theme.text} />
-                </div>
                 <div className="stat-card__content">
                     <div className="stat-card__title">
                         {title}
@@ -48,6 +45,9 @@ export default function StatCard({
                     <div className="stat-card__value">
                         {value}
                     </div>
+                </div>
+                <div className={`stat-card__icon stat-card__icon--${color}`}>
+                    <Icon size={24} color={theme.text} />
                 </div>
             </div>
 

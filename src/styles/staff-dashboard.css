@@ -25,7 +25,8 @@
 
 .stat-card__header {
     display: flex;
-    align-items: center;
+    justify-content: space-between;
+    align-items: flex-start;
     gap: var(--spacing-4);
     margin-bottom: var(--spacing-4);
 }
@@ -64,6 +65,9 @@
 .stat-card__content {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .stat-card__title {
