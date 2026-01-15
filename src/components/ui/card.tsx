@@ -1,10 +1,15 @@
 import * as React from 'react'
 import './card.css'
 
-export const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-    ({ className = '', ...props }, ref) => (
-        <div ref={ref} className={`card ${className}`} {...props} />
-    )
+export const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement> & {
+    variant?: 'default' | 'glass' | '3d'
+}>(
+    ({ className = '', variant = 'default', ...props }, ref) => {
+        const variantClass = variant !== 'default' ? `card--${variant}` : ''
+        return (
+            <div ref={ref} className={`card ${variantClass} ${className}`} {...props} />
+        )
+    }
 )
 Card.displayName = 'Card'
 

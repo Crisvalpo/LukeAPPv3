@@ -1,0 +1,40 @@
+.inputfield {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    width: 100%;
+}
+
+.inputfield__label {
+    display: block;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-dim);
+    margin-bottom: var(--spacing-1);
+    margin-left: var(--spacing-1);
+}
+
+.inputfield__input--error {
+    border-color: var(--color-error) !important;
+}
+
+.inputfield__input--error:focus {
+    border-color: var(--color-error) !important;
+    box-shadow: 0 0 0 4px hsla(0, 80%, 60%, 0.1) !important;
+}
+
+.inputfield__error {
+    color: var(--color-error);
+    font-size: var(--font-size-xs);
+    display: block;
+    margin-top: 0;
+}
+
+.inputfield__helper {
+    color: var(--color-text-dim);
+    font-size: var(--font-size-xs);
+    display: block;
+    margin-top: 0;
+}

@@ -38,3 +38,22 @@
     padding: var(--spacing-6);
     padding-top: 0;
 }
+
+/* Card Variants */
+.card--glass {
+    background: var(--glass-surface);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+}
+
+.card--3d {
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card--3d:hover {
+    transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}

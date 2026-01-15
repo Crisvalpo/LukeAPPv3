@@ -15,6 +15,7 @@ import {
     CreditCard,
     Mail,
     Tag,
+    Palette,
 } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
@@ -61,6 +62,7 @@ export default function Sidebar({ role, companyName, planTier, userEmail, functi
         { name: 'Empresas', href: '/staff/companies', icon: Building2 },
         { name: 'Planes', href: '/staff/plans', icon: Tag },
         { name: 'Pagos', href: '/staff/payments', icon: CreditCard },
+        { name: 'Style Guide', href: '/staff/styleguide', icon: Palette },
     ]
 
     // Founder Menu (Company-Level)

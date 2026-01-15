@@ -1,0 +1,79 @@
+/* Typography Component Styles */
+
+.heading {
+    font-family: var(--font-family-base);
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.text {
+    font-family: var(--font-family-base);
+    font-weight: 400;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Size Variants */
+.heading--4xl,
+.text--4xl {
+    font-size: var(--font-size-4xl);
+}
+
+.heading--3xl,
+.text--3xl {
+    font-size: var(--font-size-3xl);
+}
+
+.heading--2xl,
+.text--2xl {
+    font-size: var(--font-size-2xl);
+}
+
+.heading--xl,
+.text--xl {
+    font-size: var(--font-size-xl);
+}
+
+.heading--lg,
+.text--lg {
+    font-size: var(--font-size-lg);
+}
+
+.heading--base,
+.text--base {
+    font-size: var(--font-size-base);
+}
+
+.heading--sm,
+.text--sm {
+    font-size: var(--font-size-sm);
+}
+
+.heading--xs,
+.text--xs {
+    font-size: var(--font-size-xs);
+}
+
+/* Color Variants */
+.heading--main,
+.text--main {
+    color: var(--color-text-main);
+}
+
+.heading--muted,
+.text--muted {
+    color: var(--color-text-muted);
+}
+
+.heading--dim,
+.text--dim {
+    color: var(--color-text-dim);
+}
+
+/* Heading Specific Styles */
+.heading--2xl,
+.heading--3xl,
+.heading--4xl {
+    letter-spacing: -0.02em;
+}

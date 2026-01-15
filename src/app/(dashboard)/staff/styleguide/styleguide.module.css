@@ -1,0 +1,326 @@
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--spacing-8) var(--spacing-6);
+}
+
+.header {
+    text-align: center;
+    margin-bottom: var(--spacing-12);
+    padding: var(--spacing-8) 0;
+}
+
+.title {
+    font-size: var(--font-size-4xl);
+    font-weight: 700;
+    margin-bottom: var(--spacing-3);
+}
+
+.subtitle {
+    font-size: var(--font-size-lg);
+    color: var(--color-text-muted);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Section Styles */
+.section {
+    margin-bottom: var(--spacing-12);
+    padding: var(--spacing-6);
+    background: var(--color-bg-surface-1);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--glass-border);
+}
+
+.sectionTitle {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    margin-bottom: var(--spacing-2);
+    color: var(--color-text-main);
+}
+
+.sectionDesc {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-6);
+}
+
+.sectionDesc code {
+    background: var(--color-bg-surface-2);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    color: var(--color-primary);
+}
+
+.subsection {
+    margin-top: var(--spacing-6);
+}
+
+.subsectionTitle {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin-bottom: var(--spacing-4);
+    color: var(--color-text-main);
+}
+
+/* Quick Reference Grid */
+.quickRefGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-4);
+    margin-top: var(--spacing-4);
+}
+
+.quickRefCategory {
+    background: var(--color-bg-surface-2);
+    padding: var(--spacing-4);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--glass-border);
+}
+
+.quickRefTitle {
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.quickRefList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+}
+
+.quickRefList li {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    line-height: 1.6;
+}
+
+.quickRefList code {
+    background: var(--color-bg-surface-1);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-main);
+    font-family: var(--font-family-mono);
+}
+
+/* Color Swatches */
+.colorGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--spacing-4);
+}
+
+.colorSwatch {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-3);
+    background: var(--color-bg-surface-2);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--glass-border);
+}
+
+.colorBox {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--glass-border);
+    flex-shrink: 0;
+}
+
+.colorInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.colorName {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--color-primary);
+    font-family: var(--font-family-mono);
+}
+
+.colorValue {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-dim);
+    font-family: var(--font-family-mono);
+}
+
+/* Copy Button in Color Swatch */
+.copyButton {
+    position: absolute;
+    top: 50%;
+    right: var(--spacing-2);
+    transform: translateY(-50%);
+    background: var(--color-bg-surface-2);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-1);
+    cursor: pointer;
+    color: var(--color-text-muted);
+    transition: all var(--transition-fast);
+    opacity: 0;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+}
+
+.colorSwatch:hover .copyButton {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.copyButton:hover {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
+.copyButton:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+/* Typography Showcase */
+.typographyShowcase {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+}
+
+.typeRow {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-6);
+    padding: var(--spacing-3);
+    background: var(--color-bg-surface-2);
+    border-radius: var(--radius-md);
+}
+
+.typeLabel {
+    min-width: 180px;
+    font-size: var(--font-size-sm);
+    color: var(--color-primary);
+    font-family: var(--font-family-mono);
+    flex-shrink: 0;
+}
+
+/* Button Showcase */
+.buttonRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-3);
+    align-items: center;
+}
+
+/* Card Showcase */
+.cardGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--spacing-6);
+    margin-top: var(--spacing-4);
+}
+
+/* Input Showcase */
+.inputShowcase {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--spacing-6);
+}
+
+.inputExample {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+}
+
+/* Badge Showcase */
+.badgeRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-3);
+    align-items: center;
+    margin-top: var(--spacing-4);
+}
+
+/* Spacing Showcase */
+.spacingShowcase {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+}
+
+.spacingRow {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-6);
+    padding: var(--spacing-3);
+    background: var(--color-bg-surface-2);
+    border-radius: var(--radius-md);
+}
+
+.spacingLabel {
+    min-width: 140px;
+    font-size: var(--font-size-sm);
+    color: var(--color-primary);
+    font-family: var(--font-family-mono);
+}
+
+.spacingBox {
+    background: var(--color-primary);
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+}
+
+.spacingValue {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    font-family: var(--font-family-mono);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: var(--spacing-6) var(--spacing-4);
+    }
+
+    .colorGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .cardGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .inputShowcase {
+        grid-template-columns: 1fr;
+    }
+
+    .typeRow {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-2);
+    }
+
+    .typeLabel {
+        min-width: auto;
+    }
+
+    .quickRefGrid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -210,18 +210,131 @@ Ubicación: `src/styles/design-system.css`
 - `--shadow-1`, `--shadow-2`, `--shadow-3`
 - `--shadow-glow`: 0 0 20px var(--color-primary-glow)
 
+### 🎨 STYLE GUIDE LABORATORY
+
+**Ubicación**: `/staff/styleguide`
+
+El Laboratorio de Estilos es la **fuente de verdad visual** del sistema de diseño. Antes de usar cualquier componente o agregar nuevos estilos, **consultar el Style Guide**.
+
+#### Secciones Disponibles
+
+1. **Colores y Variables** - Color swatches con códigos HSL
+2. **Tipografía** - Escala completa de tamaños
+3. **Botones** - 24 combinaciones (6 variants × 4 sizes)
+4. **Cards** - Variantes (default, glass, 3d)
+5. **Inputs** - Estados (normal, focus, error, disabled)
+6. **Badges** - Colores semánticos
+7. **Espaciado** - Variables spacing visualizadas
+8. **Reglas de Uso** - Guidelines "Prohibido" y "Requerido"
+
+#### 📦 Nuevos Componentes UI (Enero 2026)
+
+**1. Icons Centralizados** (`src/components/ui/Icons.ts`)
+
+```tsx
+import { Icons } from '@/components/ui/Icons'
+
+// Usar nombres semánticos en lugar de importar directamente
+<Icons.Edit size={18} />
+<Icons.Delete size={20} />
+<Icons.Success size={24} />
+<Icons.Warning size={18} />
+```
+
+**Iconos disponibles** (80+ mappings):
+- **Actions**: View, Edit, Delete, Add, Back, Save, Check, Search, etc.
+- **Navigation**: ChevronLeft, ChevronRight, Menu, etc.
+- **Status**: Success, Warning, Error, Info, Pending, etc.
+- **Business**: Company, Project, Document, Tool, Fabrication, etc.
+
+**2. Typography Components** (`src/components/ui/Typography.tsx`)
+
+```tsx
+import { Heading, Text } from '@/components/ui/Typography'
+
+// Heading con auto-sizing basado en level
+<Heading level={2} variant="main">Dashboard</Heading>
+<Heading level={3} size="xl" variant="muted">Sección</Heading>
+
+// Text con size y variant
+<Text size="sm" variant="muted">Último update</Text>
+<Text size="base" variant="main" as="span">Contenido</Text>
+```
+
+**Props**:
+- `level`: 1-6 (solo Heading)
+- `size`: xs, sm, base, lg, xl, 2xl, 3xl, 4xl
+- `variant`: main, muted, dim
+- `as`: h1-h6 para Heading | p, span, div, label para Text
+
+**3. Card con Variantes** (`src/components/ui/card.tsx`)
+
+```tsx
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+
+// Card default
+<Card>...</Card>
+
+// Card con glassmorphism
+<Card variant="glass">...</Card>
+
+// Card con efecto 3D
+<Card variant="3d">...</Card>
+```
+
+**4. InputField con Label/Error** (`src/components/ui/InputField.tsx`)
+
+```tsx
+import { InputField } from '@/components/ui/InputField'
+
+<InputField 
+  label="Email"
+  error="Campo requerido"
+  helperText="Formato: user@domain.com"
+  type="email"
+  placeholder="Ingrese email"
+/>
+```
+
 ### Componentes UI Disponibles
 
 Todos implementados en Vanilla CSS (`src/components/ui/`):
 
 1. **Badge** - Etiquetas de estado
 2. **Button** - Botones (variants: default, destructive, outline, secondary, ghost, link)
-3. **Card** - Contenedores con Header, Content, Footer
+3. **Card** - Contenedores con Header, Content, Footer (variants: default, glass, 3d)
 4. **Input** - Campos de texto
-5. **Tabs** - Navegación por pestañas
-6. **Dialog** - Modales
-7. **Select** - Menús desplegables
-8. **Alert** - Avisos y alertas
+5. **InputField** - Input con label, error y helper text integrados
+6. **Typography** - Heading y Text con enforcement de design system
+7. **Icons** - Mapeo centralizado de lucide-react (80+ iconos)
+8. **Tabs** - Navegación por pestañas
+9. **Dialog** - Modales
+10. **Select** - Menús desplegables
+11. **Alert** - Avisos y alertas
+
+### Reglas de Uso del Design System
+
+**🚫 PROHIBIDO:**
+- Usar colores hexadecimales directos (ej. `#FFFFFF`, `#3b82f6`)
+- Usar píxeles fijos para colores o espaciado en componentes
+- Usar `style={{...}}` para propiedades visuales (color, padding, margin, etc.)
+- Importar iconos directamente de lucide-react (usar `Icons` mapping)
+- Hardcodear tamaños de fuente (usar `Typography` components o variables)
+
+**✅ REQUERIDO:**
+- Usar variables CSS: `var(--color-primary)`, `var(--spacing-4)`, etc.
+- Usar componentes UI en lugar de HTML crudo
+- Agregar nuevos componentes al Style Guide (`/staff/styleguide`) antes de usar en producción
+- Referenciar clases del design system (`.glass-panel`, `.text-gradient`, `.card-3d`)
+- Usar `Icons.NombreSemántico` en lugar de importar componentes individuales
+
+### ⚠️ Protección de Componentes Especiales
+
+**3D Viewer (`IsometricViewer.tsx`):**
+- Usa colores inline con hex codes para Three.js materials
+- Lógica dinámica de colores basada en `spoolColors` y `spoolStatuses` props
+- **NO aplicar** Typography, Card variants, o clases de design system al viewer
+- El viewer está aislado intencionalmente del design system
 
 ### Convenciones de Estilo
 

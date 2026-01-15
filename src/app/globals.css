@@ -34,93 +34,9 @@ button {
   font-family: inherit;
 }
 
-/* Utilities for Glassmorphism */
-.glass-panel {
-  background: var(--glass-surface);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  border-radius: var(--radius-lg);
-}
+/* ===== Landing Page Specific Styles ===== */
 
-.text-gradient {
-  background: linear-gradient(135deg, var(--color-primary) 0%, #a5b4fc 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Premium Lobby Animations */
-@keyframes gradient-shift {
-
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
-@keyframes float {
-
-  0%,
-  100% {
-    transform: translateY(0px);
-  }
-
-  50% {
-    transform: translateY(-20px);
-  }
-}
-
-@keyframes stagger-in {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Premium Utility Classes */
-.animate-gradient-shift {
-  animation: gradient-shift 3s ease infinite;
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
+/* Landing Page Animation Classes (context-specific) */
 .feature-card {
   animation: stagger-in 0.6s ease forwards;
   opacity: 0;
@@ -151,29 +67,6 @@ button {
 .hero-actions {
   animation: scale-in 0.6s ease forwards 0.4s;
   opacity: 0;
-}
-
-/* 3D Card Effects */
-.card-3d {
-  transform-style: preserve-3d;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.card-3d:hover {
-  transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(10px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-}
-
-/* Respect reduced motion preference */
-@media (prefers-reduced-motion: reduce) {
-
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
 }
 
 /* ===== Landing Page Components ===== */

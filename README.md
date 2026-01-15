@@ -354,6 +354,45 @@ Para mantener control total sobre nuestro "Industrial Glassmorphism" y animacion
 
 ---
 
+## 🎨 Style Guide Laboratory
+
+**Ubicación**: `/staff/styleguide`
+
+El **Laboratorio de Estilos** es la fuente de verdad visual del sistema de diseño de LukeAPP. Documenta todos los elementos visuales, componentes UI y reglas de uso.
+
+### Nuevos Componentes UI (Enero 2026)
+
+#### Icons Centralizados
+```tsx
+import { Icons } from '@/components/ui/Icons'
+<Icons.Edit size={18} />
+<Icons.Success size={24} />
+```
+Mapeo semántico de 80+ iconos de lucide-react.
+
+#### Typography Components
+```tsx
+import { Heading, Text } from '@/components/ui/Typography'
+<Heading level={2} size="xl" variant="main">Título</Heading>
+<Text size="sm" variant="muted">Descripción</Text>
+```
+Enforza uso de variables del design system.
+
+#### Card con Variantes
+```tsx
+<Card variant="glass">...</Card>
+<Card variant="3d">...</Card>
+```
+
+#### InputField con Label/Error
+```tsx
+<InputField label="Email" error="Campo requerido" helperText="..." />
+```
+
+**Ver `/staff/styleguide` para documentación completa y ejemplos visuales.**
+
+---
+
 ## 🎨 Principios de Diseño
 
 ### 1. Separación Online vs Offline (CRÍTICA)
