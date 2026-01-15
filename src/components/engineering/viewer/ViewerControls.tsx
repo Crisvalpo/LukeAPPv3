@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { useViewerStore, ViewMode } from './ViewerLogic'
+import { InputField } from '@/components/ui/InputField'
 
 export default function ViewerControls() {
     const {
@@ -140,12 +141,12 @@ export default function ViewerControls() {
                             </span>
                         </SectionTitle>
 
-                        <input
-                            type="text"
+                        <InputField
                             placeholder="Buscar Spool..."
-                            className="w-full bg-black/30 border border-white/10 rounded p-2 text-xs text-white mb-2 focus:border-[#667eea] outline-none transition-colors"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+                            variant="glass"
+                            className="mb-2 text-xs"
                         />
 
                         <div className="border border-white/10 rounded-md bg-black/20 flex-1 overflow-y-auto max-h-[400px]">

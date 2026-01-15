@@ -1,13 +1,24 @@
 import React from 'react'
-import { Folder, FileText, BarChart2, Package, Lock, Search, Trash2, Settings, Eye } from 'lucide-react'
+import {
+    Folder, FileText, BarChart2, Package, Lock, Search, Trash2, Settings, Eye,
+    Plus, Edit, Save, Download, Upload, Filter,
+    ChevronRight, ChevronLeft, ChevronDown, Menu, X, ArrowLeft,
+    Check, AlertCircle, AlertTriangle, Info, Clock,
+    User, Box, Layers, Play, Pause, MoreVertical
+} from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { InputField } from '@/components/ui/InputField'
+import { SelectNative } from '@/components/ui/SelectNative'
+import { Textarea } from '@/components/ui/Textarea'
 import { Badge } from '@/components/ui/badge'
 import { ColorSwatch } from './ColorSwatch'
 import { Heading, Text } from '@/components/ui/Typography'
 import '@/styles/tables.css'
 import '@/styles/engineering.css'
+import '@/styles/dashboard.css'
+import '@/components/ui/tabs.css'
 import styles from './styleguide.module.css'
 
 export const metadata = {
@@ -509,6 +520,123 @@ export default function StyleGuidePage() {
                 </div>
             </section>
 
+            {/* Forms Standard Section */}
+            <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Formularios Estándar</h2>
+                <p className={styles.sectionDesc}>
+                    Componentes estandarizados para formularios con soporte de etiquetas, errores y variantes.
+                </p>
+
+                <div className={styles.preview} style={{ background: '#020617', padding: '2rem', borderRadius: '1rem', border: '1px solid #1e293b' }}>
+                    <h3 className={styles.subsectionTitle} style={{ color: 'white' }}>Variant: Glass (New Standard)</h3>
+                    <p className={styles.sectionDesc} style={{ marginBottom: '1.5rem' }}>
+                        Usado en modales oscuros y visores 3D. Fondo <code>#0f172a</code>, Borde <code>#334155</code>.
+                    </p>
+
+                    <div style={{ display: 'grid', gap: '1rem', maxWidth: '400px' }}>
+                        <InputField
+                            label="Nombre del Proyecto"
+                            placeholder="Ej. Expansión Fase 2"
+                            variant="glass"
+                            helperText="Nombre visible en reportes"
+                        />
+
+                        <SelectNative
+                            label="Prioridad"
+                            variant="glass"
+                            options={['Alta', 'Media', 'Baja']}
+                        />
+
+                        <Textarea
+                            label="Descripción"
+                            placeholder="Detalles adicionales..."
+                            variant="glass"
+                            rows={3}
+                        />
+
+                        <InputField
+                            label="Campo con Error"
+                            defaultValue="Dato inválido"
+                            readOnly
+                            variant="glass"
+                            error="El formato no es correcto"
+                        />
+                    </div>
+                </div>
+
+                <div className={styles.preview} style={{ marginTop: '2rem', padding: '0', borderRadius: '12px', border: '1px solid #334155', background: '#0f172a', overflow: 'hidden', maxWidth: '500px' }}>
+
+                    {/* Header Mock */}
+                    <div style={{
+                        padding: '20px 24px',
+                        borderBottom: '1px solid #334155',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        backgroundColor: '#1e293b'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <div style={{ fontSize: '2rem' }}>🔥</div>
+                            <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, lineHeight: 1, color: '#f8fafc' }}>
+                                        W-102
+                                    </h2>
+                                    <span style={{
+                                        fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', padding: '4px 10px',
+                                        borderRadius: '99px', backgroundColor: 'rgba(96, 165, 250, 0.1)', color: '#60a5fa', border: '1px solid #3b82f6'
+                                    }}>
+                                        PENDIENTE
+                                    </span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+                                    <span style={{ color: '#94a3b8', fontSize: '0.9rem', fontFamily: 'monospace' }}>ISO-001</span>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#60a5fa', backgroundColor: '#60a5fa20', padding: '1px 6px', borderRadius: '4px', border: '1px solid #60a5fa40' }}>
+                                        BW
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ padding: '24px' }}>
+                        <h3 className={styles.subsectionTitle} style={{ color: 'white', marginBottom: '1rem' }}>Variant: Modal Header</h3>
+                        <p className={styles.sectionDesc} style={{ marginBottom: '1.5rem' }}>
+                            Ejemplo de integración en modal 3D.
+                        </p>
+                        <div style={{ display: 'grid', gap: '1rem' }}>
+                            <InputField label="Spool" value="SP-01" readOnly variant="glass" />
+                            <SelectNative label="Estado" variant="glass" options={['Pendiente', 'Ejecutada']} />
+                        </div>
+                    </div>
+                </div>
+
+                <div className={styles.preview} style={{ marginTop: '2rem', padding: '2rem', borderRadius: '1rem', border: '1px solid #e2e8f0', background: 'white', color: '#0f172a' }}>
+                    <h3 className={styles.subsectionTitle} style={{ color: '#0f172a' }}>Variant: Default</h3>
+                    <p className={styles.sectionDesc} style={{ marginBottom: '1.5rem', color: '#64748b' }}>
+                        Usado en páginas claras o paneles legacy.
+                    </p>
+
+                    <div style={{ display: 'grid', gap: '1rem', maxWidth: '400px' }}>
+                        {/* Force dark text for visibility in this light preview */}
+                        <div style={{ color: '#0f172a', '--color-text-main': '#0f172a', '--color-text-muted': '#475569' } as React.CSSProperties}>
+                            <InputField
+                                label="Usuario"
+                                placeholder="username"
+                                variant="default"
+                            />
+                        </div>
+                        <div style={{ color: '#0f172a', '--color-text-main': '#0f172a', '--color-text-muted': '#475569' } as React.CSSProperties}>
+                            <SelectNative
+                                label="Rol"
+                                variant="default"
+                                options={['Admin', 'User', 'Guest']}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* Badges Section */}
             <section className={styles.section}>
                 <h2 className={styles.sectionTitle}>Badges</h2>
@@ -738,6 +866,102 @@ export default function StyleGuidePage() {
                 </div>
             </section>
 
+
+            {/* Iconography Section */}
+            <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Iconografía (Lucide React)</h2>
+                <p className={styles.sectionDesc}>
+                    Usamos <strong>lucide-react</strong> como librería estándar. Estos son los iconos sugeridos para mantener consistencia.
+                    <br />
+                    Importar siempre desde <code>lucide-react</code>.
+                </p>
+
+                <div style={{ display: 'grid', gap: '2rem' }}>
+
+                    {/* Actions */}
+                    <div>
+                        <h3 className={styles.subsectionTitle} style={{ fontSize: '1rem', color: '#94a3b8', marginBottom: '1rem' }}>Acciones Comunes</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' }}>
+                            <IconCard icon={<Plus />} name="Plus" />
+                            <IconCard icon={<Trash2 />} name="Trash2" />
+                            <IconCard icon={<Edit />} name="Edit" />
+                            <IconCard icon={<Save />} name="Save" />
+                            <IconCard icon={<Search />} name="Search" />
+                            <IconCard icon={<Filter />} name="Filter" />
+                            <IconCard icon={<Download />} name="Download" />
+                            <IconCard icon={<Upload />} name="Upload" />
+                            <IconCard icon={<Settings />} name="Settings" />
+                            <IconCard icon={<Play />} name="Play" />
+                        </div>
+                    </div>
+
+                    {/* Navigation */}
+                    <div>
+                        <h3 className={styles.subsectionTitle} style={{ fontSize: '1rem', color: '#94a3b8', marginBottom: '1rem' }}>Navegación</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' }}>
+                            <IconCard icon={<ChevronRight />} name="ChevronRight" />
+                            <IconCard icon={<ChevronDown />} name="ChevronDown" />
+                            <IconCard icon={<ArrowLeft />} name="ArrowLeft" />
+                            <IconCard icon={<Menu />} name="Menu" />
+                            <IconCard icon={<X />} name="X" />
+                            <IconCard icon={<MoreVertical />} name="MoreVertical" />
+                        </div>
+                    </div>
+
+                    {/* Status & Feedback */}
+                    <div>
+                        <h3 className={styles.subsectionTitle} style={{ fontSize: '1rem', color: '#94a3b8', marginBottom: '1rem' }}>Estado y Feedback</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' }}>
+                            <IconCard icon={<Check color="#4ade80" />} name="Check" />
+                            <IconCard icon={<AlertTriangle color="#fbbf24" />} name="AlertTriangle" />
+                            <IconCard icon={<AlertCircle color="#f87171" />} name="AlertCircle" />
+                            <IconCard icon={<Info color="#60a5fa" />} name="Info" />
+                            <IconCard icon={<Clock />} name="Clock" />
+                            <IconCard icon={<Lock />} name="Lock" />
+                        </div>
+                    </div>
+
+                    {/* Objects */}
+                    <div>
+                        <h3 className={styles.subsectionTitle} style={{ fontSize: '1rem', color: '#94a3b8', marginBottom: '1rem' }}>Objetos de Negocio</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' }}>
+                            <IconCard icon={<Folder />} name="Folder" />
+                            <IconCard icon={<FileText />} name="FileText" />
+                            <IconCard icon={<User />} name="User" />
+                            <IconCard icon={<Package />} name="Package" />
+                            <IconCard icon={<Box />} name="Box" />
+                            <IconCard icon={<Layers />} name="Layers" />
+                            <IconCard icon={<BarChart2 />} name="BarChart2" />
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            {/* Focus Mode (Modals) Section */}
+            <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Focus Mode (Modals)</h2>
+                <p className={styles.sectionDesc}>
+                    Para acciones críticas que requieren total atención del usuario (pagos, confirmaciones destructivas, formularios complejos).
+                </p>
+
+                <div
+                    className="modal-overlay"
+                    style={{ position: 'relative', height: '300px', borderRadius: '1rem', zIndex: 1 }}
+                >
+                    <div className="modal-content" style={{ animation: 'none', maxWidth: '350px' }}>
+                        <div className="modal-title">Acción Crítica</div>
+                        <p className="modal-text">
+                            El fondo oscurecido (<code>bg-black/85</code>) y el desenfoque (<code>blur-sm</code>) eliminan distracciones externas.
+                        </p>
+                        <div className="modal-actions">
+                            <Button variant="default" className="full-width">Confirmar Acción</Button>
+                            <Button variant="secondary" className="full-width">Cancelar</Button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* Usage Guidelines */}
             <section className={styles.section}>
                 <h2 className={styles.sectionTitle}>Reglas de Uso</h2>
@@ -770,29 +994,24 @@ export default function StyleGuidePage() {
                     </CardContent>
                 </Card>
             </section>
-            {/* Focus Mode (Modals) Section */}
-            <section className={styles.section}>
-                <h2 className={styles.sectionTitle}>Focus Mode (Modals)</h2>
-                <p className={styles.sectionDesc}>
-                    Para acciones críticas que requieren total atención del usuario (pagos, confirmaciones destructivas, formularios complejos).
-                </p>
+        </div>
+    )
+}
 
-                <div
-                    className="modal-overlay"
-                    style={{ position: 'relative', height: '300px', borderRadius: '1rem', zIndex: 1 }}
-                >
-                    <div className="modal-content" style={{ animation: 'none', maxWidth: '350px' }}>
-                        <div className="modal-title">Acción Crítica</div>
-                        <p className="modal-text">
-                            El fondo oscurecido (<code>bg-black/85</code>) y el desenfoque (<code>blur-sm</code>) eliminan distracciones externas.
-                        </p>
-                        <div className="modal-actions">
-                            <Button variant="default" className="full-width">Confirmar Acción</Button>
-                            <Button variant="secondary" className="full-width">Cancelar</Button>
-                        </div>
-                    </div>
-                </div>
-            </section>
+function IconCard({ icon, name }: { icon: React.ReactNode, name: string }) {
+    return (
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '1rem',
+            background: '#1e293b',
+            borderRadius: '0.5rem',
+            border: '1px solid #334155'
+        }}>
+            <div style={{ color: '#e2e8f0' }}>{icon}</div>
+            <code style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{name}</code>
         </div>
     )
 }

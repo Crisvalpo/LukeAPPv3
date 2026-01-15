@@ -30,3 +30,4 @@
 {"level":"info","event":0,"ip":"198.41.192.77","connIndex":0,"time":"2026-01-15T12:30:33Z","message":"Retrying connection in up to 4s"}
 {"level":"info","event":0,"ip":"198.41.200.233","connIndex":0,"time":"2026-01-15T12:30:36Z","message":"Tunnel connection curve preferences: [X25519MLKEM768 CurveP256]"}
 {"level":"info","event":0,"connection":"f12a854b-7e79-45ad-8340-94391b703b03","connIndex":0,"location":"scl03","ip":"198.41.200.233","protocol":"quic","time":"2026-01-15T12:30:37Z","message":"Registered tunnel connection"}
+{"level":"error","error":"lookup region1.v2.argotunnel.com: i/o timeout","time":"2026-01-15T14:17:10Z","message":"Failed to refresh DNS local resolver"}

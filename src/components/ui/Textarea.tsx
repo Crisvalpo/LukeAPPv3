@@ -1,15 +1,14 @@
 import * as React from 'react'
-import { Input } from './input'
 import './inputfield.css'
 
-export interface InputFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
     label?: string
     error?: string
     helperText?: string
     variant?: 'default' | 'glass'
 }
 
-export const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
+export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     ({ label, error, helperText, className = '', variant = 'default', ...props }, ref) => {
         return (
             <div className="inputfield">
@@ -18,9 +17,10 @@ export const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
                         {label}
                     </label>
                 )}
-                <input
+                <textarea
                     ref={ref}
                     className={`input input--${variant} ${error ? 'input--error' : ''} ${className}`}
+                    style={{ minHeight: '80px', fontFamily: 'inherit', ...props.style }}
                     {...props}
                 />
                 {error && (
@@ -33,4 +33,4 @@ export const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
         )
     }
 )
-InputField.displayName = 'InputField'
+Textarea.displayName = 'Textarea'

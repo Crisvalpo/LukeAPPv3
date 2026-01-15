@@ -1,3 +1,4 @@
+/* Input Field Container */
 .inputfield {
     display: flex;
     flex-direction: column;
@@ -6,35 +7,86 @@
 }
 
 .inputfield__label {
-    display: block;
     font-size: var(--font-size-xs);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-text-dim);
-    margin-bottom: var(--spacing-1);
-    margin-left: var(--spacing-1);
-}
-
-.inputfield__input--error {
-    border-color: var(--color-error) !important;
-}
-
-.inputfield__input--error:focus {
-    border-color: var(--color-error) !important;
-    box-shadow: 0 0 0 4px hsla(0, 80%, 60%, 0.1) !important;
+    font-weight: 500;
+    color: var(--color-text-muted);
 }
 
 .inputfield__error {
-    color: var(--color-error);
     font-size: var(--font-size-xs);
-    display: block;
-    margin-top: 0;
+    color: var(--color-danger);
+    margin-top: var(--spacing-1);
 }
 
 .inputfield__helper {
-    color: var(--color-text-dim);
     font-size: var(--font-size-xs);
-    display: block;
-    margin-top: 0;
+    color: var(--color-text-muted);
+    opacity: 0.8;
+    margin-top: var(--spacing-1);
+}
+
+/* Base Input Styles */
+.input {
+    width: 100%;
+    padding: var(--spacing-3) var(--spacing-4);
+    font-size: var(--font-size-sm);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+    outline: none;
+}
+
+/* Default Variant (Dashboard) */
+.input--default {
+    background-color: var(--color-bg-surface);
+    border: 1px solid var(--glass-border);
+    color: var(--color-text-main);
+}
+
+.input--default:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.input--default:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: var(--color-bg-main);
+}
+
+/* Glass Variant (3D Viewer / Modals) */
+.input--glass {
+    background-color: #0f172a;
+    /* Slate 950 */
+    border: 1px solid #334155;
+    /* Slate 700 */
+    color: white;
+    border-radius: 6px;
+    padding: 10px;
+}
+
+.input--glass:focus {
+    border-color: #60a5fa;
+    /* Blue 400 */
+    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.2);
+}
+
+.input--glass:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #0f172a;
+    border-color: #1e293b;
+}
+
+/* Error State */
+.input--error {
+    border-color: var(--color-danger);
+}
+
+.input--glass.input--error {
+    border-color: #f87171;
+    /* Red 400 */
+}
+
+.input:focus.input--error {
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
 }

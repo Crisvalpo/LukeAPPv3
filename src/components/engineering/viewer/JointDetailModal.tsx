@@ -2,7 +2,10 @@
 
 import { createPortal } from 'react-dom'
 import { useEffect, useState } from 'react'
-import { MoreVertical, Trash2 } from 'lucide-react'
+import { Trash2, MoreVertical } from 'lucide-react'
+import { InputField } from '@/components/ui/InputField'
+import { SelectNative } from '@/components/ui/SelectNative'
+import { Textarea } from '@/components/ui/Textarea'
 
 interface JointDetailModalProps {
     joint: {
@@ -395,19 +398,13 @@ export default function JointDetailModal({ joint, onClose, onUpdate, onUnassign 
                         {/* Name Input */}
                         {missingName && (
                             <div style={{ marginBottom: '20px' }}>
-                                <label style={{ display: 'block', marginBottom: '8px', color: '#fbbf24', fontSize: '0.9rem' }}>⚠️ Ingresa tu nombre completo:</label>
-                                <input
+                                <InputField
+                                    label="⚠️ Ingresa tu nombre completo:"
                                     value={currentUserName}
-                                    onChange={e => setCurrentUserName(e.target.value)}
+                                    onChange={(e) => setCurrentUserName(e.target.value)}
                                     placeholder="Nombre Apellido"
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        backgroundColor: '#0f172a',
-                                        border: '1px solid #fbbf24',
-                                        borderRadius: '6px',
-                                        color: 'white'
-                                    }}
+                                    variant="glass"
+                                    style={{ color: '#fbbf24', borderColor: '#fbbf24' }}
                                 />
                             </div>
                         )}
@@ -440,45 +437,30 @@ export default function JointDetailModal({ joint, onClose, onUpdate, onUnassign 
                         {/* Conditional Inputs */}
                         {status === 'REWORK' && (
                             <div style={{ marginBottom: '20px' }}>
-                                <label style={{ display: 'block', marginBottom: '8px', color: '#f87171', fontSize: '0.85rem' }}>Motivo *</label>
-                                <select
+                                <SelectNative
+                                    label="Motivo *"
                                     value={notes}
-                                    onChange={e => setNotes(e.target.value)}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        backgroundColor: '#0f172a',
-                                        border: '1px solid #f87171',
-                                        borderRadius: '6px',
-                                        color: '#f87171'
-                                    }}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    variant="glass"
+                                    style={{ color: '#f87171', borderColor: '#f87171' }}
                                 >
                                     <option value="">Seleccionar...</option>
                                     <option value="ERROR_CONTRATISTA">Error Contratista</option>
                                     <option value="ERROR_INGENIERIA">Error Ingeniería</option>
                                     <option value="DAÑO_MATERIAL">Daño Material</option>
-                                </select>
+                                </SelectNative>
                             </div>
                         )}
 
                         {status === 'DELETED' && (
                             <div style={{ marginBottom: '20px' }}>
-                                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '0.85rem' }}>Motivo de Eliminación *</label>
-                                <textarea
+                                <Textarea
+                                    label="Motivo de Eliminación *"
                                     value={notes}
-                                    onChange={e => setNotes(e.target.value)}
+                                    onChange={(e) => setNotes(e.target.value)}
                                     placeholder="Explique la razón de eliminar esta unión..."
                                     rows={3}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        backgroundColor: '#0f172a',
-                                        border: '1px solid #475569',
-                                        borderRadius: '6px',
-                                        color: 'white',
-                                        resize: 'vertical',
-                                        fontFamily: 'inherit'
-                                    }}
+                                    variant="glass"
                                 />
                             </div>
                         )}

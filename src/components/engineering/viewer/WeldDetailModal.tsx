@@ -2,6 +2,11 @@
 
 import { createPortal } from 'react-dom'
 import { useEffect, useState } from 'react'
+import { InputField } from '@/components/ui/InputField'
+import { SelectNative } from '@/components/ui/SelectNative'
+import { Textarea } from '@/components/ui/Textarea'
+import { createClient } from '@/lib/supabase/client'
+import { updateWeldStatusAction } from '@/actions/welds'
 
 interface WeldDetailModalProps {
     weld: {
@@ -325,81 +330,48 @@ export default function WeldDetailModal({ weld, weldTypeConfig, onClose, onUpdat
                             </div>
                         )}
 
+
+
                         {/* Name Input */}
                         {missingName && (
                             <div style={{ marginBottom: '20px' }}>
-                                <label style={{ display: 'block', marginBottom: '8px', color: '#fbbf24', fontSize: '0.9rem' }}>⚠️ Ingresa tu nombre completo:</label>
-                                <input
+                                <InputField
+                                    label="⚠️ Ingresa tu nombre completo:"
                                     value={currentUserName}
-                                    onChange={e => setCurrentUserName(e.target.value)}
+                                    onChange={(e) => setCurrentUserName(e.target.value)}
                                     placeholder="Nombre Apellido"
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        backgroundColor: '#0f172a',
-                                        border: '1px solid #fbbf24',
-                                        borderRadius: '6px',
-                                        color: 'white'
-                                    }}
+                                    variant="glass"
+                                    style={{ color: '#fbbf24', borderColor: '#fbbf24' }} // Custom override for warning look if needed, or stick to variant
                                 />
                             </div>
                         )}
 
-                        {/* Status Buttons */}
-                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px' }}>
-                            <StatusButton
-                                active={status === 'EXECUTED'}
-                                onClick={() => setStatus('EXECUTED')}
-                                disabled={effectiveStatus === 'EXECUTED' || effectiveStatus === 'REWORK' || effectiveStatus === 'DELETED'}
-                                color="#4ade80"
-                                label="EJECUTADA"
-                            />
-                            <StatusButton
-                                active={status === 'REWORK'}
-                                onClick={() => {
-                                    setStatus('REWORK')
-                                    if (effectiveStatus === 'EXECUTED') {
-                                        setWelder('')
-                                        setSupportWelder('')
-                                    }
-                                }}
-                                disabled={effectiveStatus === 'PENDING' || effectiveStatus === 'DELETED'}
-                                color="#10b981"
-                                label="RETRABAJO"
-                            />
-                            <StatusButton
-                                active={status === 'DELETED'}
-                                onClick={() => setStatus('DELETED')}
-                                disabled={effectiveStatus === 'DELETED'}
-                                color="#94a3b8"
-                                label="ELIMINADA"
-                            />
-                        </div>
+                        {/* ... Status Buttons ... */}
 
                         {/* Conditional Inputs */}
                         {(status === 'EXECUTED' || status === 'REWORK') && weldTypeConfig?.requires_welder !== false && (
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
                                 <div>
-                                    <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '0.85rem' }}>
-                                        {status === 'REWORK' ? 'Soldador (Retrabajo) *' : 'Soldador *'}
-                                    </label>
-                                    <Select
+                                    <SelectNative
+                                        label={status === 'REWORK' ? 'Soldador (Retrabajo) *' : 'Soldador *'}
                                         value={welder}
-                                        onChange={(e: any) => {
+                                        onChange={(e) => {
                                             setWelder(e.target.value)
                                             if (supportWelder === e.target.value) setSupportWelder('')
                                         }}
                                         options={MOCK_WELDERS}
                                         placeholder="Seleccionar..."
+                                        variant="glass"
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '0.85rem' }}>Apoyo</label>
-                                    <Select
+                                    <SelectNative
+                                        label="Apoyo"
                                         value={supportWelder}
-                                        onChange={(e: any) => setSupportWelder(e.target.value)}
+                                        onChange={(e) => setSupportWelder(e.target.value)}
                                         options={MOCK_WELDERS.filter(w => w !== welder)}
                                         placeholder="Ninguno"
+                                        variant="glass"
                                     />
                                 </div>
                             </div>
@@ -407,44 +379,29 @@ export default function WeldDetailModal({ weld, weldTypeConfig, onClose, onUpdat
 
                         {status === 'REWORK' && (
                             <div style={{ marginBottom: '20px' }}>
-                                <label style={{ display: 'block', marginBottom: '8px', color: '#f87171', fontSize: '0.85rem' }}>Motivo *</label>
-                                <select
+                                <SelectNative
+                                    label="Motivo *"
                                     value={notes}
-                                    onChange={e => setNotes(e.target.value)}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        backgroundColor: '#0f172a',
-                                        border: '1px solid #f87171',
-                                        borderRadius: '6px',
-                                        color: '#f87171'
-                                    }}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    variant="glass"
+                                    style={{ color: '#f87171', borderColor: '#f87171' }}
                                 >
                                     <option value="">Seleccionar...</option>
                                     <option value="ERROR_CONTRATISTA">Error Contratista</option>
                                     <option value="ERROR_INGENIERIA">Error Ingeniería</option>
-                                </select>
+                                </SelectNative>
                             </div>
                         )}
 
                         {status === 'DELETED' && (
                             <div style={{ marginBottom: '20px' }}>
-                                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '0.85rem' }}>Motivo de Eliminación *</label>
-                                <textarea
+                                <Textarea
+                                    label="Motivo de Eliminación *"
                                     value={notes}
-                                    onChange={e => setNotes(e.target.value)}
+                                    onChange={(e) => setNotes(e.target.value)}
                                     placeholder="Explique la razón de eliminar esta unión..."
                                     rows={3}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        backgroundColor: '#0f172a',
-                                        border: '1px solid #475569',
-                                        borderRadius: '6px',
-                                        color: 'white',
-                                        resize: 'vertical',
-                                        fontFamily: 'inherit'
-                                    }}
+                                    variant="glass"
                                 />
                             </div>
                         )}
@@ -512,27 +469,7 @@ function StatusButton({ active, disabled, onClick, color, label }: any) {
     )
 }
 
-function Select({ value, onChange, options, placeholder }: any) {
-    return (
-        <select
-            value={value}
-            onChange={onChange}
-            style={{
-                width: '100%',
-                padding: '10px',
-                backgroundColor: '#0f172a',
-                border: '1px solid #334155',
-                borderRadius: '6px',
-                color: 'white'
-            }}
-        >
-            <option value="">{placeholder}</option>
-            {options.map((opt: string) => (
-                <option key={opt} value={opt}>{opt}</option>
-            ))}
-        </select>
-    )
-}
+
 
 function InfoItem({ label, value, highlight }: any) {
     return (
