@@ -48,6 +48,11 @@
     color: var(--color-text-muted);
 }
 
+.data-table td:first-child {
+    color: var(--color-text-main);
+    font-weight: 500;
+}
+
 /* Table Variants */
 .data-table--compact th,
 .data-table--compact td {

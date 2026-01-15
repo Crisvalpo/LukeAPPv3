@@ -33,7 +33,29 @@ export async function getAllCompanies(): Promise<Company[]> {
         return []
     }
 
-    return data as Company[]
+    const companies = data as Company[]
+
+    if (!companies.length) return []
+
+    // Fetch stats for each company
+    // Note: N+1 query pattern, acceptable for low volume internal tool. 
+    // For high volume, use a SQL view or RPC function.
+    const companiesWithStats = await Promise.all(
+        companies.map(async (company) => {
+            const [projectsResult, membersResult] = await Promise.all([
+                supabase.from('projects').select('id', { count: 'exact', head: true }).eq('company_id', company.id),
+                supabase.from('members').select('id', { count: 'exact', head: true }).eq('company_id', company.id)
+            ])
+
+            return {
+                ...company,
+                projects_count: projectsResult.count || 0,
+                members_count: membersResult.count || 0
+            }
+        })
+    )
+
+    return companiesWithStats
 }
 
 /**

@@ -67,11 +67,23 @@ export const CompanySchema: ViewSchema<Company> = {
             type: 'date',
             label: 'Registro',
             readOnly: true
+        },
+        projects_count: {
+            type: 'number',
+            label: 'Proyectos',
+            readOnly: true
+        },
+        members_count: {
+            type: 'number',
+            label: 'Miembros',
+            readOnly: true
         }
     },
     views: {
         list: {
-            columns: ['name', 'slug', 'created_at']
+            // columns: ['name', 'slug', 'created_at']
+            // Updating to match dashboard consistency
+            columns: ['name', 'projects_count', 'members_count', 'created_at']
         }
     }
 }

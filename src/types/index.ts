@@ -103,6 +103,9 @@ export interface Company {
     updated_at: string
     custom_users_limit?: number | null
     custom_projects_limit?: number | null
+    // Computed fields
+    projects_count?: number
+    members_count?: number
 }
 
 export interface Project {

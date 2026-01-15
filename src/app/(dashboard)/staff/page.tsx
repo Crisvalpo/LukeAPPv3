@@ -127,9 +127,7 @@ export default function StaffDashboard() {
                                     onClick={() => router.push(`/staff/companies/${company.id}`)}
                                     className="clickable-row"
                                 >
-                                    <td>
-                                        <div className="company-name">{company.name}</div>
-                                    </td>
+                                    <td>{company.name}</td>
                                     <td>{company.projects_count}</td>
                                     <td>{company.members_count}</td>
                                     <td>
