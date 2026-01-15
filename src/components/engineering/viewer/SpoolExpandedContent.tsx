@@ -52,9 +52,15 @@ export default function SpoolExpandedContent({
 
     const TabButton = ({ id, label, icon: Icon, count }: any) => {
         const isActive = activeTab === id
+        const isDisabled = count === 0
+
         return (
             <button
-                onClick={() => setActiveTab(id)}
+                onClick={(e) => {
+                    e.stopPropagation()
+                    if (!isDisabled) setActiveTab(id)
+                }}
+                disabled={isDisabled}
                 style={{
                     flex: 1,
                     display: 'flex',
@@ -66,12 +72,12 @@ export default function SpoolExpandedContent({
                     borderBottom: isActive ? '2px solid #3b82f6' : '1px solid #334155',
                     color: isActive ? '#3b82f6' : '#64748b',
                     padding: '6px 4px',
-                    cursor: 'pointer',
+                    cursor: isDisabled ? 'not-allowed' : 'pointer',
                     fontSize: '0.75rem',
                     fontWeight: 600,
                     transition: 'all 0.2s',
                     position: 'relative',
-                    opacity: isActive ? 1 : 0.8
+                    opacity: isDisabled ? 0.3 : (isActive ? 1 : 0.8)
                 }}
             >
                 <Icon size={14} />
