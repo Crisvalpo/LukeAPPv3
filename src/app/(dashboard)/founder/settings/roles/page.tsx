@@ -187,9 +187,14 @@ export default function RolesManagementPage() {
                 </div>
 
                 <div className="flex gap-3 mt-4">
-                    <Button variant="outline" onClick={() => router.push('/founder')}>
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Volver
+                    <Button
+                        variant="outline"
+                        onClick={handleCloneStandardRoles}
+                        disabled={isCloning}
+                        title="Cargar los 14 roles estándar de piping"
+                    >
+                        <Copy className="mr-2 h-4 w-4" />
+                        {isCloning ? 'Cargando...' : 'Cargar Roles Default'}
                     </Button>
                     <Button onClick={handleCreateRole}>
                         <Plus className="mr-2 h-4 w-4" />
