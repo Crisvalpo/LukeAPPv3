@@ -34,13 +34,19 @@
     border-radius: 9999px;
 }
 
+.dashboard-header .dashboard-title,
 .dashboard-title {
-    font-size: 1.875rem;
+    font-size: 2.25rem !important;
+    /* Force 36px everywhere per user request */
+    /* 36px - Balanced large header */
+    line-height: 1.2;
     font-weight: 700;
-    background: linear-gradient(90deg, white 0%, #dbeafe 50%, white 100%);
+    /* Premium Blue-Purple Gradient matching the user's reference */
+    background: linear-gradient(90deg, #60a5fa 0%, #c084fc 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .dashboard-subtitle {

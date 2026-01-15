@@ -7,6 +7,7 @@ interface SelectContextValue {
     onValueChange: (value: string) => void
     open: boolean
     setOpen: (open: boolean) => void
+    disabled?: boolean
 }
 
 const SelectContext = React.createContext<SelectContextValue | undefined>(undefined)
@@ -15,18 +16,19 @@ export interface SelectProps {
     value?: string
     onValueChange?: (value: string) => void
     defaultValue?: string
+    disabled?: boolean
     children: React.ReactNode
 }
 
-export function Select({ value: controlledValue, onValueChange, defaultValue, children }: SelectProps) {
+export function Select({ value: controlledValue, onValueChange, defaultValue, disabled, children }: SelectProps) {
     const [internalValue, setInternalValue] = React.useState(defaultValue || '')
     const [open, setOpen] = React.useState(false)
     const value = controlledValue ?? internalValue
     const setValue = onValueChange ?? setInternalValue
 
     return (
-        <SelectContext.Provider value={{ value, onValueChange: setValue, open, setOpen }}>
-            <div className="select">{children}</div>
+        <SelectContext.Provider value={{ value, onValueChange: setValue, open, setOpen, disabled }}>
+            <div className={`select ${disabled ? 'select--disabled' : ''}`}>{children}</div>
         </SelectContext.Provider>
     )
 }
@@ -39,7 +41,8 @@ export function SelectTrigger({ children, className = '' }: { children: React.Re
         <button
             type="button"
             className={`select__trigger ${className}`}
-            onClick={() => context.setOpen(!context.open)}
+            onClick={() => !context.disabled && context.setOpen(!context.open)}
+            disabled={context.disabled}
         >
             {children}
             <ChevronDown className="select__icon" />

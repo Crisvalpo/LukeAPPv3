@@ -13,9 +13,16 @@ import {
     Trash2,
     Plus,
     ClipboardList,
-    CheckCircle2
+    CheckCircle2,
+    Copy,
+    Shield,
+    Info,
+    ArrowLeft
 } from 'lucide-react';
 import '@/styles/roles.css';
+import { Heading, Text } from '@/components/ui/Typography';
+import { Button } from '@/components/ui/button';
+import '@/styles/dashboard.css';
 
 import { createClient } from '@/lib/supabase/client';
 
@@ -171,99 +178,100 @@ export default function RolesManagementPage() {
         <div className="dashboard-page">
             {/* Header */}
             <div className="dashboard-header">
-                <div className="dashboard-header-content">
-                    <div className="dashboard-accent-line" />
-                    <h1 className="dashboard-title">Gestión de Roles</h1>
+                <div className="dashboard-header-content-wrapper">
+                    <div className="dashboard-header-content">
+                        <div className="dashboard-accent-line" />
+                        <Heading level={1} className="dashboard-title">Roles y Permisos</Heading>
+                    </div>
+                    <Text size="base" className="dashboard-subtitle">Gestiona los roles funcionales de tu organización</Text>
                 </div>
-                <p className="dashboard-subtitle">Configura los roles y permisos de tu empresa</p>
-                <div className="header-actions">
-                    <button
-                        className="btn btn-secondary"
-                        onClick={handleCloneStandardRoles}
-                        disabled={isCloning || roles.length > 0}
-                    >
-                        {isCloning ? (
-                            'Clonando...'
-                        ) : (
-                            <>
-                                <ClipboardList size={18} />
-                                Cargar Roles Estándar
-                            </>
-                        )}
-                    </button>
-                    <button className="btn btn-primary" onClick={handleCreateRole}>
-                        <Plus size={18} />
-                        Crear Rol Personalizado
-                    </button>
+
+                <div className="flex gap-3 mt-4">
+                    <Button variant="outline" onClick={() => router.push('/founder')}>
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Volver
+                    </Button>
+                    <Button onClick={handleCreateRole}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Nuevo Rol
+                    </Button>
                 </div>
             </div>
 
             {/* Info Banner */}
-            {roles.length === 0 && (
-                <div className="info-banner">
-                    <div className="banner-icon">
-                        <Lightbulb size={24} />
+            {
+                roles.length === 0 && (
+                    <div className="info-banner">
+                        <div className="banner-icon">
+                            <Lightbulb size={24} />
+                        </div>
+                        <div className="banner-content">
+                            <h3>No tienes roles configurados</h3>
+                            <p>
+                                Comienza cargando los <strong>14 roles estándar de piping</strong> o crea roles personalizados
+                                desde cero.
+                            </p>
+                        </div>
                     </div>
-                    <div className="banner-content">
-                        <h3>No tienes roles configurados</h3>
-                        <p>
-                            Comienza cargando los <strong>14 roles estándar de piping</strong> o crea roles personalizados
-                            desde cero.
-                        </p>
-                    </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Roles Grid */}
-            {roles.length > 0 && (
-                <div className="roles-grid">
-                    {roles.map((role) => (
-                        <RoleCard
-                            key={role.id}
-                            role={role}
-                            onEdit={() => handleEditRole(role)}
-                            onDelete={() => handleDeleteRole(role)}
-                        />
-                    ))}
-                </div>
-            )}
+            {
+                roles.length > 0 && (
+                    <div className="roles-grid">
+                        {roles.map((role) => (
+                            <RoleCard
+                                key={role.id}
+                                role={role}
+                                onEdit={() => handleEditRole(role)}
+                                onDelete={() => handleDeleteRole(role)}
+                            />
+                        ))}
+                    </div>
+                )
+            }
 
             {/* Stats Footer */}
-            {roles.length > 0 && (
-                <div className="roles-stats">
-                    <div className="stat-item">
-                        <span className="stat-label">Total de Roles:</span>
-                        <span className="stat-value">{roles.length}</span>
+            {
+                roles.length > 0 && (
+                    <div className="roles-stats">
+                        <div className="stat-item">
+                            <span className="stat-label">Total de Roles:</span>
+                            <span className="stat-value">{roles.length}</span>
+                        </div>
+                        <div className="stat-item">
+                            <span className="stat-label">Roles del Sistema:</span>
+                            <span className="stat-value">
+                                {roles.filter((r) => r.is_template).length}
+                            </span>
+                        </div>
+                        <div className="stat-item">
+                            <span className="stat-label">Roles Personalizados:</span>
+                            <span className="stat-value">
+                                {roles.filter((r) => !r.is_template).length}
+                            </span>
+                        </div>
                     </div>
-                    <div className="stat-item">
-                        <span className="stat-label">Roles del Sistema:</span>
-                        <span className="stat-value">
-                            {roles.filter((r) => r.is_template).length}
-                        </span>
-                    </div>
-                    <div className="stat-item">
-                        <span className="stat-label">Roles Personalizados:</span>
-                        <span className="stat-value">
-                            {roles.filter((r) => !r.is_template).length}
-                        </span>
-                    </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Role Editor Modal */}
-            {companyId && (
-                <RoleEditorModal
-                    isOpen={isModalOpen}
-                    onClose={() => {
-                        setIsModalOpen(false);
-                        setRoleToEdit(null);
-                    }}
-                    onSuccess={handleModalSuccess}
-                    companyId={companyId}
-                    roleToEdit={roleToEdit}
-                />
-            )}
-        </div>
+            {
+                companyId && (
+                    <RoleEditorModal
+                        isOpen={isModalOpen}
+                        onClose={() => {
+                            setIsModalOpen(false);
+                            setRoleToEdit(null);
+                        }}
+                        onSuccess={handleModalSuccess}
+                        companyId={companyId}
+                        roleToEdit={roleToEdit}
+                    />
+                )
+            }
+        </div >
     );
 }
 

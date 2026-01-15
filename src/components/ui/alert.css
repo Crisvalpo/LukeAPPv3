@@ -17,6 +17,12 @@
     background-color: rgba(var(--hue-error), 80%, 60%, 0.1);
 }
 
+.alert--warning {
+    border-color: var(--color-warning);
+    color: var(--color-warning);
+    background-color: rgba(var(--hue-warning), 80%, 60%, 0.1);
+}
+
 .alert__title {
     margin-bottom: var(--spacing-1);
     font-weight: 500;

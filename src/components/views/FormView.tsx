@@ -3,6 +3,10 @@
 import React, { useState } from 'react'
 import '@/styles/views/form-view.css'
 import { ViewSchema } from '@/schemas/company' // Assuming shared type
+import { InputField } from '@/components/ui/InputField'
+import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Heading, Text as TypographyText } from '@/components/ui/Typography'
 
 interface FormViewProps<T> {
     schema: ViewSchema<T>
@@ -71,86 +75,76 @@ export function FormView<T extends Record<string, any>>({
         <div className="form-view-container">
             {(title || description) && (
                 <div className="form-view-header">
-                    {title && <h2 className="form-view-title">{title}</h2>}
-                    {description && <p className="form-view-description">{description}</p>}
+                    {title && <Heading level={2} className="form-view-title">{title}</Heading>}
+                    {description && <TypographyText variant="muted" className="form-view-description">{description}</TypographyText>}
                 </div>
             )}
 
             <form onSubmit={handleSubmit} className="form-view-grid">
-                {formFields.map(([key, def]) => (
-                    <div key={key} className="form-field-container">
-                        <label className={`form-field-label ${def.required ? 'required' : ''}`}>
-                            {def.label}
-                        </label>
+                {formFields.map(([key, def]) => {
+                    const commonProps = {
+                        label: def.label,
+                        error: errors[key],
+                        disabled: isSubmitting,
+                    }
 
-                        <div className="form-input-wrapper">
-                            {def.type === 'date' ? (
-                                <input
-                                    type="date"
-                                    className={`form-input ${errors[key] ? 'has-error' : ''}`}
+                    if (def.type === 'select') {
+                        return (
+                            <div key={key} className="inputfield">
+                                <label className="inputfield__label">
+                                    {def.label} {def.required && <span className="text-red-500">*</span>}
+                                </label>
+                                <Select
                                     value={formData[key as keyof T] as string || ''}
-                                    onChange={(e) => handleChange(key, e.target.value)}
-                                    disabled={isSubmitting}
-                                />
-                            ) : def.type === 'number' ? (
-                                <input
-                                    type="number"
-                                    className={`form-input ${errors[key] ? 'has-error' : ''}`}
-                                    value={formData[key as keyof T] as string || ''}
-                                    onChange={(e) => handleChange(key, e.target.value)}
-                                    placeholder={def.label}
-                                    disabled={isSubmitting}
-                                />
-                            ) : def.type === 'select' ? (
-                                <select
-                                    className={`form-input ${errors[key] ? 'has-error' : ''}`}
-                                    value={formData[key as keyof T] as string || ''}
-                                    onChange={(e) => handleChange(key, e.target.value)}
+                                    onValueChange={(val) => handleChange(key, val)}
                                     disabled={isSubmitting}
                                 >
-                                    <option value="" disabled>Seleccionar {def.label}</option>
-                                    {def.options?.map(option => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            ) : (
-                                <input
-                                    type="text"
-                                    className={`form-input ${errors[key] ? 'has-error' : ''}`}
-                                    value={formData[key as keyof T] as string || ''}
-                                    onChange={(e) => handleChange(key, e.target.value)}
-                                    placeholder={def.label}
-                                    disabled={isSubmitting}
-                                />
-                            )}
-                        </div>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder={`Seleccionar ${def.label}`} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {def.options?.map(option => (
+                                            <SelectItem key={option.value} value={option.value}>
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors[key] && <small className="inputfield__error">{errors[key]}</small>}
+                            </div>
+                        )
+                    }
 
-                        {errors[key] && (
-                            <span className="field-error">{errors[key]}</span>
-                        )}
-                    </div>
-                ))}
+                    return (
+                        <InputField
+                            key={key}
+                            type={def.type === 'date' ? 'date' : def.type === 'number' ? 'number' : 'text'}
+                            value={formData[key as keyof T] as string || ''}
+                            onChange={(e) => handleChange(key, e.target.value)}
+                            required={def.required}
+                            {...commonProps}
+                        />
+                    )
+                })}
 
-                <div className="form-actions">
+                <div className="form-actions flex justify-end gap-3 mt-6">
                     {onCancel && (
-                        <button
+                        <Button
                             type="button"
+                            variant="secondary"
                             onClick={onCancel}
-                            className="form-button secondary"
                             disabled={isSubmitting}
                         >
                             Cancelar
-                        </button>
+                        </Button>
                     )}
-                    <button
+                    <Button
                         type="submit"
-                        className="form-button primary"
+                        variant="default"
                         disabled={isSubmitting}
                     >
                         {isSubmitting ? 'Guardando...' : 'Guardar'}
-                    </button>
+                    </Button>
                 </div>
             </form>
         </div>

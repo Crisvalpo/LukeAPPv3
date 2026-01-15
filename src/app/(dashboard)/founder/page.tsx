@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Users, Building2, Bell, Shield } from 'lucide-react'
 import '@/styles/dashboard.css'
 import '@/styles/founder.css'
+import { Heading, Text } from '@/components/ui/Typography'
 
 interface CompanyInfo {
     id: string
@@ -105,11 +106,13 @@ export default function FounderDashboard() {
         <div className="dashboard-page">
             {/* Header */}
             <div className="dashboard-header">
-                <div className="dashboard-header-content">
-                    <div className="dashboard-accent-line" />
-                    <h1 className="dashboard-title">Configuración</h1>
+                <div className="dashboard-header-content-wrapper">
+                    <div className="dashboard-header-content">
+                        <div className="dashboard-accent-line" />
+                        <Heading level={1} className="dashboard-title">Panel de Control</Heading>
+                    </div>
+                    <Text size="base" className="dashboard-subtitle">Administra los recursos y configuraciones de tu organización</Text>
                 </div>
-                <p className="dashboard-subtitle">Administra las configuraciones de tu empresa</p>
             </div>
 
             {/* Content Cards */}
@@ -119,21 +122,23 @@ export default function FounderDashboard() {
                     return (
                         <div
                             key={section.title}
-                            className={`quick-action-card ${!section.available ? 'disabled' : ''}`}
+                            className={`glass-panel quick-action-card ${!section.available ? 'disabled' : ''}`}
                             onClick={() => section.available && router.push(section.href)}
                             style={{
                                 cursor: section.available ? 'pointer' : 'not-allowed',
                                 opacity: section.available ? 1 : 0.6,
-                                position: 'relative'
+                                position: 'relative',
+                                padding: '2rem',
+                                transition: 'all 0.3s ease'
                             }}
                         >
                             <div className="quick-action-icon">
                                 <Icon size={24} color={section.color} />
                             </div>
-                            <h3 className="quick-action-title">{section.title}</h3>
-                            <p className="quick-action-description">
+                            <Heading level={3} className="quick-action-title">{section.title}</Heading>
+                            <Text className="quick-action-description">
                                 {section.description}
-                            </p>
+                            </Text>
                             {!section.available && (
                                 <span className="quick-action-badge" style={{
                                     background: 'rgba(100, 116, 139, 0.2)',

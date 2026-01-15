@@ -251,13 +251,13 @@ export default function PlansManager() {
                                 ) : (
                                     <div>
                                         <label className="form-label">Características Adicionales</label>
-                                        <ul style={{ margin: 0, paddingLeft: '1.25rem', color: 'var(--color-text-muted)' }}>
+                                        <ul className="features-list">
                                             {Array.isArray(currentData.features) && currentData.features.length > 0 ? (
                                                 currentData.features.map((feature: any, idx: number) => (
-                                                    <li key={idx} style={{ marginBottom: 'var(--spacing-1)' }}>{feature}</li>
+                                                    <li key={idx} className="feature-item">{feature}</li>
                                                 ))
                                             ) : (
-                                                <li style={{ color: 'var(--color-text-dim)', listStyle: 'none', paddingLeft: 0 }}>Sin características adicionales</li>
+                                                <li className="feature-empty">Sin características adicionales</li>
                                             )}
                                         </ul>
                                     </div>

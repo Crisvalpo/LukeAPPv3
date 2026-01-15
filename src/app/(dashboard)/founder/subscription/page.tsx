@@ -3,9 +3,15 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCompanySubscriptionInfo, getSubscriptionPlans, type CompanySubscriptionInfo, type SubscriptionPlan } from '@/services/subscriptions'
-import { Users, FolderKanban, AlertCircle, CheckCircle, Mail } from 'lucide-react'
+import { Users, FolderKanban, AlertCircle, Mail, Database, FileCode } from 'lucide-react'
 import '@/styles/dashboard.css'
-import '@/styles/subscription.css'
+import '@/styles/views/founder-subscription.css'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Heading, Text } from '@/components/ui/Typography'
+import { Button } from '@/components/ui/button'
+import { StatusBadge } from '@/components/ui/StatusBadge'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Progress } from '@/components/ui/Progress'
 
 export default function FounderSubscriptionPage() {
     const router = useRouter()
@@ -19,13 +25,8 @@ export default function FounderSubscriptionPage() {
 
     async function loadData() {
         const supabase = await import('@/lib/supabase/client').then((m) => m.createClient())
-
-        // Get current user's company
         const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-            router.push('/')
-            return
-        }
+        if (!user) { router.push('/'); return }
 
         const { data: memberData } = await supabase
             .from('members')
@@ -35,10 +36,7 @@ export default function FounderSubscriptionPage() {
             .limit(1)
             .maybeSingle()
 
-        if (!memberData) {
-            router.push('/founder')
-            return
-        }
+        if (!memberData) { router.push('/founder'); return }
 
         const [info, plansData] = await Promise.all([
             getCompanySubscriptionInfo(memberData.company_id),
@@ -50,236 +48,214 @@ export default function FounderSubscriptionPage() {
         setIsLoading(false)
     }
 
-    const getStatusBadge = (status: string) => {
-        const statusClasses = {
-            active: 'subscription-status-active',
-            past_due: 'subscription-status-past-due',
-            suspended: 'subscription-status-suspended'
-        }
-
-        const statusIcons = {
-            active: <CheckCircle size={18} />,
-            past_due: <AlertCircle size={18} />,
-            suspended: <AlertCircle size={18} />
-        }
-
-        const statusLabels = {
-            active: 'Activo',
-            past_due: 'Vencido',
-            suspended: 'Suspendido'
-        }
-
-        return (
-            <span className={`subscription-status-badge ${statusClasses[status as keyof typeof statusClasses] || ''}`}>
-                {statusIcons[status as keyof typeof statusIcons]}
-                {statusLabels[status as keyof typeof statusLabels] || status}
-            </span>
-        )
-    }
-
-    const getUsagePercentage = (current: number, max: number) => {
-        if (max === 0) return 0
-        return Math.min((current / max) * 100, 100)
+    const getProgressVariant = (current: number, max: number) => {
+        const pct = (current / max) * 100
+        if (pct >= 90) return 'destructive'
+        if (pct >= 75) return 'warning'
+        return 'default'
     }
 
     if (isLoading) {
         return (
-            <div className="dashboard-page">
-                <p style={{ color: 'white', textAlign: 'center' }}>Cargando...</p>
+            <div className="dashboard-page center-message">
+                <Text variant="muted">Cargando...</Text>
             </div>
         )
     }
 
     if (!subscriptionInfo) {
         return (
-            <div className="dashboard-page">
-                <p style={{ color: 'white', textAlign: 'center' }}>No se pudo cargar la información</p>
+            <div className="dashboard-page center-message">
+                <Text className="text-error">No se pudo cargar la información</Text>
             </div>
         )
     }
 
     const currentPlan = plans.find((p) => p.id === subscriptionInfo.tier)
-    const usersPct = getUsagePercentage(subscriptionInfo.current_users, subscriptionInfo.max_users)
-    const projectsPct = getUsagePercentage(subscriptionInfo.current_projects, subscriptionInfo.max_projects)
-    const spoolsPct = getUsagePercentage(subscriptionInfo.current_spools, subscriptionInfo.max_spools)
-    const storagePct = getUsagePercentage(subscriptionInfo.current_storage_gb, subscriptionInfo.max_storage_gb)
 
     return (
         <div className="dashboard-page">
-            {/* Header */}
+            {/* Standard Header */}
             <div className="dashboard-header">
                 <div className="dashboard-header-content">
                     <div className="dashboard-accent-line" />
-                    <h1 className="dashboard-title">Suscripción</h1>
+                    <Heading level={1} className="dashboard-title">Suscripción</Heading>
                 </div>
-                <p className="dashboard-subtitle">Estado de tu plan y uso de recursos</p>
+                <Text size="base" className="dashboard-subtitle">Administra tu plan y monitoriza el uso de recursos</Text>
             </div>
 
             {/* Status Alert */}
             {subscriptionInfo.status !== 'active' && (
-                <div className={`subscription-alert ${subscriptionInfo.status === 'past_due' ? 'subscription-alert-warning' : 'subscription-alert-error'}`}>
-                    <div className="subscription-alert-icon">
-                        <AlertCircle size={32} color={subscriptionInfo.status === 'past_due' ? '#fbbf24' : '#ef4444'} />
-                    </div>
-                    <div className="subscription-alert-content">
-                        <h3>
-                            {subscriptionInfo.status === 'past_due'
-                                ? 'Pago Vencido'
-                                : 'Servicio Suspendido'}
-                        </h3>
-                        <p>
-                            {subscriptionInfo.status === 'past_due'
-                                ? 'Tu suscripción ha vencido. Por favor, realiza el pago para evitar la suspensión del servicio.'
-                                : 'Tu cuenta está suspendida por falta de pago. Contacta a soporte para reactivarla.'}
-                        </p>
-                    </div>
-                </div>
+                <Alert variant={subscriptionInfo.status === 'past_due' ? 'warning' : 'destructive'}>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>
+                        {subscriptionInfo.status === 'past_due' ? 'Pago Vencido' : 'Servicio Suspendido'}
+                    </AlertTitle>
+                    <AlertDescription>
+                        {subscriptionInfo.status === 'past_due'
+                            ? 'Tu suscripción ha vencido. Por favor, realiza el pago para evitar la suspensión del servicio.'
+                            : 'Tu cuenta está suspendida por falta de pago. Contacta a soporte para reactivarla.'}
+                    </AlertDescription>
+                </Alert>
             )}
 
-            {/* Current Plan */}
-            <div className="subscription-plan-card">
-                <div className="subscription-plan-header">
-                    <div>
-                        <h2 className="subscription-plan-name">Plan Actual</h2>
-                        <p className="subscription-plan-tier">{subscriptionInfo.tier}</p>
+            {/* Master Plan Card */}
+            <div className="premium-plan-card">
+                <div className="plan-content-wrapper">
+                    <div className="plan-main-info">
+                        <span className="plan-label">Plan Actual</span>
+                        <div className="plan-name-large">{subscriptionInfo.tier}</div>
+                        <StatusBadge status={subscriptionInfo.status} />
                     </div>
-                    <div>{getStatusBadge(subscriptionInfo.status)}</div>
-                </div>
 
-                {subscriptionInfo.end_date && (
-                    <p className="subscription-plan-info">
-                        Vencimiento: <strong>
-                            {new Date(subscriptionInfo.end_date).toLocaleDateString('es-ES')}
-                        </strong>
-                    </p>
-                )}
-
-                {currentPlan && (
-                    <p className="subscription-plan-info">
-                        Precio: <strong>
-                            ${currentPlan.price_monthly.toLocaleString('es-CL')}/mes
-                        </strong>
-                    </p>
-                )}
-            </div>
-
-            {/* Usage Stats */}
-            <h2 className="subscription-section-title">Uso de Recursos</h2>
-            <div className="subscription-usage-grid">
-                {/* Users */}
-                <div className="subscription-usage-card">
-                    <div className="subscription-usage-header">
-                        <div className="subscription-usage-icon">
-                            <Users size={24} color="#60a5fa" />
+                    <div className="plan-details-grid">
+                        {subscriptionInfo.end_date && (
+                            <div className="plan-detail-item">
+                                <span className="plan-label">Vencimiento</span>
+                                <span className="detail-value">
+                                    {new Date(subscriptionInfo.end_date).toLocaleDateString('es-ES', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric'
+                                    })}
+                                </span>
+                            </div>
+                        )}
+                        {currentPlan && (
+                            <div className="plan-detail-item">
+                                <span className="plan-label">Precio</span>
+                                <span className="detail-value">
+                                    ${currentPlan.price_monthly.toLocaleString('es-CL')}/mes
+                                </span>
+                            </div>
+                        )}
+                        <div className="plan-detail-item">
+                            <span className="plan-label">Ciclo</span>
+                            <span className="detail-value">Mensual</span>
                         </div>
-                        <div>
-                            <h3 className="subscription-usage-title">Usuarios</h3>
-                            <p className="subscription-usage-stats">
-                                {subscriptionInfo.current_users} / {subscriptionInfo.max_users}
-                                {subscriptionInfo.plan_max_users && subscriptionInfo.max_users > subscriptionInfo.plan_max_users && (
-                                    <span style={{ fontSize: '0.75rem', color: '#fbbf24', display: 'block' }}>
-                                        ⚡ Incluye {subscriptionInfo.max_users - subscriptionInfo.plan_max_users} extra
-                                    </span>
-                                )}
-                            </p>
-                        </div>
-                    </div>
-                    <div className="subscription-progress-bar">
-                        <div
-                            className={`subscription-progress-fill ${usersPct > 80 ? 'subscription-progress-fill-warning' : 'subscription-progress-fill-users'}`}
-                            style={{ width: `${usersPct}%` }}
-                        />
-                    </div>
-                </div>
-
-                {/* Projects */}
-                <div className="subscription-usage-card">
-                    <div className="subscription-usage-header">
-                        <div className="subscription-usage-icon">
-                            <FolderKanban size={24} color="#a78bfa" />
-                        </div>
-                        <div>
-                            <h3 className="subscription-usage-title">Proyectos</h3>
-                            <p className="subscription-usage-stats">
-                                {subscriptionInfo.current_projects} / {subscriptionInfo.max_projects}
-                                {subscriptionInfo.plan_max_projects && subscriptionInfo.max_projects > subscriptionInfo.plan_max_projects && (
-                                    <span style={{ fontSize: '0.75rem', color: '#fbbf24', display: 'block' }}>
-                                        ⚡ Incluye {subscriptionInfo.max_projects - subscriptionInfo.plan_max_projects} extra
-                                    </span>
-                                )}
-                            </p>
-                        </div>
-                    </div>
-                    <div className="subscription-progress-bar">
-                        <div
-                            className={`subscription-progress-fill ${projectsPct > 80 ? 'subscription-progress-fill-warning' : 'subscription-progress-fill-projects'}`}
-                            style={{ width: `${projectsPct}%` }}
-                        />
-                    </div>
-                </div>
-
-                {/* Spools */}
-                <div className="subscription-usage-card">
-                    <div className="subscription-usage-header">
-                        <div className="subscription-usage-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2">
-                                <circle cx="12" cy="12" r="10" />
-                                <path d="M8 12h8M12 8v8" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 className="subscription-usage-title">Spools</h3>
-                            <p className="subscription-usage-stats">
-                                {subscriptionInfo.current_spools} / {subscriptionInfo.max_spools}
-                            </p>
-                        </div>
-                    </div>
-                    <div className="subscription-progress-bar">
-                        <div
-                            className={`subscription-progress-fill ${getUsagePercentage(subscriptionInfo.current_spools, subscriptionInfo.max_spools) > 80 ? 'subscription-progress-fill-warning' : 'subscription-progress-fill-success'}`}
-                            style={{ width: `${getUsagePercentage(subscriptionInfo.current_spools, subscriptionInfo.max_spools)}%` }}
-                        />
-                    </div>
-                </div>
-
-                {/* Storage */}
-                <div className="subscription-usage-card">
-                    <div className="subscription-usage-header">
-                        <div className="subscription-usage-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2">
-                                <rect x="4" y="4" width="16" height="16" rx="2" />
-                                <path d="M4 10h16M4 14h16" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 className="subscription-usage-title">Almacenamiento</h3>
-                            <p className="subscription-usage-stats">
-                                {subscriptionInfo.current_storage_gb.toFixed(2)} / {subscriptionInfo.max_storage_gb} GB
-                            </p>
-                        </div>
-                    </div>
-                    <div className="subscription-progress-bar">
-                        <div
-                            className={`subscription-progress-fill ${getUsagePercentage(subscriptionInfo.current_storage_gb, subscriptionInfo.max_storage_gb) > 80 ? 'subscription-progress-fill-warning' : 'subscription-progress-fill-storage'}`}
-                            style={{ width: `${getUsagePercentage(subscriptionInfo.current_storage_gb, subscriptionInfo.max_storage_gb)}%` }}
-                        />
                     </div>
                 </div>
             </div>
 
-            {/* Payment Instructions */}
-            <div className="subscription-payment-card">
-                <h2 className="subscription-payment-title">Instrucciones de Pago</h2>
-                <p className="subscription-payment-text">
-                    Transferir a Banco Estado, Cuenta Corriente N° 123456789. Enviar comprobante a pagos@lukeapp.cl
-                </p>
-                <a
-                    href="mailto:pagos@lukeapp.cl?subject=Comprobante de Pago&body=Adjunto comprobante de pago para la empresa."
-                    className="btn btn-primary"
+            {/* Usage Stats Grid */}
+            <div>
+                <h3 className="section-title">Uso de Recursos</h3>
+                <div className="usage-grid">
+
+                    {/* Users */}
+                    <div className="premium-stat-card">
+                        <div className="stat-header">
+                            <span className="stat-title">Usuarios</span>
+                            <div className="stat-icon-box">
+                                <Users className="h-4 w-4 icon-blue" strokeWidth={1.5} />
+                            </div>
+                        </div>
+                        <div>
+                            <div className="stat-value-large">
+                                {subscriptionInfo.current_users}
+                                <span className="stat-limit">/ {subscriptionInfo.max_users}</span>
+                            </div>
+                            {subscriptionInfo.plan_max_users && subscriptionInfo.max_users > subscriptionInfo.plan_max_users && (
+                                <Text className="stat-card__extra">
+                                    +{subscriptionInfo.max_users - subscriptionInfo.plan_max_users} extra
+                                </Text>
+                            )}
+                        </div>
+                        <div className="progress-container">
+                            <div
+                                className={`progress-fill ${getProgressVariant(subscriptionInfo.current_users, subscriptionInfo.max_users)}`}
+                                style={{ width: `${(subscriptionInfo.current_users / subscriptionInfo.max_users) * 100}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Projects */}
+                    <div className="premium-stat-card">
+                        <div className="stat-header">
+                            <span className="stat-title">Proyectos</span>
+                            <div className="stat-icon-box">
+                                <FolderKanban className="h-4 w-4 icon-purple" strokeWidth={1.5} />
+                            </div>
+                        </div>
+                        <div>
+                            <div className="stat-value-large">
+                                {subscriptionInfo.current_projects}
+                                <span className="stat-limit">/ {subscriptionInfo.max_projects}</span>
+                            </div>
+                            {subscriptionInfo.plan_max_projects && subscriptionInfo.max_projects > subscriptionInfo.plan_max_projects && (
+                                <Text className="stat-card__extra">
+                                    +{subscriptionInfo.max_projects - subscriptionInfo.plan_max_projects} extra
+                                </Text>
+                            )}
+                        </div>
+                        <div className="progress-container">
+                            <div
+                                className={`progress-fill ${getProgressVariant(subscriptionInfo.current_projects, subscriptionInfo.max_projects)}`}
+                                style={{ width: `${(subscriptionInfo.current_projects / subscriptionInfo.max_projects) * 100}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Spools */}
+                    <div className="premium-stat-card">
+                        <div className="stat-header">
+                            <span className="stat-title">Spools</span>
+                            <div className="stat-icon-box">
+                                <FileCode className="h-4 w-4 icon-emerald" strokeWidth={1.5} />
+                            </div>
+                        </div>
+                        <div>
+                            <div className="stat-value-large">
+                                {subscriptionInfo.current_spools}
+                                <span className="stat-limit">/ {subscriptionInfo.max_spools}</span>
+                            </div>
+                        </div>
+                        <div className="progress-container">
+                            <div
+                                className={`progress-fill ${getProgressVariant(subscriptionInfo.current_spools, subscriptionInfo.max_spools)}`}
+                                style={{ width: `${(subscriptionInfo.current_spools / subscriptionInfo.max_spools) * 100}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Storage */}
+                    <div className="premium-stat-card">
+                        <div className="stat-header">
+                            <span className="stat-title">Almacenamiento</span>
+                            <div className="stat-icon-box">
+                                <Database className="h-4 w-4 icon-amber" strokeWidth={1.5} />
+                            </div>
+                        </div>
+                        <div>
+                            <div className="stat-value-large">
+                                {subscriptionInfo.current_storage_gb.toFixed(1)}
+                                <span className="stat-limit">/ {subscriptionInfo.max_storage_gb} GB</span>
+                            </div>
+                        </div>
+                        <div className="progress-container">
+                            <div
+                                className={`progress-fill ${getProgressVariant(subscriptionInfo.current_storage_gb, subscriptionInfo.max_storage_gb)}`}
+                                style={{ width: `${(subscriptionInfo.current_storage_gb / subscriptionInfo.max_storage_gb) * 100}%` }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Premium Payment Section */}
+            <div className="payment-section">
+                <Text variant="muted" size="sm">¿Necesitas reactivar o mejorar tu plan?</Text>
+                <div className="payment-text">
+                    Transferir a Banco Estado &bull; Cta Cte 123456789 &bull; pagos@lukeapp.cl
+                </div>
+                <Button
+                    variant="outline"
+                    className="mt-2"
+                    onClick={() => window.location.href = "mailto:pagos@lukeapp.cl?subject=Comprobante de Pago"}
                 >
-                    <Mail size={18} />
-                    Reportar Pago
-                </a>
+                    <Mail className="mr-2 h-4 w-4" />
+                    Enviar Comprobante de Pago
+                </Button>
             </div>
         </div>
     )

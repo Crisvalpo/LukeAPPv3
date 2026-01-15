@@ -13,8 +13,23 @@ import WeldTypesManager from '@/components/engineering/WeldTypesManager'
 import StructureModelsManager from '@/components/project/StructureModelsManager'
 import ProjectWeekConfigModal from '@/components/project/ProjectWeekConfigModal'
 import ProjectLogosManager from '@/components/common/ProjectLogosManager'
+
+// Design System Imports
+import { Button } from '@/components/ui/button'
+import { InputField } from '@/components/ui/InputField'
+import { Heading, Text } from '@/components/ui/Typography'
+import { Icons } from '@/components/ui/Icons'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select'
+
 import '@/styles/dashboard.css'
 import '@/styles/companies.css'
+import '@/styles/company-profile.css' // Reusing profile styles for consistent look
 
 interface ProjectDetails extends Project {
     contract_number?: string
@@ -153,11 +168,19 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
     }
 
     if (isLoading) {
-        return <div className="dashboard-page"><p style={{ color: 'white', textAlign: 'center' }}>Cargando...</p></div>
+        return (
+            <div className="dashboard-page center-message">
+                <Text>Cargando proyecto...</Text>
+            </div>
+        )
     }
 
     if (!project) {
-        return <div className="dashboard-page"><p style={{ color: 'white', textAlign: 'center' }}>Proyecto no encontrado</p></div>
+        return (
+            <div className="dashboard-page center-message">
+                <Text className="text-error">Proyecto no encontrado</Text>
+            </div>
+        )
     }
 
     return (
@@ -165,140 +188,125 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
             <div className="dashboard-header">
                 <div className="dashboard-header-content">
                     <div className="dashboard-accent-line" />
-                    <h1 className="dashboard-title">
+                    <Heading level={1} className="dashboard-title">
                         {isEditing ? 'Editar Proyecto' : project.name}
-                    </h1>
+                    </Heading>
                 </div>
                 {!isEditing && (
-                    <p className="dashboard-subtitle">
+                    <Text size="base" className="dashboard-subtitle">
                         {project.code} • <span style={{ textTransform: 'capitalize' }}>{project.status.replace('_', ' ')}</span>
-                    </p>
+                    </Text>
                 )}
             </div>
 
-            <div className="company-form-container">
+            <div className={`company-profile-container ${isEditing ? 'max-w-3xl mx-auto' : ''}`}>
                 {error && (
-                    <div style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '0.5rem', color: '#f87171', marginBottom: '1.5rem' }}>
+                    <div className="error-banner">
                         {error}
                     </div>
                 )}
 
                 {isEditing ? (
-                    <div className="company-form" style={{ width: '100%' }}>
-                        <div className="company-form-grid" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
-                            <div className="form-field">
-                                <label className="form-label">Nombre del Proyecto</label>
-                                <input
-                                    type="text"
-                                    value={editForm.name}
-                                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                                    className="form-input"
+                    <div className="profile-header-card">
+                        <div className="profile-header-glow" />
+
+                        <div className="flex flex-col gap-6 relative z-10">
+                            <InputField
+                                label="Nombre del Proyecto"
+                                value={editForm.name}
+                                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                disabled={!canEdit}
+                            />
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <InputField
+                                    label="Cliente Principal"
+                                    value={editForm.client_name}
+                                    onChange={(e) => setEditForm({ ...editForm, client_name: e.target.value })}
                                     disabled={!canEdit}
+                                />
+                                <InputField
+                                    label="N° Contrato"
+                                    value={editForm.contract_number}
+                                    onChange={(e) => setEditForm({ ...editForm, contract_number: e.target.value })}
+                                    disabled={!canEdit}
+                                    style={{ fontFamily: 'var(--font-family-mono)' }}
                                 />
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                                <div className="form-field">
-                                    <label className="form-label">Cliente Principal</label>
-                                    <input
-                                        type="text"
-                                        value={editForm.client_name}
-                                        onChange={(e) => setEditForm({ ...editForm, client_name: e.target.value })}
-                                        className="form-input"
-                                        disabled={!canEdit}
-                                    />
-                                </div>
-                                <div className="form-field">
-                                    <label className="form-label">N° Contrato</label>
-                                    <input
-                                        type="text"
-                                        value={editForm.contract_number}
-                                        onChange={(e) => setEditForm({ ...editForm, contract_number: e.target.value })}
-                                        className="form-input"
-                                        style={{ fontFamily: 'monospace' }}
-                                        disabled={!canEdit}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="form-field">
-                                <label className="form-label">Descripción</label>
+                            <div className="inputfield">
+                                <label className="inputfield__label">Descripción</label>
                                 <textarea
                                     value={editForm.description}
                                     onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                                    className="form-input"
-                                    rows={4}
+                                    className="input min-h-[120px] resize-y"
                                     disabled={!canEdit}
                                 />
                             </div>
 
-                            <div className="form-field">
-                                <label className="form-label">Estado</label>
-                                <select
+                            <div className="inputfield">
+                                <label className="inputfield__label">Estado</label>
+                                <Select
                                     value={editForm.status}
-                                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                                    className="form-input"
+                                    onValueChange={(val) => setEditForm({ ...editForm, status: val })}
                                     disabled={!canEdit}
                                 >
-                                    <option value="planning">Planificación</option>
-                                    <option value="active">Activo</option>
-                                    <option value="on_hold">En Pausa</option>
-                                    <option value="completed">Completado</option>
-                                    <option value="cancelled">Cancelado</option>
-                                </select>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Seleccionar estado" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="planning">Planificación</SelectItem>
+                                        <SelectItem value="active">Activo</SelectItem>
+                                        <SelectItem value="on_hold">En Pausa</SelectItem>
+                                        <SelectItem value="completed">Completado</SelectItem>
+                                        <SelectItem value="cancelled">Cancelado</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
-                        </div>
 
-                        <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                            <button onClick={handleSave} className="form-button" disabled={isSaving || !canEdit}>
-                                Guardar Cambios
-                            </button>
-                            <button
-                                onClick={exitEditMode}
-                                className="form-button"
-                                style={{ background: 'rgba(255,255,255,0.05)' }}
-                                disabled={isSaving}
-                            >
-                                Cancelar
-                            </button>
+                            <div className="flex gap-4 mt-4">
+                                <Button
+                                    onClick={handleSave}
+                                    disabled={isSaving || !canEdit}
+                                    className="flex-1"
+                                >
+                                    Guardar Cambios
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={exitEditMode}
+                                    disabled={isSaving}
+                                    className="flex-1"
+                                >
+                                    Cancelar
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 ) : (
                     <div>
                         {/* Hide Navbar for Admins in Settings Mode */}
                         {!(role === 'admin' && activeTab === 'settings') && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', overflowX: 'auto' }}>
+                            <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4 overflow-x-auto">
                                 {/* Left Side: Work Modules */}
-                                <div style={{ display: 'flex', gap: '1rem' }}>
+                                <div className="flex gap-4">
                                     {!(role === 'admin' && activeTab === 'team') && (
                                         <>
                                             <button
                                                 onClick={() => setActiveTab('engineering')}
-                                                style={{
-                                                    padding: '0.75rem 1rem',
-                                                    background: 'transparent',
-                                                    border: 'none',
-                                                    borderBottom: activeTab === 'engineering' ? '2px solid var(--color-primary)' : '2px solid transparent',
-                                                    color: activeTab === 'engineering' ? 'white' : '#94a3b8',
-                                                    fontWeight: activeTab === 'engineering' ? 600 : 400,
-                                                    cursor: 'pointer',
-                                                    whiteSpace: 'nowrap'
-                                                }}
+                                                className={`px-4 py-2 bg-transparent border-0 border-b-2 transition-all font-medium text-sm whitespace-nowrap cursor-pointer ${activeTab === 'engineering'
+                                                    ? 'border-blue-500 text-white'
+                                                    : 'border-transparent text-slate-400 hover:text-white'
+                                                    }`}
                                             >
                                                 Ingeniería
                                             </button>
                                             <button
                                                 onClick={() => setActiveTab('procurement')}
-                                                style={{
-                                                    padding: '0.75rem 1rem',
-                                                    background: 'transparent',
-                                                    border: 'none',
-                                                    borderBottom: activeTab === 'procurement' ? '2px solid var(--color-primary)' : '2px solid transparent',
-                                                    color: activeTab === 'procurement' ? 'white' : '#94a3b8',
-                                                    fontWeight: activeTab === 'procurement' ? 600 : 400,
-                                                    cursor: 'pointer',
-                                                    whiteSpace: 'nowrap'
-                                                }}
+                                                className={`px-4 py-2 bg-transparent border-0 border-b-2 transition-all font-medium text-sm whitespace-nowrap cursor-pointer ${activeTab === 'procurement'
+                                                    ? 'border-blue-500 text-white'
+                                                    : 'border-transparent text-slate-400 hover:text-white'
+                                                    }`}
                                             >
                                                 Abastecimiento
                                             </button>
@@ -307,20 +315,14 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
                                 </div>
 
                                 {/* Right Side: Management & Settings */}
-                                <div style={{ display: 'flex', gap: '1rem' }}>
+                                <div className="flex gap-4">
                                     {(role === 'founder' || activeTab === 'details') && (
                                         <button
                                             onClick={() => setActiveTab('details')}
-                                            style={{
-                                                padding: '0.75rem 1rem',
-                                                background: 'transparent',
-                                                border: 'none',
-                                                borderBottom: activeTab === 'details' ? '2px solid var(--color-primary)' : '2px solid transparent',
-                                                color: activeTab === 'details' ? 'white' : '#94a3b8',
-                                                fontWeight: activeTab === 'details' ? 600 : 400,
-                                                cursor: 'pointer',
-                                                whiteSpace: 'nowrap'
-                                            }}
+                                            className={`px-4 py-2 bg-transparent border-0 border-b-2 transition-all font-medium text-sm whitespace-nowrap cursor-pointer ${activeTab === 'details'
+                                                ? 'border-blue-500 text-white'
+                                                : 'border-transparent text-slate-400 hover:text-white'
+                                                }`}
                                         >
                                             Detalles
                                         </button>
@@ -328,34 +330,22 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
                                     {(role === 'founder' || activeTab === 'team') && (
                                         <button
                                             onClick={() => setActiveTab('team')}
-                                            style={{
-                                                padding: '0.75rem 1rem',
-                                                background: 'transparent',
-                                                border: 'none',
-                                                borderBottom: activeTab === 'team' ? '2px solid var(--color-primary)' : '2px solid transparent',
-                                                color: activeTab === 'team' ? 'white' : '#94a3b8',
-                                                fontWeight: activeTab === 'team' ? 600 : 400,
-                                                cursor: 'pointer',
-                                                whiteSpace: 'nowrap'
-                                            }}
+                                            className={`px-4 py-2 bg-transparent border-0 border-b-2 transition-all font-medium text-sm whitespace-nowrap cursor-pointer ${activeTab === 'team'
+                                                ? 'border-blue-500 text-white'
+                                                : 'border-transparent text-slate-400 hover:text-white'
+                                                }`}
                                         >
                                             Equipo & Invitaciones
                                         </button>
                                     )}
-                                    {/* Config Tab only visible for Founder or if actively selected (though if navbar hidden this is moot for admin) */}
+                                    {/* Config Tab only visible for Founder or if actively selected */}
                                     {(role === 'founder') && (
                                         <button
                                             onClick={() => setActiveTab('settings')}
-                                            style={{
-                                                padding: '0.75rem 1rem',
-                                                background: 'transparent',
-                                                border: 'none',
-                                                borderBottom: activeTab === 'settings' ? '2px solid var(--color-primary)' : '2px solid transparent',
-                                                color: activeTab === 'settings' ? 'white' : '#94a3b8',
-                                                fontWeight: activeTab === 'settings' ? 600 : 400,
-                                                cursor: 'pointer',
-                                                whiteSpace: 'nowrap'
-                                            }}
+                                            className={`px-4 py-2 bg-transparent border-0 border-b-2 transition-all font-medium text-sm whitespace-nowrap cursor-pointer ${activeTab === 'settings'
+                                                ? 'border-blue-500 text-white'
+                                                : 'border-transparent text-slate-400 hover:text-white'
+                                                }`}
                                         >
                                             Configuración
                                         </button>
@@ -365,46 +355,46 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
                         )}
 
                         {activeTab === 'details' && (
-                            <div style={{ padding: '1rem' }} className="fade-in">
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
+                            <div className="fade-in p-4">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
                                     <div>
-                                        <h3 style={{ fontSize: '0.875rem', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '0.5rem', fontWeight: '600' }}>
+                                        <Text size="xs" variant="muted" className="mb-2 uppercase font-semibold tracking-wider">
                                             Cliente
-                                        </h3>
-                                        <div style={{ fontSize: '1.125rem', color: 'white', fontWeight: '500' }}>
-                                            {project.client_name || <span style={{ color: '#475569', fontStyle: 'italic' }}>No especificado</span>}
-                                        </div>
+                                        </Text>
+                                        <Text size="lg" className="font-medium">
+                                            {project.client_name || <span className="text-slate-500 italic">No especificado</span>}
+                                        </Text>
                                     </div>
 
                                     <div>
-                                        <h3 style={{ fontSize: '0.875rem', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '0.5rem', fontWeight: '600' }}>
+                                        <Text size="xs" variant="muted" className="mb-2 uppercase font-semibold tracking-wider">
                                             Contrato
-                                        </h3>
-                                        <div style={{ fontSize: '1.125rem', color: 'white', fontWeight: '500', fontFamily: 'monospace' }}>
-                                            {project.contract_number || <span style={{ color: '#475569', fontStyle: 'italic', fontFamily: 'sans-serif' }}>No especificado</span>}
-                                        </div>
+                                        </Text>
+                                        <Text size="lg" className="font-medium font-mono">
+                                            {project.contract_number || <span className="text-slate-500 italic font-sans">No especificado</span>}
+                                        </Text>
                                     </div>
 
                                     <div>
-                                        <h3 style={{ fontSize: '0.875rem', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '0.5rem', fontWeight: '600' }}>
+                                        <Text size="xs" variant="muted" className="mb-2 uppercase font-semibold tracking-wider">
                                             Descripción
-                                        </h3>
-                                        <div style={{ fontSize: '1rem', color: '#cbd5e1', lineHeight: '1.6' }}>
-                                            {project.description || <span style={{ color: '#475569', fontStyle: 'italic' }}>Sin descripción</span>}
-                                        </div>
+                                        </Text>
+                                        <Text className="leading-relaxed">
+                                            {project.description || <span className="text-slate-500 italic">Sin descripción</span>}
+                                        </Text>
                                     </div>
                                 </div>
 
                                 {canEdit && (
-                                    <div style={{ display: 'flex', gap: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '2rem' }}>
-                                        <button
+                                    <div className="flex gap-4 pt-8 border-t border-white/5">
+                                        <Button
                                             onClick={() => setIsEditing(true)}
-                                            className="action-button"
-                                            style={{ width: 'auto', padding: '0.75rem 1.5rem', gap: '0.5rem' }}
+                                            variant="secondary"
+                                            className="gap-2"
                                         >
-                                            <FileText size={18} />
+                                            <Icons.Edit size={18} />
                                             Editar Proyecto
-                                        </button>
+                                        </Button>
                                     </div>
                                 )}
                             </div>
@@ -449,215 +439,79 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
                         )}
 
                         {activeTab === 'settings' && (
-                            <div className="fade-in" style={{ padding: '1rem' }}>
+                            <div className="fade-in p-4">
                                 {settingsView === 'menu' ? (
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                                    <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-6">
                                         <div
                                             onClick={() => setSettingsView('locations')}
-                                            style={{
-                                                background: 'rgba(30, 41, 59, 0.7)',
-                                                backdropFilter: 'blur(10px)',
-                                                border: '1px solid #334155',
-                                                borderRadius: '16px',
-                                                padding: '1.5rem',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s ease',
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.transform = 'translateY(-4px)'
-                                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
-                                                e.currentTarget.style.borderColor = '#8b5cf6'
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.transform = 'none'
-                                                e.currentTarget.style.boxShadow = 'none'
-                                                e.currentTarget.style.borderColor = '#334155'
-                                            }}
+                                            className="bg-slate-800/70 backdrop-blur-md border border-slate-700 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg hover:border-violet-500 group"
                                         >
-                                            <div style={{
-                                                background: 'rgba(139, 92, 246, 0.2)',
-                                                width: '48px',
-                                                height: '48px',
-                                                borderRadius: '12px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                marginBottom: '1rem'
-                                            }}>
-                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                    <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                                    <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                            <div className="bg-violet-500/20 w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-violet-500 group-hover:text-violet-400">
+                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="stroke-current stroke-2">
+                                                    <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" strokeLinecap="round" strokeLinejoin="round" />
+                                                    <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" strokeLinecap="round" strokeLinejoin="round" />
                                                 </svg>
                                             </div>
-                                            <h3 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 600 }}>Ubicaciones</h3>
-                                            <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                                            <Heading level={3} size="lg" className="mb-2">Ubicaciones</Heading>
+                                            <Text variant="muted" size="sm">
                                                 Gestiona bodegas, talleres, áreas de acopio y sitios de montaje.
-                                            </p>
+                                            </Text>
                                         </div>
 
                                         <div
                                             onClick={() => setSettingsView('weld-types')}
-                                            style={{
-                                                background: 'rgba(30, 41, 59, 0.7)',
-                                                backdropFilter: 'blur(10px)',
-                                                border: '1px solid #334155',
-                                                borderRadius: '16px',
-                                                padding: '1.5rem',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s ease',
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.transform = 'translateY(-4px)'
-                                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
-                                                e.currentTarget.style.borderColor = '#ef4444'
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.transform = 'none'
-                                                e.currentTarget.style.boxShadow = 'none'
-                                                e.currentTarget.style.borderColor = '#334155'
-                                            }}
+                                            className="bg-slate-800/70 backdrop-blur-md border border-slate-700 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg hover:border-red-500 group"
                                         >
-                                            <div style={{
-                                                background: 'rgba(239, 68, 68, 0.2)',
-                                                width: '48px',
-                                                height: '48px',
-                                                borderRadius: '12px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                marginBottom: '1rem',
-                                                fontSize: '1.5rem'
-                                            }}>
+                                            <div className="bg-red-500/20 w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-2xl">
                                                 🔥
                                             </div>
-                                            <h3 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 600 }}>Tipos de Unión</h3>
-                                            <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                                            <Heading level={3} size="lg" className="mb-2">Tipos de Unión</Heading>
+                                            <Text variant="muted" size="sm">
                                                 Marca las excepciones que NO requieren soldador.
-                                            </p>
+                                            </Text>
                                         </div>
 
                                         <div
                                             onClick={() => setIsWeekConfigOpen(true)}
-                                            style={{
-                                                background: 'rgba(30, 41, 59, 0.7)',
-                                                backdropFilter: 'blur(10px)',
-                                                border: '1px solid #334155',
-                                                borderRadius: '16px',
-                                                padding: '1.5rem',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s ease',
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.transform = 'translateY(-4px)'
-                                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
-                                                e.currentTarget.style.borderColor = '#3b82f6'
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.transform = 'none'
-                                                e.currentTarget.style.boxShadow = 'none'
-                                                e.currentTarget.style.borderColor = '#334155'
-                                            }}
+                                            className="bg-slate-800/70 backdrop-blur-md border border-slate-700 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg hover:border-blue-500 group"
                                         >
-                                            <div style={{
-                                                background: 'rgba(59, 130, 246, 0.2)',
-                                                width: '48px',
-                                                height: '48px',
-                                                borderRadius: '12px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                marginBottom: '1rem'
-                                            }}>
-                                                <Calendar size={24} color="#3b82f6" />
+                                            <div className="bg-blue-500/20 w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-blue-500">
+                                                <Calendar size={24} />
                                             </div>
-                                            <h3 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 600 }}>Configuración de Semanas</h3>
-                                            <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                                            <Heading level={3} size="lg" className="mb-2">Configuración de Semanas</Heading>
+                                            <Text variant="muted" size="sm">
                                                 Define la fecha de inicio del proyecto y el ciclo semanal.
-                                            </p>
+                                            </Text>
                                         </div>
 
                                         <div
                                             onClick={() => setSettingsView('logo')}
-                                            style={{
-                                                background: 'rgba(30, 41, 59, 0.7)',
-                                                backdropFilter: 'blur(10px)',
-                                                border: '1px solid #334155',
-                                                borderRadius: '16px',
-                                                padding: '1.5rem',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s ease',
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.transform = 'translateY(-4px)'
-                                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
-                                                e.currentTarget.style.borderColor = '#10b981'
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.transform = 'none'
-                                                e.currentTarget.style.boxShadow = 'none'
-                                                e.currentTarget.style.borderColor = '#334155'
-                                            }}
+                                            className="bg-slate-800/70 backdrop-blur-md border border-slate-700 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg hover:border-emerald-500 group"
                                         >
-                                            <div style={{
-                                                background: 'rgba(16, 185, 129, 0.2)',
-                                                width: '48px',
-                                                height: '48px',
-                                                borderRadius: '12px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                marginBottom: '1rem'
-                                            }}>
-                                                <ImageIcon size={24} color="#10b981" />
+                                            <div className="bg-emerald-500/20 w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-emerald-500">
+                                                <ImageIcon size={24} />
                                             </div>
-                                            <h3 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 600 }}>Logo del Proyecto</h3>
-                                            <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                                            <Heading level={3} size="lg" className="mb-2">Logo del Proyecto</Heading>
+                                            <Text variant="muted" size="sm">
                                                 Sube el logo del proyecto para incluirlo en reportes PDF.
-                                            </p>
+                                            </Text>
                                         </div>
 
                                         <div
                                             onClick={() => setSettingsView('structure-models')}
-                                            style={{
-                                                background: 'rgba(30, 41, 59, 0.7)',
-                                                backdropFilter: 'blur(10px)',
-                                                border: '1px solid #334155',
-                                                borderRadius: '16px',
-                                                padding: '1.5rem',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s ease',
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.transform = 'translateY(-4px)'
-                                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
-                                                e.currentTarget.style.borderColor = '#0ea5e9'
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.transform = 'none'
-                                                e.currentTarget.style.boxShadow = 'none'
-                                                e.currentTarget.style.borderColor = '#334155'
-                                            }}
+                                            className="bg-slate-800/70 backdrop-blur-md border border-slate-700 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg hover:border-sky-500 group"
                                         >
-                                            <div style={{
-                                                background: 'rgba(14, 165, 233, 0.2)',
-                                                width: '48px',
-                                                height: '48px',
-                                                borderRadius: '12px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                marginBottom: '1rem'
-                                            }}>
-                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <div className="bg-sky-500/20 w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-sky-500">
+                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
                                                     <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
                                                     <line x1="12" y1="22.08" x2="12" y2="12" />
                                                 </svg>
                                             </div>
-                                            <h3 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '0.5rem', fontWeight: 600 }}>Modelos Estructurales (BIM)</h3>
-                                            <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                                            <Heading level={3} size="lg" className="mb-2">Modelos Estructurales (BIM)</Heading>
+                                            <Text variant="muted" size="sm">
                                                 Carga modelos 3D de contexto.
-                                            </p>
+                                            </Text>
                                         </div>
                                     </div>
                                 ) : settingsView === 'locations' ? (

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ColorSwatch } from './ColorSwatch'
+import { Heading, Text } from '@/components/ui/Typography'
 import '@/styles/tables.css'
 import styles from './styleguide.module.css'
 
@@ -23,6 +24,69 @@ export default function StyleGuidePage() {
                     Sistema de Diseño LukeAPP - Fuente de verdad visual para desarrolladores
                 </p>
             </header>
+
+            {/* Standard Page Header Documentation */}
+            <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>🏛️ Encabezados de Página</h2>
+                <p className={styles.sectionDesc}>
+                    Estándar para títulos de páginas en el dashboard (Accent Line + Gradient)
+                </p>
+
+                <div className={styles.preview} style={{ background: 'var(--color-bg-app)', padding: '2rem', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    {/* Basic Header */}
+                    <div className="dashboard-header" style={{ marginBottom: '3rem' }}>
+                        <div className="dashboard-header-content">
+                            <div className="dashboard-accent-line" />
+                            <Heading level={1} className="dashboard-title">Título de la Página</Heading>
+                        </div>
+                        <Text size="base" className="dashboard-subtitle">Descripción corta y concisa del propósito de esta vista</Text>
+                    </div>
+
+                    {/* Header with Actions */}
+                    <div className="dashboard-header" style={{ marginBottom: 0 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div className="dashboard-header-content-wrapper">
+                                <div className="dashboard-header-content">
+                                    <div className="dashboard-accent-line" />
+                                    <Heading level={1} className="dashboard-title">Título con Acciones</Heading>
+                                </div>
+                                <Text size="base" className="dashboard-subtitle">Variante con botones de acción a la derecha</Text>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button variant="secondary" size="sm">Exportar</Button>
+                                <Button variant="default" size="sm">+ Nuevo</Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className={styles.codeBlock}>
+                    <code>{`/* Basic Header */
+<div className="dashboard-header">
+    <div className="dashboard-header-content">
+        <div className="dashboard-accent-line" />
+        <Heading level={1} className="dashboard-title">Título de la Página</Heading>
+    </div>
+    <Text size="base" className="dashboard-subtitle">Descripción corta</Text>
+</div>
+
+/* Header with Actions */
+<div className="dashboard-header">
+     <div className="flex justify-between items-start">
+        <div>
+            <div className="dashboard-header-content">
+                <div className="dashboard-accent-line" />
+                <Heading level={1} className="dashboard-title">Título</Heading>
+            </div>
+            <Text className="dashboard-subtitle">Descripción</Text>
+        </div>
+        <div className="flex gap-2">
+            <Button>Acción</Button>
+        </div>
+    </div>
+</div>`}</code>
+                </div>
+            </section>
 
             {/* Quick Reference Table */}
             <section className={styles.section}>

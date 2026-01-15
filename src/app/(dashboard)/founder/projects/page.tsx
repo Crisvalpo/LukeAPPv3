@@ -3,16 +3,18 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Plus, XCircle, ArrowUpCircle } from 'lucide-react'
 
 import { getProjectsByCompany, type Project } from '@/services/projects'
 import { ListView } from '@/components/views/ListView'
 import { ProjectSchema } from '@/schemas/project'
 import DeleteProjectModal from '@/components/modals/DeleteProjectModal'
 import '@/styles/dashboard.css'
+import '@/styles/views/founder-projects.css'
+import { Heading, Text } from '@/components/ui/Typography'
+import { Button } from '@/components/ui/button'
 
 import { SubscriptionTierType } from '@/types'
-import { XCircle, ArrowUpCircle } from 'lucide-react'
 
 interface ProjectWithStats extends Project {
     members_count: number
@@ -144,46 +146,53 @@ export default function ProjectsListPage() {
 
     return (
         <div className="dashboard-page">
-            <div className="dashboard-header">
-                <div className="dashboard-header-content">
-                    <div className="dashboard-accent-line" />
-                    <h1 className="dashboard-title">Mis Proyectos</h1>
+            {/* Header */}
+            <div className="dashboard-header project-page-header">
+                <div className="dashboard-header-content-wrapper">
+                    <div className="dashboard-header-content">
+                        <div className="dashboard-accent-line" />
+                        <Heading level={1} className="dashboard-title">Mis Proyectos</Heading>
+                    </div>
+                    <Text size="base" className="dashboard-subtitle">Gestiona los proyectos de tu empresa</Text>
                 </div>
-                <div className="dashboard-header-right">
+
+                <div className="header-right">
                     <span className={`project-count-badge ${projects.length >= currentLimit ? 'limit-reached' : ''}`}>
                         {projects.length} / {currentLimit} Proyectos
                     </span>
-                    <p className="dashboard-subtitle">Gestiona los proyectos de tu empresa</p>
+                    <Button onClick={handleCreateClick} disabled={projects.length >= currentLimit}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Nuevo Proyecto
+                    </Button>
                 </div>
             </div>
 
-            {/* ListView Implementation */}
-            <div style={{ marginTop: '2rem' }}>
-                <ListView
-                    schema={ProjectSchema}
-                    data={projects}
-                    isLoading={isLoading}
-                    onCreate={handleCreateClick}
-                    onAction={(action: string, item: Project) => {
-                        if (action === 'view') router.push(`/founder/projects/${item.id}`)
-                        if (action === 'delete') {
-                            setDeleteModal({
-                                projectId: item.id,
-                                projectCode: item.code,
-                                projectName: item.name
-                            })
-                        }
-                    }}
-                    customActions={[
-                        {
-                            id: 'delete',
-                            label: 'Eliminar',
-                            icon: Trash2,
-                            color: '#ef4444'
-                        }
-                    ]}
-                />
-            </div>
+            {/* ListView Implementation - Header Hidden */}
+            <ListView
+                schema={ProjectSchema}
+                data={projects}
+                isLoading={isLoading}
+                // We handle creation via the main header button now
+                onAction={(action: string, item: Project) => {
+                    if (action === 'view') router.push(`/founder/projects/${item.id}`)
+                    if (action === 'delete') {
+                        setDeleteModal({
+                            projectId: item.id,
+                            projectCode: item.code,
+                            projectName: item.name
+                        })
+                    }
+                }}
+                customActions={[
+                    {
+                        id: 'delete',
+                        label: 'Eliminar',
+                        icon: Trash2,
+                        color: '#ef4444'
+                    }
+                ]}
+                hideHeader={true}
+            />
 
             {/* Delete Modal */}
             {deleteModal && companyId && (
@@ -197,42 +206,41 @@ export default function ProjectsListPage() {
                 />
             )}
 
-            {/* Limit Reached Modal */}
+            {/* Limit Reached Modal - Premium Style */}
             {limitModalOpen && (
                 <div className="modal-overlay">
-                    <div className="modal-content limit-reached">
+                    <div className="modal-content premium-modal">
                         <div className="modal-icon-container">
                             <div className="modal-icon-circle danger">
-                                <XCircle size={32} color="#f87171" />
+                                <XCircle size={32} />
                             </div>
                         </div>
 
-                        <h2 className="modal-title danger">Límite del Plan Alcanzado</h2>
+                        <h2 className="modal-title">Límite del Plan Alcanzado</h2>
 
                         <p className="modal-text">
-                            Tu plan actual <strong style={{ color: 'white', textTransform: 'capitalize' }}>{subscriptionTier}</strong> permite hasta <strong>{maxProjectsLimit}</strong> proyectos.
+                            Tu plan actual <strong className="text-white capitalize">{subscriptionTier}</strong> permite hasta <strong>{maxProjectsLimit}</strong> proyectos.
                         </p>
 
-                        <p className="modal-text secondary">
+                        <p className="modal-text text-sm">
                             Para crear más proyectos, debes cambiarte a un plan superior o eliminar proyectos antiguos.
                         </p>
 
                         <div className="modal-actions">
-                            <button
+                            <Button
                                 onClick={() => setLimitModalOpen(false)}
-                                className="action-button primary full-width"
-                                style={{ background: '#3b82f6', justifyContent: 'center' }}
+                                className="w-full justify-center"
                             >
-                                <ArrowUpCircle size={18} />
+                                <ArrowUpCircle className="mr-2 h-4 w-4" />
                                 Contactar para Upgrade
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                                variant="ghost"
                                 onClick={() => setLimitModalOpen(false)}
-                                className="action-button secondary full-width"
-                                style={{ justifyContent: 'center' }}
+                                className="w-full justify-center"
                             >
                                 Entendido
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>

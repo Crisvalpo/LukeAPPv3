@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getCompanyById, updateCompany, getCompanyStats, type Company } from '@/services/companies'
-import { Building2, Users, FolderKanban, Edit2, X, Check } from 'lucide-react'
+import { Building2, Users, FolderKanban, Check, X } from 'lucide-react'
+import { Heading, Text } from '@/components/ui/Typography'
+import { Icons } from '@/components/ui/Icons'
+import { InputField } from '@/components/ui/InputField'
 import '@/styles/dashboard.css'
 import '@/styles/companies.css'
 import '@/styles/company-profile.css'
@@ -99,7 +102,7 @@ export default function FounderCompanyPage() {
     if (isLoading) {
         return (
             <div className="dashboard-page">
-                <p style={{ color: 'white', textAlign: 'center' }}>Cargando...</p>
+                <Text size="base" style={{ textAlign: 'center' }}>Cargando perfil...</Text>
             </div>
         )
     }
@@ -107,7 +110,7 @@ export default function FounderCompanyPage() {
     if (!company) {
         return (
             <div className="dashboard-page">
-                <p style={{ color: 'white', textAlign: 'center' }}>No se encontró la empresa</p>
+                <Text size="base" style={{ textAlign: 'center' }}>No se encontró la empresa</Text>
             </div>
         )
     }
@@ -117,13 +120,13 @@ export default function FounderCompanyPage() {
 
             {/* Header */}
             <div className="dashboard-header">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                    <div className="dashboard-header-content">
-                        <div className="dashboard-accent-line" />
-                        <h1 className="dashboard-title">Mi Empresa</h1>
-                    </div>
+                <div className="dashboard-header-content">
+                    <div className="dashboard-accent-line" />
+                    <Heading level={1} className="dashboard-title">Mi Empresa</Heading>
                 </div>
-                <p className="dashboard-subtitle">Información y configuración de tu empresa</p>
+                <Text size="base" className="dashboard-subtitle">
+                    Información detalla y configuración de tu organización
+                </Text>
             </div>
 
             <div className="company-profile-container">
@@ -132,16 +135,7 @@ export default function FounderCompanyPage() {
                     <div className="profile-header-glow" />
 
                     {error && (
-                        <div style={{
-                            padding: '1rem',
-                            background: 'rgba(239, 68, 68, 0.1)',
-                            border: '1px solid rgba(239, 68, 68, 0.3)',
-                            borderRadius: '0.5rem',
-                            color: '#f87171',
-                            marginBottom: '1.5rem',
-                            position: 'relative',
-                            zIndex: 2
-                        }}>
+                        <div className="error-banner">
                             {error}
                         </div>
                     )}
@@ -173,14 +167,13 @@ export default function FounderCompanyPage() {
                                 </div>
                             ) : (
                                 <div className="company-name-row">
-                                    <h2 className="company-name">{company.name}</h2>
+                                    <Heading as="h2" className="company-name">{company.name}</Heading>
                                     <button
                                         onClick={() => setIsEditing(true)}
-                                        className="icon-btn"
-                                        style={{ background: 'rgba(255,255,255,0.05)', color: '#94a3b8' }}
+                                        className="icon-btn edit"
                                         title="Editar nombre"
                                     >
-                                        <Edit2 size={18} />
+                                        <Icons.Edit size={18} />
                                     </button>
                                 </div>
                             )}
@@ -211,17 +204,17 @@ export default function FounderCompanyPage() {
 
                 {/* Quick Actions Section */}
                 <div>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'white', marginBottom: '1.5rem' }}>
+                    <Heading level={3} size="xl" className="mb-6 text-white font-bold">
                         Accesos Directos
-                    </h3>
+                    </Heading>
                     <div className="quick-actions-grid">
                         <button onClick={() => router.push('/founder/projects')} className="action-card">
                             <div className="action-icon-circle purple-glow">
                                 <FolderKanban size={28} />
                             </div>
                             <div className="action-content">
-                                <h3>Gestionar Proyectos</h3>
-                                <p>Crea, edita y supervisa tus proyectos</p>
+                                <Heading level={4} size="lg">Gestionar Proyectos</Heading>
+                                <Text size="sm" variant="muted">Crea, edita y supervisa tus proyectos</Text>
                             </div>
                         </button>
 
@@ -230,8 +223,8 @@ export default function FounderCompanyPage() {
                                 <Users size={28} />
                             </div>
                             <div className="action-content">
-                                <h3>Invitar Equipo</h3>
-                                <p>Agrega administradores y colaboradores</p>
+                                <Heading level={4} size="lg">Invitar Equipo</Heading>
+                                <Text size="sm" variant="muted">Agrega administradores y colaboradores</Text>
                             </div>
                         </button>
                     </div>

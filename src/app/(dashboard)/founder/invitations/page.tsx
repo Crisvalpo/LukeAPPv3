@@ -7,6 +7,7 @@ import { createInvitation, getPendingInvitations, revokeInvitation, type Invitat
 import { getProjectsByCompany, type Project } from '@/services/projects'
 import InvitationManager from '@/components/invitations/InvitationManager' // Import reusable component
 import '@/styles/dashboard.css'
+import { Heading, Text } from '@/components/ui/Typography'
 
 export default function FounderInvitationsPage() {
     const router = useRouter()
@@ -102,11 +103,13 @@ export default function FounderInvitationsPage() {
     return (
         <div className="dashboard-page">
             <div className="dashboard-header">
-                <div className="dashboard-header-content">
-                    <div className="dashboard-accent-line" />
-                    <h1 className="dashboard-title">Gestión de Invitaciones</h1>
+                <div className="dashboard-header-content-wrapper">
+                    <div className="dashboard-header-content">
+                        <div className="dashboard-accent-line" />
+                        <Heading level={1} className="dashboard-title">Gestión de Invitaciones</Heading>
+                    </div>
+                    <Text size="base" className="dashboard-subtitle">Invita administradores y trabajadores a tus proyectos en {companyName}</Text>
                 </div>
-                <p className="dashboard-subtitle">Invita administradores y trabajadores a tus proyectos en {companyName}</p>
             </div>
 
             {/* REUSABLE COMPONENT IN ACTION */}

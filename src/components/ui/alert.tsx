@@ -2,7 +2,7 @@ import * as React from 'react'
 import './alert.css'
 
 export interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
-    variant?: 'default' | 'destructive'
+    variant?: 'default' | 'destructive' | 'warning'
 }
 
 export function Alert({ className = '', variant = 'default', ...props }: AlertProps) {
