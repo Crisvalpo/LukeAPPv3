@@ -52,6 +52,7 @@ import {
     XCircle,
     Hourglass,
     Clock,
+    Split,
 
     // Context & Business
     Building2,
@@ -140,6 +141,7 @@ export const Icons = {
     Failed: XCircle,
     Pending: Hourglass,
     Clock: Clock,
+    Split: Split,
 
     // Context & Business
     Company: Building2,

@@ -42,6 +42,40 @@ export default async function LobbyPage() {
             redirect('/staff');
         }
 
+        // --- AUTO-ACCEPT PENDING INVITATIONS ---
+        // If user already exists but has pending invitations, accept them now (Fix for "User already registered" error)
+        if (user.email) {
+            const { data: pendingInv } = await supabase
+                .from('invitations')
+                .select('token')
+                .eq('email', user.email)
+                .eq('status', 'pending')
+                .limit(1)
+                .maybeSingle();
+
+            if (pendingInv && pendingInv.token) {
+                console.log('🔔 Auto-accepting invitation for existing user:', user.email);
+                await supabase.rpc('accept_invitation', {
+                    token_input: pendingInv.token,
+                    user_id_input: user.id
+                });
+            }
+        }
+        // ---------------------------------------
+
+        // Check for founder role
+        const { data: founderMember } = await supabase
+            .from('members')
+            .select('role_id')
+            .eq('user_id', user.id)
+            .eq('role_id', 'founder')
+            .maybeSingle();
+
+        // Direct Access for Founders
+        if (founderMember) {
+            redirect('/founder');
+        }
+
         // Get single active membership (invite-only model)
         const { data: memberData, error } = await supabase
             .from('members')
@@ -62,7 +96,11 @@ export default async function LobbyPage() {
         if (!error && memberData) {
             membership = memberData as unknown as Membership;
         }
-    } catch (error) {
+    } catch (error: any) {
+        // Allow Next.js redirects to propagate
+        if (error?.digest?.startsWith('NEXT_REDIRECT') || error?.message === 'NEXT_REDIRECT') {
+            throw error;
+        }
         console.error('Lobby load error:', error);
     }
 

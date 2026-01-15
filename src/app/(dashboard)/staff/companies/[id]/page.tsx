@@ -3,7 +3,13 @@
 import { use, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCompanyById, updateCompany, deleteCompanyCascade, getCompanyStats, type Company } from '@/services/companies'
-import { Building2, Users, FolderKanban, ArrowLeft, Trash2 } from 'lucide-react'
+import { Building2, Users, FolderKanban, Trash2, FileText, Mail, Pencil, Save, X, Eraser, AlertTriangle, CheckCircle, Zap } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import '@/styles/dashboard.css'
 import '@/styles/companies.css'
 import CompanyProjectsTab from '@/components/staff/company-tabs/CompanyProjectsTab'
@@ -173,26 +179,9 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
         <div className="dashboard-page companies-page">
             {/* Header */}
             <div className="dashboard-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                    <button
-                        onClick={() => router.push('/staff/companies')}
-                        style={{
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            borderRadius: '0.5rem',
-                            padding: '0.5rem',
-                            color: 'white',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center'
-                        }}
-                    >
-                        <ArrowLeft size={20} />
-                    </button>
-                    <div className="dashboard-header-content">
-                        <div className="dashboard-accent-line" />
-                        <h1 className="dashboard-title">{company.name}</h1>
-                    </div>
+                <div className="dashboard-header-content">
+                    <div className="dashboard-accent-line" />
+                    <h1 className="dashboard-title">{company.name}</h1>
                 </div>
                 <p className="dashboard-subtitle">Detalles y configuración de la empresa</p>
             </div>
@@ -231,270 +220,261 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
             </div>
 
             {/* TABS NAVIGATION */}
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>
-                {[
-                    { id: 'details', label: '📋 Detalles' },
-                    { id: 'projects', label: '📂 Proyectos' },
-                    { id: 'members', label: '👥 Miembros' },
-                    { id: 'invitations', label: '✉️ Invitaciones' }
-                ].map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id as any)}
-                        style={{
-                            background: 'transparent',
-                            border: 'none',
-                            borderBottom: activeTab === tab.id ? '2px solid #60a5fa' : '2px solid transparent',
-                            color: activeTab === tab.id ? 'white' : '#94a3b8',
-                            padding: '0.5rem 1rem',
-                            cursor: 'pointer',
-                            fontSize: '1rem',
-                            fontWeight: activeTab === tab.id ? '600' : '400',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        {tab.label}
-                    </button>
-                ))}
-            </div>
+            <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as any)} className="w-full">
+                <div style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '1.5rem' }}>
+                    <TabsList variant="underline">
+                        <TabsTrigger value="details" variant="underline">
+                            <FileText size={16} style={{ marginRight: '8px' }} />
+                            Detalles
+                        </TabsTrigger>
+                        <TabsTrigger value="projects" variant="underline">
+                            <FolderKanban size={16} style={{ marginRight: '8px' }} />
+                            Proyectos
+                        </TabsTrigger>
+                        <TabsTrigger value="members" variant="underline">
+                            <Users size={16} style={{ marginRight: '8px' }} />
+                            Miembros
+                        </TabsTrigger>
+                        <TabsTrigger value="invitations" variant="underline">
+                            <Mail size={16} style={{ marginRight: '8px' }} />
+                            Invitaciones
+                        </TabsTrigger>
+                    </TabsList>
+                </div>
 
-            {/* TAB CONTENT */}
-            {activeTab === 'details' && (
-                <div className="company-form-container">
-                    <div className="company-form-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                            <h2 className="company-form-title">Información de la Empresa</h2>
-                            <p className="company-form-description">
-                                {isEditing ? 'Editando detalles de la empresa' : 'Detalles de la empresa'}
-                            </p>
-                        </div>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            {!isEditing && (
-                                <>
-                                    <button
-                                        onClick={() => setIsEditing(true)}
-                                        className="action-button"
-                                        style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
-                                    >
-                                        ✏️ Editar
-                                    </button>
-                                    {/* Ocultar botón eliminar para empresa genesis */}
-                                    {company.slug !== 'lukeapp-hq' && (
-                                        <button
-                                            onClick={handleDelete}
-                                            disabled={deleting}
-                                            className="action-button delete"
-                                            style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
-                                            title="Eliminar empresa"
+                {/* TAB CONTENT */}
+                <TabsContent value="details">
+                    <Card>
+                        <CardHeader className="company-card-header">
+                            <div className="company-card-title-group">
+                                <CardTitle>Información de la Empresa</CardTitle>
+                                <CardDescription>
+                                    {isEditing ? 'Editando detalles de la empresa' : 'Detalles de la empresa'}
+                                </CardDescription>
+                            </div>
+                            <div className="company-card-actions">
+                                {!isEditing && (
+                                    <>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setIsEditing(true)}
+                                            className="gap-2"
                                         >
-                                            {deleting ? '...' : '🗑️ Eliminar'}
-                                        </button>
-                                    )}
-                                </>
+                                            <Pencil size={14} />
+                                            Editar
+                                        </Button>
+                                        {/* Ocultar botón eliminar para empresa genesis */}
+                                        {company.slug !== 'lukeapp-hq' && (
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                onClick={handleDelete}
+                                                disabled={deleting}
+                                                title="Eliminar empresa"
+                                                className="gap-2"
+                                            >
+                                                <Trash2 size={14} />
+                                                {deleting ? 'Eliminando...' : 'Eliminar'}
+                                            </Button>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        </CardHeader>
+
+                        <CardContent>
+                            {success && (
+                                <Alert className="company-success">
+                                    <AlertTitle className="company-success-title flex items-center gap-2">
+                                        <CheckCircle size={16} />
+                                        Cambios guardados
+                                    </AlertTitle>
+                                    <AlertDescription className="company-success-text">La información se actualizó correctamente</AlertDescription>
+                                </Alert>
                             )}
-                        </div>
-                    </div>
 
-                    {success && (
-                        <div className="company-success">
-                            <h3 className="company-success-title">✅ Cambios guardados</h3>
-                            <p className="company-success-text">La información se actualizó correctamente</p>
-                        </div>
-                    )}
+                            <form onSubmit={handleSubmit} className="company-form-spacer">
+                                {error && (
+                                    <Alert variant="destructive" className="mb-4">
+                                        <AlertTitle>Error</AlertTitle>
+                                        <AlertDescription>{error}</AlertDescription>
+                                    </Alert>
+                                )}
 
-                    <form onSubmit={handleSubmit} className="company-form">
-                        {error && (
-                            <div style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '0.5rem', color: '#f87171' }}>
-                                {error}
-                            </div>
-                        )}
-
-                        <div className="company-form-grid">
-                            <div className="form-field">
-                                <label htmlFor="name" className="form-label">
-                                    Nombre de la Empresa *
-                                </label>
-                                <input
-                                    id="name"
-                                    type="text"
-                                    required
-                                    disabled={!isEditing}
-                                    value={formData.name}
-                                    onChange={(e) => handleNameChange(e.target.value)}
-                                    className="form-input"
-                                    placeholder="Minera Candelaria"
-                                />
-                            </div>
-
-                            <div className="form-field">
-                                <label htmlFor="slug" className="form-label">
-                                    Slug (URL) *
-                                </label>
-                                <input
-                                    id="slug"
-                                    type="text"
-                                    required
-                                    disabled={true}
-                                    value={formData.slug}
-                                    className="form-input"
-                                    style={{ opacity: 0.7, cursor: 'not-allowed' }}
-                                    placeholder="minera-candelaria"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="form-field">
-                            <label htmlFor="subscription_tier" className="form-label" style={{ color: '#60a5fa' }}>
-                                Plan de Suscripción *
-                            </label>
-                            <select
-                                id="subscription_tier"
-                                required
-                                disabled={!isEditing}
-                                value={formData.subscription_tier}
-                                onChange={(e) => setFormData({ ...formData, subscription_tier: e.target.value as any })}
-                                className="form-input"
-                                style={{ borderColor: '#60a5fa' }}
-                            >
-                                <option value="starter">Starter</option>
-                                <option value="pro">Pro</option>
-                                <option value="enterprise">Enterprise</option>
-                            </select>
-                            <p className="form-hint">Determina los límites base y el costo.</p>
-                        </div>
-
-                        {/* Clear Quota Strikes Button */}
-                        {!isEditing && (
-                            <div style={{
-                                padding: '1rem',
-                                background: 'rgba(249, 115, 22, 0.1)',
-                                border: '1px solid rgba(249, 115, 22, 0.3)',
-                                borderRadius: '0.5rem',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                gap: '1rem'
-                            }}>
-                                <div>
-                                    <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#fb923c', marginBottom: '0.25rem' }}>
-                                        ⚠️ Limpiar Avisos de Cuota
+                                <div className="company-form-grid">
+                                    <div className="form-field">
+                                        <label htmlFor="name" className="form-label">
+                                            Nombre de la Empresa *
+                                        </label>
+                                        <Input
+                                            id="name"
+                                            type="text"
+                                            required
+                                            disabled={!isEditing}
+                                            value={formData.name}
+                                            onChange={(e) => handleNameChange(e.target.value)}
+                                            placeholder="Minera Candelaria"
+                                        />
                                     </div>
-                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                                        Elimina strikes acumulados y borra el banner de advertencia
+
+                                    <div className="form-field">
+                                        <label htmlFor="slug" className="form-label">
+                                            Slug (URL) *
+                                        </label>
+                                        <Input
+                                            id="slug"
+                                            type="text"
+                                            required
+                                            disabled={true}
+                                            value={formData.slug}
+                                            className="opacity-70 cursor-not-allowed"
+                                            placeholder="minera-candelaria"
+                                        />
                                     </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={handleClearStrikes}
-                                    disabled={clearingStrikes}
-                                    className="action-button"
-                                    style={{
-                                        fontSize: '0.875rem',
-                                        padding: '0.5rem 1rem',
-                                        background: 'rgba(249, 115, 22, 0.2)',
-                                        borderColor: '#f97316',
-                                        color: '#fb923c',
-                                        whiteSpace: 'nowrap'
-                                    }}
-                                >
-                                    {clearingStrikes ? '⏳ Limpiando...' : '🧹 Limpiar Avisos'}
-                                </button>
-                            </div>
-                        )}
-
-
-                        {/* Custom Limits Section */}
-                        <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#f59e0b', marginBottom: '1rem' }}>⚡ Límites Personalizados (Overrides)</h3>
-                            <div className="company-form-grid">
-                                <div className="form-field">
-                                    <label htmlFor="custom_users_limit" className="form-label" style={{ color: '#fbbf24' }}>
-                                        Máximo Usuarios
-                                    </label>
-                                    <input
-                                        id="custom_users_limit"
-                                        type="number"
-                                        min="0"
-                                        disabled={!isEditing}
-                                        value={formData.custom_users_limit}
-                                        onChange={(e) => setFormData({ ...formData, custom_users_limit: e.target.value })}
-                                        className="form-input"
-                                        style={{ borderColor: formData.custom_users_limit ? '#f59e0b' : '' }}
-                                        placeholder="Dejar vacío para usar límite del plan"
-                                    />
-                                    <p className="form-hint">Sobreescribe el límite del Plan</p>
                                 </div>
 
                                 <div className="form-field">
-                                    <label htmlFor="custom_projects_limit" className="form-label" style={{ color: '#fbbf24' }}>
-                                        Máximo Proyectos
+                                    <label htmlFor="subscription_tier" className="form-label form-label-blue">
+                                        Plan de Suscripción *
                                     </label>
-                                    <input
-                                        id="custom_projects_limit"
-                                        type="number"
-                                        min="0"
+                                    <Select
                                         disabled={!isEditing}
-                                        value={formData.custom_projects_limit}
-                                        onChange={(e) => setFormData({ ...formData, custom_projects_limit: e.target.value })}
-                                        className="form-input"
-                                        style={{ borderColor: formData.custom_projects_limit ? '#f59e0b' : '' }}
-                                        placeholder="Dejar vacío para usar límite del plan"
-                                    />
-                                    <p className="form-hint">Sobreescribe el límite del Plan</p>
+                                        value={formData.subscription_tier}
+                                        onValueChange={(val) => setFormData({ ...formData, subscription_tier: val as any })}
+                                    >
+                                        <SelectTrigger className="select-trigger-blue">
+                                            <SelectValue placeholder="Seleccionar plan" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="starter">Starter</SelectItem>
+                                            <SelectItem value="pro">Pro</SelectItem>
+                                            <SelectItem value="enterprise">Enterprise</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="form-hint">Determina los límites base y el costo.</p>
                                 </div>
-                            </div>
-                        </div>
 
-                        {isEditing && (
-                            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                                <button type="submit" disabled={submitting} className="form-button">
-                                    {submitting ? 'Guardando...' : '💾 Guardar Cambios'}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setIsEditing(false)
-                                        setFormData({
-                                            name: company.name,
-                                            slug: company.slug,
-                                            subscription_tier: company.subscription_tier || 'starter',
-                                            custom_users_limit: company.custom_users_limit ?? '',
-                                            custom_projects_limit: company.custom_projects_limit ?? ''
-                                        })
-                                        setError('')
-                                    }}
-                                    className="form-button"
-                                    style={{ background: 'rgba(255, 255, 255, 0.05)' }}
-                                >
-                                    Cancelar
-                                </button>
-                            </div>
-                        )}
-                    </form>
-                </div >
-            )}
+                                {/* Clear Quota Strikes Button */}
+                                {!isEditing && (
+                                    <Alert variant="warning" className="alert-quota">
+                                        <div className="alert-quota-content">
+                                            <AlertTitle className="alert-quota-title">
+                                                <AlertTriangle size={16} />
+                                                Limpiar Avisos de Cuota
+                                            </AlertTitle>
+                                            <AlertDescription className="alert-quota-desc">
+                                                Elimina strikes acumulados y borra el banner de advertencia
+                                            </AlertDescription>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleClearStrikes}
+                                            disabled={clearingStrikes}
+                                            className="btn-quota gap-2"
+                                        >
+                                            <Eraser size={14} />
+                                            {clearingStrikes ? 'Limpiando...' : 'Limpiar Avisos'}
+                                        </Button>
+                                    </Alert>
+                                )}
 
-            {
-                activeTab === 'projects' && (
+
+                                {/* Custom Limits Section */}
+                                <div className="company-form-divider">
+                                    <h3 className="company-form-divider-title flex items-center gap-2">
+                                        <Zap size={16} />
+                                        Límites Personalizados (Overrides)
+                                    </h3>
+                                    <div className="company-form-grid">
+                                        <div className="form-field">
+                                            <label htmlFor="custom_users_limit" className="form-label form-label-amber">
+                                                Máximo Usuarios
+                                            </label>
+                                            <Input
+                                                id="custom_users_limit"
+                                                type="number"
+                                                min="0"
+                                                disabled={!isEditing}
+                                                value={formData.custom_users_limit}
+                                                onChange={(e) => setFormData({ ...formData, custom_users_limit: e.target.value })}
+                                                className={formData.custom_users_limit ? 'input-amber' : ''}
+                                                placeholder="Dejar vacío para usar límite del plan"
+                                            />
+                                            <p className="form-hint">Sobreescribe el límite del Plan</p>
+                                        </div>
+
+                                        <div className="form-field">
+                                            <label htmlFor="custom_projects_limit" className="form-label form-label-amber">
+                                                Máximo Proyectos
+                                            </label>
+                                            <Input
+                                                id="custom_projects_limit"
+                                                type="number"
+                                                min="0"
+                                                disabled={!isEditing}
+                                                value={formData.custom_projects_limit}
+                                                onChange={(e) => setFormData({ ...formData, custom_projects_limit: e.target.value })}
+                                                className={formData.custom_projects_limit ? 'input-amber' : ''}
+                                                placeholder="Dejar vacío para usar límite del plan"
+                                            />
+                                            <p className="form-hint">Sobreescribe el límite del Plan</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {isEditing && (
+                                    <div className="company-form-footer">
+                                        <Button type="submit" disabled={submitting} className="gap-2">
+                                            <Save size={16} />
+                                            {submitting ? 'Guardando...' : 'Guardar Cambios'}
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            onClick={() => {
+                                                setIsEditing(false)
+                                                setFormData({
+                                                    name: company.name,
+                                                    slug: company.slug,
+                                                    subscription_tier: company.subscription_tier || 'starter',
+                                                    custom_users_limit: company.custom_users_limit ?? '',
+                                                    custom_projects_limit: company.custom_projects_limit ?? ''
+                                                })
+                                                setError('')
+                                            }}
+                                            className="gap-2"
+                                        >
+                                            <X size={16} />
+                                            Cancelar
+                                        </Button>
+                                    </div>
+                                )}
+                            </form>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="projects">
                     <CompanyProjectsTab companyId={resolvedParams.id} />
-                )
-            }
+                </TabsContent>
 
-            {
-                activeTab === 'members' && (
+                <TabsContent value="members">
                     <CompanyMembersTab companyId={resolvedParams.id} />
-                )
-            }
+                </TabsContent>
 
-            {
-                activeTab === 'invitations' && company && (
-                    <CompanyInvitationsTab
-                        companyId={resolvedParams.id}
-                        companyName={company.name}
-                        companySlug={company.slug}
-                    />
-                )
-            }
+                <TabsContent value="invitations">
+                    {company && (
+                        <CompanyInvitationsTab
+                            companyId={resolvedParams.id}
+                            companyName={company.name}
+                            companySlug={company.slug}
+                        />
+                    )}
+                </TabsContent>
+            </Tabs>
         </div >
     )
 }

@@ -15,7 +15,7 @@ interface SplitSpoolModalProps {
     isOpen?: boolean
     onClose?: () => void
     spool?: any
-    onSuccess?: () => void
+    onSuccess?: (newSpools?: any[]) => void
 }
 
 export function SplitSpoolModal({ isOpen, onClose, spool, onSuccess }: SplitSpoolModalProps = {}) {
@@ -53,7 +53,7 @@ export function SplitSpoolModal({ isOpen, onClose, spool, onSuccess }: SplitSpoo
             if (result.success) {
                 // Success! Close modal
                 handleClose()
-                if (onSuccess) onSuccess()
+                if (onSuccess) onSuccess(result.children)
             }
         } catch (e: any) {
             console.error('Split failed', e)
@@ -90,6 +90,23 @@ export function SplitSpoolModal({ isOpen, onClose, spool, onSuccess }: SplitSpoo
                             <li>Generará nuevos Tags de Gestión.</li>
                             <li>Requerirá re-impresión de etiquetas.</li>
                         </ul>
+                    </div>
+
+                    <div style={{
+                        backgroundColor: 'rgba(234, 179, 8, 0.1)',
+                        border: '1px solid rgba(234, 179, 8, 0.2)',
+                        padding: '12px',
+                        borderRadius: '6px',
+                        color: '#facc15',
+                        fontSize: '0.75rem',
+                        display: 'flex',
+                        gap: '8px',
+                        alignItems: 'start'
+                    }}>
+                        <span style={{ fontSize: '1rem' }}>⚠️</span>
+                        <span>
+                            <strong>Nota Importante:</strong> Si quedan uniones pendientes (Origen 'S' Taller) en el spool padre, este no podrá marcarse como "FABRICADO" hasta que dichas uniones se gestionen (Ej: editando su estado o eliminándolas).
+                        </span>
                     </div>
 
                     {error && (

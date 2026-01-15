@@ -22,6 +22,7 @@ import UnassignedJointsPanel from './viewer/UnassignedJointsPanel'
 import { assignJointToSpoolAction } from '@/actions/joints'
 import { FileText, Trash2, ExternalLink, Box, Wrench, Split } from 'lucide-react'
 import { SplitSpoolModal } from './viewer/SplitSpoolModal'
+import { useViewerStore } from './viewer/ViewerLogic'
 import { createClient } from '@/lib/supabase/client'
 
 // Wrapper to load spools for viewer and handle fullscreen portal
@@ -750,6 +751,50 @@ function IsometricViewerWrapper({
                                                 setSelectedWeldForDetail(weldData)
                                             }}
                                             onJointClick={(joint) => setSelectedJointForDetail(joint)}
+                                            onAssign={(type, id, targetSpoolId) => {
+                                                console.log(`📦 Assigned ${type} ${id} to ${targetSpoolId}`)
+
+                                                if (type === 'WELD') {
+                                                    // Update Welds Map
+                                                    // 1. Remove from Parent (current spool) cache
+                                                    const parentId = spool.id
+                                                    const parentWelds = weldsMap[parentId] || []
+
+                                                    // Find the weld to move
+                                                    const weldToMove = parentWelds.find((w: any) => w.id === id)
+
+                                                    if (weldToMove) {
+                                                        // A. Remove from Parent List
+                                                        const newParentWelds = parentWelds.filter((w: any) => w.id !== id)
+
+                                                        // B. Add to Child List (if initialized) or create
+                                                        // Actually, we don't display child list in detail here yet 
+                                                        // BUT removing it from Parent List is KEY for 'Pool' visualization
+
+                                                        setWeldsMap(prev => ({
+                                                            ...prev,
+                                                            [parentId]: newParentWelds,
+                                                            // Optionally add to target if we track it
+                                                            [targetSpoolId]: [...(prev[targetSpoolId] || []), { ...weldToMove, spool_id: targetSpoolId }]
+                                                        }))
+                                                    }
+                                                } else {
+                                                    // Update JOINTS Map
+                                                    const parentId = spool.id
+                                                    const parentJoints = jointsMap[parentId] || []
+                                                    const jointToMove = parentJoints.find((j: any) => j.id === id)
+
+                                                    if (jointToMove) {
+                                                        const newParentJoints = parentJoints.filter((j: any) => j.id !== id)
+
+                                                        setJointsMap(prev => ({
+                                                            ...prev,
+                                                            [parentId]: newParentJoints,
+                                                            [targetSpoolId]: [...(prev[targetSpoolId] || []), { ...jointToMove, spool_id: targetSpoolId }]
+                                                        }))
+                                                    }
+                                                }
+                                            }}
                                         />
                                     )}
                                 </div>
@@ -1260,6 +1305,7 @@ function IsometricViewerWrapper({
                 <WeldDetailModal
                     weld={selectedWeldForDetail}
                     weldTypeConfig={weldTypesConfig[selectedWeldForDetail.type_weld]}
+                    availableWeldTypes={Object.keys(weldTypesConfig)}
                     onClose={() => setSelectedWeldForDetail(null)}
                     onUpdate={(updatedWeld) => {
                         const spoolId = updatedWeld.spool_id
@@ -1353,14 +1399,48 @@ function IsometricViewerWrapper({
                 isOpen={isSplitting}
                 onClose={() => setIsSplitting(false)}
                 spool={spools.find(s => s.id === activeSpoolId)}
-                onSuccess={() => {
-                    // Force Refresh entire context
-                    // We can use router.refresh() but local state spools need update too
-                    // Simplest is to reload page or re-trigger fetchContext
-                    // We can check if `onRefresh` prop exists on parent wrapper? No, this is Wrapper.
-                    // We'll trust router.refresh() + maybe imperative fetchContext if we extracted it.
-                    // For now, reload window is safest for "Split" which is a major structural change.
-                    window.location.reload()
+                onSuccess={(newSpools) => {
+                    // Update Local State Optimistically
+                    if (newSpools && newSpools.length > 0) {
+                        setSpools(current => {
+                            // 1. Mark Parent as DIVIDED
+                            const updated = current.map(s =>
+                                s.id === activeSpoolId ? { ...s, status: 'DIVIDED' } : s
+                            )
+                            // 2. Add New Children (Mapped)
+                            const mappedChildren = newSpools.map((s: any) => ({
+                                id: s.id,
+                                name: s.spool_number,
+                                tag: s.management_tag,
+                                status: s.status,
+                                welds: 0, // Initial state
+                                location: null, // Initial state
+                                parent_spool_id: s.parent_spool_id
+                            }))
+
+                            // 3. Unlink 3D Meshes (Visual Update via modelData)
+                            // Remove the parent assignment so elements become available (Grey)
+                            setModelData((prev: any) => {
+                                const newAssignments = { ...(prev?.spool_assignments || {}) }
+                                // Delete the parent key so its elements are no longer colored/assigned to it
+                                if (activeSpoolId) {
+                                    delete newAssignments[activeSpoolId]
+                                }
+                                return {
+                                    ...prev,
+                                    spool_assignments: newAssignments
+                                }
+                            })
+
+                            return [...updated, ...mappedChildren]
+                        })
+                        // Close splitting mode
+                        setIsSplitting(false)
+                        // Alert user? Maybe toast. For now, simple transition.
+                    } else {
+                        // Fallback if no children returned?
+                        window.location.reload()
+                    }
                 }}
             />
         </div>

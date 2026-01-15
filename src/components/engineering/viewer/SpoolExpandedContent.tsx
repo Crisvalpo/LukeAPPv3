@@ -17,6 +17,7 @@ interface SpoolExpandedContentProps {
     loading: boolean
     onWeldClick: (weld: any) => void
     onJointClick?: (joint: any) => void
+    onAssign?: (type: 'WELD' | 'JOINT', id: string, targetSpoolId: string) => void
 }
 
 export default function SpoolExpandedContent({
@@ -29,7 +30,8 @@ export default function SpoolExpandedContent({
     weldTypesConfig,
     loading,
     onWeldClick,
-    onJointClick
+    onJointClick,
+    onAssign
 }: SpoolExpandedContentProps) {
     const [activeTab, setActiveTab] = useState<'WELDS' | 'JOINTS' | 'SPLIT'>('WELDS')
 
@@ -61,20 +63,58 @@ export default function SpoolExpandedContent({
     // -------------------------------------------------------------
     // SPLIT VIEW: Distribution Interface
     // -------------------------------------------------------------
-    if (activeTab === 'SPLIT' || (spool.status === 'DIVIDED' && activeTab === 'SPLIT')) {
+    // -------------------------------------------------------------
+    // SPLIT VIEW: Distribution Interface
+    // -------------------------------------------------------------
+    // Warning: 'SPLIT' might not be in the type definition of activeTab initially if inferred incorrectly?
+    // It is defined as <'WELDS' | 'JOINTS' | 'SPLIT'> above.
+    const isSplitView = activeTab === 'SPLIT'
+
+    if (isSplitView) {
         return (
-            <div className="bg-slate-900/50 p-2 rounded border border-slate-700 mt-2">
-                <div className="text-xs font-bold text-amber-400 mb-2 flex items-center gap-2">
-                    <Icons.Split className="w-3 h-3" />
+            <div style={{
+                backgroundColor: 'rgba(15, 23, 42, 0.5)', // slate-900/50
+                padding: '8px',
+                borderRadius: '6px',
+                border: '1px solid #334155', // slate-700
+                marginTop: '8px'
+            }}>
+                <div style={{
+                    fontSize: '0.75rem', // xs
+                    fontWeight: 'bold',
+                    color: '#fbbf24', // amber-400
+                    marginBottom: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                }}>
+                    <Icons.Split size={12} />
                     Spool Dividido - Asignación Pendiente
                 </div>
 
                 {/* 1. Unassigned Components (Source) */}
-                <div className="mb-4">
-                    <span className="text-[10px] uppercase text-slate-400 font-semibold tracking-wider">
+                <div style={{ marginBottom: '16px' }}>
+                    <span style={{
+                        fontSize: '10px',
+                        textTransform: 'uppercase',
+                        color: '#94a3b8', // slate-400
+                        fontWeight: 600,
+                        letterSpacing: '0.05em'
+                    }}>
                         Pool de Componentes ({welds.length + joints.length})
                     </span>
-                    <div className="grid grid-cols-2 gap-2 mt-1 max-h-[150px] overflow-y-auto p-1 bg-slate-950 rounded border border-slate-800">
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, 1fr)',
+                        gap: '8px',
+                        marginTop: '4px',
+                        maxHeight: '150px',
+                        overflowY: 'auto',
+                        padding: '4px',
+                        backgroundColor: '#020617', // slate-950
+                        borderRadius: '4px',
+                        border: '1px solid #1e293b' // slate-800
+                    }}>
                         {/* Welds */}
                         {welds.map(w => (
                             <div
@@ -85,13 +125,22 @@ export default function SpoolExpandedContent({
                                     e.dataTransfer.setData('id', w.id)
                                     e.dataTransfer.effectAllowed = 'move'
                                 }}
-                                className="cursor-grab hover:bg-slate-800 p-1.5 rounded flex items-center justify-between border border-slate-700 bg-slate-900"
+                                style={{
+                                    cursor: 'grab',
+                                    padding: '6px',
+                                    borderRadius: '4px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    border: '1px solid #334155', // slate-700
+                                    backgroundColor: '#0f172a' // slate-900
+                                }}
                             >
-                                <div className="flex items-center gap-1.5">
-                                    <Flame size={10} className="text-orange-400" />
-                                    <span className="text-xs font-mono text-white">{w.weld_number}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <Flame size={10} color="#fb923c" /> {/* orange-400 */}
+                                    <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', color: 'white' }}>{w.weld_number}</span>
                                 </div>
-                                <span className="text-[9px] text-slate-500">{w.type_weld}</span>
+                                <span style={{ fontSize: '9px', color: '#64748b' }}>{w.type_weld}</span>
                             </div>
                         ))}
                         {/* Joints */}
@@ -104,17 +153,26 @@ export default function SpoolExpandedContent({
                                     e.dataTransfer.setData('id', j.id)
                                     e.dataTransfer.effectAllowed = 'move'
                                 }}
-                                className="cursor-grab hover:bg-slate-800 p-1.5 rounded flex items-center justify-between border border-slate-700 bg-slate-900"
+                                style={{
+                                    cursor: 'grab',
+                                    padding: '6px',
+                                    borderRadius: '4px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    border: '1px solid #334155', // slate-700
+                                    backgroundColor: '#0f172a' // slate-900
+                                }}
                             >
-                                <div className="flex items-center gap-1.5">
-                                    <Wrench size={10} className="text-sky-400" />
-                                    <span className="text-xs font-mono text-white">{j.flanged_joint_number}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <Wrench size={10} color="#38bdf8" /> {/* sky-400 */}
+                                    <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', color: 'white' }}>{j.flanged_joint_number}</span>
                                 </div>
-                                <span className="text-[9px] text-slate-500">{j.type_code}</span>
+                                <span style={{ fontSize: '9px', color: '#64748b' }}>{j.type_code}</span>
                             </div>
                         ))}
                         {welds.length === 0 && joints.length === 0 && (
-                            <div className="col-span-2 text-center text-[10px] text-slate-600 py-2">
+                            <div style={{ gridColumn: 'span 2', textAlign: 'center', fontSize: '10px', color: '#475569', padding: '8px' }}>
                                 No hay componentes pendientes
                             </div>
                         )}
@@ -123,10 +181,16 @@ export default function SpoolExpandedContent({
 
                 {/* 2. Child Spools (Targets) */}
                 <div>
-                    <span className="text-[10px] uppercase text-slate-400 font-semibold tracking-wider">
+                    <span style={{
+                        fontSize: '10px',
+                        textTransform: 'uppercase',
+                        color: '#94a3b8', // slate-400
+                        fontWeight: 600,
+                        letterSpacing: '0.05em'
+                    }}>
                         Sub-Spools (Destinos)
                     </span>
-                    <div className="space-y-2 mt-1">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
                         {childSpools.map((child: any) => (
                             <div
                                 key={child.id}
@@ -138,12 +202,12 @@ export default function SpoolExpandedContent({
                                 }}
                                 onDragLeave={(e) => {
                                     e.currentTarget.style.borderColor = '#334155'
-                                    e.currentTarget.style.backgroundColor = 'transparent'
+                                    e.currentTarget.style.backgroundColor = 'rgba(30, 41, 59, 0.5)' // slate-800/50
                                 }}
                                 onDrop={async (e) => {
                                     e.preventDefault()
                                     e.currentTarget.style.borderColor = '#334155'
-                                    e.currentTarget.style.backgroundColor = 'transparent'
+                                    e.currentTarget.style.backgroundColor = 'rgba(30, 41, 59, 0.5)'
 
                                     const type = e.dataTransfer.getData('type')
                                     const id = e.dataTransfer.getData('id')
@@ -152,27 +216,45 @@ export default function SpoolExpandedContent({
                                     const { assignComponentsToSpool } = await import('@/actions/spools')
                                     await assignComponentsToSpool(child.id, [id], type as 'WELD' | 'JOINT')
 
-                                    // Note: Caller should handle refresh. 
-                                    // Ideally we need a callback from parent to re-fetch welds/joints.
-                                    // For now, simple interaction, user might need to collapse/expand to refresh.
-                                    // Or we inject a refresh handler.
+                                    // Notify Parent for Optimistic Update
+                                    if (onAssign) onAssign(type as 'WELD' | 'JOINT', id, child.id)
+
+
+                                    // Trigger simple refresh if passed, or rely on parent
+                                    // ideally we'd have onRefresh() prop
                                 }}
-                                className="p-2 rounded border border-slate-700 bg-slate-800/50 flex items-center justify-between transition-colors"
+                                style={{
+                                    padding: '8px',
+                                    borderRadius: '4px',
+                                    border: '1px solid #334155', // slate-700
+                                    backgroundColor: 'rgba(30, 41, 59, 0.5)', // slate-800/50
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    transition: 'all 0.2s'
+                                }}
                             >
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-white">{child.name}</span>
-                                    <span className="text-[10px] font-mono text-slate-400 bg-slate-900 px-1 py-0.5 rounded">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'white' }}>{child.name}</span>
+                                    <span style={{
+                                        fontSize: '10px',
+                                        fontFamily: 'monospace',
+                                        color: '#94a3b8',
+                                        backgroundColor: '#0f172a',
+                                        padding: '2px 4px',
+                                        borderRadius: '2px'
+                                    }}>
                                         {child.tag || 'SIN-TAG'}
                                     </span>
                                 </div>
-                                <div className="text-[10px] text-slate-500 flex items-center gap-1">
-                                    <div className="w-2 h-2 rounded-full bg-slate-600 animate-pulse"></div>
+                                <div style={{ fontSize: '10px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#475569' }}></div>
                                     Arrastra aquí
                                 </div>
                             </div>
                         ))}
                         {childSpools.length === 0 && (
-                            <div className="text-xs text-red-400 italic">
+                            <div style={{ fontSize: '0.75rem', color: '#f87171', fontStyle: 'italic' }}>
                                 Error: No se encontraron sub-spools creados.
                             </div>
                         )}

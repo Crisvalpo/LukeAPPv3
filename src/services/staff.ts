@@ -21,10 +21,11 @@ export interface RecentCompany {
  */
 export async function getGlobalStats(): Promise<GlobalStats> {
     const supabase = createClient()
+    const genesisId = 'bc4387ef-b092-4ee2-b660-bb928f1d2ae8'
 
     const [companiesResult, projectsResult, usersResult, invitationsResult] = await Promise.all([
-        supabase.from('companies').select('id', { count: 'exact', head: true }),
-        supabase.from('projects').select('id', { count: 'exact', head: true }),
+        supabase.from('companies').select('id', { count: 'exact', head: true }).neq('id', genesisId), // Exclude Genesis
+        supabase.from('projects').select('id', { count: 'exact', head: true }).neq('company_id', genesisId), // Exclude Genesis Projects
         supabase.from('members').select('id', { count: 'exact', head: true }),
         supabase.from('invitations').select('id', { count: 'exact', head: true }).eq('status', 'pending')
     ])

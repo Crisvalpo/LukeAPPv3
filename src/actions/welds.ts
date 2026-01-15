@@ -11,6 +11,7 @@ export type UpdateWeldStatusPayload = {
     welderStamp?: string | null
     supportWelderId?: string | null // Collera
     executionNotes?: string | null
+    metadataEdit?: boolean // NEW: Flag to indicate technical data edit
 }
 
 export async function updateWeldStatusAction(payload: UpdateWeldStatusPayload) {
@@ -23,13 +24,13 @@ export async function updateWeldStatusAction(payload: UpdateWeldStatusPayload) {
         return { success: false, error: 'Unauthorized' }
     }
 
-    const { weldId, projectId, status, welderStamp, executionNotes, supportWelderId } = payload
+    const { weldId, projectId, status, welderStamp, executionNotes, supportWelderId, metadataEdit } = payload
 
     try {
         // 1. Fetch current weld data for revision_id, nps, and history context
         const { data: currentWeld, error: fetchError } = await supabase
             .from('spools_welds')
-            .select('execution_status, revision_id, nps, diameter_inches, spool_number, company_id') // Corrected: spool_number instead of spool_id
+            .select('execution_status, revision_id, nps, diameter_inches, spool_number, company_id, execution_notes') // Corrected: spool_number instead of spool_id
             .eq('id', weldId)
             .single()
 
@@ -49,9 +50,12 @@ export async function updateWeldStatusAction(payload: UpdateWeldStatusPayload) {
         }
 
         if (status === 'EXECUTED') {
-            updateData.executed_at = new Date().toISOString()
-            updateData.executed_by = user.id
-            updateData.executed_revision_id = currentWeld.revision_id // Snapshot revision
+            // Only update executed_at if it wasn't already EXECUTED
+            if (currentWeld.execution_status !== 'EXECUTED') {
+                updateData.executed_at = new Date().toISOString()
+                updateData.executed_by = user.id
+                updateData.executed_revision_id = currentWeld.revision_id // Snapshot revision
+            }
             if (welderStamp) updateData.welder_stamp = welderStamp
             if (supportWelderId) updateData.support_welder_id = supportWelderId
         } else if (status === 'REWORK') {
@@ -79,10 +83,23 @@ export async function updateWeldStatusAction(payload: UpdateWeldStatusPayload) {
         if (updateError) throw updateError
 
         // 4. Log History
-        // Only log if status changed or it's a significant update (like adding notes)
-        if (currentWeld.execution_status !== status || executionNotes) {
+        // Log if status changed, notes changed, OR if it's a metadata edit
+        const statusChanged = currentWeld.execution_status !== status
+        const notesChanged = executionNotes && executionNotes !== currentWeld.execution_notes
+
+        if (statusChanged || notesChanged || metadataEdit) {
             const userName = user.user_metadata?.full_name || user.user_metadata?.nombre || user.email || 'Usuario'
-            const details = executionNotes || (status === 'EXECUTED' ? `Soldador: ${welderStamp}` : '')
+
+            let comments = ''
+            if (metadataEdit) {
+                comments = `Usuario: ${userName} | edito Datos Técnicos`
+            } else {
+                const details = executionNotes || (status === 'EXECUTED' ? `Soldador: ${welderStamp}` : '')
+                comments = `Usuario: ${userName} | ${details}`.trim()
+            }
+
+            // Clean up trailing pipes if empty details
+            if (comments.endsWith('| ')) comments = comments.slice(0, -2)
 
             const { error: historyError } = await supabase
                 .from('weld_status_history')
@@ -90,9 +107,9 @@ export async function updateWeldStatusAction(payload: UpdateWeldStatusPayload) {
                     weld_id: weldId,
                     project_id: projectId,
                     previous_status: currentWeld.execution_status || 'PENDING',
-                    new_status: status,
+                    new_status: status, // Status might be same if just metadata edit
                     changed_by: user.id,
-                    comments: `Usuario: ${userName} | ${details}`.trim()
+                    comments: comments
                 })
 
             if (historyError) {

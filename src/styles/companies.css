@@ -359,3 +359,101 @@
         transform: translateY(0);
     }
 }
+
+/* ===== Card & Form Overrides (Vanilla CSS) ===== */
+.company-card-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 0.5rem;
+}
+
+.company-card-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.company-card-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.company-form-spacer {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.company-form-divider {
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: 1.5rem;
+}
+
+.company-form-divider-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #f59e0b;
+    /* amber-500 */
+    margin-bottom: 1rem;
+}
+
+.company-form-footer {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.form-label-amber {
+    color: #fbbf24;
+    /* amber-400 */
+}
+
+.input-amber {
+    border-color: rgba(245, 158, 11, 0.5);
+}
+
+.form-label-blue {
+    color: #60a5fa;
+    /* blue-400 */
+}
+
+.select-trigger-blue {
+    border-color: rgba(96, 165, 250, 0.5);
+}
+
+.alert-quota {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.alert-quota-content {
+    flex: 1;
+}
+
+.alert-quota-title {
+    color: #fb923c;
+    /* orange-400 */
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.alert-quota-desc {
+    color: #94a3b8;
+    /* slate-400 */
+}
+
+.btn-quota {
+    border-color: rgba(249, 115, 22, 0.5);
+    color: #fb923c;
+}
+
+.btn-quota:hover {
+    background: rgba(249, 115, 22, 0.1);
+    color: #fdba74;
+}

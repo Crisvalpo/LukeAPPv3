@@ -47,18 +47,13 @@ export async function splitSpool(spoolId: string, splitFromWeldId: string | null
         if (tagError) throw new Error('Failed to update parent tag status')
     }
 
-    // 4. Mark Parent Spool as HOLD (or DIVIDED)
-    // We try to set it to 'HOLD' to indicate it's no longer active.
-    // If 'HOLD' is not a valid enum, we catch the error and proceed, relying on the Tag Registry 'SPLIT' status.
+    // 4. Mark Parent Spool as DIVIDED
     const { error: updateError } = await supabase
         .from('spools')
-        .update({ status: 'HOLD' })
+        .update({ status: 'DIVIDED' })
         .eq('id', spoolId)
 
-    if (updateError) {
-        console.warn('Warning: Could not update parent spool status to HOLD. Proceeding anyway.', updateError)
-        // We do NOT throw here, so the split can complete.
-    }
+    if (updateError) throw new Error(`Failed to update parent spool status: ${updateError.message}`)
 
     // 5. Create Child Spools
     // Default: Create 2 parts initially (Part 1, Part 2)
@@ -120,7 +115,7 @@ export async function splitSpool(spoolId: string, splitFromWeldId: string | null
                 project_id: spool.project_id,
                 company_id: spool.company_id,
                 revision_id: spool.revision_id,
-                status: 'PENDIENTE', // Initial status
+                status: 'PENDING', // Initial status
                 parent_spool_id: spool.id, // THE LINK
                 tag_registry_id: newTag.id,
                 management_tag: newTag.tag_display,
@@ -174,9 +169,19 @@ export async function assignComponentsToSpool(targetSpoolId: string, componentId
     // 2. Update Components
     const table = type === 'WELD' ? 'spools_welds' : 'spools_joints'
 
+    let updatePayload: any = {}
+
+    if (type === 'WELD') {
+        // Welds use 'spool_number' string linkage (Legacy)
+        updatePayload = { spool_number: target.spool_number }
+    } else {
+        // Joints use 'spool_id' foreign key
+        updatePayload = { spool_id: targetSpoolId }
+    }
+
     const { error } = await supabase
         .from(table)
-        .update({ spool_id: targetSpoolId })
+        .update(updatePayload)
         .in('id', componentIds)
 
     if (error) throw new Error(`Failed to assign components: ${error.message}`)
@@ -269,13 +274,13 @@ async function calculateSpoolStatus(supabase: any, spoolId: string) {
     // 1. Get welds
     const { data: welds } = await supabase.from('spools_welds').select('status').eq('spool_id', spoolId)
 
-    if (!welds || welds.length === 0) return 'PENDIENTE' // Or 'FABRICADO' if Pasante? Design said "no uniones -> fabricado"
+    if (!welds || welds.length === 0) return 'PENDING' // Or 'FABRICATED' if Pasante? Design said "no uniones -> fabricado"
 
     const allExecuted = welds.every((w: any) => w.status === 'EJECUTADO' || w.status === 'APPROVED') // Adjust check based on real values
-    if (allExecuted) return 'FABRICADO'
+    if (allExecuted) return 'FABRICATED'
 
     const someExecuted = welds.some((w: any) => w.status === 'EJECUTADO' || w.status === 'APPROVED')
-    if (someExecuted) return 'EN_FABRICACION'
+    if (someExecuted) return 'IN_FABRICATION'
 
-    return 'PENDIENTE' // Default
+    return 'PENDING' // Default
 }
