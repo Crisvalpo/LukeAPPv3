@@ -4,7 +4,14 @@ import React, { useEffect, useState, useRef, useMemo, Fragment } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import type { EngineeringRevision } from '@/types'
-import { deleteRevisionAction } from '@/actions/revisions'
+import {
+    deleteRevisionAction,
+    updateRevisionModelUrlAction,
+    deleteRevisionModelUrlAction,
+    updateRevisionPdfUrlAction,
+    deleteRevisionPdfUrlAction,
+    deleteRevisionModelAction
+} from '@/actions/revisions'
 import { calculateDataStatus, calculateMaterialStatus, isFabricable, type DataStatus, type MaterialStatus } from '@/services/fabricability'
 import RevisionMasterView from './RevisionMasterView'
 import IsometricViewer from './viewer/IsometricViewer'
@@ -13,7 +20,8 @@ import WeldDetailModal from './viewer/WeldDetailModal'
 import SpoolExpandedContent from './viewer/SpoolExpandedContent'
 import UnassignedJointsPanel from './viewer/UnassignedJointsPanel'
 import { assignJointToSpoolAction } from '@/actions/joints'
-import { FileText, Trash2, ExternalLink, Box, Wrench } from 'lucide-react'
+import { FileText, Trash2, ExternalLink, Box, Wrench, Split } from 'lucide-react'
+import { SplitSpoolModal } from './viewer/SplitSpoolModal'
 import { createClient } from '@/lib/supabase/client'
 
 // Wrapper to load spools for viewer and handle fullscreen portal
@@ -170,6 +178,7 @@ function IsometricViewerWrapper({
     const [showJointsPanel, setShowJointsPanel] = useState(false)
     const [refreshTrigger, setRefreshTrigger] = useState(0)
     const [unassignedJointsCount, setUnassignedJointsCount] = useState<number | null>(null)
+    const [isSplitting, setIsSplitting] = useState(false)
 
     // Separate function to refresh weld types config
     const refreshWeldTypesConfig = async () => {
@@ -730,6 +739,9 @@ function IsometricViewerWrapper({
                                             projectId={projectId}
                                             welds={weldsMap[spool.id] || []}
                                             joints={jointsMap[spool.id] || []}
+                                            // Pass Child Spools if this is a Parent
+                                            childSpools={spools.filter((s: any) => s.parent_spool_id === spool.id)}
+
                                             weldTypesConfig={weldTypesConfig}
                                             loading={loadingMap[spool.id] || false}
                                             onWeldClick={(weldData) => {
@@ -991,6 +1003,34 @@ function IsometricViewerWrapper({
                                 />
                             </div>
                         </div>
+
+
+                        {/* Split Spool Button (When Spool Selected) */}
+                        {activeSpoolId && (
+                            <button
+                                onClick={() => setIsSplitting(true)}
+                                title="Dividir Spool"
+                                style={{
+                                    background: isSplitting ? '#3b82f6' : 'transparent',
+                                    color: isSplitting ? 'white' : '#94a3b8',
+                                    border: '1px solid #334155',
+                                    borderRadius: '4px',
+                                    width: '32px',
+                                    height: '32px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    fontSize: '1.2rem',
+                                    marginLeft: '8px',
+                                    position: 'relative'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.color = 'white'}
+                                onMouseLeave={(e) => !isSplitting && (e.currentTarget.style.color = '#94a3b8')}
+                            >
+                                <Split size={16} />
+                            </button>
+                        )}
 
 
                         {/* Unassigned Joints Toggle */}
@@ -1308,6 +1348,21 @@ function IsometricViewerWrapper({
                     }}
                 />
             )}
+
+            <SplitSpoolModal
+                isOpen={isSplitting}
+                onClose={() => setIsSplitting(false)}
+                spool={spools.find(s => s.id === activeSpoolId)}
+                onSuccess={() => {
+                    // Force Refresh entire context
+                    // We can use router.refresh() but local state spools need update too
+                    // Simplest is to reload page or re-trigger fetchContext
+                    // We can check if `onRefresh` prop exists on parent wrapper? No, this is Wrapper.
+                    // We'll trust router.refresh() + maybe imperative fetchContext if we extracted it.
+                    // For now, reload window is safest for "Split" which is a major structural change.
+                    window.location.reload()
+                }}
+            />
         </div>
     )
 

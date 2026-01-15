@@ -1,6 +1,10 @@
 import React, { useMemo, useState } from 'react'
 import { useViewerStore, ViewMode } from './ViewerLogic'
 import { InputField } from '@/components/ui/InputField'
+import { Icons } from '@/components/ui/Icons'
+import { SplitSpoolModal } from './SplitSpoolModal'
+import { Icons } from '@/components/ui/Icons'
+import { SplitSpoolModal } from './SplitSpoolModal'
 
 export default function ViewerControls() {
     const {
@@ -12,7 +16,8 @@ export default function ViewerControls() {
         setActiveSpool,
         setMapping,
         clearSelection,
-        meshSpoolMap
+        meshSpoolMap,
+        setSplitting
     } = useViewerStore()
 
     const [isSidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -228,6 +233,7 @@ export default function ViewerControls() {
             {/* Loading/Notification Overlay */}
             {/* Logic for notifications will be added via store later or local state */}
 
+            <SplitSpoolModal />
         </div>
     )
 }

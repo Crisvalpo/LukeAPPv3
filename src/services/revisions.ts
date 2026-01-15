@@ -580,6 +580,7 @@ export async function getRevisionSpools(revisionId: string) {
                 status,
                 total_welds,
                 current_location_id,
+                parent_spool_id,
                 location:current_location_id (name, code)
             `)
             .eq('revision_id', revisionId)
@@ -593,7 +594,8 @@ export async function getRevisionSpools(revisionId: string) {
             tag: s.management_tag,
             status: s.status,
             welds: s.total_welds,
-            location: s.location
+            location: s.location,
+            parent_spool_id: s.parent_spool_id
         }))
     } catch (error) {
         console.error('Error fetching revision spools:', error)

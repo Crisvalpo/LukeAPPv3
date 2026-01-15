@@ -13,15 +13,15 @@ interface ViewerState {
     // Data
     spools: Map<string, SpoolData> // SpoolID -> Data
     meshSpoolMap: Map<string, string> // MeshName -> SpoolID
-    
+
     // UI State
     viewMode: ViewMode
     selection: Set<string> // Set of Mesh Names
     hoveredMesh: string | null
-    
+
     // Assignment Mode
     activeSpoolId: string | null // Spool currently being assigned to
-    
+
     // Actions
     setSpools: (spools: SpoolData[]) => void
     loadMapping: (mapping: Record<string, string>) => void
@@ -31,20 +31,28 @@ interface ViewerState {
     removeFromSelection: (meshName: string) => void
     clearSelection: () => void
     toggleSelection: (meshName: string) => void
-    setActiveSpool: (spoolId: string | null) => void
-    setHoveredMesh: (meshName: string | null) => void
+    // Splitting Mode
+    isSplitting: boolean
+    setSplitting: (active: boolean) => void
+
+    setActiveSpool: (id: string | null) => void
+    setHoveredMesh: (name: string | null) => void
 }
 
 export const useViewerStore = create<ViewerState>((set, get) => ({
     spools: new Map(),
     meshSpoolMap: new Map(),
-    
+
     viewMode: 'normal',
     selection: new Set(),
     hoveredMesh: null,
-    
+
     activeSpoolId: null,
-    
+
+    // Splitting Mode
+    isSplitting: false,
+    setSplitting: (active) => set({ isSplitting: active }),
+
     setSpools: (spoolsList) => {
         const map = new Map()
         spoolsList.forEach(s => map.set(s.id, s))
@@ -95,3 +103,4 @@ export const useViewerStore = create<ViewerState>((set, get) => ({
     setActiveSpool: (id) => set({ activeSpoolId: id }),
     setHoveredMesh: (name) => set({ hoveredMesh: name })
 }))
+
