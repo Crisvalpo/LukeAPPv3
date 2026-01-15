@@ -6,6 +6,7 @@ import { getCompaniesWithSubscription, registerManualPayment, updateCompanySubsc
 import { deleteCompanyCascade } from '@/services/companies'
 import { Icons } from '@/components/ui/Icons'
 import { Heading, Text } from '@/components/ui/Typography'
+import { Button } from '@/components/ui/button'
 import '@/styles/dashboard.css'
 import '@/styles/staff-payments.css'
 import '@/styles/tables.css'
@@ -201,14 +202,15 @@ export default function StaffPaymentsPage() {
                                                 {/* Delete Option (Visual indicator only until enabled) */}
                                                 {isSuspended && (
                                                     canDelete ? (
-                                                        <button
+                                                        <Button
                                                             onClick={() => handleDeleteCompany(company.id)}
-                                                            className="btn btn-sm btn-icon btn-danger-outline"
+                                                            variant="destructive"
+                                                            size="icon"
                                                             title="Eliminar Definitivamente"
                                                             disabled={isProcessing}
                                                         >
                                                             <Icons.Delete size={16} />
-                                                        </button>
+                                                        </Button>
                                                     ) : (
                                                         <div className="countdown-badge" title={`Desbloqueo en ${daysRemaining} días`}>
                                                             <Icons.Clock size={14} /> {daysRemaining}d
@@ -216,33 +218,37 @@ export default function StaffPaymentsPage() {
                                                     )
                                                 )}
 
-                                                <button
+                                                <Button
                                                     onClick={() => {
                                                         setSelectedCompany(company)
                                                         setSelectedTier(company.subscription_tier)
                                                     }}
-                                                    className="btn btn-sm btn-primary"
+                                                    variant="default"
+                                                    size="sm"
                                                     disabled={isProcessing}
                                                 >
                                                     <Icons.Document size={14} /> Registrar Pago
-                                                </button>
+                                                </Button>
 
                                                 {isSuspended ? (
-                                                    <button
+                                                    <Button
                                                         onClick={() => handleActivateCompany(company.id)}
-                                                        className="btn btn-sm btn-success"
+                                                        variant="secondary"
+                                                        size="sm"
+                                                        className="text-green-400 border-green-500/20 hover:bg-green-500/10"
                                                         disabled={isProcessing}
                                                     >
                                                         Reactivar
-                                                    </button>
+                                                    </Button>
                                                 ) : (
-                                                    <button
+                                                    <Button
                                                         onClick={() => handleSuspendCompany(company.id)}
-                                                        className="btn btn-sm btn-danger"
+                                                        variant="destructive"
+                                                        size="sm"
                                                         disabled={isProcessing}
                                                     >
                                                         Suspender
-                                                    </button>
+                                                    </Button>
                                                 )}
                                             </div>
                                         </td>
@@ -297,20 +303,21 @@ export default function StaffPaymentsPage() {
                         </select>
 
                         <div className="payment-modal-actions">
-                            <button
+                            <Button
                                 onClick={handleRegisterPayment}
-                                className="btn btn-primary payment-modal-btn-confirm"
+                                variant="default"
+                                className="payment-modal-btn-confirm"
                                 disabled={isProcessing}
                             >
                                 {isProcessing ? 'Procesando...' : 'Confirmar Pago'}
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 onClick={() => setSelectedCompany(null)}
-                                className="btn btn-secondary"
+                                variant="secondary"
                                 disabled={isProcessing}
                             >
                                 Cancelar
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>

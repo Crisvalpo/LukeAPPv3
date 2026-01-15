@@ -1,4 +1,5 @@
 import React from 'react'
+import { Folder, FileText, BarChart2, Package, Lock, Search, Trash2, Settings, Eye } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -6,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { ColorSwatch } from './ColorSwatch'
 import { Heading, Text } from '@/components/ui/Typography'
 import '@/styles/tables.css'
+import '@/styles/engineering.css'
 import styles from './styleguide.module.css'
 
 export const metadata = {
@@ -266,9 +268,93 @@ export default function StyleGuidePage() {
                 </div>
             </section>
 
-            {/* Buttons Section */}
+            {/* Tables Section */}
             <section className={styles.section}>
-                <h2 className={styles.sectionTitle}>Botones</h2>
+                <h2 className={styles.sectionTitle}>Tablas</h2>
+                <p className={styles.sectionDesc}>
+                    Estructura estándar para visualización de datos. Usa las clases de <code>tables.css</code>.
+                </p>
+
+                <div className="card" style={{ marginBottom: '1.5rem' }}>
+                    <div className="data-table-wrapper">
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Proyecto</th>
+                                    <th>Estado</th>
+                                    <th>Progreso</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <Folder size={16} className="text-blue-400" />
+                                            Expansión Planta Norte
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span style={{
+                                            padding: '0.25rem 0.5rem',
+                                            borderRadius: '999px',
+                                            background: 'rgba(16, 185, 129, 0.1)',
+                                            color: '#34d399',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 500
+                                        }}>
+                                            Activo
+                                        </span>
+                                    </td>
+                                    <td>75%</td>
+                                    <td>
+                                        <Button variant="ghost" size="icon">
+                                            <Settings size={16} />
+                                        </Button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <Folder size={16} className="text-gray-400" />
+                                            Mantenimiento Anual
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span style={{
+                                            padding: '0.25rem 0.5rem',
+                                            borderRadius: '999px',
+                                            background: 'rgba(239, 68, 68, 0.1)',
+                                            color: '#f87171',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 500
+                                        }}>
+                                            Detenido
+                                        </span>
+                                    </td>
+                                    <td>30%</td>
+                                    <td>
+                                        <Button variant="ghost" size="icon">
+                                            <Settings size={16} />
+                                        </Button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            {/* Navigation Section */}
+            <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Botones (Standard)</h2>
+                <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '8px' }}>
+                    <p className={styles.sectionDesc} style={{ color: '#93c5fd', margin: 0 }}>
+                        <strong>Regla de Oro:</strong> Usar siempre el componente <code>&lt;Button /&gt;</code>.
+                        <br />
+                        Este componente encapsula los estilos visuales estándar. Evitar el uso de clases CSS manuales como <code>.btn</code>.
+                    </p>
+                </div>
                 <p className={styles.sectionDesc}>
                     6 variantes × 4 tamaños = 24 combinaciones
                 </p>
@@ -279,7 +365,7 @@ export default function StyleGuidePage() {
                         <Button variant="default" size="sm">Small</Button>
                         <Button variant="default" size="default">Default</Button>
                         <Button variant="default" size="lg">Large</Button>
-                        <Button variant="default" size="icon">🔍</Button>
+                        <Button variant="default" size="icon"><Search size={16} /></Button>
                     </div>
                 </div>
 
@@ -289,7 +375,7 @@ export default function StyleGuidePage() {
                         <Button variant="destructive" size="sm">Small</Button>
                         <Button variant="destructive" size="default">Default</Button>
                         <Button variant="destructive" size="lg">Large</Button>
-                        <Button variant="destructive" size="icon">🗑️</Button>
+                        <Button variant="destructive" size="icon"><Trash2 size={16} /></Button>
                     </div>
                 </div>
 
@@ -299,7 +385,7 @@ export default function StyleGuidePage() {
                         <Button variant="outline" size="sm">Small</Button>
                         <Button variant="outline" size="default">Default</Button>
                         <Button variant="outline" size="lg">Large</Button>
-                        <Button variant="outline" size="icon">📝</Button>
+                        <Button variant="outline" size="icon"><FileText size={16} /></Button>
                     </div>
                 </div>
 
@@ -309,7 +395,7 @@ export default function StyleGuidePage() {
                         <Button variant="secondary" size="sm">Small</Button>
                         <Button variant="secondary" size="default">Default</Button>
                         <Button variant="secondary" size="lg">Large</Button>
-                        <Button variant="secondary" size="icon">⚙️</Button>
+                        <Button variant="secondary" size="icon"><Settings size={16} /></Button>
                     </div>
                 </div>
 
@@ -319,7 +405,7 @@ export default function StyleGuidePage() {
                         <Button variant="ghost" size="sm">Small</Button>
                         <Button variant="ghost" size="default">Default</Button>
                         <Button variant="ghost" size="lg">Large</Button>
-                        <Button variant="ghost" size="icon">👁️</Button>
+                        <Button variant="ghost" size="icon"><Eye size={16} /></Button>
                     </div>
                 </div>
 
@@ -573,6 +659,85 @@ export default function StyleGuidePage() {
                 </div>
             </section>
 
+
+            {/* Tabs Section */}
+            <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Navegación (Tabs)</h2>
+                <p className={styles.sectionDesc}>
+                    Sistema de navegación por pestañas con dos variantes
+                </p>
+
+                <div className={styles.preview}>
+                    {/* Default Variant */}
+                    <div style={{ marginBottom: '2rem' }}>
+                        <h3 className={styles.subsectionTitle}>Default (Pill)</h3>
+                        <p className={styles.sectionDesc} style={{ margin: '0 0 1rem 0' }}>
+                            Estilo botón/pastilla, usado en selectores pequeños o interfaces densas.
+                        </p>
+                        <div className="tabs">
+                            <div className="tabs__list">
+                                <button className="tabs__trigger tabs__trigger--active">Activo</button>
+                                <button className="tabs__trigger">Inactivo</button>
+                                <button className="tabs__trigger">Disabled</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Underline Variant */}
+                    <div>
+                        <h3 className={styles.subsectionTitle}>Underline (Premium)</h3>
+                        <p className={styles.sectionDesc} style={{ margin: '0 0 1rem 0' }}>
+                            Estilo financiero/limpio, usado en layouts principales y dashboards.
+                            <br />
+                            Agrega <code>variant="underline"</code> a <code>TabsList</code> y <code>TabsTrigger</code>.
+                        </p>
+                        <div className="tabs">
+                            <div className="tabs__list tabs__list--underline">
+                                <button className="tabs__trigger tabs__trigger--underline tabs__trigger--active">
+                                    Engineering
+                                </button>
+                                <button className="tabs__trigger tabs__trigger--underline">
+                                    Procurement
+                                </button>
+                                <button className="tabs__trigger tabs__trigger--underline">
+                                    Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Module Navigation Bar */}
+                    <div style={{ marginTop: '3rem' }}>
+                        <h3 className={styles.subsectionTitle}>Barra de Navegación de Módulo</h3>
+                        <p className={styles.sectionDesc} style={{ margin: '0 0 1rem 0' }}>
+                            "Navegación de Pestañas de Nivel Superior".
+                            <br />
+                            Es el menú principal dentro de los módulos de trabajo (Ingeniería, Abastecimiento).
+                            <br />
+                            Utiliza un contenedor oscuro con botones tipo "pill".
+                        </p>
+
+                        {/* Simulation Container */}
+                        <div style={{ background: '#0f172a', padding: '2rem', borderRadius: '1rem', border: '1px solid #1e293b' }}>
+                            <div className="engineering-tabs" style={{ marginTop: 0, marginBottom: 0 }}>
+                                <button className="tab-button active">
+                                    <Folder size={16} /> Catálogo
+                                </button>
+                                <button className="tab-button">
+                                    <FileText size={16} /> Solicitudes
+                                </button>
+                                <button className="tab-button">
+                                    <BarChart2 size={16} /> MTO
+                                </button>
+                                <button className="tab-button">
+                                    <Package size={16} /> Tracking
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* Usage Guidelines */}
             <section className={styles.section}>
                 <h2 className={styles.sectionTitle}>Reglas de Uso</h2>
@@ -604,6 +769,29 @@ export default function StyleGuidePage() {
                         </ul>
                     </CardContent>
                 </Card>
+            </section>
+            {/* Focus Mode (Modals) Section */}
+            <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Focus Mode (Modals)</h2>
+                <p className={styles.sectionDesc}>
+                    Para acciones críticas que requieren total atención del usuario (pagos, confirmaciones destructivas, formularios complejos).
+                </p>
+
+                <div
+                    className="modal-overlay"
+                    style={{ position: 'relative', height: '300px', borderRadius: '1rem', zIndex: 1 }}
+                >
+                    <div className="modal-content" style={{ animation: 'none', maxWidth: '350px' }}>
+                        <div className="modal-title">Acción Crítica</div>
+                        <p className="modal-text">
+                            El fondo oscurecido (<code>bg-black/85</code>) y el desenfoque (<code>blur-sm</code>) eliminan distracciones externas.
+                        </p>
+                        <div className="modal-actions">
+                            <Button variant="default" className="full-width">Confirmar Acción</Button>
+                            <Button variant="secondary" className="full-width">Cancelar</Button>
+                        </div>
+                    </div>
+                </div>
             </section>
         </div>
     )

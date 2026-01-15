@@ -111,77 +111,99 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.85);
+    /* Darker backdrop */
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(8px);
+    /* Deeper blur */
     animation: fadeIn 0.2s ease-out;
 }
 
 .payment-modal-content {
-    max-width: 500px;
+    max-width: 480px;
     width: 90%;
-    /* Usage of .card class expected for base styles */
+    /* Override standard card padding for separate header/body if needed */
 }
 
 .payment-modal-title {
     color: var(--color-text-main);
-    margin-bottom: var(--spacing-4);
-    font-size: var(--font-size-2xl);
+    margin-bottom: var(--spacing-2);
+    font-size: var(--font-size-xl);
     font-weight: 600;
 }
 
 .payment-modal-subtitle {
     color: var(--color-text-muted);
     margin-bottom: var(--spacing-6);
+    font-size: var(--font-size-sm);
 }
 
 .payment-modal-subtitle strong {
     color: var(--color-text-main);
+    font-weight: 600;
 }
 
 .payment-modal-label {
     display: block;
     color: var(--color-text-muted);
     margin-bottom: var(--spacing-2);
-    font-size: var(--font-size-sm);
+    font-size: 0.85rem;
+    font-weight: 500;
 }
 
 .payment-modal-select {
     width: 100%;
-    padding: var(--spacing-3);
-    background: var(--color-bg-surface-2);
+    padding: 0.75rem 1rem;
+    background: var(--color-bg-surface-1);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-md);
     color: var(--color-text-main);
     margin-bottom: var(--spacing-6);
     outline: none;
     transition: all var(--transition-fast);
+    appearance: none;
+    /* Hide default arrow to use custom if desired, or keep clear */
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+}
+
+.payment-modal-select:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: var(--color-bg-surface-2);
 }
 
 .payment-modal-select:focus {
     border-color: var(--color-primary);
     box-shadow: 0 0 0 2px var(--color-primary-glow);
+    background: var(--color-bg-surface-2);
 }
 
 .payment-modal-actions {
-    display: flex;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    /* Confirm button takes 2/3 */
     gap: var(--spacing-3);
+    margin-top: var(--spacing-4);
 }
 
 .payment-modal-btn-confirm {
-    flex: 1;
+    height: 3rem !important;
+    /* Taller standard for primary action */
+    font-size: 1rem !important;
 }
 
 /* Animations */
 @keyframes fadeIn {
     from {
         opacity: 0;
+        transform: scale(0.95);
     }
 
     to {
         opacity: 1;
+        transform: scale(1);
     }
 }

@@ -25,10 +25,8 @@ export default function ProcurementManager({ projectId, companyId, userRole = 'f
 
     return (
         <div className="engineering-hub-container">
-            {/* Header Actions */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-                {/* Actions removed as per request to enforce context-aware creation via MTO */}
-            </div>
+            {/* Header Actions (Empty placeholder removed for consistent spacing) */}
+            {/* Actions removed as per request to enforce context-aware creation via MTO */}
 
             {/* Tabs Navigation */}
             <div className="engineering-tabs">

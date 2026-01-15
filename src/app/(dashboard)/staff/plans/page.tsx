@@ -6,6 +6,7 @@ import { Database } from '@/types/database.types';
 import { Icons } from '@/components/ui/Icons';
 import { Heading, Text } from '@/components/ui/Typography';
 import { InputField } from '@/components/ui/InputField';
+import { Button } from '@/components/ui/button';
 import '@/styles/dashboard.css';
 import '@/styles/staff-plans.css';
 
@@ -131,12 +132,13 @@ export default function PlansManager() {
                                     </span>
                                 </div>
                                 {!isEditing && (
-                                    <button
+                                    <Button
                                         onClick={() => handleEdit(plan)}
-                                        className="btn btn-secondary btn-sm"
+                                        variant="secondary"
+                                        size="sm"
                                     >
                                         Editar
-                                    </button>
+                                    </Button>
                                 )}
                             </div>
 
@@ -267,21 +269,22 @@ export default function PlansManager() {
                             {/* Actions */}
                             {isEditing && (
                                 <div className="plan-actions">
-                                    <button
+                                    <Button
                                         onClick={handleSave}
                                         disabled={saveLoading}
-                                        className="btn btn-primary"
+                                        variant="default" // Primary gradient
                                     >
                                         {saveLoading ? <Icons.Refresh className="spin" size={16} /> : <Icons.Save size={16} />}
                                         Guardar
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button
                                         onClick={handleCancel}
                                         disabled={saveLoading}
-                                        className="btn btn-secondary btn-icon"
+                                        variant="secondary"
+                                        size="icon"
                                     >
                                         <Icons.Close size={20} />
-                                    </button>
+                                    </Button>
                                 </div>
                             )}
                         </div>

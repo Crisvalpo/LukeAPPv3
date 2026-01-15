@@ -28,28 +28,32 @@ export function Tabs({ value: controlledValue, onValueChange, defaultValue, chil
     )
 }
 
-export function TabsList({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-    return <div className={`tabs__list ${className}`}>{children}</div>
+
+export function TabsList({ children, className = '', variant = 'default' }: { children: React.ReactNode; className?: string; variant?: 'default' | 'underline' }) {
+    const variantClass = variant === 'underline' ? 'tabs__list--underline' : ''
+    return <div className={`tabs__list ${variantClass} ${className}`}>{children}</div>
 }
 
-export function TabsTrigger({ value, children, className = '' }: { value: string; children: React.ReactNode; className?: string }) {
+export function TabsTrigger({ value, children, className = '', variant = 'default' }: { value: string; children: React.ReactNode; className?: string; variant?: 'default' | 'underline' }) {
     const context = React.useContext(TabsContext)
     if (!context) throw new Error('TabsTrigger must be used within Tabs')
 
     const isActive = context.value === value
+    const variantClass = variant === 'underline' ? 'tabs__trigger--underline' : ''
 
     return (
         <button
             type="button"
             role="tab"
             aria-selected={isActive}
-            className={`tabs__trigger ${isActive ? 'tabs__trigger--active' : ''} ${className}`}
+            className={`tabs__trigger ${variantClass} ${isActive ? 'tabs__trigger--active' : ''} ${className}`}
             onClick={() => context.onValueChange(value)}
         >
             {children}
         </button>
     )
 }
+
 
 export function TabsContent({ value, children, className = '' }: { value: string; children: React.ReactNode; className?: string }) {
     const context = React.useContext(TabsContext)

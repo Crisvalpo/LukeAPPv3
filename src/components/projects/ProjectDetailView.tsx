@@ -26,10 +26,17 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
+import {
+    Tabs,
+    TabsList,
+    TabsTrigger,
+    TabsContent,
+} from '@/components/ui/tabs'
 
 import '@/styles/dashboard.css'
 import '@/styles/companies.css'
 import '@/styles/company-profile.css' // Reusing profile styles for consistent look
+import '@/styles/views/project-details.css' // New specific styles for this view
 
 interface ProjectDetails extends Project {
     contract_number?: string
@@ -284,77 +291,37 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
                         </div>
                     </div>
                 ) : (
-                    <div>
-                        {/* Hide Navbar for Admins in Settings Mode */}
+
+                    <Tabs value={activeTab} onValueChange={(val: any) => setActiveTab(val)} className="w-full">
+                        {/* Navbar */}
                         {!(role === 'admin' && activeTab === 'settings') && (
-                            <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4 overflow-x-auto">
-                                {/* Left Side: Work Modules */}
-                                <div className="flex gap-4">
+                            <div className="flex flex-col md:flex-row justify-between items-end mb-8 border-b border-white/5">
+                                {/* Work Modules (Left) */}
+                                <TabsList variant="underline" className="w-full md:w-auto">
                                     {!(role === 'admin' && activeTab === 'team') && (
                                         <>
-                                            <button
-                                                onClick={() => setActiveTab('engineering')}
-                                                className={`px-4 py-2 bg-transparent border-0 border-b-2 transition-all font-medium text-sm whitespace-nowrap cursor-pointer ${activeTab === 'engineering'
-                                                    ? 'border-blue-500 text-white'
-                                                    : 'border-transparent text-slate-400 hover:text-white'
-                                                    }`}
-                                            >
-                                                Ingeniería
-                                            </button>
-                                            <button
-                                                onClick={() => setActiveTab('procurement')}
-                                                className={`px-4 py-2 bg-transparent border-0 border-b-2 transition-all font-medium text-sm whitespace-nowrap cursor-pointer ${activeTab === 'procurement'
-                                                    ? 'border-blue-500 text-white'
-                                                    : 'border-transparent text-slate-400 hover:text-white'
-                                                    }`}
-                                            >
-                                                Abastecimiento
-                                            </button>
+                                            <TabsTrigger variant="underline" value="engineering">Ingeniería</TabsTrigger>
+                                            <TabsTrigger variant="underline" value="procurement">Abastecimiento</TabsTrigger>
                                         </>
                                     )}
-                                </div>
+                                </TabsList>
 
-                                {/* Right Side: Management & Settings */}
-                                <div className="flex gap-4">
+                                {/* Management (Right) */}
+                                <TabsList variant="underline" className="w-full md:w-auto justify-end">
                                     {(role === 'founder' || activeTab === 'details') && (
-                                        <button
-                                            onClick={() => setActiveTab('details')}
-                                            className={`px-4 py-2 bg-transparent border-0 border-b-2 transition-all font-medium text-sm whitespace-nowrap cursor-pointer ${activeTab === 'details'
-                                                ? 'border-blue-500 text-white'
-                                                : 'border-transparent text-slate-400 hover:text-white'
-                                                }`}
-                                        >
-                                            Detalles
-                                        </button>
+                                        <TabsTrigger variant="underline" value="details">Detalles</TabsTrigger>
                                     )}
                                     {(role === 'founder' || activeTab === 'team') && (
-                                        <button
-                                            onClick={() => setActiveTab('team')}
-                                            className={`px-4 py-2 bg-transparent border-0 border-b-2 transition-all font-medium text-sm whitespace-nowrap cursor-pointer ${activeTab === 'team'
-                                                ? 'border-blue-500 text-white'
-                                                : 'border-transparent text-slate-400 hover:text-white'
-                                                }`}
-                                        >
-                                            Equipo & Invitaciones
-                                        </button>
+                                        <TabsTrigger variant="underline" value="team">Equipo & Invitaciones</TabsTrigger>
                                     )}
-                                    {/* Config Tab only visible for Founder or if actively selected */}
                                     {(role === 'founder') && (
-                                        <button
-                                            onClick={() => setActiveTab('settings')}
-                                            className={`px-4 py-2 bg-transparent border-0 border-b-2 transition-all font-medium text-sm whitespace-nowrap cursor-pointer ${activeTab === 'settings'
-                                                ? 'border-blue-500 text-white'
-                                                : 'border-transparent text-slate-400 hover:text-white'
-                                                }`}
-                                        >
-                                            Configuración
-                                        </button>
+                                        <TabsTrigger variant="underline" value="settings">Configuración</TabsTrigger>
                                     )}
-                                </div>
+                                </TabsList>
                             </div>
                         )}
 
-                        {activeTab === 'details' && (
+                        <TabsContent value="details">
                             <div className="fade-in p-4">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
                                     <div>
@@ -398,9 +365,9 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
                                     </div>
                                 )}
                             </div>
-                        )}
+                        </TabsContent>
 
-                        {activeTab === 'team' && (
+                        <TabsContent value="team">
                             <div className="fade-in">
                                 <InvitationManager
                                     companyId={project.company_id}
@@ -418,35 +385,35 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
                                     ]}
                                 />
                             </div>
-                        )}
+                        </TabsContent>
 
-                        {activeTab === 'engineering' && (
+                        <TabsContent value="engineering">
                             <div className="fade-in">
                                 <EngineeringManager
                                     projectId={project.id}
                                     companyId={project.company_id}
                                 />
                             </div>
-                        )}
+                        </TabsContent>
 
-                        {activeTab === 'procurement' && (
+                        <TabsContent value="procurement">
                             <div className="fade-in">
                                 <ProcurementManager
                                     projectId={project.id}
                                     companyId={project.company_id}
                                 />
                             </div>
-                        )}
+                        </TabsContent>
 
-                        {activeTab === 'settings' && (
+                        <TabsContent value="settings">
                             <div className="fade-in p-4">
                                 {settingsView === 'menu' ? (
-                                    <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-6">
+                                    <div className="settings-grid">
                                         <div
                                             onClick={() => setSettingsView('locations')}
-                                            className="bg-slate-800/70 backdrop-blur-md border border-slate-700 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg hover:border-violet-500 group"
+                                            className="settings-card settings-card--locations group"
                                         >
-                                            <div className="bg-violet-500/20 w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-violet-500 group-hover:text-violet-400">
+                                            <div className="settings-icon">
                                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="stroke-current stroke-2">
                                                     <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" strokeLinecap="round" strokeLinejoin="round" />
                                                     <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" strokeLinecap="round" strokeLinejoin="round" />
@@ -460,9 +427,9 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
 
                                         <div
                                             onClick={() => setSettingsView('weld-types')}
-                                            className="bg-slate-800/70 backdrop-blur-md border border-slate-700 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg hover:border-red-500 group"
+                                            className="settings-card settings-card--weld group"
                                         >
-                                            <div className="bg-red-500/20 w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-2xl">
+                                            <div className="settings-icon">
                                                 🔥
                                             </div>
                                             <Heading level={3} size="lg" className="mb-2">Tipos de Unión</Heading>
@@ -473,9 +440,9 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
 
                                         <div
                                             onClick={() => setIsWeekConfigOpen(true)}
-                                            className="bg-slate-800/70 backdrop-blur-md border border-slate-700 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg hover:border-blue-500 group"
+                                            className="settings-card settings-card--week group"
                                         >
-                                            <div className="bg-blue-500/20 w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-blue-500">
+                                            <div className="settings-icon">
                                                 <Calendar size={24} />
                                             </div>
                                             <Heading level={3} size="lg" className="mb-2">Configuración de Semanas</Heading>
@@ -486,9 +453,9 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
 
                                         <div
                                             onClick={() => setSettingsView('logo')}
-                                            className="bg-slate-800/70 backdrop-blur-md border border-slate-700 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg hover:border-emerald-500 group"
+                                            className="settings-card settings-card--logo group"
                                         >
-                                            <div className="bg-emerald-500/20 w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-emerald-500">
+                                            <div className="settings-icon">
                                                 <ImageIcon size={24} />
                                             </div>
                                             <Heading level={3} size="lg" className="mb-2">Logo del Proyecto</Heading>
@@ -499,9 +466,9 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
 
                                         <div
                                             onClick={() => setSettingsView('structure-models')}
-                                            className="bg-slate-800/70 backdrop-blur-md border border-slate-700 rounded-2xl p-6 cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg hover:border-sky-500 group"
+                                            className="settings-card settings-card--bim group"
                                         >
-                                            <div className="bg-sky-500/20 w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-sky-500">
+                                            <div className="settings-icon">
                                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
                                                     <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
@@ -544,8 +511,8 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
                                     </div>
                                 ) : null}
                             </div>
-                        )}
-                    </div>
+                        </TabsContent>
+                    </Tabs>
                 )}
             </div>
 
@@ -557,6 +524,6 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
                     setIsWeekConfigOpen(false)
                 }}
             />
-        </div>
+        </div >
     )
 }

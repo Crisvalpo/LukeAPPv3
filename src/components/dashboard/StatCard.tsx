@@ -1,6 +1,7 @@
 'use client'
 
 import { LucideIcon } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import '@/styles/dashboard.css'
 import '@/styles/staff-dashboard.css'
 
@@ -52,13 +53,15 @@ export default function StatCard({
             </div>
 
             {onClick && (
-                <button
+                <Button
                     onClick={!disabled ? onClick : undefined}
                     disabled={disabled}
+                    variant="ghost"
+                    size="sm"
                     className={`stat-card__button stat-card__button--${color}`}
                 >
                     {disabled ? 'Próximamente' : buttonText}
-                </button>
+                </Button>
             )}
         </div>
     )
