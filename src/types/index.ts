@@ -155,6 +155,12 @@ export interface ModuleConfig {
  * Complete permissions object (JSONB in DB)
  */
 export interface RolePermissions {
+    modules?: {
+        [key: string]: {
+            enabled: boolean
+            is_home?: boolean
+        }
+    }
     isometricos?: ModuleConfig
     levantamientos?: ModuleConfig
     lineas?: ModuleConfig
@@ -170,9 +176,16 @@ export interface CompanyRole {
     company_id: string
     name: string  // E.g., "Jefe de Calidad"
     description: string | null
+    color: string
+    base_role: 'admin' | 'supervisor' | 'worker'
     permissions: RolePermissions
+    is_template: boolean
     created_at: string
     updated_at: string
+}
+
+export interface CompanyRoleWithStats extends CompanyRole {
+    members_count: number
 }
 
 // ===== INVITATIONS =====

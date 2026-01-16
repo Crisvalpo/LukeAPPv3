@@ -17,12 +17,16 @@ import {
     Copy,
     Shield,
     Info,
-    ArrowLeft
+    ArrowLeft,
+    AlertTriangle
 } from 'lucide-react';
 import '@/styles/roles.css';
 import { Heading, Text } from '@/components/ui/Typography';
 import { Button } from '@/components/ui/button';
 import '@/styles/dashboard.css';
+import Confetti from '@/components/onboarding/Confetti';
+import Toast from '@/components/onboarding/Toast';
+import { CELEBRATION_MESSAGES } from '@/config/onboarding-messages';
 
 import { createClient } from '@/lib/supabase/client';
 
@@ -33,6 +37,8 @@ export default function RolesManagementPage() {
     const [error, setError] = useState('');
     const [companyId, setCompanyId] = useState<string | null>(null);
     const [isCloning, setIsCloning] = useState(false);
+    const [showConfetti, setShowConfetti] = useState(false);
+    const [toastMessage, setToastMessage] = useState<string | null>(null);
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -88,7 +94,7 @@ export default function RolesManagementPage() {
         if (result.success) {
             setRoles(result.data || []);
         } else {
-            setError(result.message);
+            setError(result.message ?? 'Error desconocido');
         }
 
         setIsLoading(false);
@@ -103,11 +109,19 @@ export default function RolesManagementPage() {
         if (result.success) {
             // Reload roles
             await loadRoles(companyId);
-            // Reload roles
-            await loadRoles(companyId);
-            // alert(`✅ ${result.data?.roles_created || 0} roles estándar clonados correctamente`);
-            // Removing alert for better UX or replacing with toast later. For now just cleaning emoji.
-            alert(`${result.data?.roles_created || 0} roles estándar clonados correctamente`);
+
+            // Trigger celebrations!
+            setShowConfetti(true);
+            setToastMessage(CELEBRATION_MESSAGES.roles);
+
+            // Reset celebrations after animation
+            setTimeout(() => {
+                setShowConfetti(false);
+            }, 3500);
+
+            // Notify other components (like OnboardingWidget)
+            window.dispatchEvent(new Event('onboarding-updated'));
+            router.refresh();
         } else {
             alert(`❌ ${result.message}`);
         }
@@ -140,6 +154,9 @@ export default function RolesManagementPage() {
         if (result.success) {
             if (companyId) {
                 await loadRoles(companyId);
+                // Also update onboarding status in case they deleted the last role
+                window.dispatchEvent(new Event('onboarding-updated'));
+                router.refresh();
             }
             alert(`✅ ${result.message}`);
         } else {
@@ -150,6 +167,9 @@ export default function RolesManagementPage() {
     function handleModalSuccess() {
         if (companyId) {
             loadRoles(companyId);
+            // Notify other components (like OnboardingWidget)
+            window.dispatchEvent(new Event('onboarding-updated'));
+            router.refresh();
         }
     }
 
@@ -186,7 +206,12 @@ export default function RolesManagementPage() {
                     <Text size="base" className="dashboard-subtitle">Gestiona los roles funcionales de tu organización</Text>
                 </div>
 
-                <div className="flex gap-3 mt-4">
+                <div className="roles-actions">
+                    {!isLoading && roles.length === 0 && (
+                        <span className="missing-badge pulsate">
+                            ⚠️ Faltan Roles
+                        </span>
+                    )}
                     <Button
                         variant="outline"
                         onClick={handleCloneStandardRoles}
@@ -211,10 +236,21 @@ export default function RolesManagementPage() {
                             <Lightbulb size={24} />
                         </div>
                         <div className="banner-content">
-                            <h3>No tienes roles configurados</h3>
+                            <h3>Define los cargos de tu equipo</h3>
                             <p>
-                                Comienza cargando los <strong>14 roles estándar de piping</strong> o crea roles personalizados
-                                desde cero.
+                                Crea roles personalizados según los <strong>cargos reales de tu obra</strong>:
+                                "Pañolero", "Jefe de Calidad", "Capataz", "Encargado BIM", etc.
+                            </p>
+                            <p style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
+                                <strong>Ejemplo:</strong> Un "Encargado BIM" puede tener acceso a:
+                            </p>
+                            <ul style={{ marginLeft: '1.5rem', marginTop: '0.25rem', fontSize: '0.85rem', lineHeight: '1.6' }}>
+                                <li>📐 <strong>Engineering</strong> - Cargar isométricos y modelos 3D</li>
+                                <li>🏗️ <strong>BIM</strong> - Gestión de modelos estructurales</li>
+                                <li>📊 <strong>Procurement</strong> - Consultar catálogo de materiales</li>
+                            </ul>
+                            <p style={{ marginTop: '0.75rem', fontSize: '0.85rem', opacity: 0.8 }}>
+                                💡 Tip: Puedes empezar cargando los <strong>14 roles estándar</strong> y ajustarlos según tu empresa.
                             </p>
                         </div>
                     </div>
@@ -276,6 +312,16 @@ export default function RolesManagementPage() {
                     />
                 )
             }
+
+            {/* Celebration Components */}
+            <Confetti show={showConfetti} />
+            {toastMessage && (
+                <Toast
+                    message={toastMessage}
+                    type="success"
+                    onClose={() => setToastMessage(null)}
+                />
+            )}
         </div >
     );
 }

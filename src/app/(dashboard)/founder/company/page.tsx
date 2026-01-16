@@ -3,11 +3,16 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { getOnboardingStatus, type OnboardingStatus } from '@/actions/onboarding'
 import { getCompanyById, updateCompany, getCompanyStats, type Company } from '@/services/companies'
 import { Building2, Users, FolderKanban, Check, X } from 'lucide-react'
 import { Heading, Text } from '@/components/ui/Typography'
 import { Icons } from '@/components/ui/Icons'
 import { InputField } from '@/components/ui/InputField'
+import CompanyLogoUpload from '@/components/company/CompanyLogoUpload'
+import Confetti from '@/components/onboarding/Confetti'
+import Toast from '@/components/onboarding/Toast'
+import { CELEBRATION_MESSAGES } from '@/config/onboarding-messages'
 import '@/styles/dashboard.css'
 import '@/styles/companies.css'
 import '@/styles/company-profile.css'
@@ -27,10 +32,38 @@ export default function FounderCompanyPage() {
     const [company, setCompany] = useState<Company | null>(null)
     const [stats, setStats] = useState<CompanyStats>({ projects: 0, members: 0 })
     const [editedName, setEditedName] = useState('')
+    const [editedRut, setEditedRut] = useState('')
+
+    // Celebration state
+    const [onboardingStatus, setOnboardingStatus] = useState<OnboardingStatus | null>(null)
+    const [showConfetti, setShowConfetti] = useState(false)
+    const [toastMessage, setToastMessage] = useState<string | null>(null)
 
     useEffect(() => {
         loadCompanyData()
     }, [])
+
+    async function checkCompletion(companyId: string) {
+        const status = await getOnboardingStatus(companyId)
+        setOnboardingStatus(status)
+
+        // Check if company step is now complete (it wasn't before)
+        // Note: We check specifically if the company step is complete in the new status
+        if (status.completedSteps.includes('company')) {
+            // We can allow re-triggering celebration or check against previous state if we had it fine-grained
+            // For now, let's just trigger toast if it looks complete
+            if (!onboardingStatus?.completedSteps.includes('company')) {
+                setToastMessage(CELEBRATION_MESSAGES.company)
+                setShowConfetti(true)
+
+                // Notify other components (like OnboardingWidget) that status has changed
+                window.dispatchEvent(new Event('onboarding-updated'))
+                router.refresh()
+
+                setTimeout(() => setShowConfetti(false), 5000)
+            }
+        }
+    }
 
     async function loadCompanyData() {
         const supabase = createClient()
@@ -63,10 +96,15 @@ export default function FounderCompanyPage() {
 
         setCompany(companyData)
         setEditedName(companyData.name)
+        setEditedRut((companyData as any).rut || '')
 
         // Load stats
         const companyStats = await getCompanyStats(memberData.company_id)
         setStats(companyStats)
+
+        // Load onboarding status
+        const status = await getOnboardingStatus(memberData.company_id)
+        setOnboardingStatus(status)
 
         setIsLoading(false)
     }
@@ -78,12 +116,15 @@ export default function FounderCompanyPage() {
         setError('')
 
         const result = await updateCompany(company.id, {
-            name: editedName
+            name: editedName,
+            rut: editedRut
         })
 
         if (result.success && result.data) {
             setCompany(result.data)
             setIsEditing(false)
+            // Check if this update completed the onboarding step
+            checkCompletion(company.id)
         } else {
             setError(result.message)
         }
@@ -94,6 +135,7 @@ export default function FounderCompanyPage() {
     function handleCancel() {
         if (company) {
             setEditedName(company.name)
+            setEditedRut((company as any).rut || '')
         }
         setIsEditing(false)
         setError('')
@@ -117,45 +159,40 @@ export default function FounderCompanyPage() {
 
     return (
         <div className="dashboard-page">
-
-            {/* Header */}
-            <div className="dashboard-header">
-                <div className="dashboard-header-content">
-                    <div className="dashboard-accent-line" />
-                    <Heading level={1} className="dashboard-title">Mi Empresa</Heading>
-                </div>
-                <Text size="base" className="dashboard-subtitle">
-                    Información detalla y configuración de tu organización
-                </Text>
-            </div>
+            {/* ... Header ... */}
 
             <div className="company-profile-container">
                 {/* Main Profile Card */}
                 <div className="profile-header-card">
-                    <div className="profile-header-glow" />
+                    {/* ... error banner ... */}
 
-                    {error && (
-                        <div className="error-banner">
-                            {error}
-                        </div>
-                    )}
-
-                    <div className="company-main-info">
-                        <div className="company-logo-box">
-                            <Building2 className="company-logo-icon" />
-                        </div>
-
+                    {/* Profile Header Flex Container */}
+                    <div className="profile-header-flex">
+                        {/* Company Info (Left) */}
                         <div className="company-content">
                             {isEditing ? (
-                                <div className="company-name-row">
-                                    <input
-                                        type="text"
-                                        value={editedName}
-                                        onChange={(e) => setEditedName(e.target.value)}
-                                        className="edit-input"
-                                        placeholder="Nombre de la empresa"
-                                        autoFocus
-                                    />
+                                <div className="company-edit-form">
+                                    <div className="form-group">
+                                        <label className="input-label">Nombre de la Empresa</label>
+                                        <input
+                                            type="text"
+                                            value={editedName}
+                                            onChange={(e) => setEditedName(e.target.value)}
+                                            className="edit-input"
+                                            placeholder="Nombre de la empresa"
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="input-label">RUT / Tax ID <span className="required-star">*</span></label>
+                                        <input
+                                            type="text"
+                                            value={editedRut}
+                                            onChange={(e) => setEditedRut(e.target.value)}
+                                            className="edit-input"
+                                            placeholder="Ej: 76.123.456-K"
+                                        />
+                                    </div>
                                     <div className="edit-actions">
                                         <button onClick={handleSave} disabled={isSaving || !editedName.trim()} className="icon-btn save" title="Guardar">
                                             <Check size={20} />
@@ -166,70 +203,143 @@ export default function FounderCompanyPage() {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="company-name-row">
-                                    <Heading as="h2" className="company-name">{company.name}</Heading>
-                                    <button
-                                        onClick={() => setIsEditing(true)}
-                                        className="icon-btn edit"
-                                        title="Editar nombre"
-                                    >
-                                        <Icons.Edit size={18} />
-                                    </button>
+                                <div className="company-display-info">
+                                    <div className="company-name-row">
+                                        <Heading as="h2" className="company-name">{company.name}</Heading>
+
+                                        {/* RUT Display with Badge if missing */}
+                                        {(company as any).rut ? (
+                                            <Text size="base" variant="muted" style={{ fontFamily: 'monospace', marginLeft: '1rem' }}>
+                                                RUT: {(company as any).rut}
+                                            </Text>
+                                        ) : (
+                                            <span
+                                                className="missing-badge pulsate"
+                                                onClick={() => setIsEditing(true)}
+                                                style={{ cursor: 'pointer', marginLeft: '1rem' }}
+                                                title="Haz clic para agregar"
+                                            >
+                                                ⚠️ Falta RUT
+                                            </span>
+                                        )}
+
+                                        <button
+                                            onClick={() => setIsEditing(true)}
+                                            className="icon-btn edit"
+                                            title="Editar información"
+                                            style={{ marginLeft: '0.5rem' }}
+                                        >
+                                            <Icons.Edit size={18} />
+                                        </button>
+                                    </div>
                                 </div>
                             )}
 
                             <div className="company-meta-row">
                                 <span className="company-date">
-                                    Creada el {new Date(company.created_at).toLocaleDateString('es-ES', {
+                                    📅 Creada el {new Date(company.created_at).toLocaleDateString('es-ES', {
                                         year: 'numeric',
                                         month: 'long',
                                         day: 'numeric'
                                     })}
                                 </span>
+                                <span className="company-badge">
+                                    ✨ Activa
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Logo Section (Right) */}
+                        <div className="company-logo-section">
+                            <div className="logo-wrapper">
+                                <CompanyLogoUpload
+                                    companyId={company.id}
+                                    companyName={company.name}
+                                    currentLogoUrl={(company as any).logo_url || null}
+                                    onUpdate={(newLogoUrl) => {
+                                        setCompany({ ...company, logo_url: newLogoUrl } as any);
+                                        checkCompletion(company.id);
+                                    }}
+                                    showMissingBadge={!(company as any).logo_url}
+                                />
                             </div>
                         </div>
                     </div>
 
+                    {/* Stats Grid - Enhanced */}
                     <div className="profile-stats-grid">
-                        <div className="stat-item">
-                            <span className="stat-label">Proyectos Activos</span>
-                            <span className="stat-value">{stats.projects}</span>
+                        <div className="stat-card">
+                            <div className="stat-card-header">
+                                <div className="stat-icon">
+                                    <FolderKanban size={20} />
+                                </div>
+                            </div>
+                            <div className="stat-label">Proyectos Activos</div>
+                            <div className="stat-value">{stats.projects}</div>
                         </div>
-                        <div className="stat-item">
-                            <span className="stat-label">Miembros del Equipo</span>
-                            <span className="stat-value">{stats.members}</span>
+
+                        <div className="stat-card">
+                            <div className="stat-card-header">
+                                <div className="stat-icon">
+                                    <Users size={20} />
+                                </div>
+                            </div>
+                            <div className="stat-label">Miembros del Equipo</div>
+                            <div className="stat-value">{stats.members}</div>
                         </div>
                     </div>
                 </div>
 
                 {/* Quick Actions Section */}
                 <div>
-                    <Heading level={3} size="xl" className="mb-6 text-white font-bold">
+                    <Heading level={3} size="xl" style={{ marginBottom: '1.5rem', color: 'white', fontWeight: 'bold' }}>
                         Accesos Directos
                     </Heading>
                     <div className="quick-actions-grid">
                         <button onClick={() => router.push('/founder/projects')} className="action-card">
                             <div className="action-icon-circle purple-glow">
-                                <FolderKanban size={28} />
+                                <FolderKanban size={32} />
                             </div>
                             <div className="action-content">
-                                <Heading level={4} size="lg">Gestionar Proyectos</Heading>
-                                <Text size="sm" variant="muted">Crea, edita y supervisa tus proyectos</Text>
+                                <h4>Gestionar Proyectos</h4>
+                                <p>Crea, edita y supervisa tus proyectos</p>
+                                {stats.projects === 0 && (
+                                    <span className="action-badge">Sin proyectos</span>
+                                )}
                             </div>
                         </button>
 
-                        <button onClick={() => router.push('/founder/invitations')} className="action-card">
+                        <button onClick={() => router.push('/founder/settings/invitations')} className="action-card">
                             <div className="action-icon-circle emerald-glow">
-                                <Users size={28} />
+                                <Users size={32} />
                             </div>
                             <div className="action-content">
-                                <Heading level={4} size="lg">Invitar Equipo</Heading>
-                                <Text size="sm" variant="muted">Agrega administradores y colaboradores</Text>
+                                <h4>Invitar Equipo</h4>
+                                <p>Agrega administradores y colaboradores</p>
+                            </div>
+                        </button>
+
+                        <button onClick={() => router.push('/founder/settings/roles')} className="action-card">
+                            <div className="action-icon-circle amber-glow">
+                                <Building2 size={32} />
+                            </div>
+                            <div className="action-content">
+                                <h4>Roles y Permisos</h4>
+                                <p>Configura roles funcionales de tu equipo</p>
                             </div>
                         </button>
                     </div>
                 </div>
             </div>
+            {/* Celebration Components */}
+            <Confetti show={showConfetti} />
+            {toastMessage && (
+                <Toast
+                    message={toastMessage}
+                    type="success"
+                    onClose={() => setToastMessage(null)}
+                />
+            )}
         </div>
     )
 }

@@ -30,6 +30,48 @@
     background-clip: text;
 }
 
+.missing-badge {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.pulsate {
+    animation: pulsate 2s infinite;
+}
+
+@keyframes pulsate {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
+.roles-actions {
+    display: flex;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.roles-actions>*+* {
+    margin-left: 1rem;
+}
+
 .subtitle {
     color: rgba(226, 232, 240, 0.7);
     font-size: 0.95rem;
