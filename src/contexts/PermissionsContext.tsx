@@ -125,7 +125,8 @@ export function PermissionsProvider({ children }: PermissionsProviderProps) {
     function can(resource: string, action: string): boolean {
         if (!permissions) return false;
 
-        const resourcePerms = permissions.resources[resource];
+        const resources = permissions.resources || {};
+        const resourcePerms = resources[resource];
         if (!resourcePerms) return false;
 
         return resourcePerms[action] === true;
@@ -137,7 +138,8 @@ export function PermissionsProvider({ children }: PermissionsProviderProps) {
     function hasModule(moduleId: string): boolean {
         if (!permissions) return false;
 
-        const moduleConfig = permissions.modules[moduleId];
+        const modules = permissions.modules || {};
+        const moduleConfig = modules[moduleId];
         return moduleConfig?.enabled === true;
     }
 
@@ -147,14 +149,16 @@ export function PermissionsProvider({ children }: PermissionsProviderProps) {
     function getHomeModule(): string | null {
         if (!permissions) return null;
 
-        for (const [moduleId, config] of Object.entries(permissions.modules)) {
+        const modules = permissions.modules || {};
+
+        for (const [moduleId, config] of Object.entries(modules)) {
             if (config?.is_home === true) {
                 return moduleId;
             }
         }
 
         // Fallback: return first enabled module
-        for (const [moduleId, config] of Object.entries(permissions.modules)) {
+        for (const [moduleId, config] of Object.entries(modules)) {
             if (config?.enabled === true) {
                 return moduleId;
             }

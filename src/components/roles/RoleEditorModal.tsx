@@ -81,6 +81,7 @@ export default function RoleEditorModal({
     function handleModuleToggle(moduleId: string) {
         setFormData((prev) => {
             const newPermissions = { ...prev.permissions };
+            if (!newPermissions.modules) newPermissions.modules = {}
             const currentModule = newPermissions.modules[moduleId];
 
             // Toggle enabled state
@@ -96,20 +97,22 @@ export default function RoleEditorModal({
     function handleSetHomeModule(moduleId: string) {
         setFormData((prev) => {
             const newPermissions = { ...prev.permissions };
+            if (!newPermissions.modules) newPermissions.modules = {};
+            const modules = newPermissions.modules;
 
             // Unset all is_home flags
-            Object.keys(newPermissions.modules).forEach((key) => {
-                if (newPermissions.modules[key]) {
-                    newPermissions.modules[key]!.is_home = false;
+            Object.keys(modules).forEach((key) => {
+                if (modules[key]) {
+                    modules[key]!.is_home = false;
                 }
             });
 
             // Set this module as home (and enable it)
-            if (!newPermissions.modules[moduleId]) {
-                newPermissions.modules[moduleId] = { enabled: true, is_home: true };
+            if (!modules[moduleId]) {
+                modules[moduleId] = { enabled: true, is_home: true };
             } else {
-                newPermissions.modules[moduleId]!.is_home = true;
-                newPermissions.modules[moduleId]!.enabled = true;
+                modules[moduleId]!.is_home = true;
+                modules[moduleId]!.enabled = true;
             }
 
             return { ...prev, permissions: newPermissions };
@@ -126,8 +129,10 @@ export default function RoleEditorModal({
             return;
         }
 
+        const modules = formData.permissions.modules || {};
+
         // Check if at least one module is enabled
-        const hasEnabledModule = Object.values(formData.permissions.modules).some(
+        const hasEnabledModule = Object.values(modules).some(
             (m) => m?.enabled
         );
 
@@ -137,7 +142,7 @@ export default function RoleEditorModal({
         }
 
         // Check if a home module is set
-        const hasHomeModule = Object.values(formData.permissions.modules).some(
+        const hasHomeModule = Object.values(modules).some(
             (m) => m?.is_home
         );
 
@@ -179,7 +184,7 @@ export default function RoleEditorModal({
                 onClose();
                 resetForm();
             } else {
-                setError(result.message);
+                setError(result.message || 'Error desconocido');
             }
         } catch (err: any) {
             setError(err.message || 'Error al guardar el rol');
@@ -190,7 +195,8 @@ export default function RoleEditorModal({
 
     if (!isOpen) return null;
 
-    const enabledModules = Object.entries(formData.permissions.modules)
+    const modules = formData.permissions.modules || {};
+    const enabledModules = Object.entries(modules)
         .filter(([_, config]) => config?.enabled)
         .map(([id]) => id);
 
@@ -288,8 +294,8 @@ export default function RoleEditorModal({
                         <div className="module-toggles">
                             {Object.entries(MODULES).map(([key, module]) => {
                                 const moduleId = module.id;
-                                const isEnabled = formData.permissions.modules[moduleId]?.enabled;
-                                const isHome = formData.permissions.modules[moduleId]?.is_home;
+                                const isEnabled = modules[moduleId]?.enabled;
+                                const isHome = modules[moduleId]?.is_home;
 
                                 return (
                                     <div

@@ -11,7 +11,7 @@ import type {
     MaterialReceiptItem,
     CreateMaterialRequestParams,
     CreateMaterialReceiptParams,
-    MaterialRequestStatusEnum
+    RequestStatusEnum
 } from '@/types'
 
 /**
@@ -123,7 +123,7 @@ export async function createMaterialRequest(
  */
 export async function updateMaterialRequestStatus(
     requestId: string,
-    status: MaterialRequestStatusEnum,
+    status: RequestStatusEnum,
     etaDate?: string
 ): Promise<void> {
     const supabase = createClient()

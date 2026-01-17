@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Loader2, Scissors, ruler, RotateCcw } from 'lucide-react'
+import { Loader2, Scissors } from 'lucide-react'
 
 interface CuttingOrderViewProps {
     projectId: string
@@ -172,8 +172,8 @@ export default function CuttingOrderView({ projectId, userId, workshopId }: Cutt
                                     key={spool.spoolId}
                                     onClick={() => handleSelectSpool(spool.spoolId)}
                                     className={`p-3 rounded-lg border cursor-pointer transition-colors ${selectedSpool?.spoolId === spool.spoolId
-                                            ? 'bg-blue-500/20 border-blue-500'
-                                            : 'hover:bg-accent/50 border-transparent hover:border-accent'
+                                        ? 'bg-blue-500/20 border-blue-500'
+                                        : 'hover:bg-accent/50 border-transparent hover:border-accent'
                                         }`}
                                 >
                                     <div className="font-bold">{spool.spoolName}</div>

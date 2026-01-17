@@ -13,6 +13,7 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
     const [loading, setLoading] = useState(true)
     const [accepting, setAccepting] = useState(false)
     const [invitation, setInvitation] = useState<any>(null)
+    const [userExists, setUserExists] = useState(false)
     const [error, setError] = useState('')
     const [isAuthenticated, setIsAuthenticated] = useState(false)
     const [password, setPassword] = useState('')
@@ -58,6 +59,16 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
                 await handleAccept() // Use existing accept flow
                 return
             }
+
+            // CHECK IF USER EXISTS IN AUTH (even if not logged in)
+            if (!user) {
+                const { checkUserExists } = await import('@/actions/auth-actions')
+                const check = await checkUserExists(result.data.email)
+                if (check.exists) {
+                    console.log('ℹ️ El usuario ya está registrado en Auth. Mostrando flow de Login.')
+                    setUserExists(true)
+                }
+            }
         } else {
             setError(result.message)
         }
@@ -73,78 +84,78 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
     async function handleAccept() {
         setError('')
 
-        // User not authenticated - need to create account first
+        // User not authenticated - need to CREATE or LOGIN
         if (!isAuthenticated) {
-            if (password.length < 6) {
-                setError('La contraseña debe tener al menos 6 caracteres')
-                return
+
+            // Login Mode
+            if (userExists) {
+                setAccepting(true)
+                const { error: signInError } = await supabase.auth.signInWithPassword({
+                    email: invitation.email,
+                    password: password,
+                })
+
+                if (signInError) {
+                    setError('Error al iniciar sesión: ' + signInError.message)
+                    setAccepting(false)
+                    return
+                }
+                // If success, we fall through to "Accept Invitation" logic below
             }
+            // Create Mode
+            else {
+                if (password.length < 6) {
+                    setError('La contraseña debe tener al menos 6 caracteres')
+                    return
+                }
 
-            if (password !== confirmPassword) {
-                setError('Las contraseñas no coinciden')
-                return
-            }
+                if (password !== confirmPassword) {
+                    setError('Las contraseñas no coinciden')
+                    return
+                }
 
-            setAccepting(true)
+                setAccepting(true)
 
-            // 1. Create auth user (BACKEND STRATEGY)
-            // We hash the password client-side (or pass plain and hash on server, but bcryptjs is heavy for edge if we used edge functions).
-            // Since we are using Server Actions (Node.js), we can pass plain text and let the Action hash it, 
-            // OR hash here. The Action expects a hash because the RPC expects a hash.
-            // Let's hash in the Server Action to keep client bundle small, 
-            // BUT wait, we defined the Action to take a hash? 
-            // Let's check the Action definition I just wrote... it takes 'passwordHash'.
-            // Actually, let's update the Action to take plain password and hash it there to avoid 'bcryptjs' on client.
-            // RE-READING my previous step: I installed bcryptjs in the PROJECT, so it's available.
-            // But better to do it on server.
-            // Let's assume for a moment I passed plain password to the action and the action hashes it.
-            // I will update the action in a second if needed, but for now let's implement the call.
+                // Create user using Admin API (no need to hash password)
+                const { createUserBackend } = await import('@/actions/auth-actions')
 
-            // Wait, I need to hash it.
-            // Let's dynamic import bcryptjs to avoid load if not needed? 
-            // OR simpler: Just rely on the server action to do the hashing.
-            // I will update the Server Action file to take 'plainPassword' and hash it inside.
-            // Let's assume 'createUserBackend' takes (email, plainPassword, fullName).
+                console.log('Calling Admin API to create user...')
+                const signUpResult = await createUserBackend(
+                    invitation.email,
+                    password,  // Plain password - Admin API will hash it
+                    invitation.email.split('@')[0]  // Use email prefix as name
+                )
 
-            // Update: I will re-write the action to take plain password.
+                if (!signUpResult.success) {
+                    console.error('❌ SignUp Error (Backend):', signUpResult.error)
+                    // Fallback: If for some reason checking failed but creation says exists
+                    if (signUpResult.error && (signUpResult.error.includes('already exists') || signUpResult.error.includes('duplicate'))) {
+                        setError('Esta cuenta ya existe. Por favor, ingresa tu contraseña para acceder.')
+                        setUserExists(true) // Switch UI to login
+                        setAccepting(false)
+                        return
+                    } else {
+                        setError('Error al crear cuenta: ' + signUpResult.error)
+                        setAccepting(false)
+                        return
+                    }
+                }
 
-            // Create user using Admin API (no need to hash password)
-            const { createUserBackend } = await import('@/actions/auth-actions')
+                // Login immediately using the password
+                const { error: signInError } = await supabase.auth.signInWithPassword({
+                    email: invitation.email,
+                    password: password,
+                })
 
-            console.log('Calling Admin API to create user...')
-            const signUpResult = await createUserBackend(
-                invitation.email,
-                password,  // Plain password - Admin API will hash it
-                invitation.email.split('@')[0]  // Use email prefix as name
-            )
-
-            if (!signUpResult.success) {
-                console.error('❌ SignUp Error (Backend):', signUpResult.error)
-                // Handle "User already registered" specifically if needed
-                if (signUpResult.error && (signUpResult.error.includes('already exists') || signUpResult.error.includes('duplicate'))) {
-                    // Proceed to login
-                    console.log('User exists, trying login...')
-                } else {
-                    setError('Error al crear cuenta: ' + signUpResult.error)
+                if (signInError) {
+                    setError('Cuenta creada, pero error al iniciar sesión: ' + signInError.message)
                     setAccepting(false)
                     return
                 }
             }
-
-            // 2. Login immediately using the password
-            const { error: signInError } = await supabase.auth.signInWithPassword({
-                email: invitation.email,
-                password: password,
-            })
-
-            if (signInError) {
-                setError('Cuenta creada, pero error al iniciar sesión: ' + signInError.message)
-                setAccepting(false)
-                return
-            }
         }
 
-        // 2. Accept invitation (User is now authenticated or was already) (OR just finished creating account)
+        // 2. Accept invitation (User is now authenticated or was already) (OR just finished creating/logging in)
         const result = await acceptInvitation(resolvedParams.token)
 
         if (result.success) {
@@ -239,9 +250,20 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
 
                 {!isAuthenticated && (
                     <div style={{ width: '100%', marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <p style={{ fontSize: '0.875rem', color: '#94a3b8', textAlign: 'center' }}>
-                            Crea tu contraseña para activar tu cuenta
-                        </p>
+                        {userExists ? (
+                            <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '0.75rem', borderRadius: '0.5rem' }}>
+                                <p style={{ fontSize: '0.875rem', color: '#60a5fa', textAlign: 'center', marginBottom: 0 }}>
+                                    ¡Hola de nuevo! Esta cuenta ya existe.
+                                    <br />
+                                    <strong>Ingresa tu contraseña para aceptar la invitación.</strong>
+                                </p>
+                            </div>
+                        ) : (
+                            <p style={{ fontSize: '0.875rem', color: '#94a3b8', textAlign: 'center' }}>
+                                Crea tu contraseña para activar tu cuenta
+                            </p>
+                        )}
+
                         <div>
                             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#e2e8f0', marginBottom: '0.5rem' }}>
                                 Contraseña
@@ -251,29 +273,39 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="form-input"
-                                placeholder="Mínimo 6 caracteres"
+                                placeholder={userExists ? "Tu contraseña actual" : "Mínimo 6 caracteres"}
                                 style={{ width: '100%' }}
                             />
                         </div>
-                        <div>
-                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#e2e8f0', marginBottom: '0.5rem' }}>
-                                Confirmar Contraseña
-                            </label>
-                            <input
-                                type="password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="form-input"
-                                placeholder="Repite tu contraseña"
-                                style={{ width: '100%' }}
-                            />
-                        </div>
+
+                        {!userExists && (
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#e2e8f0', marginBottom: '0.5rem' }}>
+                                    Confirmar Contraseña
+                                </label>
+                                <input
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className="form-input"
+                                    placeholder="Repite tu contraseña"
+                                    style={{ width: '100%' }}
+                                />
+                            </div>
+                        )}
                     </div>
                 )}
 
                 {error && (
                     <div style={{ padding: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '0.5rem', color: '#f87171', fontSize: '0.875rem', marginTop: '1rem' }}>
                         {error}
+                        {error.includes('credentials') && (
+                            <div style={{ marginTop: '0.5rem', textAlign: 'center' }}>
+                                <a href="/forgot-password" style={{ color: '#f87171', textDecoration: 'underline', fontSize: '0.8rem' }}>
+                                    ¿Olvidaste tu contraseña?
+                                </a>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -283,7 +315,7 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
                         disabled={accepting}
                         className="accept-button"
                     >
-                        {accepting ? 'Procesando...' : (isAuthenticated ? 'Aceptar Invitación' : 'Crear Cuenta y Aceptar')}
+                        {accepting ? 'Procesando...' : (isAuthenticated ? 'Aceptar Invitación' : (userExists ? 'Iniciar Sesión y Aceptar' : 'Crear Cuenta y Aceptar'))}
                     </button>
                     {!isAuthenticated && (
                         <div style={{ marginTop: '1rem', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -291,7 +323,7 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
                                 onClick={() => router.push('/')}
                                 style={{ background: 'none', border: 'none', color: '#60a5fa', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
                             >
-                                Ya tengo una cuenta, iniciar sesión
+                                {userExists ? 'Volver al Inicio' : 'Ya tengo una cuenta, iniciar sesión'}
                             </button>
                         </div>
                     )}

@@ -119,6 +119,7 @@ export async function canAccessRoute(pathname: string): Promise<boolean> {
     }
 
     // Check if user has access to this module
-    const moduleConfig = permissions.modules[moduleId];
+    const modules = permissions.modules || {};
+    const moduleConfig = modules[moduleId];
     return moduleConfig?.enabled === true;
 }

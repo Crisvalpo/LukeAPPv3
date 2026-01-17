@@ -1,3 +1,6 @@
+import React from 'react';
+import { useGLTF, Center } from '@react-three/drei';
+
 function StructureModel({ url, spatialData }: { url: string, spatialData?: any }) {
     const { scene } = useGLTF(url)
     const clonedScene = React.useMemo(() => {

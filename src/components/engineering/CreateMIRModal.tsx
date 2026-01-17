@@ -27,7 +27,7 @@ export default function CreateMIRModal({
     onSuccess,
     preSelectedSpools = []
 }: Props) {
-    const [requestType, setRequestType] = useState<MaterialRequestTypeEnum>('CLIENT_MIR')
+    const [requestType, setRequestType] = useState<MaterialRequestTypeEnum>(MaterialRequestTypeEnum.CLIENT_MIR)
     const [notes, setNotes] = useState('')
     const [items, setItems] = useState<{
         material_spec: string

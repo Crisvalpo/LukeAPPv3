@@ -20,10 +20,12 @@ import {
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
 import '@/styles/sidebar.css'
+import OnboardingWidget from '@/components/onboarding/OnboardingWidget'
 
 interface SidebarProps {
     role: 'super_admin' | 'founder' | 'admin' | string
     companyName?: string | null
+    companyId?: string | null
     planTier?: string | null
     userEmail?: string | null
     functionalRoleName?: string | null
@@ -32,11 +34,11 @@ interface SidebarProps {
 type MenuItem = {
     name: string
     href: string
-    icon: React.ElementType
-    subitems?: { name: string; href: string; icon: React.ElementType }[]
+    icon: any
+    subitems?: { name: string; href: string; icon: any }[]
 }
 
-export default function Sidebar({ role, companyName, planTier, userEmail, functionalRoleName }: SidebarProps) {
+export default function Sidebar({ role, companyName, companyId, planTier, userEmail, functionalRoleName }: SidebarProps) {
     const pathname = usePathname()
     const router = useRouter()
     const [openItems, setOpenItems] = useState<Record<string, boolean>>({})
@@ -106,6 +108,13 @@ export default function Sidebar({ role, companyName, planTier, userEmail, functi
                     )}
                 </div>
             </div>
+
+            {/* Onboarding Widget - Only for Founders */}
+            {role === 'founder' && companyId && (
+                <div style={{ padding: '0 1rem' }}>
+                    <OnboardingWidget companyId={companyId} />
+                </div>
+            )}
 
             {/* Navigation */}
             <nav className="sidebar-nav">

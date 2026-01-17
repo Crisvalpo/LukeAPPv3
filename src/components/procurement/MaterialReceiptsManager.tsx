@@ -125,7 +125,7 @@ export default function MaterialReceiptsManager({ projectId, companyId }: Materi
                                                     </span>
                                                 </td>
                                                 <td>{new Date(req.created_at).toLocaleDateString()}</td>
-                                                <td className="truncate-note" title={req.notes}>{req.notes || '-'}</td>
+                                                <td className="truncate-note" title={req.notes || undefined}>{req.notes || '-'}</td>
                                                 <td className="actions-cell">
                                                     <button
                                                         className="btn-icon"

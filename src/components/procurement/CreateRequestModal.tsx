@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { createMaterialRequest } from '@/services/material-requests'
-import type { MaterialRequestTypeEnum } from '@/types'
+import { MaterialRequestTypeEnum } from '@/types'
 
 interface RequestItem {
     material_spec: string
@@ -27,7 +27,7 @@ export default function CreateRequestModal({
     onSuccess,
     initialItems
 }: CreateRequestModalProps) {
-    const [requestType, setRequestType] = useState<MaterialRequestTypeEnum>('CLIENT_MIR')
+    const [requestType, setRequestType] = useState<MaterialRequestTypeEnum>(MaterialRequestTypeEnum.CLIENT_MIR)
     const [notes, setNotes] = useState('')
     // Initialize with provided items or empty default
     const [items, setItems] = useState<RequestItem[]>(
@@ -127,16 +127,16 @@ export default function CreateRequestModal({
                             <div className="type-selector">
                                 <button
                                     type="button"
-                                    className={`type-btn ${requestType === 'CLIENT_MIR' ? 'active' : ''}`}
-                                    onClick={() => setRequestType('CLIENT_MIR')}
+                                    className={`type-btn ${requestType === MaterialRequestTypeEnum.CLIENT_MIR ? 'active' : ''}`}
+                                    onClick={() => setRequestType(MaterialRequestTypeEnum.CLIENT_MIR)}
                                 >
                                     🏢 MIR Cliente
                                     <small>Material suministrado por cliente</small>
                                 </button>
                                 <button
                                     type="button"
-                                    className={`type-btn ${requestType === 'CONTRACTOR_PO' ? 'active' : ''}`}
-                                    onClick={() => setRequestType('CONTRACTOR_PO')}
+                                    className={`type-btn ${requestType === MaterialRequestTypeEnum.CONTRACTOR_PO ? 'active' : ''}`}
+                                    onClick={() => setRequestType(MaterialRequestTypeEnum.CONTRACTOR_PO)}
                                 >
                                     🏗️ Orden de Compra
                                     <small>Material comprado por nosotros</small>

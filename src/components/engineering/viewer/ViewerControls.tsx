@@ -3,8 +3,6 @@ import { useViewerStore, ViewMode } from './ViewerLogic'
 import { InputField } from '@/components/ui/InputField'
 import { Icons } from '@/components/ui/Icons'
 import { SplitSpoolModal } from './SplitSpoolModal'
-import { Icons } from '@/components/ui/Icons'
-import { SplitSpoolModal } from './SplitSpoolModal'
 
 export default function ViewerControls() {
     const {

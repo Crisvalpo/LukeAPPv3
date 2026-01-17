@@ -278,6 +278,9 @@ export type Database = {
                 ]
             }
         }
+        Views: {
+            [_ in never]: never
+        }
         Enums: {
             subscription_status: "active" | "past_due" | "suspended"
             subscription_tier: "starter" | "pro" | "enterprise"

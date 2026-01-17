@@ -29,6 +29,8 @@ import Toast from '@/components/onboarding/Toast';
 import { CELEBRATION_MESSAGES } from '@/config/onboarding-messages';
 
 import { createClient } from '@/lib/supabase/client';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function RolesManagementPage() {
     const router = useRouter();
@@ -208,9 +210,9 @@ export default function RolesManagementPage() {
 
                 <div className="roles-actions">
                     {!isLoading && roles.length === 0 && (
-                        <span className="missing-badge pulsate">
+                        <Badge variant="destructive" className="pulsate">
                             ⚠️ Faltan Roles
-                        </span>
+                        </Badge>
                     )}
                     <Button
                         variant="outline"
@@ -358,7 +360,7 @@ function RoleCard({ role, onEdit, onDelete }: RoleCardProps) {
                     <span className="role-base-type">{baseRoleLabels[role.base_role]}</span>
                 </div>
                 {role.is_template && (
-                    <span className="template-badge">Sistema</span>
+                    <Badge variant="secondary">Sistema</Badge>
                 )}
             </div>
 

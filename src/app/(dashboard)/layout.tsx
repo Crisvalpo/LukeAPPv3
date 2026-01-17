@@ -92,7 +92,14 @@ export default async function DashboardLayout({
     return (
         <div style={{ display: 'flex', height: '100vh', background: '#0f172a', color: '#f1f5f9', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
             {/* Left Sidebar (Fixed) - Role Aware */}
-            <Sidebar role={role} companyName={companyName} planTier={planTier} userEmail={user.email} functionalRoleName={functionalRoleName} />
+            <Sidebar
+                role={role}
+                companyName={companyName}
+                companyId={memberData.company_id}
+                planTier={planTier}
+                userEmail={user.email}
+                functionalRoleName={functionalRoleName}
+            />
 
             {/* Main Content Area (Scrollable) */}
             <main style={{

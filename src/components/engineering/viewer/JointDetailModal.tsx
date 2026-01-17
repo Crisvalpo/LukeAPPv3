@@ -23,7 +23,7 @@ interface JointDetailModalProps {
     }
     onClose: () => void
     onUpdate?: (updatedJoint: any) => void
-    onUnassign?: () => void
+    onUnassign?: (spoolId: string | null, jointId: string) => void
 }
 
 export default function JointDetailModal({ joint, onClose, onUpdate, onUnassign }: JointDetailModalProps) {
@@ -171,7 +171,7 @@ export default function JointDetailModal({ joint, onClose, onUpdate, onUnassign 
             const { unassignJointAction } = await import('@/actions/joints')
             const result = await unassignJointAction(joint.id, joint.project_id)
             if (result.success) {
-                if (onUnassign) onUnassign()
+                if (onUnassign) onUnassign(joint.spool_id, joint.id)
                 onClose()
             } else {
                 throw new Error(result.error)
@@ -613,21 +613,25 @@ function JointHistoryList({ jointId, triggerRefresh }: { jointId: string, trigge
 
                             <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{userName}</span>
 
-                            <span style={{ color: '#64748b' }}>cambió a</span>
+                            {record.new_status !== record.previous_status && (
+                                <>
+                                    <span style={{ color: '#64748b' }}>cambió a</span>
 
-                            <span style={{
-                                fontWeight: 700,
-                                color: record.new_status === 'EXECUTED' ? '#4ade80' :
-                                    (record.new_status === 'REWORK' ? '#10b981' :
-                                        (record.new_status === 'DELETED' ? '#94a3b8' : '#e2e8f0'))
-                            }}>
-                                {{
-                                    'PENDING': 'PENDIENTE',
-                                    'EXECUTED': 'EJECUTADA',
-                                    'REWORK': 'RETRABAJO',
-                                    'DELETED': 'ELIMINADA'
-                                }[record.new_status as string] || record.new_status}
-                            </span>
+                                    <span style={{
+                                        fontWeight: 700,
+                                        color: record.new_status === 'EXECUTED' ? '#4ade80' :
+                                            (record.new_status === 'REWORK' ? '#10b981' :
+                                                (record.new_status === 'DELETED' ? '#94a3b8' : '#e2e8f0'))
+                                    }}>
+                                        {{
+                                            'PENDING': 'PENDIENTE',
+                                            'EXECUTED': 'EJECUTADA',
+                                            'REWORK': 'RETRABAJO',
+                                            'DELETED': 'ELIMINADA'
+                                        }[record.new_status as string] || record.new_status}
+                                    </span>
+                                </>
+                            )}
 
                             {cleanComment && (
                                 <span style={{ color: '#94a3b8', fontStyle: 'italic', marginLeft: '4px' }}>

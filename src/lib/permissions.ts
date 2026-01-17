@@ -15,7 +15,8 @@ export function canPerform(
 ): boolean {
     if (!permissions) return false;
 
-    const resourcePerms = permissions.resources[resource];
+    const resources = permissions.resources || {};
+    const resourcePerms = resources[resource];
     if (!resourcePerms) return false;
 
     return resourcePerms[action] === true;
@@ -30,7 +31,8 @@ export function hasModuleAccess(
 ): boolean {
     if (!permissions) return false;
 
-    const moduleConfig = permissions.modules[moduleId];
+    const modules = permissions.modules || {};
+    const moduleConfig = modules[moduleId];
     return moduleConfig?.enabled === true;
 }
 
@@ -40,14 +42,16 @@ export function hasModuleAccess(
 export function getHomeModule(permissions: RolePermissions | null): string | null {
     if (!permissions) return null;
 
-    for (const [moduleId, config] of Object.entries(permissions.modules)) {
+    const modules = permissions.modules || {};
+
+    for (const [moduleId, config] of Object.entries(modules)) {
         if (config?.is_home === true) {
             return moduleId;
         }
     }
 
     // Fallback: return first enabled module
-    for (const [moduleId, config] of Object.entries(permissions.modules)) {
+    for (const [moduleId, config] of Object.entries(modules)) {
         if (config?.enabled === true) {
             return moduleId;
         }
@@ -62,7 +66,8 @@ export function getHomeModule(permissions: RolePermissions | null): string | nul
 export function getEnabledModules(permissions: RolePermissions | null): string[] {
     if (!permissions) return [];
 
-    return Object.entries(permissions.modules)
+    const modules = permissions.modules || {};
+    return Object.entries(modules)
         .filter(([_, config]) => config?.enabled === true)
         .map(([moduleId]) => moduleId);
 }
@@ -76,7 +81,8 @@ export function getResourcePermissions(
 ): Record<string, boolean> {
     if (!permissions) return {};
 
-    return permissions.resources[resource] || {};
+    const resources = permissions.resources || {};
+    return resources[resource] || {};
 }
 
 /**
@@ -89,7 +95,8 @@ export function hasAnyPermission(
 ): boolean {
     if (!permissions) return false;
 
-    const resourcePerms = permissions.resources[resource];
+    const resources = permissions.resources || {};
+    const resourcePerms = resources[resource];
     if (!resourcePerms) return false;
 
     return actions.some(action => resourcePerms[action] === true);
@@ -105,7 +112,8 @@ export function hasAllPermissions(
 ): boolean {
     if (!permissions) return false;
 
-    const resourcePerms = permissions.resources[resource];
+    const resources = permissions.resources || {};
+    const resourcePerms = resources[resource];
     if (!resourcePerms) return false;
 
     return actions.every(action => resourcePerms[action] === true);

@@ -124,7 +124,7 @@ async function addCoverPage(
         // Label below QR
         doc.setFontSize(8)
         doc.setFont('helvetica', 'bold')
-        doc.text(request.request_number, qrX + (qrSize / 2), qrY + qrSize + 4, { align: 'center' })
+        doc.text(request.request_number || 'UNKNOWN', qrX + (qrSize / 2), qrY + qrSize + 4, { align: 'center' })
     }
 
     // Title "MIR (BY LukeAPP)"

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Search } from 'lucide-react'
 import { searchConsolidatedMTO, type MTOByIsometricWithStats, type MTOItemSummary } from '@/services/material-consolidation'
 import { createMaterialRequest } from '@/services/material-requests'
+import { MaterialRequestTypeEnum } from '@/types'
 import IsometricMTOCard from './IsometricMTOCard'
 
 interface Props {
@@ -120,7 +121,7 @@ export default function ConsolidatedMTO({ projectId, companyId }: Props) {
             await createMaterialRequest(
                 {
                     project_id: projectId,
-                    request_type: type,
+                    request_type: type as MaterialRequestTypeEnum,
                     items,
                     notes: ''
                 },

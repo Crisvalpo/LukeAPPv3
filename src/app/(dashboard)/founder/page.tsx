@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Users, Building2, Bell, Shield } from 'lucide-react'
+import { getOnboardingStatus, type OnboardingStatus } from '@/actions/onboarding'
+import { Users, Building2, FolderKanban, UserPlus } from 'lucide-react'
 import '@/styles/dashboard.css'
 import '@/styles/founder.css'
 import { Heading, Text } from '@/components/ui/Typography'
+import ConfigCard from '@/components/founder/ConfigCard'
 
 interface CompanyInfo {
     id: string
@@ -18,6 +20,7 @@ export default function FounderDashboard() {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(true)
     const [companyData, setCompanyData] = useState<CompanyInfo | null>(null)
+    const [onboardingStatus, setOnboardingStatus] = useState<OnboardingStatus | null>(null)
 
     useEffect(() => {
         loadFounderData()
@@ -47,44 +50,15 @@ export default function FounderDashboard() {
             return
         }
 
-        setCompanyData(memberData.companies as unknown as CompanyInfo)
+        const company = memberData.companies as unknown as CompanyInfo
+        setCompanyData(company)
+
+        // Fetch onboarding status
+        const status = await getOnboardingStatus(company.id)
+        setOnboardingStatus(status)
+
         setIsLoading(false)
     }
-
-    const settingsSections = [
-        {
-            title: 'Roles y Permisos',
-            description: 'Configura roles funcionales y permisos de acceso',
-            icon: Users,
-            color: '#f472b6',
-            href: '/founder/settings/roles',
-            available: true
-        },
-        {
-            title: 'Información de Empresa',
-            description: 'Edita nombre, logo y datos de la organización',
-            icon: Building2,
-            color: '#c084fc',
-            href: '/founder/settings/company',
-            available: false
-        },
-        {
-            title: 'Notificaciones',
-            description: 'Preferencias de alertas y comunicaciones',
-            icon: Bell,
-            color: '#60a5fa',
-            href: '/founder/settings/notifications',
-            available: false
-        },
-        {
-            title: 'Seguridad',
-            description: 'Gestión de seguridad y autenticación',
-            icon: Shield,
-            color: '#4ade80',
-            href: '/founder/settings/security',
-            available: false
-        }
-    ]
 
     if (isLoading) {
         return (
@@ -117,44 +91,41 @@ export default function FounderDashboard() {
 
             {/* Content Cards */}
             <div className="quick-actions-grid" style={{ marginTop: '2rem' }}>
-                {settingsSections.map((section) => {
-                    const Icon = section.icon
-                    return (
-                        <div
-                            key={section.title}
-                            className={`glass-panel quick-action-card ${!section.available ? 'disabled' : ''}`}
-                            onClick={() => section.available && router.push(section.href)}
-                            style={{
-                                cursor: section.available ? 'pointer' : 'not-allowed',
-                                opacity: section.available ? 1 : 0.6,
-                                position: 'relative',
-                                padding: '2rem',
-                                transition: 'all 0.3s ease'
-                            }}
-                        >
-                            <div className="quick-action-icon">
-                                <Icon size={24} color={section.color} />
-                            </div>
-                            <Heading level={3} className="quick-action-title">{section.title}</Heading>
-                            <Text className="quick-action-description">
-                                {section.description}
-                            </Text>
-                            {!section.available && (
-                                <span className="quick-action-badge" style={{
-                                    background: 'rgba(100, 116, 139, 0.2)',
-                                    color: '#94a3b8',
-                                    fontSize: '0.75rem',
-                                    padding: '0.25rem 0.5rem',
-                                    borderRadius: '0.375rem',
-                                    marginTop: '0.5rem',
-                                    display: 'inline-block'
-                                }}>
-                                    Próximamente
-                                </span>
-                            )}
-                        </div>
-                    )
-                })}
+                <ConfigCard
+                    title="Información de Empresa"
+                    description="Edita nombre, logo y datos de la organización"
+                    href="/founder/company"
+                    icon={Building2}
+                    step="company"
+                    onboardingStatus={onboardingStatus}
+                />
+
+                <ConfigCard
+                    title="Roles y Permisos"
+                    description="Configura roles funcionales y permisos de acceso"
+                    href="/founder/settings/roles"
+                    icon={Users}
+                    step="roles"
+                    onboardingStatus={onboardingStatus}
+                />
+
+                <ConfigCard
+                    title="Proyectos"
+                    description="Crea y gestiona proyectos de tu organización"
+                    href="/founder/projects"
+                    icon={FolderKanban}
+                    step="projects"
+                    onboardingStatus={onboardingStatus}
+                />
+
+                <ConfigCard
+                    title="Invitaciones"
+                    description="Invita a miembros de tu equipo"
+                    href="/founder/settings/invitations"
+                    icon={UserPlus}
+                    step="invitations"
+                    onboardingStatus={onboardingStatus}
+                />
             </div>
         </div>
     )

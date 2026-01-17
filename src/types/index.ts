@@ -165,6 +165,7 @@ export interface RolePermissions {
     levantamientos?: ModuleConfig
     lineas?: ModuleConfig
     materiales?: ModuleConfig
+    resources?: Record<string, any>
 }
 
 /**
@@ -377,13 +378,7 @@ export enum RevisionOccupancyEnum {
 /**
  * RevisionEventTypeEnum
  */
-export enum RevisionEventTypeEnum {
-    CREATION = 'CREATION',
-    FILE_UPLOAD = 'FILE_UPLOAD',
-    STATUS_CHANGE = 'STATUS_CHANGE',
-    APPROVAL = 'APPROVAL',
-    REJECTION = 'REJECTION'
-}
+export type RevisionEventTypeEnum = 'CREATED' | 'UPDATED' | 'DELETED' | 'STATUS_CHANGED' | 'APPROVED' | 'APPLIED' | 'REJECTED' | 'DRAFT' | 'VIGENTE' | 'PENDING' | 'CREATION' | 'FILE_UPLOAD' | 'STATUS_CHANGE' | 'APPROVAL' | 'REJECTION' | 'IMPACT_DETECTED' | 'RESOLVED'
 
 /**
  * ImpactTypeEnum
@@ -392,7 +387,8 @@ export enum ImpactTypeEnum {
     MAJOR_DIMENSION_CHANGE = 'MAJOR_DIMENSION_CHANGE',
     MINOR_CORRECTION = 'MINOR_CORRECTION',
     MATERIAL_SUBSTITUTION = 'MATERIAL_SUBSTITUTION',
-    SPEC_CLARIFICATION = 'SPEC_CLARIFICATION'
+    SPEC_CLARIFICATION = 'SPEC_CLARIFICATION',
+    MODIFIED = 'MODIFIED'
 }
 
 /**
@@ -413,6 +409,23 @@ export enum ResolutionTypeEnum {
     MODIFY_EXISTING = 'MODIFY_EXISTING',
     REWORK_REQUIRED = 'REWORK_REQUIRED',
     SCRAP_REPLACE = 'SCRAP_REPLACE'
+}
+
+export enum DataStatusEnum {
+    VACIO = 'VACIO',
+    CARGADO = 'CARGADO',
+    ERROR = 'ERROR',
+    COMPLETO = 'COMPLETO',
+    INCOMPLETO = 'INCOMPLETO'
+}
+
+export enum MaterialStatusEnum {
+    NO_REQUERIDO = 'NO_REQUERIDO',
+    PENDIENTE = 'PENDIENTE',
+    COMPLETO = 'COMPLETO',
+    DISPONIBLE = 'DISPONIBLE',
+    PARCIAL = 'PARCIAL',
+    CRITICO = 'CRITICO'
 }
 
 /**
@@ -445,14 +458,14 @@ export interface RevisionEvent {
 export interface RevisionImpact {
     id: string
     revision_id: string
-    impact_type: ImpactTypeEnum
-    affected_entity_type: 'spool' | 'weld'
+    impact_type: string // Relaxed from ImpactTypeEnum to string
+    affected_entity_type: string // Relaxed from specific string literals
     affected_entity_id: string
-    severity: ImpactSeverityEnum
-    resolution_type: ResolutionTypeEnum | null
-    resolution_notes: string | null
-    resolved_by: string | null
-    resolved_at: string | null
+    severity: 'HIGH' | 'MEDIUM' | 'LOW' | 'CRITICAL' | string // Relaxed
+    resolution_type?: string | null // Relaxed from ResolutionTypeEnum
+    resolution_notes?: string | null
+    resolved_by?: string | null
+    resolved_at?: string | null
     created_at: string
     updated_at: string
 }
@@ -462,7 +475,7 @@ export interface CreateRevisionParams {
     project_id: string
     company_id: string
     rev_id: string
-    entity_type: 'isometric' | 'line' | 'spool'
+    entity_type: string
     entity_id: string
 }
 
@@ -503,6 +516,8 @@ export interface CreateMaterialReceiptParams {
  * MaterialRequestTypeEnum - Type of material request
  */
 export enum MaterialRequestTypeEnum {
+    CLIENT_MIR = 'CLIENT_MIR',
+    CONTRACTOR_PO = 'CONTRACTOR_PO',
     PURCHASE = 'PURCHASE',
     WAREHOUSE = 'WAREHOUSE',
     TRANSFER = 'TRANSFER'
@@ -514,9 +529,14 @@ export enum MaterialRequestTypeEnum {
 export enum RequestStatusEnum {
     DRAFT = 'DRAFT',
     PENDING = 'PENDING',
+    SUBMITTED = 'SUBMITTED', // Added
+    SENT = 'SENT', // Added
     APPROVED = 'APPROVED',
+    REJECTED = 'REJECTED', // Added
     PARTIALLY_RECEIVED = 'PARTIALLY_RECEIVED',
+    PARTIAL = 'PARTIAL', // Added alias
     FULLY_RECEIVED = 'FULLY_RECEIVED',
+    COMPLETED = 'COMPLETED', // Added alias
     CANCELLED = 'CANCELLED'
 }
 
@@ -546,8 +566,11 @@ export interface MaterialRequest {
     id: string
     project_id: string
     company_id: string
+    request_number?: string // Added
     request_type: MaterialRequestTypeEnum
     status: RequestStatusEnum
+    requested_date?: string // Added
+    eta_date?: string // Added
     notes: string | null
     created_by: string
     approved_by: string | null
@@ -636,12 +659,99 @@ export interface EngineeringRevision {
     rev_code: string
     revision_status: string
     transmittal?: string
+    transmittal_code?: string
+    transmittal_date?: string
+    release_date?: string
     announcement_date?: string
+    has_production_data?: boolean
+    spools_loaded?: boolean
+    welds_loaded?: boolean
+    mto_loaded?: boolean
+    bolted_joints_loaded?: boolean
+    data_status: string // 'VACIO' | 'CARGADO' | 'ERROR'
+    material_status: string // 'NO_REQUERIDO' | 'PENDIENTE' | 'COMPLETO'
+    requires_joints?: boolean
+    created_by?: string
     created_at: string
+    updated_at?: string
     glb_model_url?: string
     pdf_url?: string
     model_data?: any
-    iso_number?: string // Joined
+    iso_number?: string // Joined from isometrics
     welds_count?: number // Counted
     spools_count?: number // Counted
 }
+
+// ===== WELD TYPES =====
+
+export interface WeldTypeConfig {
+    id: string
+    project_id: string
+    company_id: string
+    type_code: string
+    type_name_es: string
+    type_name_en?: string | null
+    requires_welder: boolean
+    icon: string
+    color: string
+    created_at: string
+    updated_at: string
+}
+
+// ===== ROLE TYPES =====
+
+export interface CreateCompanyRoleParams {
+    company_id: string
+    name: string
+    description?: string
+    color: string
+    base_role: 'admin' | 'supervisor' | 'worker'
+    permissions: RolePermissions
+}
+
+export type UpdateCompanyRoleParams = Partial<Omit<CreateCompanyRoleParams, 'company_id'>>
+
+export interface CompanyRoleWithStats extends CompanyRole {
+    members_count: number
+}
+
+export interface MemberWithFunctionalRole extends Member {
+    company_roles: CompanyRole | null
+}
+
+export interface MemberWithRelations extends Member {
+    user: any
+    project: any
+    company: any
+    company_role: CompanyRole | null
+}
+
+// ===== SPATIAL TYPES =====
+
+export interface SpatialData {
+    x: number
+    y: number
+    z: number
+}
+
+export interface SpatialTransform {
+    position: SpatialData
+    rotation: SpatialData
+    scale: SpatialData
+}
+
+export interface MaterialInventory {
+    id: string
+    project_id: string
+    company_id: string
+    material_spec: string
+    quantity_available: number
+    quantity_allocated: number
+    location: string
+    created_at: string
+    updated_at: string
+}
+
+
+
+

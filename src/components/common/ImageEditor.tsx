@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import Cropper from 'react-easy-crop'
 import { X, RotateCcw, RotateCw, RefreshCw } from 'lucide-react'
 import type { Area } from 'react-easy-crop'
@@ -8,6 +9,8 @@ interface ImageEditorProps {
   onSave: (croppedImage: Blob, cropSettings: CropSettings) => Promise<void>
   onCancel: () => void
   title?: string
+  aspect?: number
+  cropShape?: 'rect' | 'round'
 }
 
 export interface CropSettings {
@@ -19,7 +22,20 @@ export interface CropSettings {
   rotation: number
 }
 
-export default function ImageEditor({ imageUrl, onSave, onCancel, title = 'Editar Logo' }: ImageEditorProps) {
+export default function ImageEditor({
+  imageUrl,
+  onSave,
+  onCancel,
+  title = 'Editar Logo',
+  aspect = 200 / 55,
+  cropShape = 'rect'
+}: ImageEditorProps) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [rotation, setRotation] = useState(0)
@@ -110,7 +126,9 @@ export default function ImageEditor({ imageUrl, onSave, onCancel, title = 'Edita
     }
   }
 
-  return (
+  if (!mounted) return null
+
+  return createPortal(
     <div className="editor-overlay">
       <div className="editor-modal">
         {/* Header */}
@@ -128,7 +146,8 @@ export default function ImageEditor({ imageUrl, onSave, onCancel, title = 'Edita
             crop={crop}
             zoom={zoom}
             rotation={rotation}
-            aspect={200 / 55} // Match vertical logo canvas ratio (200x55 per logo)
+            aspect={aspect}
+            cropShape={cropShape}
             onCropChange={setCrop}
             onZoomChange={setZoom}
             onRotationChange={setRotation}
@@ -374,7 +393,8 @@ export default function ImageEditor({ imageUrl, onSave, onCancel, title = 'Edita
           to { opacity: 1; }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   )
 }
 

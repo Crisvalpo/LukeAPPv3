@@ -8,7 +8,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
-import type {
+import {
     ApiResponse,
     RevisionImpact,
     ImpactTypeEnum,
@@ -57,7 +57,7 @@ export async function detectRevisionImpacts(
             if (level !== 'ENGINEERING_ONLY') {
                 const impact = {
                     revision_id: revisionId,
-                    impact_type: determineImpactType(spool.revision, newRevision),
+                    impact_type: determineImpactType(oldRevision, newRevision),
                     affected_entity_type: 'spool',
                     affected_entity_id: spool.id,
                     severity: determineSeverity(level, productionStatus),
@@ -128,9 +128,9 @@ export async function detectRevisionImpacts(
 function determineImpactType(oldRev: string, newRev: string): ImpactTypeEnum {
     // Simple logic for now - in real implementation would compare actual data
     if (oldRev === 'A' && newRev === 'B') {
-        return 'MODIFIED'
+        return ImpactTypeEnum.MODIFIED
     }
-    return 'MODIFIED'
+    return ImpactTypeEnum.MODIFIED
 }
 
 /**
@@ -143,16 +143,16 @@ function determineSeverity(
     if (level === 'IN_PROGRESS') {
         // Work in progress - check if dispatched or has welds
         if (status.hasDispatch || status.hasWelds) {
-            return 'CRITICAL' // On-site work affected
+            return ImpactSeverityEnum.CRITICAL // On-site work affected
         }
-        return 'HIGH'
+        return ImpactSeverityEnum.HIGH
     }
 
     if (level === 'FABRICATED_ONLY') {
-        return 'MEDIUM' // Logistical impact only
+        return ImpactSeverityEnum.MEDIUM // Logistical impact only
     }
 
-    return 'LOW'
+    return ImpactSeverityEnum.LOW
 }
 
 /**

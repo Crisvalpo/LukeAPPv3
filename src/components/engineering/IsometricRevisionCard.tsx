@@ -1388,9 +1388,18 @@ function IsometricViewerWrapper({
                             }))
                         }
                     }}
-                    onUnassign={() => {
+                    onUnassign={(unassignedSpoolId: string | null, unassignedJointId: string) => {
                         setRefreshTrigger(prev => prev + 1)
                         setUnassignedJointsCount(prev => (prev ?? 0) + 1)
+
+                        // 3. Update Spool Map (Remove from Spool)
+                        if (unassignedSpoolId && jointsMap[unassignedSpoolId]) {
+                            const updatedJoints = jointsMap[unassignedSpoolId].filter((j: any) => j.id !== unassignedJointId)
+                            setJointsMap(prev => ({
+                                ...prev,
+                                [unassignedSpoolId]: updatedJoints
+                            }))
+                        }
                     }}
                 />
             )}

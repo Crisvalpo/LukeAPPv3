@@ -8,11 +8,13 @@ export interface CreateCompanyParams {
     slug: string
     subscription_tier?: SubscriptionTierType
     initial_months?: number
+    rut?: string
 }
 
 export interface UpdateCompanyParams {
     name?: string
     slug?: string
+    rut?: string
     custom_users_limit?: number | null
     custom_projects_limit?: number | null
 }
@@ -128,7 +130,8 @@ export async function createCompany(params: CreateCompanyParams) {
                 slug: params.slug,
                 subscription_tier: params.subscription_tier || 'starter',
                 subscription_status: 'active',
-                subscription_end_date
+                subscription_end_date,
+                rut: params.rut || null
             })
             .select()
             .single()
@@ -149,9 +152,6 @@ export async function createCompany(params: CreateCompanyParams) {
     }
 }
 
-/**
- * Update company
- */
 export async function updateCompany(id: string, params: UpdateCompanyParams) {
     const supabase = createClient()
 
@@ -173,14 +173,27 @@ export async function updateCompany(id: string, params: UpdateCompanyParams) {
             }
         }
 
+        console.log('Updating company:', id, params);
+
         const { data, error } = await supabase
             .from('companies')
             .update(params)
             .eq('id', id)
             .select()
-            .single()
+            .maybeSingle() // Changed from .single() to avoid "Cannot coerce" error
 
-        if (error) throw error
+        if (error) {
+            console.error('Supabase update error:', error);
+            throw error;
+        }
+
+        if (!data) {
+            console.error('No data returned from update');
+            return {
+                success: false,
+                message: 'No se pudo actualizar la empresa. Verifica los permisos.'
+            };
+        }
 
         return {
             success: true,

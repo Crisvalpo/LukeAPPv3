@@ -203,8 +203,8 @@ export async function getLocationHierarchy(locationId: string): Promise<ProjectL
         const { data, error } = await supabase
             .from('project_locations')
             .select('*')
-            .eq('id', currentId)
-            .single()
+            .eq('id', currentId as string)
+            .single() as { data: ProjectLocation | null; error: any }
 
         if (error || !data) break
 

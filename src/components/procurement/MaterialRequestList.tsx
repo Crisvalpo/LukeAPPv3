@@ -43,7 +43,7 @@ export default function MaterialRequestList({ projectId }: MaterialRequestListPr
 
     // Filter logic
     const filteredRequests = requests.filter(req => {
-        const matchesSearch = req.request_number.toLowerCase().includes(searchQuery.toLowerCase())
+        const matchesSearch = (req.request_number || '').toLowerCase().includes(searchQuery.toLowerCase())
         const matchesType = typeFilter === 'ALL' || req.request_type === typeFilter
         const matchesStatus = statusFilter === 'ALL' || req.status === statusFilter
         return matchesSearch && matchesType && matchesStatus

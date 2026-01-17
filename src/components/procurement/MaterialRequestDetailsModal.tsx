@@ -1,7 +1,7 @@
 import { useState, useEffect, Fragment } from 'react'
 import { X, Check, XCircle, Trash2, Send, PackageCheck, FileDown, Printer } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import type { MaterialRequest, MaterialRequestItem } from '@/types'
+import { MaterialRequest, MaterialRequestItem, RequestStatusEnum } from '@/types'
 import CreateReceiptModal from './CreateReceiptModal'
 import { downloadMIRPDF, printMIRPDF } from '@/services/mir-pdf-generator'
 
@@ -224,7 +224,7 @@ export default function MaterialRequestDetailsModal({ request, onClose, onUpdate
 
     // ... handleStatusChange, handleDelete, getPDFData, handleDownloadPDF, handlePrintPDF remain same ...
 
-    async function handleStatusChange(newStatus: 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'DRAFT') {
+    async function handleStatusChange(newStatus: RequestStatusEnum) {
         if (!confirm('¿Estás seguro de cambiar el estado de esta solicitud?')) return
         setIsUpdating(true)
         const { error } = await supabase.from('material_requests').update({ status: newStatus }).eq('id', request.id)
@@ -374,33 +374,33 @@ export default function MaterialRequestDetailsModal({ request, onClose, onUpdate
                 {/* Footer Actions */}
                 <div className="modal-footer" style={{ justifyContent: 'space-between' }}>
                     <div>
-                        {request.status === 'DRAFT' && (
+                        {request.status === RequestStatusEnum.DRAFT && (
                             <button className="action-button action-danger" onClick={handleDelete} disabled={isUpdating}>
                                 <Trash2 size={16} /> Eliminar
                             </button>
                         )}
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        {request.status === 'DRAFT' && (
-                            <button className="action-button action-primary" onClick={() => handleStatusChange('SUBMITTED')} disabled={isUpdating}>
+                        {request.status === RequestStatusEnum.DRAFT && (
+                            <button className="action-button action-primary" onClick={() => handleStatusChange(RequestStatusEnum.SUBMITTED)} disabled={isUpdating}>
                                 <Send size={16} /> Enviar Solicitud
                             </button>
                         )}
-                        {request.status === 'SUBMITTED' && (
+                        {request.status === RequestStatusEnum.SUBMITTED && (
                             <>
-                                <button className="action-button action-danger" onClick={() => handleStatusChange('REJECTED')} disabled={isUpdating}>
+                                <button className="action-button action-danger" onClick={() => handleStatusChange(RequestStatusEnum.REJECTED)} disabled={isUpdating}>
                                     <XCircle size={16} /> Rechazar
                                 </button>
-                                <button className="action-button action-success" onClick={() => handleStatusChange('APPROVED')} disabled={isUpdating}>
+                                <button className="action-button action-success" onClick={() => handleStatusChange(RequestStatusEnum.APPROVED)} disabled={isUpdating}>
                                     <Check size={16} /> Aprobar
                                 </button>
                             </>
                         )}
-                        {(request.status === 'APPROVED' || request.status === 'PARTIAL') && (
+                        {(request.status === RequestStatusEnum.APPROVED || request.status === RequestStatusEnum.PARTIAL) && (
                             <>
-                                <div className={`status-indicator ${request.status === 'APPROVED' ? 'status-text-approved' : 'status-text-warning'}`}>
-                                    {request.status === 'APPROVED' ? <Check size={18} /> : <PackageCheck size={18} />}
-                                    {request.status === 'APPROVED' ? 'Aprobado' : 'Parcial'}
+                                <div className={`status-indicator ${request.status === RequestStatusEnum.APPROVED ? 'status-text-approved' : 'status-text-warning'}`}>
+                                    {request.status === RequestStatusEnum.APPROVED ? <Check size={18} /> : <PackageCheck size={18} />}
+                                    {request.status === RequestStatusEnum.APPROVED ? 'Aprobado' : 'Parcial'}
                                 </div>
                                 <button className="action-button action-primary" onClick={() => setShowReceiptModal(true)} disabled={isUpdating}>
                                     <PackageCheck size={18} /> Recepcionar

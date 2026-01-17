@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { getProjectWeldTypesAction, updateWeldTypeAction, createWeldTypeAction, deleteWeldTypeAction } from '@/actions/weld-types'
-import type { WeldTypeConfig } from '@/types'
+import type { WeldTypeConfig } from '@/services/weld-types'
 
 interface WeldTypeFormData {
     type_code: string

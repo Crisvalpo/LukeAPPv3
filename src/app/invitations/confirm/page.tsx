@@ -7,7 +7,9 @@ import { acceptInvitation } from '@/services/invitations'
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
 import '@/styles/invitations.css'
 
-export default function ConfirmInvitationPage() {
+import { Suspense } from 'react'
+
+function ConfirmInvitationContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing')
@@ -148,5 +150,13 @@ export default function ConfirmInvitationPage() {
                 )}
             </div>
         </div>
+    )
+}
+
+export default function ConfirmInvitationPage() {
+    return (
+        <Suspense fallback={<div className="flex h-screen items-center justify-center text-white">Cargando...</div>}>
+            <ConfirmInvitationContent />
+        </Suspense>
     )
 }

@@ -13,6 +13,7 @@ import '@/styles/dashboard.css'
 import '@/styles/views/founder-projects.css'
 import { Heading, Text } from '@/components/ui/Typography'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 import { SubscriptionTierType } from '@/types'
 
@@ -157,9 +158,9 @@ export default function ProjectsListPage() {
                 </div>
 
                 <div className="header-right">
-                    <span className={`project-count-badge ${projects.length >= currentLimit ? 'limit-reached' : ''}`}>
+                    <Badge variant={projects.length >= currentLimit ? 'destructive' : 'secondary'} className="text-sm py-1 px-3 h-9 flex items-center justify-center">
                         {projects.length} / {currentLimit} Proyectos
-                    </span>
+                    </Badge>
                     <Button onClick={handleCreateClick} disabled={projects.length >= currentLimit}>
                         <Plus className="mr-2 h-4 w-4" />
                         Nuevo Proyecto

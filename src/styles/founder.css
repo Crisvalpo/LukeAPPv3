@@ -85,51 +85,19 @@
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
+    align-items: stretch;
+    /* Force all items to stretch to row height */
 }
 
-.quick-action-card {
-    background: rgba(30, 41, 59, 0.9);
-    backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 1rem;
-    padding: 2rem;
-    cursor: pointer;
-    transition: all 0.3s;
-}
+/* ... existing code ... */
 
-.quick-action-card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(96, 165, 250, 0.3);
-    box-shadow: 0 12px 40px rgba(59, 130, 246, 0.2);
-}
-
-.quick-action-card.primary {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
-    border: 2px solid rgba(96, 165, 250, 0.3);
-}
-
-.quick-action-icon {
-    width: 3rem;
-    height: 3rem;
-    background: rgba(96, 165, 250, 0.1);
-    border: 1px solid rgba(96, 165, 250, 0.3);
-    border-radius: 0.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1rem;
-}
-
-.quick-action-title {
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: white;
-    margin-bottom: 0.5rem;
-}
-
-.quick-action-description {
-    font-size: 0.875rem;
-    color: #94a3b8;
+/* Also fixing the .onboarding-locked opacity if defined elsewhere or adding it here */
+.onboarding-locked {
+    opacity: 0.4;
+    /* Make locked state more visible (was likely inheriting default or missing) */
+    pointer-events: none;
+    /* Ensure not clickable at CSS level too */
+    filter: grayscale(100%);
 }
 
 .quick-action-badge {
@@ -148,4 +116,56 @@
     background: rgba(148, 163, 184, 0.1);
     border-color: rgba(148, 163, 184, 0.3);
     color: #94a3b8;
+}
+
+/* ===== Config Cards (for Onboarding) ===== */
+.config-card {
+    background: rgba(30, 41, 59, 0.9);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 2rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: 100%;
+    /* Ensure it fills the grid cell */
+    justify-content: flex-start;
+    /* Align content to top */
+}
+
+/* ... hover styles ... */
+
+.config-card-description {
+    font-size: 0.875rem;
+    color: #94a3b8;
+    line-height: 1.5;
+    margin: 0;
+    flex-grow: 1;
+    /* Pushes the status footer to the bottom */
+}
+
+.config-card-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    /* Default color */
+    margin-top: auto;
+    /* Redundant with flex-grow but safe */
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.config-card-status-complete {
+    color: #10b981;
+}
+
+.config-card-status-active {
+    color: #fbbf24;
+    font-weight: 600;
 }

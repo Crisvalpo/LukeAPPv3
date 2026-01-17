@@ -93,7 +93,7 @@ export default function RevisionsPage() {
                 if (result.success) {
                     setRevisions(result.data || [])
                 } else {
-                    setError(result.message)
+                    setError(result.message ?? 'Error desconocido')
                 }
             }
 
@@ -114,15 +114,15 @@ export default function RevisionsPage() {
 
     const filteredRevisions = statusFilter === 'ALL'
         ? revisions
-        : revisions.filter(r => r.status === statusFilter)
+        : revisions.filter(r => r.revision_status === statusFilter)
 
     // Calculate stats
     const stats = {
         total: revisions.length,
-        pending: revisions.filter(r => r.status === 'PENDING').length,
-        approved: revisions.filter(r => r.status === 'APPROVED').length,
-        applied: revisions.filter(r => r.status === 'APPLIED').length,
-        draft: revisions.filter(r => r.status === 'DRAFT').length
+        pending: revisions.filter(r => r.revision_status === 'PENDING').length,
+        approved: revisions.filter(r => r.revision_status === 'APPROVED').length,
+        applied: revisions.filter(r => r.revision_status === 'APPLIED').length,
+        draft: revisions.filter(r => r.revision_status === 'DRAFT').length
     }
 
     if (isLoading) {
@@ -264,18 +264,17 @@ export default function RevisionsPage() {
                         >
                             <div className="revision-header">
                                 <div className="revision-title">
-                                    <span className="revision-id">Rev {revision.rev_id}</span>
-                                    <span className="revision-entity">{revision.entity_type}</span>
+                                    <span className="revision-id">Rev {revision.rev_code}</span>
                                 </div>
                                 <div
                                     className="revision-status-badge"
                                     style={{
-                                        background: `${REVISION_STATUS_LABELS[revision.status]?.color}33`,
-                                        color: REVISION_STATUS_LABELS[revision.status]?.color,
-                                        border: `1px solid ${REVISION_STATUS_LABELS[revision.status]?.color}66`
+                                        background: `${REVISION_STATUS_LABELS[revision.revision_status]?.color}33`,
+                                        color: REVISION_STATUS_LABELS[revision.revision_status]?.color,
+                                        border: `1px solid ${REVISION_STATUS_LABELS[revision.revision_status]?.color}66`
                                     }}
                                 >
-                                    {REVISION_STATUS_LABELS[revision.status]?.label}
+                                    {REVISION_STATUS_LABELS[revision.revision_status]?.label}
                                 </div>
                             </div>
 
@@ -283,21 +282,14 @@ export default function RevisionsPage() {
                                 <div className="meta-item">
                                     <span className="meta-label">Anunciada:</span>
                                     <span className="meta-value">
-                                        {revision.announced_at
-                                            ? new Date(revision.announced_at).toLocaleDateString('es-CL')
+                                        {revision.announcement_date
+                                            ? new Date(revision.announcement_date).toLocaleDateString('es-CL')
                                             : 'No anunciada'
                                         }
                                     </span>
                                 </div>
 
-                                {revision.approved_at && (
-                                    <div className="meta-item">
-                                        <span className="meta-label">Aprobada:</span>
-                                        <span className="meta-value">
-                                            {new Date(revision.approved_at).toLocaleDateString('es-CL')}
-                                        </span>
-                                    </div>
-                                )}
+
                             </div>
 
                             <div className="revision-actions">

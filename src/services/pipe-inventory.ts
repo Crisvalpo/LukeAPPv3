@@ -78,7 +78,7 @@ export async function aggregatePipeNeeds(
                 ident_code: item.item_code,
                 material_spec: shortDesc || item.item_code,
                 total_required_meters: 0,
-                spool_ids: []
+                spool_ids: [] as string[]
             }
 
             current.total_required_meters += Number(item.qty)

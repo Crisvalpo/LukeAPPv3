@@ -180,16 +180,16 @@ export default function RevisionDetailPage() {
                             <ArrowLeft size={16} />
                             Volver
                         </button>
-                        <h1>Revisión {revision.rev_id}</h1>
+                        <h1>Revisión {revision.rev_code}</h1>
                         <div
                             className="revision-status-badge"
                             style={{
-                                background: `${REVISION_STATUS_LABELS[revision.status]?.color}33`,
-                                color: REVISION_STATUS_LABELS[revision.status]?.color,
-                                border: `1px solid ${REVISION_STATUS_LABELS[revision.status]?.color}66`
+                                background: `${REVISION_STATUS_LABELS[revision.revision_status]?.color}33`,
+                                color: REVISION_STATUS_LABELS[revision.revision_status]?.color,
+                                border: `1px solid ${REVISION_STATUS_LABELS[revision.revision_status]?.color}66`
                             }}
                         >
-                            {REVISION_STATUS_LABELS[revision.status]?.label}
+                            {REVISION_STATUS_LABELS[revision.revision_status]?.label}
                         </div>
                     </div>
                     <p className="dashboard-subtitle">
@@ -236,8 +236,8 @@ export default function RevisionDetailPage() {
                     </div>
                     <div>
                         <div className="stat-value">
-                            {revision.announced_at
-                                ? new Date(revision.announced_at).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })
+                            {revision.announcement_date
+                                ? new Date(revision.announcement_date).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })
                                 : 'N/A'
                             }
                         </div>
@@ -324,13 +324,14 @@ export default function RevisionDetailPage() {
                     <div className="impacts-grid">
                         {resolvedImpacts.map(impact => (
                             <div key={impact.id} className="impact-card" style={{ opacity: 0.7 }}>
+                                <div className="impact-header">
                                     <div>
                                         <h3 style={{ color: 'white', marginBottom: '0.5rem' }}>
                                             {impact.affected_entity_type}
                                         </h3>
                                     </div>
                                     <div style={{ color: '#4ade80' }}>
-                                       <CheckCircle2 size={24} />
+                                        <CheckCircle2 size={24} />
                                     </div>
                                 </div>
 
@@ -350,7 +351,10 @@ export default function RevisionDetailPage() {
                                 </div>
                             </div>
                         ))}
-                </div>
+                    </div>
+                </>
+            )}
+
             {/* Resolution Modal */}
             {
                 selectedImpact && (

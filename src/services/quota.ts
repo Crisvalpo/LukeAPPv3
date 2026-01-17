@@ -102,7 +102,8 @@ export async function validateStorageQuotaWithStrikes(
 
     if (error || !company) throw new Error('Error validating storage quota')
 
-    const limitGb = company.subscription_plans?.max_storage_gb
+    const plans = company.subscription_plans as any
+    const limitGb = plans?.length ? plans[0].max_storage_gb : (plans as any)?.max_storage_gb
     // Handle infinite (null or 999999)
     if (!limitGb || limitGb >= 999999) return
 
