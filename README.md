@@ -238,6 +238,43 @@ node scripts/execute_sql_direct.js
 
 ---
 
+## 🔒 Security Guidelines
+
+### Credential Management
+
+**Critical Rule**: Never commit credentials to git.
+
+#### Environment Variables
+
+All sensitive data must be in `.env.local` (already in `.gitignore`):
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your_url_here
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key_here
+```
+
+#### Development Scripts
+
+Scripts that need credentials must read from environment:
+```powershell
+# ❌ BAD
+$url = "https://project.supabase.co"
+
+# ✅ GOOD  
+$url = $env:NEXT_PUBLIC_SUPABASE_URL
+```
+
+#### Pre-Commit Checklist
+
+Before every commit:
+- [ ] No hardcoded URLs in code
+- [ ] No API keys in files
+- [ ] All `.env*` ignored
+- [ ] Development scripts use environment variables
+
+**If credentials are exposed**: Immediately rotate keys in Supabase Dashboard → Settings → API.
+
+---
+
 ### Tech & Styling Guidelines
 
 > [!IMPORTANT]  

@@ -346,6 +346,75 @@ Todos implementados en Vanilla CSS (`src/components/ui/`):
 
 ---
 
+## 🔒 SECURITY & CREDENTIALS (CRITICAL)
+
+### Never Hardcode Credentials
+
+**Rule**: Credentials MUST NEVER be hardcoded in any file committed to git.
+
+#### ❌ PROHIBITED
+```powershell
+# BAD - Hardcoded credentials
+$supabaseUrl = "https://rvgrhtqxzfcypbfxqilp.supabase.co"
+$anonKey = "eyJhbGciOiJI..."
+```
+
+#### ✅ REQUIRED
+```powershell
+# GOOD - Read from environment
+$supabaseUrl = $env:NEXT_PUBLIC_SUPABASE_URL
+$anonKey = $env:NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+if (-not $supabaseUrl -or -not $anonKey) {
+    Write-Error "Missing environment variables"
+    exit 1
+}
+```
+
+### Protected Files Patterns
+
+Add to `.gitignore` BEFORE creating credential-containing files:
+```gitignore
+# Development scripts with credentials
+clean-database.ps1
+*.ps1.local
+run-migration.mjs
+*.env.local
+*.log
+```
+
+### Pre-Commit Checklist
+
+Before `git commit`, ALWAYS verify:
+- [ ] No hardcoded URLs (search for `https://`)
+- [ ] No hardcoded keys (search for `.supabase.co`, `eyJhbGciOiJ`)
+- [ ] All `.env*` files in `.gitignore`
+- [ ] No service role keys (grep for `service_role`)
+
+### Incident Response
+
+If credentials are accidentally pushed:
+1. ✅ Remove file immediately
+2. ✅ Add to `.gitignore`
+3. ✅ Commit removal
+4. ⚠️ **Rotate credentials** in Supabase Dashboard
+5. ⚠️ Monitor usage for suspicious activity (7 days)
+6. 📋 Document incident in SECURITY_ALERT.md
+
+### Supabase Key Types
+
+| Key Type | Public? | Usage | Risk if Exposed |
+|----------|---------|-------|----------------|
+| **Anon Key** | ✅ Yes | Frontend apps | 🟡 Medium (RLS protects) |
+| **Service Role** | ❌ NO | Backend only | 🔴 CRITICAL (bypasses RLS) |
+
+**Remember**: Even "public" anon keys should be managed via `.env` to:
+- Enable easy rotation
+- Prevent scrapers/bots
+- Maintain professional standards
+
+---
+
 ## 📦 MATERIAL CATALOG (Procurement Module)
 
 ### Multi-Specification Support (Jan 2025)
