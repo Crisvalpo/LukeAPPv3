@@ -30,6 +30,13 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# tunnel logs (cloudflare tunnel for local dev)
+cloudflared.log
+tunnel*.log
+
+# Build logs
+build.log
+
 # env files (can opt-in for committing if needed)
 .env*
 

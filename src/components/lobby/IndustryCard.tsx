@@ -27,6 +27,7 @@ export default function IndustryCard({ image, title, description, delay = 0 }: I
                 src={image}
                 alt={title}
                 fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="object-cover transition-transform duration-500"
                 style={{
                     transform: isHovered ? 'scale(1.1)' : 'scale(1)',
