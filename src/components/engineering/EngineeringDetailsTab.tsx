@@ -268,8 +268,6 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
 
             <style jsx>{`
                 .details-tab-container { animation: fadeIn 0.3s ease; }
-                .section-header { display: flex; gap: 15px; margin-bottom: 25px; align-items: center; }
-                .section-header .icon { font-size: 2rem; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 12px; }
                 
                 .context-header {
                     display: flex;
@@ -279,6 +277,7 @@ export default function EngineeringDetailsTab({ projectId, companyId }: Props) {
                     gap: 20px;
                     flex-wrap: wrap;
                 }
+
 
                 .context-banner {
                     background: rgba(var(--accent-rgb), 0.1);

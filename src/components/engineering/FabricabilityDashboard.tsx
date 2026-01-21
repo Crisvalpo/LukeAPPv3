@@ -179,10 +179,12 @@ export default function FabricabilityDashboard({ projectId }: FabricabilityDashb
     return (
         <div className="engineering-content">
             {/* Header */}
+            {/* Header */}
             <div className="section-header">
-                <div>
-                    <h2>Dashboard de Fabricabilidad</h2>
-                    <p className="section-subtitle">
+                <div className="icon">✅</div>
+                <div style={{ flex: 1 }}>
+                    <h3>3. Fabricabilidad y Control</h3>
+                    <p>
                         Visualización de qué revisiones están listas para fabricación
                     </p>
                 </div>

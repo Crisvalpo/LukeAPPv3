@@ -168,8 +168,28 @@ export default function RolesManagementPage() {
 
     function handleModalSuccess() {
         if (companyId) {
+            // Check if this was the first role (task completion)
+            const isFirstRole = roles.length === 0;
+
             loadRoles(companyId);
-            // Notify other components (like OnboardingWidget)
+
+            if (isFirstRole) {
+                // Trigger LARGE celebration only for the first role (Task Complete)
+                setShowConfetti(true);
+                setToastMessage(CELEBRATION_MESSAGES.roles);
+
+                setTimeout(() => {
+                    setShowConfetti(false);
+                }, 3500);
+            } else {
+                // For subsequent roles, just show a Toast (no disruptive confetti)
+                // Optionally we could show a different toast message
+                // setToastMessage('Rol guardado correctamente'); 
+                // Using existing toast component logic which might rely on message presence
+                // For now, let's just NOT trigger the large confetti, but maybe still trigger the sidebar update
+            }
+
+            // Always notify other components (Sidebar widget needs to update progress)
             window.dispatchEvent(new Event('onboarding-updated'));
             router.refresh();
         }

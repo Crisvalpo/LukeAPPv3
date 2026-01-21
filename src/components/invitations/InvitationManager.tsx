@@ -112,9 +112,18 @@ export default function InvitationManager({
                 setInvitationLink(result.data.link)
                 setFormData(prev => ({ ...prev, email: '', job_title: '' }))
 
-                // Trigger celebration
-                setShowConfetti(true)
-                setToastMessage(CELEBRATION_MESSAGES.invitations)
+                setFormData(prev => ({ ...prev, email: '', job_title: '' }))
+
+                // Trigger celebration ONLY for the first invitation (Task Complete)
+                if (invitations.length === 0) {
+                    setShowConfetti(true)
+                    setToastMessage(CELEBRATION_MESSAGES.invitations)
+                    setTimeout(() => setShowConfetti(false), 5000)
+                } else {
+                    // Quiet success for subsequent
+                    setToastMessage('Invitación enviada correctamente')
+                }
+
                 window.dispatchEvent(new Event('onboarding-updated'))
 
                 // Hide confetti after animation

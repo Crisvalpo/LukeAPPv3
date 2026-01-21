@@ -81,7 +81,9 @@ export default function RoleEditorModal({
     function handleModuleToggle(moduleId: string) {
         setFormData((prev) => {
             const newPermissions = { ...prev.permissions };
-            if (!newPermissions.modules) newPermissions.modules = {}
+            // Deep clone modules to avoid mutation
+            newPermissions.modules = { ...(newPermissions.modules || {}) };
+
             const currentModule = newPermissions.modules[moduleId];
 
             // Toggle enabled state
@@ -97,22 +99,24 @@ export default function RoleEditorModal({
     function handleSetHomeModule(moduleId: string) {
         setFormData((prev) => {
             const newPermissions = { ...prev.permissions };
-            if (!newPermissions.modules) newPermissions.modules = {};
-            const modules = newPermissions.modules;
+            // Deep clone modules
+            const modules = { ...(newPermissions.modules || {}) };
+            newPermissions.modules = modules;
 
             // Unset all is_home flags
             Object.keys(modules).forEach((key) => {
-                if (modules[key]) {
-                    modules[key]!.is_home = false;
+                const mod = modules[key];
+                if (mod) {
+                    modules[key] = { ...mod, is_home: false };
                 }
             });
 
             // Set this module as home (and enable it)
-            if (!modules[moduleId]) {
+            const targetMod = modules[moduleId];
+            if (!targetMod) {
                 modules[moduleId] = { enabled: true, is_home: true };
             } else {
-                modules[moduleId]!.is_home = true;
-                modules[moduleId]!.enabled = true;
+                modules[moduleId] = { ...targetMod, enabled: true, is_home: true };
             }
 
             return { ...prev, permissions: newPermissions };

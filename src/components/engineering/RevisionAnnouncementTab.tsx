@@ -145,14 +145,21 @@ export default function RevisionAnnouncementTab({
 
     return (
         <div className="detail-section">
-            <div className="section-info">
-                <p>Carga el Excel con isométricos y sus revisiones para iniciar el flujo de ingeniería.</p>
-                <button
-                    className="btn-link"
-                    onClick={downloadAnnouncementTemplate}
-                >
-                    📥 Descargar Plantilla
-                </button>
+            <div className="section-header">
+                <div className="icon">📢</div>
+                <div>
+                    <h3>1. Anuncio de Ingeniería</h3>
+                    <p>
+                        Carga el Excel con isométricos y sus revisiones para iniciar el flujo de ingeniería.
+                        <button
+                            className="btn-link"
+                            onClick={downloadAnnouncementTemplate}
+                            style={{ marginLeft: '10px' }}
+                        >
+                            📥 Descargar Plantilla
+                        </button>
+                    </p>
+                </div>
             </div>
 
             {!file && !result && (

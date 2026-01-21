@@ -111,15 +111,35 @@ export default function NewProjectPage() {
         })
 
         if (result.success) {
-            // Trigger celebration
-            setShowConfetti(true)
-            setToastMessage(CELEBRATION_MESSAGES.projects || '¡Proyecto creado con éxito!')
-            window.dispatchEvent(new Event('onboarding-updated'))
+            // Check if this is the first project (Task Complete)
+            // We can check this by counting projects BEFORE this one
+            // Or simpler: We rely on a quick client-side check if we had 0 projects before
 
-            // Wait for celebration before redirecting
-            setTimeout(() => {
-                router.push('/founder/projects')
-            }, 3000)
+            // To be 100% sure without extra fetch, we can check onboarding status logic or just fetch count
+            const supabase = createClient()
+            const { count } = await supabase
+                .from('projects')
+                .select('*', { count: 'exact', head: true })
+                .eq('company_id', companyId)
+
+            // If count is 1 (the one we just created), then it WAS 0 before. 
+            // So trigger if count === 1.
+            if (count === 1) {
+                setShowConfetti(true)
+                setToastMessage(CELEBRATION_MESSAGES.projects)
+                // Wait for celebration before redirecting
+                setTimeout(() => {
+                    router.push('/founder/projects')
+                }, 3000)
+            } else {
+                setToastMessage('Proyecto creado correctamente')
+                // Quick redirect
+                setTimeout(() => {
+                    router.push('/founder/projects')
+                }, 1000)
+            }
+
+            window.dispatchEvent(new Event('onboarding-updated'))
         } else {
             setError(result.message)
             setIsSubmitting(false)
