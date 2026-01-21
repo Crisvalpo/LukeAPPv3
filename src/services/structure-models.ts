@@ -1,6 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { ApiResponse, StructureModel } from '@/types'
+import { getProjectFilePath } from '@/lib/storage-paths'
 
 export async function getProjectStructureModels(projectId: string, client?: SupabaseClient): Promise<ApiResponse<StructureModel[]>> {
     const supabase = client || createClient()
@@ -105,27 +106,29 @@ export async function createStructureModel(
 ): Promise<ApiResponse<StructureModel>> {
     const supabase = client || createClient()
     try {
-        // 0. Fetch company_id for the project (needed for new storage path)
+        // 0. Fetch project and company info for descriptive storage path
         const { data: projectData, error: projectError } = await supabase
             .from('projects')
-            .select('company_id')
+            .select('code, name, company_id, companies(id, slug)')
             .eq('id', projectId)
             .single()
 
-        if (projectError || !projectData) {
+        if (projectError || !projectData || !projectData.companies) {
             return {
                 success: false,
-                message: 'No se encontró el proyecto para verificar permisos de almacenamiento'
+                message: 'No se encontró el proyecto o empresa para generar ruta de almacenamiento'
             }
         }
 
-        const companyId = projectData.company_id
+        // @ts-ignore - Type safety for companies relation
+        const company = { id: projectData.companies.id, slug: projectData.companies.slug }
+        const project = { id: projectId, code: projectData.code, name: projectData.name }
 
         // 1. Upload file to NEW consolidated bucket
         const fileExt = 'glb' // Enforce GLB
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
-        // Path: {company_id}/{project_id}/structure-models/{filename}
-        const storagePath = `${companyId}/${projectId}/structure-models/${fileName}`
+        // Path: {company-slug}-{id}/{project-code}-{id}/structure-models/{filename}
+        const storagePath = getProjectFilePath(company, project, 'structure-models', fileName)
 
         const { error: uploadError, data: uploadData } = await supabase.storage
             .from('project-files')

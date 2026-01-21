@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import { Upload, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import ImageEditor, { type CropSettings } from '../common/ImageEditor';
+import { getCompanyFilePath } from '@/lib/storage-paths';
 
 interface CompanyLogoUploadProps {
     companyId: string;
@@ -48,12 +49,22 @@ export default function CompanyLogoUpload({
     async function handleSaveCroppedImage(croppedBlob: Blob, cropSettings: CropSettings) {
         setIsUploading(true);
         try {
+            // Fetch company slug for descriptive path
+            const { data: companyData } = await supabase
+                .from('companies')
+                .select('id, slug')
+                .eq('id', companyId)
+                .single();
+
+            if (!companyData) throw new Error('Company not found');
+
             // Generate filename
             const timestamp = Date.now();
             const fileName = `company_logo_${timestamp}.png`;
 
-            // Path: {company_id}/company/logo/{filename}
-            const storagePath = `${companyId}/company/logo/${fileName}`;
+            // Path: {company-slug}-{id}/company/logo/{filename}
+            const company = { id: companyData.id, slug: companyData.slug };
+            const storagePath = getCompanyFilePath(company, 'logo', fileName);
 
             // Delete old logo if exists
             if (currentLogoUrl) {

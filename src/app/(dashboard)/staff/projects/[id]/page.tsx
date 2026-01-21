@@ -35,12 +35,18 @@ export default function StaffProjectDetailPage() {
     async function handleDelete() {
         if (!project) return
 
-        if (!window.confirm(`⚠️ ESTÁS A PUNTO DE ELIMINAR EL PROYECTO "${project.name}"\n\n` +
+        const confirm1 = confirm(`⚠️ ESTÁS A PUNTO DE ELIMINAR EL PROYECTO "${project.name}"\n\n` +
             `Esta acción es IRREVERSIBLE y eliminará:\n` +
             `- Todos los usuarios vinculados.\n` +
             `- Todos los archivos en Storage (modelos, planos, etc).\n` +
             `- Todos los registros de Base de Datos.\n\n` +
-            `¿Confirmas la eliminación TOTAL?`)) {
+            `¿Confirmas la eliminación TOTAL?`)
+
+        if (!confirm1) return
+
+        const typedName = prompt(`Para confirmar, escribe el nombre exacto del proyecto:\n"${project.name}"`)
+        if (typedName !== project.name) {
+            alert('El nombre no coincide. Eliminación cancelada.')
             return
         }
 
@@ -50,7 +56,7 @@ export default function StaffProjectDetailPage() {
         const result = await deleteProjectComplete(projectId, project.company_id)
 
         if (result.success) {
-            alert(`Proyecto eliminado exitosamente.\n\nStats:\nMiembros: ${result.stats?.members || 0}\nArchivos: Limpiados`)
+            alert(`✅ Proyecto eliminado exitosamente.\n\nStats:\nMiembros: ${result.stats?.members || 0}\nArchivos: Limpiados`)
             router.push('/staff/projects')
         } else {
             alert('Error eliminando proyecto: ' + (result.error || 'Error desconocido'))

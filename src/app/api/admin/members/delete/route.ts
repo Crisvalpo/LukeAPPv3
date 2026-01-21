@@ -1,4 +1,3 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
@@ -27,20 +26,12 @@ export async function POST(request: Request) {
         }
 
         // 3. Init Admin Client
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-        const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
-            auth: {
-                autoRefreshToken: false,
-                persistSession: false
-            }
-        })
+        const { createAdminClient } = await import('@/lib/supabase/server')
+        const supabaseAdmin = createAdminClient()
 
-        // 4. Delete Member Record (Safe Unlink)
-        // This only removes the relationship, keeping the Auth User intact.
-        const { error } = await supabaseAdmin
-            .from('members')
-            .delete()
-            .eq('id', memberId)
+        // 4. Delete Member using SECURITY DEFINER function (bypasses RLS)
+        const { data, error } = await supabaseAdmin
+            .rpc('admin_delete_member', { target_member_id: memberId })
 
         if (error) {
             console.error('Error deleting member:', error)

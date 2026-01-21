@@ -302,32 +302,10 @@ export async function deleteCompanyCascade(companyId: string) {
             return response
         }
 
-        // 2. If successful, clean up Storage Bucket
-        // The RPC deleted the DB rows, now we clean the files
-        try {
-            // Remove the entire folder: project-files/{company_id}
-            const { data: files } = await supabase.storage
-                .from('project-files')
-                .list(companyId, { limit: 100 })
-
-            if (files && files.length > 0) {
-                // We can't delete a folder directly, we must empty it.
-                // But list(companyId) only gives top level. 
-                // Since structure is deep ({company}/{project}/...), 
-                // we might leave some orphan files if we aren't careful.
-                // However, 'deleteProjectComplete' logic usually cleans per project.
-                // Since projects are gone from DB, we can just iterate known projects from the stats? 
-                // No, they are gone.
-                // Best effort: list recursively if possible, or leave for manual cleanup.
-                // Supabase Storage doesn't support recursive delete of a root folder easily without listing everything.
-                // For now, we accept that 'project-files/{company_id}' might remain with some files 
-                // if not manually cleaned, but RLS will hide them effectively since company is gone.
-
-                console.warn('Storage cleanup for deleted company not partial. Please verify bucket cleanliness.')
-            }
-        } catch (storageError) {
-            console.warn('Error cleaning up storage:', storageError)
-        }
+        // 2. Storage cleanup is handled within the RPC function
+        // The SQL function deletes files matching pattern: {slug}-{id}/*
+        // Example: acme-construction-fd48f0e5/*
+        // No additional client-side cleanup needed
 
         return response
 

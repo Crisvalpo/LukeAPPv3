@@ -1,8 +1,10 @@
 'use client'
 
 import React, { useEffect, useState, useRef, useMemo, Fragment } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
+import { getProjectFilePath } from '@/lib/storage-paths'
 import type { EngineeringRevision } from '@/types'
 import {
     deleteRevisionAction,
@@ -23,7 +25,6 @@ import { assignJointToSpoolAction } from '@/actions/joints'
 import { FileText, Trash2, ExternalLink, Box, Wrench, Split } from 'lucide-react'
 import { SplitSpoolModal } from './viewer/SplitSpoolModal'
 import { useViewerStore } from './viewer/ViewerLogic'
-import { createClient } from '@/lib/supabase/client'
 
 // Wrapper to load spools for viewer and handle fullscreen portal
 function IsometricViewerWrapper({
@@ -1518,8 +1519,26 @@ export default function IsometricRevisionCard({
 
         try {
             const supabase = createClient()
+
+            // Fetch project and company info for descriptive path
+            const { data: projectData } = await supabase
+                .from('projects')
+                .select('code, name, company_id, companies(id, slug)')
+                .eq('id', rev.project_id)
+                .single()
+
+            if (!projectData || !projectData.companies) {
+                throw new Error('Could not load project/company data')
+            }
+
+            // Generate filename
             const fileName = `model-${targetRevId}-${Date.now()}.glb`
-            const filePath = `${rev.company_id}/${rev.project_id}/isometric-models/${fileName}`
+
+            // Path: {company-slug}-{id}/{project-code}-{id}/isometric-models/{filename}
+            // @ts-ignore
+            const company = { id: projectData.companies.id, slug: projectData.companies.slug }
+            const project = { id: rev.project_id, code: projectData.code, name: projectData.name }
+            const filePath = getProjectFilePath(company, project, 'isometric-models', fileName)
 
             // 1. Upload to Storage
             const { error: uploadError } = await supabase.storage
@@ -1576,8 +1595,26 @@ export default function IsometricRevisionCard({
 
         try {
             const supabase = createClient()
+
+            // Fetch project and company info for descriptive path
+            const { data: projectData } = await supabase
+                .from('projects')
+                .select('code, name, company_id, companies(id, slug)')
+                .eq('id', rev.project_id)
+                .single()
+
+            if (!projectData || !projectData.companies) {
+                throw new Error('Could not load project/company data')
+            }
+
+            // Generate filename
             const fileName = `pdf-${targetRevId}-${Date.now()}.pdf`
-            const filePath = `${rev.company_id}/${rev.project_id}/isometric-pdfs/${fileName}`
+
+            // Path: {company-slug}-{id}/{project-code}-{id}/isometric-pdfs/{filename}
+            // @ts-ignore
+            const company = { id: projectData.companies.id, slug: projectData.companies.slug }
+            const project = { id: rev.project_id, code: projectData.code, name: projectData.name }
+            const filePath = getProjectFilePath(company, project, 'isometric-pdfs', fileName)
 
             // 1. Upload to Storage (Using project-files bucket)
             const { error: uploadError } = await supabase.storage

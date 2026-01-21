@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
+import { getProjectStoragePath, getCompanyStoragePath } from '@/lib/storage-paths'
 
 export interface Project {
     id: string
@@ -156,24 +157,33 @@ export async function createProject(params: CreateProjectParams) {
         // This ensures folders exist for future uploads
         if (data) {
             try {
-                const basePath = `${params.company_id}/${data.id}`
-                const folders = ['logos', 'structure-models', 'isometric-models', 'drawings', 'photos']
+                // Get full company info for path generation
+                const { data: companyData } = await supabase
+                    .from('companies')
+                    .select('id, slug')
+                    .eq('id', params.company_id)
+                    .single()
 
-                // Upload a placeholder .keep file to each folder to initialize it
-                // Supabase Storage creates folders on demand when files are uploaded
-                const filePromises = folders.map(folder =>
-                    supabase.storage
-                        .from('project-files')
-                        .upload(`${basePath}/${folder}/.keep`, new Blob(['']), {
-                            upsert: true
-                        })
-                )
+                if (companyData) {
+                    const company = { id: companyData.id, slug: companyData.slug }
+                    const project = { id: data.id, code: data.code, name: data.name }
+                    const basePath = getProjectStoragePath(company, project)
+                    const folders = ['logos', 'structure-models', 'isometric-models', 'drawings', 'photos']
 
-                // We don't await this to avoid slowing down the response
-                // It runs in the background
-                Promise.all(filePromises).catch(err =>
-                    console.warn('Error creating storage folders:', err)
-                )
+                    // Upload a placeholder .keep file to each folder to initialize it
+                    const filePromises = folders.map(folder =>
+                        supabase.storage
+                            .from('project-files')
+                            .upload(`${basePath}/${folder}/.keep`, new Blob(['']), {
+                                upsert: true
+                            })
+                    )
+
+                    // We don't await this to avoid slowing down the response
+                    Promise.all(filePromises).catch(err =>
+                        console.warn('Error creating storage folders:', err)
+                    )
+                }
             } catch (storageError) {
                 console.warn('Error initiating storage folder creation:', storageError)
             }
@@ -265,51 +275,67 @@ export async function deleteProjectComplete(
     const supabase = createClient()
 
     try {
-        // ==========================================
-        // STORAGE CLEANUP - Consolidated Structure
-        // ==========================================
-        // Bucket: 'project-files'
-        // Structure: {company_id}/{project_id}/...
-        // We attempt to clean the entire project folder.
+        // 1. Fetch project details needed for storage path
+        const { data: projectData, error: fetchError } = await supabase
+            .from('projects')
+            .select('id, code, name, company_id, companies(id, slug)')
+            .eq('id', projectId)
+            .single()
 
-        try {
-            const projectPath = `${companyId}/${projectId}`
-            // We need to list contents. Listing at project root might work if files are directly there, 
-            // but usually they are in subfolders.
-            // Known subfolders:
-            const subfolders = ['logos', 'structure-models', 'isometric-models', 'drawings', 'photos']
+        if (fetchError || !projectData) {
+            // If project not found in DB, it might be already deleted or we just can't find it.
+            // We can try to proceed with RPC deletion just in case, or fail.
+            // But we need the slug to clean storage. 
+            // If we can't get it, we can't clean storage efficiently with the new path system.
+            console.warn('Could not fetch project details for storage cleanup. Proceeding to DB delete only.')
+        } else {
+            // ==========================================
+            // STORAGE CLEANUP
+            // ==========================================
+            try {
+                // @ts-ignore
+                const company = { id: projectData.companies.id, slug: projectData.companies.slug }
+                const project = { id: projectData.id, code: projectData.code, name: projectData.name }
 
-            for (const folder of subfolders) {
-                const folderPath = `${projectPath}/${folder}`
-                const { data: files } = await supabase.storage
-                    .from('project-files')
-                    .list(folderPath, { limit: 100 })
+                // Get the root folder for this project: {slug}-{id}/{code}-{id}
+                const projectPath = getProjectStoragePath(company, project)
 
-                if (files && files.length > 0) {
-                    const paths = files.map(f => `${folderPath}/${f.name}`)
-                    await supabase.storage.from('project-files').remove(paths)
+                console.log('Cleaning up project storage at:', projectPath)
+
+                // Subfolders to clean
+                const subfolders = ['logos', 'structure-models', 'isometric-models', 'drawings', 'photos', 'isometric-pdfs']
+
+                for (const folder of subfolders) {
+                    const folderPath = `${projectPath}/${folder}`
+                    const { data: files } = await supabase.storage
+                        .from('project-files')
+                        .list(folderPath, { limit: 100 })
+
+                    if (files && files.length > 0) {
+                        const paths = files.map(f => `${folderPath}/${f.name}`)
+                        await supabase.storage.from('project-files').remove(paths)
+                    }
                 }
-            }
 
-            // Also try cleaning root (for .keep files etc)
-            const { data: rootFiles } = await supabase.storage.from('project-files').list(projectPath)
-            if (rootFiles && rootFiles.length > 0) {
-                const rootPaths = rootFiles
-                    .filter(f => f.name !== '.emptyFolderPlaceholder') // optional filter
-                    .map(f => `${projectPath}/${f.name}`)
-                if (rootPaths.length > 0) {
-                    await supabase.storage.from('project-files').remove(rootPaths)
+                // Also try cleaning root of project folder
+                const { data: rootFiles } = await supabase.storage.from('project-files').list(projectPath)
+                if (rootFiles && rootFiles.length > 0) {
+                    const rootPaths = rootFiles
+                        .filter(f => f.name !== '.emptyFolderPlaceholder')
+                        .map(f => `${projectPath}/${f.name}`)
+                    if (rootPaths.length > 0) {
+                        await supabase.storage.from('project-files').remove(rootPaths)
+                    }
                 }
-            }
 
-        } catch (storageError) {
-            console.warn('Error cleaning up project-files:', storageError)
+            } catch (storageError) {
+                console.warn('Error cleaning up project-files:', storageError)
+            }
         }
 
         // ==========================================
-        // DATABASE CLEANUP - Call RPC function
+        // DATABASE CLEANUP
         // ==========================================
-        // Call RPC function to delete project and get stats
         const { data: stats, error: rpcError } = await supabase
             .rpc('delete_project_complete', {
                 p_project_id: projectId,
@@ -318,30 +344,6 @@ export async function deleteProjectComplete(
             .single()
 
         if (rpcError) throw rpcError
-
-        // Delete all files from Storage bucket for this project
-        // Pattern: company_id/project_id/*
-        const storagePath = `${companyId}/${projectId}`
-
-        // List all files in project folder
-        const { data: files, error: listError } = await supabase.storage
-            .from('project-files')
-            .list(storagePath, {
-                limit: 1000,
-                sortBy: { column: 'name', order: 'asc' }
-            })
-
-        if (!listError && files && files.length > 0) {
-            // Delete all files
-            const filePaths = files.map(file => `${storagePath}/${file.name}`)
-            const { error: deleteError } = await supabase.storage
-                .from('project-files')
-                .remove(filePaths)
-
-            if (deleteError) {
-                console.warn('Error deleting some storage files:', deleteError)
-            }
-        }
 
         return {
             success: true,

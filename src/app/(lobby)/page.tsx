@@ -208,6 +208,23 @@ export default function LandingPage() {
                                                 />
                                             </div>
 
+                                            {/* Forgot Password Link */}
+                                            <div style={{ textAlign: 'right', marginTop: '-8px' }}>
+                                                <Link
+                                                    href="/forgot-password"
+                                                    style={{
+                                                        color: 'var(--color-primary)',
+                                                        fontSize: '0.875rem',
+                                                        textDecoration: 'none',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                    onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                                                    onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+                                                >
+                                                    ¿Olvidaste tu contraseña?
+                                                </Link>
+                                            </div>
+
                                             {error && (
                                                 <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
                                                     {error}

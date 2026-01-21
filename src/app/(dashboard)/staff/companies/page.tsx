@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getAllCompanies, createCompany, type Company } from '@/services/companies'
+import { getAllCompanies, createCompany, deleteCompanyCascade, type Company } from '@/services/companies'
 import { Icons } from '@/components/ui/Icons'
 import { Heading, Text } from '@/components/ui/Typography'
 import { ListView } from '@/components/views/ListView'
@@ -124,8 +124,61 @@ export default function CompaniesPage() {
                     data={companies}
                     isLoading={loading}
                     onCreate={!showCreateForm ? () => setShowCreateForm(true) : undefined}
-                    onAction={(action: string, item: Company) => {
-                        if (action === 'view') router.push(`/staff/companies/${item.id}`)
+                    onAction={async (action: string, item: Company) => {
+                        if (action === 'view') {
+                            router.push(`/staff/companies/${item.id}`)
+                        } else if (action === 'delete') {
+                            // Check if suspended
+                            if (item.subscription_status !== 'suspended') {
+                                alert('Solo se pueden eliminar empresas suspendidas por más de 15 días')
+                                return
+                            }
+
+                            // Calculate days since suspension
+                            const suspendedAt = item.suspended_at ? new Date(item.suspended_at) : null
+                            const daysSuspended = suspendedAt
+                                ? Math.floor((Date.now() - suspendedAt.getTime()) / (1000 * 60 * 60 * 24))
+                                : 0
+
+                            if (daysSuspended < 15) {
+                                alert(`La empresa debe estar suspendida al menos 15 días. Faltan ${15 - daysSuspended} días.`)
+                                return
+                            }
+
+                            const confirmMsg = `⚠️ ELIMINAR EMPRESA: ${item.name}\n\n` +
+                                `Esto eliminará PERMANENTEMENTE:\n` +
+                                `• Todos los proyectos\n` +
+                                `• Todos los miembros\n` +
+                                `• Todos los archivos (${item.projects_count || 0} proyectos)\n` +
+                                `• Usuarios huérfanos (solo de esta empresa)\n\n` +
+                                `Días suspendido: ${daysSuspended}\n\n` +
+                                `Esta acción NO se puede deshacer.\n\n` +
+                                `¿Estás completamente seguro?`
+
+                            if (!confirm(confirmMsg)) return
+
+                            // Second confirmation
+                            const typedName = prompt(`Para confirmar, escribe el nombre de la empresa:\n"${item.name}"`)
+                            if (typedName !== item.name) {
+                                alert('El nombre no coincide. Eliminación cancelada.')
+                                return
+                            }
+
+                            // Execute deletion
+                            setLoading(true)
+                            const result = await deleteCompanyCascade(item.id)
+                            setLoading(false)
+
+                            if (result.success) {
+                                alert(`✅ Empresa eliminada exitosamente\n\n` +
+                                    `Storage path: ${result.stats?.storage_path || 'N/A'}\n` +
+                                    `Archivos eliminados: ${result.stats?.deleted_files || 0}\n` +
+                                    `Usuarios eliminados: ${result.stats?.deleted_users || 0}`)
+                                loadCompanies()
+                            } else {
+                                alert(`❌ Error: ${result.message}`)
+                            }
+                        }
                     }}
                 />
             </div>

@@ -91,7 +91,41 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
     }
 
     async function handleDelete() {
-        if (!confirm(`¿Eliminar "${company?.name}"?\n\nEsta acción intentará eliminar todos los datos de la empresa.\nSolo es posible si la empresa ha estado suspendida por más de 15 días.`)) {
+        if (!company) return
+
+        // Check suspension status
+        if (company.subscription_status !== 'suspended') {
+            alert('Solo se pueden eliminar empresas suspendidas.')
+            return
+        }
+
+        // Calculate days since suspension
+        const suspendedAt = company.suspended_at ? new Date(company.suspended_at) : null
+        const daysSuspended = suspendedAt
+            ? Math.floor((Date.now() - suspendedAt.getTime()) / (1000 * 60 * 60 * 24))
+            : 0
+
+        if (daysSuspended < 15) {
+            alert(`La empresa debe estar suspendida al menos 15 días. Faltan ${15 - daysSuspended} días.`)
+            return
+        }
+
+        // 1. First Confirmation
+        const confirmMsg = `⚠️ ELIMINAR EMPRESA: ${company.name}\n\n` +
+            `Esto eliminará PERMANENTEMENTE:\n` +
+            `• Todos los proyectos (${stats.projects})\n` +
+            `• Todos los miembros (${stats.members})\n` +
+            `• Todos los archivos y documentos\n` +
+            `• Usuarios sin otra empresa asignada\n\n` +
+            `Esta acción NO se puede deshacer.\n` +
+            `¿Estás seguro de continuar?`
+
+        if (!confirm(confirmMsg)) return
+
+        // 2. Second Confirmation (Type Name)
+        const typedName = prompt(`Para confirmar, escribe el nombre exacto de la empresa:\n"${company.name}"`)
+        if (typedName !== company.name) {
+            alert('El nombre no coincide. Eliminación cancelada.')
             return
         }
 
@@ -101,14 +135,16 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
         const result = await deleteCompanyCascade(resolvedParams.id)
 
         if (result.success) {
-            alert('Empresa eliminada exitosamente')
+            alert(`✅ Empresa eliminada exitosamente\n\n` +
+                `Storage path: ${result.stats?.storage_path || 'N/A'}\n` +
+                `Archivos eliminados: ${result.stats?.deleted_files || 0}\n` +
+                `Usuarios eliminados: ${result.stats?.deleted_users || 0}`)
             router.push('/staff/companies')
         } else {
-            alert(result.message)
+            alert(`❌ Error: ${result.message}`)
             setError(result.message)
+            setDeleting(false)
         }
-
-        setDeleting(false)
     }
 
     async function handleClearStrikes() {
@@ -270,8 +306,10 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                                                 variant="destructive"
                                                 size="sm"
                                                 onClick={handleDelete}
-                                                disabled={deleting}
-                                                title="Eliminar empresa"
+                                                disabled={deleting || company.subscription_status !== 'suspended'}
+                                                title={company.subscription_status !== 'suspended'
+                                                    ? "La empresa debe estar suspendida para eliminarse"
+                                                    : "Eliminar empresa permanentemente"}
                                                 className="gap-2"
                                             >
                                                 <Trash2 size={14} />

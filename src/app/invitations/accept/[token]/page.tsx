@@ -129,7 +129,11 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
                 if (!signUpResult.success) {
                     console.error('❌ SignUp Error (Backend):', signUpResult.error)
                     // Fallback: If for some reason checking failed but creation says exists
-                    if (signUpResult.error && (signUpResult.error.includes('already exists') || signUpResult.error.includes('duplicate'))) {
+                    if (signUpResult.error && (
+                        signUpResult.error.includes('already exists') ||
+                        signUpResult.error.includes('duplicate') ||
+                        signUpResult.error.includes('already been registered')
+                    )) {
                         setError('Esta cuenta ya existe. Por favor, ingresa tu contraseña para acceder.')
                         setUserExists(true) // Switch UI to login
                         setAccepting(false)

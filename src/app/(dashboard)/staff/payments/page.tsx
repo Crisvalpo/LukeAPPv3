@@ -102,17 +102,26 @@ export default function StaffPaymentsPage() {
     }
 
     async function handleDeleteCompany(companyId: string) {
-        const confirm1 = confirm('⚠️ ADVERTENCIA CRÍTICA ⚠️\n\nEstás a punto de ELIMINAR DEFINITIVAMENTE esta empresa.\n\n- Se borrarán todos los proyectos.\n- Se borrarán todos los usuarios.\n- Se borrarán todos los archivos.\n\nEsta acción NO SE PUEDE DESHACER.\n\n¿Estás seguro?')
+        const companyToDelete = companies.find(c => c.id === companyId)
+        if (!companyToDelete) return
+
+        const confirm1 = confirm(`⚠️ ADVERTENCIA CRÍTICA ⚠️\n\nEstás a punto de ELIMINAR DEFINITIVAMENTE la empresa:\n"${companyToDelete.name}"\n\n- Se borrarán todos los proyectos.\n- Se borrarán todos los usuarios.\n- Se borrarán todos los archivos.\n\nEsta acción NO SE PUEDE DESHACER.\n\n¿Estás seguro?`)
         if (!confirm1) return
 
-        const confirm2 = confirm('Última oportunidad: ¿Realmente deseas eliminar todos los datos de esta empresa?')
-        if (!confirm2) return
+        const typedName = prompt(`Para confirmar, escribe el nombre exacto de la empresa:\n"${companyToDelete.name}"`)
+        if (typedName !== companyToDelete.name) {
+            alert('El nombre no coincide. Eliminación cancelada.')
+            return
+        }
 
         setIsProcessing(true)
         const result = await deleteCompanyCascade(companyId)
 
         if (result.success) {
-            alert('Empresa eliminada exitosamente.')
+            alert(`✅ Empresa eliminada exitosamente\n\n` +
+                `Storage path: ${result.stats?.storage_path || 'N/A'}\n` +
+                `Archivos eliminados: ${result.stats?.deleted_files || 0}\n` +
+                `Usuarios eliminados: ${result.stats?.deleted_users || 0}`)
             await loadCompanies()
         } else {
             alert('No se pudo eliminar: ' + result.message)

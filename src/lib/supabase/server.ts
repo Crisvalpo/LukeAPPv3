@@ -23,17 +23,21 @@ export async function createClient() {
 
 /**
  * Creates an admin client with service role for privileged operations
- * Use ONLY for server-side admin tasks like storage management
+ * Use ONLY for server-side admin tasks that need to bypass RLS
+ * @returns Supabase client with service role (bypasses RLS)
  */
 export function createAdminClient() {
-    return createServerClient(
+    // Use regular supabase-js client (NOT ssr) to bypass RLS
+    const { createClient } = require('@supabase/supabase-js')
+
+    return createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!,
         {
-            cookies: {
-                getAll() { return [] },
-                setAll() { },
-            },
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false,
+            }
         }
     )
 }

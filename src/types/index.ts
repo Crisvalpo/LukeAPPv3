@@ -449,6 +449,8 @@ export interface Revision {
 export interface RevisionEvent {
     id: string
     revision_id: string
+    project_id: string  // Auto-filled by trigger from engineering_revisions
+    company_id: string  // Auto-filled by trigger from engineering_revisions
     event_type: RevisionEventTypeEnum
     payload: Record<string, any> | null
     created_by: string
@@ -458,6 +460,8 @@ export interface RevisionEvent {
 export interface RevisionImpact {
     id: string
     revision_id: string
+    project_id: string  // Auto-filled by trigger from engineering_revisions
+    company_id: string  // Auto-filled by trigger from engineering_revisions
     impact_type: string // Relaxed from ImpactTypeEnum to string
     affected_entity_type: string // Relaxed from specific string literals
     affected_entity_id: string

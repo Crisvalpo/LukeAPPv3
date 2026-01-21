@@ -3,6 +3,7 @@ import { Upload, Image as ImageIcon, Check, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import ImageEditor, { type CropSettings } from './ImageEditor'
 import LogoCanvas from './LogoCanvas'
+import { getProjectFilePath } from '@/lib/storage-paths'
 
 interface ProjectLogosManagerProps {
     projectId: string
@@ -60,12 +61,26 @@ export default function ProjectLogosManager({
 
         setIsUploading(true)
         try {
+            // Fetch project and company info for descriptive path
+            const { data: projectData } = await supabase
+                .from('projects')
+                .select('code, name, company_id, companies(id, slug)')
+                .eq('id', projectId)
+                .single()
+
+            if (!projectData || !projectData.companies) {
+                throw new Error('Could not load project/company data')
+            }
+
             // Generate filename
             const timestamp = Date.now()
             const fileName = `${editingLogo}_${timestamp}.png`
 
-            // Path: {company_id}/{project_id}/logos/{filename}
-            const storagePath = `${companyId}/${projectId}/logos/${fileName}`
+            // Path: {company-slug}-{id}/{project-code}-{id}/logos/{filename}
+            // @ts-ignore
+            const company = { id: projectData.companies.id, slug: projectData.companies.slug }
+            const project = { id: projectId, code: projectData.code, name: projectData.name }
+            const storagePath = getProjectFilePath(company, project, 'logos', fileName)
 
             // Delete old logo if exists
             const oldUrl = editingLogo === 'primary' ? primaryLogo : secondaryLogo
