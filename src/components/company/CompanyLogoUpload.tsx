@@ -114,6 +114,7 @@ export default function CompanyLogoUpload({
 
             // Notify parent
             onUpdate(publicUrl);
+            window.dispatchEvent(new Event('onboarding-updated'));
         } catch (error: any) {
             console.error('Error saving logo:', error);
             alert('Error al guardar el logo: ' + error.message);

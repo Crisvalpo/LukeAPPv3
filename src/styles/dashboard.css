@@ -118,7 +118,9 @@
 /* ===== STANDARD BUTTONS ===== */
 
 /* Base Button */
-.btn {
+.btn,
+.form-button,
+.action-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -167,7 +169,8 @@
 }
 
 /* Primary Button (Gradient) */
-.btn-primary {
+.btn-primary,
+.form-button {
     background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
     color: white;
     border: none;
@@ -185,7 +188,8 @@
 }
 
 /* Secondary Button (Glass/Outline) */
-.btn-secondary {
+.btn-secondary,
+.action-button {
     background: rgba(30, 41, 59, 0.4);
     backdrop-filter: blur(8px);
     border-color: rgba(148, 163, 184, 0.2);
@@ -250,12 +254,9 @@
 }
 
 /* Compatibility Aliases */
-.form-button {
-    composes: btn btn-primary;
-}
+/* Note: form-button and action-button styles are now shared via grouped selectors above */
 
 .action-button {
-    composes: btn btn-secondary;
     padding: 0.5rem 0.75rem;
     /* Slight adjust for legacy action buttons */
 }

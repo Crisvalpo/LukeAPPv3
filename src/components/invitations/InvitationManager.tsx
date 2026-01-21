@@ -5,6 +5,9 @@ import { Copy, Mail, MessageCircle, Trash2, UserPlus, Shield } from 'lucide-reac
 import { Project, CompanyRole } from '@/types'
 import { Invitation } from '@/services/invitations'
 import { getCompanyRoles } from '@/services/roles'
+import Confetti from '@/components/onboarding/Confetti'
+import Toast from '@/components/onboarding/Toast'
+import { CELEBRATION_MESSAGES } from '@/config/onboarding-messages'
 
 interface InvitationManagerProps {
     companyId: string  // Required to fetch functional roles
@@ -45,6 +48,10 @@ export default function InvitationManager({
     // Functional Roles State
     const [functionalRoles, setFunctionalRoles] = useState<CompanyRole[]>([])
     const [loadingRoles, setLoadingRoles] = useState(true)
+
+    // Celebration state
+    const [showConfetti, setShowConfetti] = useState(false)
+    const [toastMessage, setToastMessage] = useState<string | null>(null)
 
     // Form State
     const [formData, setFormData] = useState({
@@ -104,6 +111,14 @@ export default function InvitationManager({
                 setSuccess(true)
                 setInvitationLink(result.data.link)
                 setFormData(prev => ({ ...prev, email: '', job_title: '' }))
+
+                // Trigger celebration
+                setShowConfetti(true)
+                setToastMessage(CELEBRATION_MESSAGES.invitations)
+                window.dispatchEvent(new Event('onboarding-updated'))
+
+                // Hide confetti after animation
+                setTimeout(() => setShowConfetti(false), 5000)
             } else {
                 setError(result.message || 'Error al crear invitación')
             }
@@ -142,7 +157,7 @@ export default function InvitationManager({
             <div className="company-form-container">
                 <div style={{ marginBottom: '1.5rem' }}>
                     <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'white', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <UserPlus size={20} className="kpi-icon purple" />
+                        <UserPlus size={20} style={{ color: '#c084fc' }} />
                         Nueva Invitación
                     </h2>
                     <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
@@ -458,7 +473,7 @@ export default function InvitationManager({
                                                 </button>
                                                 <button
                                                     onClick={() => onRevoke(inv.id)}
-                                                    className="action-button delete"
+                                                    className="action-button btn-danger"
                                                     title="Revocar invitación"
                                                     style={{ fontSize: '0.875rem', padding: '0.5rem' }}
                                                 >
@@ -473,6 +488,16 @@ export default function InvitationManager({
                     )}
                 </div>
             </div>
+
+            {/* Celebration Components */}
+            <Confetti show={showConfetti} />
+            {toastMessage && (
+                <Toast
+                    message={toastMessage}
+                    type="success"
+                    onClose={() => setToastMessage(null)}
+                />
+            )}
         </div >
     )
 }

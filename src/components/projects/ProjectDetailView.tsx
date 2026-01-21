@@ -78,21 +78,23 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
 
     const searchParams = useSearchParams()
 
+    // Extract primitive values for dependency stability
+    const tabParam = searchParams.get('tab')
+    const actionParam = searchParams.get('action')
+
     useEffect(() => {
         loadProject()
 
         // Handle tab selection via URL
-        const tabParam = searchParams.get('tab')
         if (tabParam && ['details', 'team', 'engineering', 'procurement', 'settings'].includes(tabParam)) {
             setActiveTab(tabParam as any)
         }
 
         // Handle action param
-        const actionParam = searchParams.get('action')
         if (actionParam === 'edit' && canEdit) {
             setIsEditing(true)
         }
-    }, [projectId, searchParams, canEdit])
+    }, [projectId, tabParam, actionParam, canEdit])
 
     async function loadProject() {
         if (!projectId) return
@@ -139,8 +141,12 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
 
     async function handleRevoke(id: string) {
         if (!window.confirm('¿Revocar invitación?')) return
-        await revokeInvitation(id)
-        loadProject()
+        const result = await revokeInvitation(id)
+        if (result.success) {
+            loadProject()
+        } else {
+            alert('Error al revocar: ' + (result.message || 'Desconocido'))
+        }
     }
 
     function exitEditMode() {

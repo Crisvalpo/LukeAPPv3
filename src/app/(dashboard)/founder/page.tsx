@@ -121,7 +121,7 @@ export default function FounderDashboard() {
                 <ConfigCard
                     title="Invitaciones"
                     description="Invita a miembros de tu equipo"
-                    href="/founder/settings/invitations"
+                    href="/founder/invitations"
                     icon={UserPlus}
                     step="invitations"
                     onboardingStatus={onboardingStatus}

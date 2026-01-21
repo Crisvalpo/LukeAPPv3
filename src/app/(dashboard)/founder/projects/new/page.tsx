@@ -1,10 +1,15 @@
 'use client'
 
+// ... (Top of file changes for imports handled by multi_replace usually, but here doing full file context awareness for single replace)
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { createProject } from '@/services/projects'
 import { FolderKanban } from 'lucide-react'
+import Confetti from '@/components/onboarding/Confetti'
+import Toast from '@/components/onboarding/Toast'
+import { CELEBRATION_MESSAGES } from '@/config/onboarding-messages'
 import '@/styles/dashboard.css'
 import '@/styles/companies.css'
 
@@ -13,6 +18,10 @@ export default function NewProjectPage() {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState('')
     const [companyId, setCompanyId] = useState<string | null>(null)
+
+    // Celebration state
+    const [showConfetti, setShowConfetti] = useState(false)
+    const [toastMessage, setToastMessage] = useState<string | null>(null)
 
     const [formData, setFormData] = useState({
         name: '',
@@ -102,12 +111,19 @@ export default function NewProjectPage() {
         })
 
         if (result.success) {
-            router.push('/founder/projects')
+            // Trigger celebration
+            setShowConfetti(true)
+            setToastMessage(CELEBRATION_MESSAGES.projects || '¡Proyecto creado con éxito!')
+            window.dispatchEvent(new Event('onboarding-updated'))
+
+            // Wait for celebration before redirecting
+            setTimeout(() => {
+                router.push('/founder/projects')
+            }, 3000)
         } else {
             setError(result.message)
+            setIsSubmitting(false)
         }
-
-        setIsSubmitting(false)
     }
 
     if (!companyId) {
@@ -259,6 +275,15 @@ export default function NewProjectPage() {
                     </div>
                 </form>
             </div>
+            {/* Celebration Components */}
+            <Confetti show={showConfetti} />
+            {toastMessage && (
+                <Toast
+                    message={toastMessage}
+                    type="success"
+                    onClose={() => setToastMessage(null)}
+                />
+            )}
         </div>
     )
 }
