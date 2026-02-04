@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react'
 import {
     Folder, FileText, BarChart2, Package, Lock, Search, Trash2, Settings, Eye,
@@ -20,11 +22,6 @@ import '@/styles/engineering.css'
 import '@/styles/dashboard.css'
 import '@/components/ui/tabs.css'
 import styles from './styleguide.module.css'
-
-export const metadata = {
-    title: 'Style Guide | LukeAPP',
-    description: 'Laboratorio de estilos - Sistema de diseño LukeAPP'
-}
 
 export default function StyleGuidePage() {
     return (

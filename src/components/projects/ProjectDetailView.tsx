@@ -13,6 +13,7 @@ import WeldTypesManager from '@/components/engineering/WeldTypesManager'
 import StructureModelsManager from '@/components/project/StructureModelsManager'
 import ProjectWeekConfigModal from '@/components/project/ProjectWeekConfigModal'
 import ProjectLogosManager from '@/components/common/ProjectLogosManager'
+import PersonnelManager from '@/components/personnel/PersonnelManager'
 
 // Design System Imports
 import { Button } from '@/components/ui/button'
@@ -60,6 +61,7 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
     const [invitations, setInvitations] = useState<Invitation[]>([])
     const [activeTab, setActiveTab] = useState<'details' | 'team' | 'engineering' | 'procurement' | 'settings'>('engineering')
     const [settingsView, setSettingsView] = useState<'menu' | 'locations' | 'weld-types' | 'logo' | 'structure-models'>('menu')
+    const [teamTab, setTeamTab] = useState<'staff' | 'workforce'>('workforce')
 
     const [isEditing, setIsEditing] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
@@ -318,7 +320,7 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
                                         <TabsTrigger variant="underline" value="details">Detalles</TabsTrigger>
                                     )}
                                     {(role === 'founder' || activeTab === 'team') && (
-                                        <TabsTrigger variant="underline" value="team">Equipo & Invitaciones</TabsTrigger>
+                                        <TabsTrigger variant="underline" value="team">Equipo</TabsTrigger>
                                     )}
                                     {(role === 'founder') && (
                                         <TabsTrigger variant="underline" value="settings">Configuración</TabsTrigger>
@@ -375,21 +377,47 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
 
                         <TabsContent value="team">
                             <div className="fade-in">
-                                <InvitationManager
-                                    companyId={project.company_id}
-                                    companyName={project.name}
-                                    projects={[project]}
-                                    invitations={invitations}
-                                    requireProject={true}
-                                    fixedProjectId={project.id}
-                                    onInvite={handleInvite}
-                                    onRevoke={handleRevoke}
-                                    roleOptions={[
-                                        { value: 'admin', label: 'Admin Proyecto', description: 'Control total de ingeniería y construcción.' },
-                                        { value: 'supervisor', label: 'Supervisor', description: 'Gestión de terreno, bodega o calidad.' },
-                                        { value: 'worker', label: 'Operativo', description: 'Visualización de tareas y reportes simples.' }
-                                    ]}
-                                />
+                                {/* Sub-navigation for Team */}
+                                {/* Sub-navigation for Team */}
+                                <div className="sub-tabs-container">
+                                    <button
+                                        onClick={() => setTeamTab('workforce')}
+                                        className={`sub-tab-btn ${teamTab === 'workforce' ? 'active' : ''}`}
+                                    >
+                                        Dotación
+                                        {teamTab === 'workforce' && <div className="sub-tab-indicator" />}
+                                    </button>
+                                    <button
+                                        onClick={() => setTeamTab('staff')}
+                                        className={`sub-tab-btn ${teamTab === 'staff' ? 'active' : ''}`}
+                                    >
+                                        Administradores
+                                        {teamTab === 'staff' && <div className="sub-tab-indicator" />}
+                                    </button>
+                                </div>
+
+                                {teamTab === 'workforce' ? (
+                                    <PersonnelManager
+                                        projectId={project.id}
+                                        isAdmin={['admin', 'founder'].includes(role)}
+                                    />
+                                ) : (
+                                    <InvitationManager
+                                        companyId={project.company_id}
+                                        companyName={project.name}
+                                        projects={[project]}
+                                        invitations={invitations}
+                                        requireProject={true}
+                                        fixedProjectId={project.id}
+                                        onInvite={handleInvite}
+                                        onRevoke={handleRevoke}
+                                        roleOptions={[
+                                            { value: 'admin', label: 'Admin Proyecto', description: 'Control total de ingeniería y construcción.' },
+                                            { value: 'supervisor', label: 'Supervisor', description: 'Gestión de terreno, bodega o calidad.' },
+                                            { value: 'worker', label: 'Operativo', description: 'Visualización de tareas y reportes simples.' }
+                                        ]}
+                                    />
+                                )}
                             </div>
                         </TabsContent>
 
