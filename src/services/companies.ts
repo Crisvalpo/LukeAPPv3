@@ -285,7 +285,7 @@ export async function getCompanyStats(companyId: string) {
  * Only works if company has been suspended for > 15 days
  * This calls the secure RPC function 'delete_company_cascade'
  */
-export async function deleteCompanyCascade(companyId: string) {
+export async function deleteCompanyCascade(companyId: string): Promise<{ success: boolean; message: string; stats?: any }> {
     const supabase = createClient()
 
     try {
@@ -313,7 +313,8 @@ export async function deleteCompanyCascade(companyId: string) {
         console.error('Error in deleteCompanyCascade:', error)
         return {
             success: false,
-            message: error.message || 'Error al eliminar empresa'
+            message: error.message || 'Error al eliminar empresa',
+            stats: undefined
         }
     }
 }

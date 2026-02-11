@@ -271,7 +271,7 @@ export async function updateProject(projectId: string, params: UpdateProjectPara
 export async function deleteProjectComplete(
     projectId: string,
     companyId: string
-): Promise<{ success: boolean; stats?: ProjectDeletionStats; error?: string }> {
+): Promise<{ success: boolean; stats?: ProjectDeletionStats; error?: string; message?: string }> {
     const supabase = createClient()
 
     try {
@@ -353,7 +353,9 @@ export async function deleteProjectComplete(
         console.error('Error deleting project:', error)
         return {
             success: false,
-            error: error.message || 'Error al eliminar proyecto'
+            error: error.message || 'Error al eliminar proyecto',
+            message: error.message || 'Error al eliminar proyecto',
+            stats: undefined
         }
     }
 }
