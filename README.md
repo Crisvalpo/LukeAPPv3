@@ -145,11 +145,10 @@ Ordenado por etapas lógicas de construcción del producto.
 - **Estilos**: Vanilla CSS (CSS Variables) - **NO Tailwind**.
 - **PWA**: `@ducanh2912/next-pwa`
 
-### Backend
-- **BaaS**: Supabase (Auth, Postgres, RLS, Realtime, Edge Functions).
-
 ### Infraestructura
-- **Deploys**: Vercel (Proyectos separados para Web Core vs Field Apps).
+- **Servidor**: Ubuntu Server (Auto-host)
+- **Proxy/SSL**: Cloudflare (DNS + Proxy) + Nginx/Caddy (Local)
+- **BaaS**: Supabase (Auth, Postgres, RLS, Realtime, Edge Functions).
 
 ---
 

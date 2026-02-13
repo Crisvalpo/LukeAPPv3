@@ -86,12 +86,12 @@ Do not share execution logic between them.
 Only shared domain models and types are allowed.
 
 #### Satellite App Architecture (New Jan 2026)
-- **Web Core (`app.lukeapp.cl`)**: 
+- **Web Core (lukeapp.me)**: 
     - Tech: Next.js + Vanilla CSS (Glassmorphism)
     - Role: Admin, Engineering, Management
-    - State: Online necessary
+    - State: Online necessary (Self-hosted Ubuntu)
 
-- **Field Satellites (`bodega.lukeapp.cl`, etc)**:
+- **Field Satellites (field.lukeapp.me, etc)**:
     - Tech: Next.js PWA + Tailwind CSS (Mobile First)
     - Role: Worker, Supervisor
     - State: Offline First (Service Worker + Local DB)

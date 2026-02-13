@@ -49,3 +49,6 @@ next-env.d.ts
 
 # reference repositories
 /PIPING-REF
+
+# AI Agent Skills (Context only, do not commit)
+.agent/skills/
