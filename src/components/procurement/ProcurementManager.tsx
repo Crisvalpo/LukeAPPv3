@@ -9,8 +9,8 @@ import MaterialCatalogManager from '@/components/procurement/MaterialCatalogMana
 import MaterialReceiptsManager from '@/components/procurement/MaterialReceiptsManager'
 import MaterialInventoryManager from '@/components/procurement/MaterialInventoryManager'
 import MaterialTrackingView from '@/components/procurement/MaterialTrackingView'
-import '@/styles/dashboard.css'
-import '@/styles/engineering.css'
+// Styles migrated to Tailwind v4
+// Styles migrated to Tailwind v4
 
 interface ProcurementManagerProps {
     projectId: string

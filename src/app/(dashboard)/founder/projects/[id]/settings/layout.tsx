@@ -2,7 +2,8 @@
 
 import { useParams, useRouter, usePathname } from 'next/navigation'
 import { Settings, MapPin, ArrowLeft } from 'lucide-react'
-import '@/styles/project-settings.css'
+import { Heading } from '@/components/ui/Typography'
+// Styles migrated to Tailwind v4
 
 export default function ProjectSettingsLayout({
     children
@@ -36,7 +37,7 @@ export default function ProjectSettingsLayout({
 
                     <div className="settings-title-row">
                         <Settings className="settings-icon" />
-                        <h1 className="settings-title">Configuración del Proyecto</h1>
+                        <Heading level={1} className="settings-title">Configuración del Proyecto</Heading>
                     </div>
 
                     {/* Tabs */}

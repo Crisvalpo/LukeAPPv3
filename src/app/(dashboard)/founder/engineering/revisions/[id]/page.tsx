@@ -13,8 +13,9 @@ import { createClient } from '@/lib/supabase/client'
 import { fetchRevisionEvents, fetchRevisionImpacts, resolveImpactAction } from '@/actions/revisions'
 import type { EngineeringRevision, RevisionImpact, RevisionEvent } from '@/types'
 import { REVISION_STATUS_LABELS, IMPACT_SEVERITY_LABELS, RESOLUTION_TYPE_LABELS } from '@/constants'
-import '@/styles/dashboard.css'
-import '@/styles/revisions.css'
+import { ArrowLeft } from 'lucide-react'
+import { Heading, Text } from '@/components/ui/Typography'
+// Styles migrated to Tailwind v4
 
 export default function RevisionDetailPage() {
     const router = useRouter()
@@ -127,22 +128,16 @@ export default function RevisionDetailPage() {
 
     if (isLoading) {
         return (
-            <div className="dashboard-page">
-                <p style={{ color: 'white', textAlign: 'center' }}>Cargando...</p>
+            <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
+                <p className="text-white text-center">Cargando...</p>
             </div>
         )
     }
 
     if (error || !revision) {
         return (
-            <div className="dashboard-page">
-                <div style={{
-                    padding: '1rem',
-                    background: 'rgba(239, 68, 68, 0.1)',
-                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                    borderRadius: '0.5rem',
-                    color: '#f87171'
-                }}>
+            <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
+                <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400">
                     {error || 'Revisión no encontrada'}
                 </div>
             </div>
@@ -153,27 +148,23 @@ export default function RevisionDetailPage() {
     const resolvedImpacts = impacts.filter(i => i.resolved_at)
 
     return (
-        <div className="dashboard-page">
+        <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
             {/* Header */}
-            <div className="dashboard-header">
-                <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-                        <button
-                            onClick={() => router.push('/founder/engineering?tab=revisiones')}
-                            style={{
-                                background: 'rgba(255, 255, 255, 0.1)',
-                                border: 'none',
-                                color: 'white',
-                                padding: '0.5rem 1rem',
-                                borderRadius: '0.5rem',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            ← Volver a Ingeniería
-                        </button>
-                        <h1>Revisión {revision.rev_code}</h1>
+            <div className="space-y-2">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <button
+                        onClick={() => router.push('/founder/engineering?tab=revisiones')}
+                        className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors"
+                    >
+                        <ArrowLeft size={20} />
+                    </button>
+                    <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-8 bg-indigo-500 rounded-full" />
+                        <Heading level={1} className="tracking-tight text-white">
+                            Revisión {revision.rev_code}
+                        </Heading>
                         <div
-                            className="revision-status-badge"
+                            className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
                             style={{
                                 background: `${REVISION_STATUS_LABELS[revision.revision_status]?.color}33`,
                                 color: REVISION_STATUS_LABELS[revision.revision_status]?.color,
@@ -183,10 +174,10 @@ export default function RevisionDetailPage() {
                             {REVISION_STATUS_LABELS[revision.revision_status]?.label}
                         </div>
                     </div>
-                    <p className="dashboard-subtitle">
-                        Análisis de Impactos y Resolución Estratégica
-                    </p>
                 </div>
+                <Text size="base" className="text-text-muted font-medium ml-14">
+                    Análisis de Impactos y Resolución Estratégica
+                </Text>
             </div>
 
             {/* Summary Stats */}
@@ -233,7 +224,7 @@ export default function RevisionDetailPage() {
             {impacts.length === 0 && (
                 <div className="empty-state">
                     <div className="empty-icon">✨</div>
-                    <h3>Sin Impactos Detectados</h3>
+                    <Heading level={3}>Sin Impactos Detectados</Heading>
                     <p>Esta revisión no generó impactos en la producción existente</p>
                     <p style={{ marginTop: '0.5rem', color: '#4ade80' }}>
                         ✅ Puede aplicarse automáticamente
@@ -244,7 +235,7 @@ export default function RevisionDetailPage() {
             {/* Impacts List */}
             {unresolvedImpacts.length > 0 && (
                 <>
-                    <h2 style={{ color: 'white', marginBottom: '1rem' }}>Impactos Pendientes</h2>
+                    <Heading level={2} className="mb-4">Impactos Pendientes</Heading>
                     <div className="impacts-grid">
                         {unresolvedImpacts.map(impact => (
                             <div
@@ -253,9 +244,9 @@ export default function RevisionDetailPage() {
                             >
                                 <div className="impact-header">
                                     <div>
-                                        <h3 style={{ color: 'white', marginBottom: '0.5rem' }}>
+                                        <Heading level={3} size="base" className="mb-2">
                                             Impacto en {impact.affected_entity_type}
-                                        </h3>
+                                        </Heading>
                                         <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
                                             ID: {impact.affected_entity_id.slice(0, 8)}...
                                         </p>
@@ -299,17 +290,17 @@ export default function RevisionDetailPage() {
             {/* Resolved Impacts */}
             {resolvedImpacts.length > 0 && (
                 <>
-                    <h2 style={{ color: '#4ade80', marginTop: '2rem', marginBottom: '1rem' }}>
+                    <Heading level={2} className="mt-8 mb-4 text-[#4ade80]">
                         Impactos Resueltos
-                    </h2>
+                    </Heading>
                     <div className="impacts-grid">
                         {resolvedImpacts.map(impact => (
                             <div key={impact.id} className="impact-card" style={{ opacity: 0.7 }}>
                                 <div className="impact-header">
                                     <div>
-                                        <h3 style={{ color: 'white', marginBottom: '0.5rem' }}>
+                                        <Heading level={3} size="base" className="mb-2">
                                             {impact.affected_entity_type}
-                                        </h3>
+                                        </Heading>
                                     </div>
                                     <div style={{ fontSize: '1.5rem' }}>✅</div>
                                 </div>
@@ -366,9 +357,9 @@ export default function RevisionDetailPage() {
                         }}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <h2 style={{ color: 'white', marginBottom: '1.5rem' }}>
+                        <Heading level={2} className="mb-6">
                             Resolución Estratégica
-                        </h2>
+                        </Heading>
 
                         <div className="form-field">
                             <label className="form-label">Tipo de Resolución</label>

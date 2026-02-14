@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getProjectById, updateProject, type Project } from '@/services/projects'
 import { getPendingInvitations, createInvitation, revokeInvitation, type Invitation } from '@/services/invitations'
-import { Building2, Calendar, FileText, Check, X, Shield, Users, Image as ImageIcon } from 'lucide-react'
+import { Building2, Calendar, FileText, Check, X, Shield, Users, Image as ImageIcon, MapPin, Flame, Box } from 'lucide-react'
 import InvitationManager from '@/components/invitations/InvitationManager'
 import EngineeringManager from '@/components/engineering/EngineeringManager'
 import ProcurementManager from '@/components/procurement/ProcurementManager'
@@ -34,10 +34,8 @@ import {
     TabsContent,
 } from '@/components/ui/tabs'
 
-import '@/styles/dashboard.css'
-import '@/styles/companies.css'
-import '@/styles/company-profile.css' // Reusing profile styles for consistent look
-import '@/styles/views/project-details.css' // New specific styles for this view
+// Styles migrated to Tailwind v4
+// Styles migrated to Tailwind v4
 
 interface ProjectDetails extends Project {
     contract_number?: string
@@ -61,7 +59,6 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
     const [invitations, setInvitations] = useState<Invitation[]>([])
     const [activeTab, setActiveTab] = useState<'details' | 'team' | 'engineering' | 'procurement' | 'settings'>('engineering')
     const [settingsView, setSettingsView] = useState<'menu' | 'locations' | 'weld-types' | 'logo' | 'structure-models'>('menu')
-    const [teamTab, setTeamTab] = useState<'staff' | 'workforce'>('workforce')
 
     const [isEditing, setIsEditing] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
@@ -199,22 +196,31 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
     }
 
     return (
-        <div className="dashboard-page">
-            <div className="dashboard-header">
-                <div className="dashboard-header-content">
-                    <div className="dashboard-accent-line" />
-                    <Heading level={1} className="dashboard-title">
+        <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
+            {/* Header */}
+            <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-8 bg-indigo-500 rounded-full" />
+                    <Heading level={1}>
                         {isEditing ? 'Editar Proyecto' : project.name}
                     </Heading>
                 </div>
                 {!isEditing && (
-                    <Text size="base" className="dashboard-subtitle">
-                        {project.code} • <span style={{ textTransform: 'capitalize' }}>{project.status.replace('_', ' ')}</span>
+                    <Text size="base" className="text-text-muted font-medium ml-4.5">
+                        {/* Only show code if different from name */}
+                        {project.code !== project.name && (
+                            <>
+                                {project.code} • {' '}
+                            </>
+                        )}
+                        <span className="capitalize">
+                            {project.status.replace('_', ' ')}
+                        </span>
                     </Text>
                 )}
             </div>
 
-            <div className={`company-profile-container ${isEditing ? 'max-w-3xl mx-auto' : ''}`}>
+            <div className={`${isEditing ? 'max-w-3xl mx-auto' : ''}`}>
                 {error && (
                     <div className="error-banner">
                         {error}
@@ -303,9 +309,9 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
                     <Tabs value={activeTab} onValueChange={(val: any) => setActiveTab(val)} className="w-full">
                         {/* Navbar */}
                         {!(role === 'admin' && activeTab === 'settings') && (
-                            <div className="flex flex-col md:flex-row justify-between items-end mb-8 border-b border-white/5">
+                            <div className="flex items-center justify-between mb-8 border-b border-white/5 w-full">
                                 {/* Work Modules (Left) */}
-                                <TabsList variant="underline" className="w-full md:w-auto">
+                                <TabsList variant="underline" className="shrink-0 border-b-0 space-x-0">
                                     {!(role === 'admin' && activeTab === 'team') && (
                                         <>
                                             <TabsTrigger variant="underline" value="engineering">Ingeniería</TabsTrigger>
@@ -315,7 +321,7 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
                                 </TabsList>
 
                                 {/* Management (Right) */}
-                                <TabsList variant="underline" className="w-full md:w-auto justify-end">
+                                <TabsList variant="underline" className="shrink-0 border-b-0 space-x-0">
                                     {(role === 'founder' || activeTab === 'details') && (
                                         <TabsTrigger variant="underline" value="details">Detalles</TabsTrigger>
                                     )}
@@ -331,41 +337,127 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
 
                         <TabsContent value="details">
                             <div className="fade-in p-4">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-                                    <div>
-                                        <Text size="xs" variant="muted" className="mb-2 uppercase font-semibold tracking-wider">
-                                            Cliente
-                                        </Text>
-                                        <Text size="lg" className="font-medium">
-                                            {project.client_name || <span className="text-slate-500 italic">No especificado</span>}
-                                        </Text>
+                                {/* Info Cards Grid */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                                    {/* Client Card */}
+                                    <div className="group relative bg-bg-surface-1 border border-glass-border rounded-xl p-6 hover:border-brand-primary/30 transition-all duration-300 overflow-hidden">
+                                        <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                        <div className="relative z-10">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="p-2.5 rounded-lg bg-brand-primary/10 text-brand-primary group-hover:scale-110 transition-transform duration-300">
+                                                    <Building2 size={20} />
+                                                </div>
+                                                <Text size="xs" variant="muted" className="uppercase font-bold tracking-wider">
+                                                    Cliente
+                                                </Text>
+                                            </div>
+                                            <Text size="lg" className="font-semibold text-white">
+                                                {project.client_name || <span className="text-text-dim italic font-normal">No especificado</span>}
+                                            </Text>
+                                        </div>
                                     </div>
 
-                                    <div>
-                                        <Text size="xs" variant="muted" className="mb-2 uppercase font-semibold tracking-wider">
-                                            Contrato
-                                        </Text>
-                                        <Text size="lg" className="font-medium font-mono">
-                                            {project.contract_number || <span className="text-slate-500 italic font-sans">No especificado</span>}
-                                        </Text>
+                                    {/* Contract Card */}
+                                    <div className="group relative bg-bg-surface-1 border border-glass-border rounded-xl p-6 hover:border-brand-primary/30 transition-all duration-300 overflow-hidden">
+                                        <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                        <div className="relative z-10">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="p-2.5 rounded-lg bg-brand-primary/10 text-brand-primary group-hover:scale-110 transition-transform duration-300">
+                                                    <FileText size={20} />
+                                                </div>
+                                                <Text size="xs" variant="muted" className="uppercase font-bold tracking-wider">
+                                                    Contrato
+                                                </Text>
+                                            </div>
+                                            <Text size="lg" className="font-semibold font-mono text-white">
+                                                {project.contract_number || <span className="text-text-dim italic font-sans font-normal">No especificado</span>}
+                                            </Text>
+                                        </div>
                                     </div>
 
-                                    <div>
-                                        <Text size="xs" variant="muted" className="mb-2 uppercase font-semibold tracking-wider">
-                                            Descripción
+                                    {/* Status Card */}
+                                    <div className="group relative bg-bg-surface-1 border border-glass-border rounded-xl p-6 hover:border-brand-primary/30 transition-all duration-300 overflow-hidden">
+                                        <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                        <div className="relative z-10">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="p-2.5 rounded-lg bg-brand-primary/10 text-brand-primary group-hover:scale-110 transition-transform duration-300">
+                                                    <Check size={20} />
+                                                </div>
+                                                <Text size="xs" variant="muted" className="uppercase font-bold tracking-wider">
+                                                    Estado
+                                                </Text>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <div className={`w-2 h-2 rounded-full ${project.status === 'active' ? 'bg-green-500' :
+                                                    project.status === 'planning' ? 'bg-blue-500' :
+                                                        project.status === 'on_hold' ? 'bg-yellow-500' :
+                                                            project.status === 'completed' ? 'bg-purple-500' :
+                                                                'bg-gray-500'
+                                                    }`} />
+                                                <Text size="lg" className="font-semibold text-white capitalize">
+                                                    {project.status.replace('_', ' ')}
+                                                </Text>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Description Card */}
+                                {(project.description || canEdit) && (
+                                    <div className="bg-bg-surface-1 border border-glass-border rounded-xl p-6 mb-8">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="p-2.5 rounded-lg bg-brand-primary/10 text-brand-primary">
+                                                <FileText size={20} />
+                                            </div>
+                                            <Text size="sm" variant="muted" className="uppercase font-bold tracking-wider">
+                                                Descripción del Proyecto
+                                            </Text>
+                                        </div>
+                                        <Text className="leading-relaxed text-text-main">
+                                            {project.description || <span className="text-text-dim italic">Sin descripción disponible</span>}
                                         </Text>
-                                        <Text className="leading-relaxed">
-                                            {project.description || <span className="text-slate-500 italic">Sin descripción</span>}
+                                    </div>
+                                )}
+
+                                {/* Project Metadata */}
+                                <div className="bg-bg-surface-1 border border-glass-border rounded-xl p-6">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="p-2.5 rounded-lg bg-brand-primary/10 text-brand-primary">
+                                            <Calendar size={20} />
+                                        </div>
+                                        <Text size="sm" variant="muted" className="uppercase font-bold tracking-wider">
+                                            Información del Sistema
                                         </Text>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <Text size="xs" variant="muted" className="mb-1">
+                                                Código del Proyecto
+                                            </Text>
+                                            <Text className="font-mono text-brand-primary font-medium">
+                                                {project.code}
+                                            </Text>
+                                        </div>
+                                        <div>
+                                            <Text size="xs" variant="muted" className="mb-1">
+                                                Fecha de Creación
+                                            </Text>
+                                            <Text className="font-medium">
+                                                {new Date(project.created_at).toLocaleDateString('es-ES', {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric'
+                                                })}
+                                            </Text>
+                                        </div>
                                     </div>
                                 </div>
 
                                 {canEdit && (
-                                    <div className="flex gap-4 pt-8 border-t border-white/5">
+                                    <div className="flex gap-4 pt-8">
                                         <Button
                                             onClick={() => setIsEditing(true)}
-                                            variant="secondary"
-                                            className="gap-2"
+                                            className="gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white"
                                         >
                                             <Icons.Edit size={18} />
                                             Editar Proyecto
@@ -376,49 +468,41 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
                         </TabsContent>
 
                         <TabsContent value="team">
-                            <div className="fade-in">
+                            <Tabs defaultValue="workforce" className="fade-in">
                                 {/* Sub-navigation for Team */}
-                                {/* Sub-navigation for Team */}
-                                <div className="sub-tabs-container">
-                                    <button
-                                        onClick={() => setTeamTab('workforce')}
-                                        className={`sub-tab-btn ${teamTab === 'workforce' ? 'active' : ''}`}
-                                    >
-                                        Dotación
-                                        {teamTab === 'workforce' && <div className="sub-tab-indicator" />}
-                                    </button>
-                                    <button
-                                        onClick={() => setTeamTab('staff')}
-                                        className={`sub-tab-btn ${teamTab === 'staff' ? 'active' : ''}`}
-                                    >
-                                        Administradores
-                                        {teamTab === 'staff' && <div className="sub-tab-indicator" />}
-                                    </button>
-                                </div>
+                                <TabsList variant="underline" className="mb-8 justify-end">
+                                    <TabsTrigger variant="underline" value="workforce">Dotación</TabsTrigger>
+                                    <TabsTrigger variant="underline" value="staff">Administradores</TabsTrigger>
+                                </TabsList>
 
-                                {teamTab === 'workforce' ? (
-                                    <PersonnelManager
-                                        projectId={project.id}
-                                        isAdmin={['admin', 'founder'].includes(role)}
-                                    />
-                                ) : (
-                                    <InvitationManager
-                                        companyId={project.company_id}
-                                        companyName={project.name}
-                                        projects={[project]}
-                                        invitations={invitations}
-                                        requireProject={true}
-                                        fixedProjectId={project.id}
-                                        onInvite={handleInvite}
-                                        onRevoke={handleRevoke}
-                                        roleOptions={[
-                                            { value: 'admin', label: 'Admin Proyecto', description: 'Control total de ingeniería y construcción.' },
-                                            { value: 'supervisor', label: 'Supervisor', description: 'Gestión de terreno, bodega o calidad.' },
-                                            { value: 'worker', label: 'Operativo', description: 'Visualización de tareas y reportes simples.' }
-                                        ]}
-                                    />
-                                )}
-                            </div>
+                                <TabsContent value="workforce">
+                                    {project && (
+                                        <PersonnelManager
+                                            projectId={project.id}
+                                            isAdmin={['admin', 'founder'].includes(role)}
+                                        />
+                                    )}
+                                </TabsContent>
+                                <TabsContent value="staff">
+                                    {project && (
+                                        <InvitationManager
+                                            companyId={project.company_id}
+                                            companyName={project.name}
+                                            projects={[project]}
+                                            invitations={invitations}
+                                            requireProject={true}
+                                            fixedProjectId={project.id}
+                                            onInvite={handleInvite}
+                                            onRevoke={handleRevoke}
+                                            roleOptions={[
+                                                { value: 'admin', label: 'Admin Proyecto', description: 'Control total de ingeniería y construcción.' },
+                                                { value: 'supervisor', label: 'Supervisor', description: 'Gestión de terreno, bodega o calidad.' },
+                                                { value: 'worker', label: 'Operativo', description: 'Visualización de tareas y reportes simples.' }
+                                            ]}
+                                        />
+                                    )}
+                                </TabsContent>
+                            </Tabs>
                         </TabsContent>
 
                         <TabsContent value="engineering">
@@ -442,77 +526,85 @@ export default function ProjectDetailView({ projectId, role }: ProjectDetailView
                         <TabsContent value="settings">
                             <div className="fade-in p-4">
                                 {settingsView === 'menu' ? (
-                                    <div className="settings-grid">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                         <div
                                             onClick={() => setSettingsView('locations')}
-                                            className="settings-card settings-card--locations group"
+                                            className="group relative flex flex-col p-6 rounded-xl border border-white/5 bg-white/5 hover:border-brand-primary/50 hover:bg-white/10 transition-all duration-300 cursor-pointer overflow-hidden shadow-lg hover:shadow-brand-primary/10"
                                         >
-                                            <div className="settings-icon">
-                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="stroke-current stroke-2">
-                                                    <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" strokeLinecap="round" strokeLinejoin="round" />
-                                                    <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" strokeLinecap="round" strokeLinejoin="round" />
-                                                </svg>
+                                            <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                            <div className="mb-4 p-3 rounded-lg bg-brand-primary/10 text-brand-primary w-fit group-hover:scale-110 transition-transform duration-300 z-10">
+                                                <MapPin size={24} />
                                             </div>
-                                            <Heading level={3} size="lg" className="mb-2">Ubicaciones</Heading>
-                                            <Text variant="muted" size="sm">
-                                                Gestiona bodegas, talleres, áreas de acopio y sitios de montaje.
-                                            </Text>
+                                            <div className="z-10">
+                                                <Heading level={3} size="lg" className="mb-2 group-hover:text-brand-primary transition-colors">Ubicaciones</Heading>
+                                                <Text variant="muted" size="sm">
+                                                    Gestiona bodegas, talleres, áreas de acopio y sitios de montaje.
+                                                </Text>
+                                            </div>
                                         </div>
 
                                         <div
                                             onClick={() => setSettingsView('weld-types')}
-                                            className="settings-card settings-card--weld group"
+                                            className="group relative flex flex-col p-6 rounded-xl border border-white/5 bg-white/5 hover:border-brand-primary/50 hover:bg-white/10 transition-all duration-300 cursor-pointer overflow-hidden shadow-lg hover:shadow-brand-primary/10"
                                         >
-                                            <div className="settings-icon">
-                                                🔥
+                                            <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                            <div className="mb-4 p-3 rounded-lg bg-brand-primary/10 text-brand-primary w-fit group-hover:scale-110 transition-transform duration-300 z-10">
+                                                <Flame size={24} />
                                             </div>
-                                            <Heading level={3} size="lg" className="mb-2">Tipos de Unión</Heading>
-                                            <Text variant="muted" size="sm">
-                                                Marca las excepciones que NO requieren soldador.
-                                            </Text>
+                                            <div className="z-10">
+                                                <Heading level={3} size="lg" className="mb-2 group-hover:text-brand-primary transition-colors">Tipos de Unión</Heading>
+                                                <Text variant="muted" size="sm">
+                                                    Marca las excepciones que NO requieren soldador.
+                                                </Text>
+                                            </div>
                                         </div>
 
                                         <div
                                             onClick={() => setIsWeekConfigOpen(true)}
-                                            className="settings-card settings-card--week group"
+                                            className="group relative flex flex-col p-6 rounded-xl border border-white/5 bg-white/5 hover:border-brand-primary/50 hover:bg-white/10 transition-all duration-300 cursor-pointer overflow-hidden shadow-lg hover:shadow-brand-primary/10"
                                         >
-                                            <div className="settings-icon">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                            <div className="mb-4 p-3 rounded-lg bg-brand-primary/10 text-brand-primary w-fit group-hover:scale-110 transition-transform duration-300 z-10">
                                                 <Calendar size={24} />
                                             </div>
-                                            <Heading level={3} size="lg" className="mb-2">Configuración de Semanas</Heading>
-                                            <Text variant="muted" size="sm">
-                                                Define la fecha de inicio del proyecto y el ciclo semanal.
-                                            </Text>
+                                            <div className="z-10">
+                                                <Heading level={3} size="lg" className="mb-2 group-hover:text-brand-primary transition-colors">Configuración de Semanas</Heading>
+                                                <Text variant="muted" size="sm">
+                                                    Define la fecha de inicio del proyecto y el ciclo semanal.
+                                                </Text>
+                                            </div>
                                         </div>
 
                                         <div
                                             onClick={() => setSettingsView('logo')}
-                                            className="settings-card settings-card--logo group"
+                                            className="group relative flex flex-col p-6 rounded-xl border border-white/5 bg-white/5 hover:border-brand-primary/50 hover:bg-white/10 transition-all duration-300 cursor-pointer overflow-hidden shadow-lg hover:shadow-brand-primary/10"
                                         >
-                                            <div className="settings-icon">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                            <div className="mb-4 p-3 rounded-lg bg-brand-primary/10 text-brand-primary w-fit group-hover:scale-110 transition-transform duration-300 z-10">
                                                 <ImageIcon size={24} />
                                             </div>
-                                            <Heading level={3} size="lg" className="mb-2">Logo del Proyecto</Heading>
-                                            <Text variant="muted" size="sm">
-                                                Sube el logo del proyecto para incluirlo en reportes PDF.
-                                            </Text>
+                                            <div className="z-10">
+                                                <Heading level={3} size="lg" className="mb-2 group-hover:text-brand-primary transition-colors">Logo del Proyecto</Heading>
+                                                <Text variant="muted" size="sm">
+                                                    Sube el logo del proyecto para incluirlo en reportes PDF.
+                                                </Text>
+                                            </div>
                                         </div>
 
                                         <div
                                             onClick={() => setSettingsView('structure-models')}
-                                            className="settings-card settings-card--bim group"
+                                            className="group relative flex flex-col p-6 rounded-xl border border-white/5 bg-white/5 hover:border-brand-primary/50 hover:bg-white/10 transition-all duration-300 cursor-pointer overflow-hidden shadow-lg hover:shadow-brand-primary/10"
                                         >
-                                            <div className="settings-icon">
-                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                                                    <line x1="12" y1="22.08" x2="12" y2="12" />
-                                                </svg>
+                                            <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                            <div className="mb-4 p-3 rounded-lg bg-brand-primary/10 text-brand-primary w-fit group-hover:scale-110 transition-transform duration-300 z-10">
+                                                <Box size={24} />
                                             </div>
-                                            <Heading level={3} size="lg" className="mb-2">Modelos Estructurales (BIM)</Heading>
-                                            <Text variant="muted" size="sm">
-                                                Carga modelos 3D de contexto.
-                                            </Text>
+                                            <div className="z-10">
+                                                <Heading level={3} size="lg" className="mb-2 group-hover:text-brand-primary transition-colors">Modelos Estructurales (BIM)</Heading>
+                                                <Text variant="muted" size="sm">
+                                                    Carga modelos 3D de contexto.
+                                                </Text>
+                                            </div>
                                         </div>
                                     </div>
                                 ) : settingsView === 'locations' ? (

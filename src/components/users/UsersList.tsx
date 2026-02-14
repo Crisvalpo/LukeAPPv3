@@ -1,8 +1,7 @@
 'use client'
 
-import { Mail, Shield, User, Calendar, Trash2 } from 'lucide-react'
-import '@/styles/dashboard.css'
-import '@/styles/companies.css'
+import { Mail, Shield, User, Calendar, Trash2, ChevronRight } from 'lucide-react'
+import { Heading, Text } from '@/components/ui/Typography'
 
 // Basic Member Interface
 interface Member {
@@ -23,30 +22,38 @@ interface UsersListProps {
 export default function UsersList({ users, onDelete, context }: UsersListProps) {
 
     const getRoleBadge = (role: string) => {
-        const styles: Record<string, any> = {
-            founder: { bg: 'rgba(168, 85, 247, 0.1)', color: '#c084fc', border: 'rgba(168, 85, 247, 0.2)' },
-            admin: { bg: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: 'rgba(59, 130, 246, 0.2)' },
-            supervisor: { bg: 'rgba(234, 179, 8, 0.1)', color: '#facc15', border: 'rgba(234, 179, 8, 0.2)' },
-            worker: { bg: 'rgba(148, 163, 184, 0.1)', color: '#cbd5e1', border: 'rgba(148, 163, 184, 0.2)' }
+        const styles: Record<string, { bg: string, text: string, border: string, icon: string }> = {
+            founder: {
+                bg: 'bg-indigo-500/10',
+                text: 'text-indigo-400',
+                border: 'border-indigo-500/20',
+                icon: 'text-indigo-400'
+            },
+            admin: {
+                bg: 'bg-blue-500/10',
+                text: 'text-blue-400',
+                border: 'border-blue-500/20',
+                icon: 'text-blue-400'
+            },
+            supervisor: {
+                bg: 'bg-amber-500/10',
+                text: 'text-amber-400',
+                border: 'border-amber-500/20',
+                icon: 'text-amber-400'
+            },
+            worker: {
+                bg: 'bg-slate-500/10',
+                text: 'text-slate-400',
+                border: 'border-slate-500/20',
+                icon: 'text-slate-400'
+            }
         }
 
         const style = styles[role] || styles['worker']
 
         return (
-            <span style={{
-                padding: '0.25rem 0.75rem',
-                background: style.bg,
-                border: `1px solid ${style.border}`,
-                borderRadius: '9999px',
-                fontSize: '0.75rem',
-                color: style.color,
-                fontWeight: '600',
-                textTransform: 'capitalize',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.25rem'
-            }}>
-                <Shield size={12} />
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${style.bg} ${style.text} ${style.border}`}>
+                <Shield size={10} className={style.icon} />
                 {role}
             </span>
         )
@@ -54,79 +61,76 @@ export default function UsersList({ users, onDelete, context }: UsersListProps) 
 
     if (users.length === 0) {
         return (
-            <div className="companies-empty">
-                <div style={{ textAlign: 'center', padding: '3rem' }}>
-                    <User size={64} color="#94a3b8" style={{ margin: '0 auto 1.5rem', opacity: 0.5 }} />
-                    <h3 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'white', marginBottom: '0.75rem' }}>
-                        No hay usuarios
-                    </h3>
-                    <p style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '2rem' }}>
-                        Esta empresa aún no tiene miembros registrados.
-                    </p>
+            <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-12 text-center backdrop-blur-sm">
+                <div className="w-16 h-16 bg-slate-800/50 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-white/5 shadow-xl">
+                    <User size={32} className="text-slate-500 opacity-50" />
                 </div>
+                <h3 className="text-xl font-bold text-white mb-2">No hay usuarios</h3>
+                <p className="text-slate-400 text-sm max-w-xs mx-auto">
+                    Esta empresa aún no tiene miembros registrados en el sistema.
+                </p>
             </div>
         )
     }
 
     return (
-        <div className="companies-list-container">
-            <div className="companies-table-wrapper">
-                <table className="companies-table">
+        <div className="overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40 backdrop-blur-xl shadow-2xl">
+            <div className="overflow-x-auto">
+                <table className="w-full text-left border-separate border-spacing-0">
                     <thead>
-                        <tr>
-                            <th>Usuario</th>
-                            <th>Rol</th>
-                            <th>Proyecto Asignado</th>
-                            <th>Fecha Registro</th>
-                            {onDelete && <th>Acciones</th>}
+                        <tr className="bg-white/[0.02]">
+                            <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-white/5">Usuario</th>
+                            <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-white/5">Rol</th>
+                            <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-white/5 text-center">Proyecto</th>
+                            <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-white/5">Registro</th>
+                            {onDelete && <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-white/5 text-right">Acciones</th>}
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-white/5">
                         {users.map((member) => (
-                            <tr key={member.id}>
-                                <td>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        <div style={{
-                                            width: '2rem', height: '2rem',
-                                            borderRadius: '999px',
-                                            background: 'rgba(255,255,255,0.1)',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            fontSize: '0.875rem', color: '#cbd5e1'
-                                        }}>
+                            <tr key={member.id} className="group hover:bg-white/[0.02] transition-colors duration-200">
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/5 flex items-center justify-center text-sm font-bold text-slate-300 shadow-lg group-hover:scale-110 transition-transform duration-300">
                                             {member.email[0].toUpperCase()}
                                         </div>
-                                        <div>
-                                            <div style={{ color: 'white', fontWeight: '500' }}>{member.email}</div>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors">
+                                                {member.email}
+                                            </span>
+                                            <span className="text-[10px] text-slate-500 font-mono">ID: {member.id.substring(0, 8)}</span>
                                         </div>
                                     </div>
                                 </td>
-                                <td>{getRoleBadge(member.role_id)}</td>
-                                <td>
+                                <td className="px-6 py-4">
+                                    {getRoleBadge(member.role_id)}
+                                </td>
+                                <td className="px-6 py-4 text-center">
                                     {member.project ? (
-                                        <span style={{ fontFamily: 'monospace', color: '#60a5fa', background: 'rgba(96, 165, 250, 0.1)', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.85rem' }}>
+                                        <span className="inline-flex items-center px-2 py-1 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400 font-mono text-[11px] font-bold">
                                             {member.project.code}
                                         </span>
                                     ) : (
-                                        <span style={{ color: '#64748b', fontSize: '0.875rem', fontStyle: 'italic' }}>
+                                        <span className="text-slate-500 text-xs italic opacity-60">
                                             — Global —
                                         </span>
                                     )}
                                 </td>
-                                <td>
-                                    <span style={{ color: '#94a3b8', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <Calendar size={14} />
-                                        {new Date(member.created_at).toLocaleDateString('es-ES')}
-                                    </span>
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-2 text-slate-400 text-xs">
+                                        <Calendar size={14} className="opacity-50" />
+                                        <span>{new Date(member.created_at).toLocaleDateString('es-ES')}</span>
+                                    </div>
                                 </td>
                                 {onDelete && (
-                                    <td>
+                                    <td className="px-6 py-4 text-right">
                                         {member.role_id !== 'super_admin' && (
                                             <button
                                                 onClick={() => onDelete(member.id)}
-                                                className="action-button delete"
+                                                className="p-2 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all duration-300 shadow-lg shadow-red-500/10 group/btn"
                                                 title="Eliminar usuario"
                                             >
-                                                <Trash2 size={16} />
+                                                <Trash2 size={16} className="group-hover/btn:scale-110 transition-transform" />
                                             </button>
                                         )}
                                     </td>
@@ -139,3 +143,4 @@ export default function UsersList({ users, onDelete, context }: UsersListProps) 
         </div>
     )
 }
+

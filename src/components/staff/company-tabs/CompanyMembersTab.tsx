@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import UsersList from '@/components/users/UsersList'
 import { getMembersByCompany, deleteMember } from '@/services/members'
+import { Icons } from '@/components/ui/Icons'
 
 interface UIMember {
     id: string
@@ -63,14 +64,23 @@ export default function CompanyMembersTab({ companyId }: CompanyMembersTabProps)
     }
 
     if (isLoading) {
-        return <div style={{ padding: '2rem', textAlign: 'center', color: 'white' }}>Cargando miembros...</div>
+        return (
+            <div className="flex flex-col items-center justify-center py-20 animate-pulse">
+                <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-4">
+                    <Icons.Refresh size={24} className="text-blue-500 animate-spin" />
+                </div>
+                <p className="text-slate-400 font-medium tracking-wide">Cargando nómina de personal...</p>
+            </div>
+        )
     }
 
     return (
-        <UsersList
-            users={members}
-            context="staff"
-            onDelete={handleDeleteMember}
-        />
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <UsersList
+                users={members}
+                context="staff"
+                onDelete={handleDeleteMember}
+            />
+        </div>
     )
 }

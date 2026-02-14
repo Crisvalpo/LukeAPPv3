@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { AlertTriangle, Trash2 } from 'lucide-react'
 import { deleteProjectComplete, type ProjectDeletionStats } from '@/services/projects'
-import '@/styles/dashboard.css'
+// Styles migrated to Tailwind v4
 
 interface DeleteProjectModalProps {
     projectId: string

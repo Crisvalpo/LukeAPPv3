@@ -1,8 +1,7 @@
 'use client'
 
 import { ArrowRight } from 'lucide-react'
-import '@/styles/dashboard.css'
-import '@/styles/staff-dashboard.css'
+// Styles migrated to Tailwind v4
 
 interface DashboardWidgetProps {
     title: string
@@ -23,26 +22,34 @@ export default function DashboardWidget({
 }: DashboardWidgetProps) {
 
     return (
-        <div className="companies-list-container dashboard-widget">
-            <div className="companies-list-header">
-                <h2 className="companies-list-title">{title}</h2>
+        <div className="glass-panel overflow-hidden flex flex-col">
+            <div className="px-6 py-4 flex items-center justify-between border-b border-glass-border bg-white/5">
+                <h2 className="text-lg font-bold text-text-main flex items-center gap-2">
+                    <div className="w-1 h-5 bg-brand-primary rounded-full" />
+                    {title}
+                </h2>
                 {onAction && (
                     <button
                         onClick={onAction}
-                        className="dashboard-widget__action"
+                        className="flex items-center gap-1.5 text-xs font-bold text-brand-primary hover:text-brand-primary-hover transition-colors group"
                     >
-                        {actionLabel} <ArrowRight size={16} />
+                        {actionLabel}
+                        <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                     </button>
                 )}
             </div>
 
-            {isEmpty ? (
-                <div className="companies-empty">
-                    <p className="companies-empty-text">{emptyMessage}</p>
-                </div>
-            ) : (
-                children
-            )}
+            <div className="flex-1 overflow-x-auto custom-scrollbar">
+                {isEmpty ? (
+                    <div className="p-12 flex flex-col items-center justify-center text-center">
+                        <p className="text-sm text-text-dim italic">{emptyMessage}</p>
+                    </div>
+                ) : (
+                    <div className="min-w-[600px] md:min-w-0">
+                        {children}
+                    </div>
+                )}
+            </div>
         </div>
     )
 }

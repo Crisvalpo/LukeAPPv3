@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { createInvitation, getPendingInvitations, revokeInvitation, type Invitation } from '@/services/invitations'
 import InvitationManager from '@/components/invitations/InvitationManager'
-import '@/styles/dashboard.css'
+import { Heading, Text } from '@/components/ui/Typography'
+// Styles migrated to Tailwind v4
 
 export default function AdminInvitationsPage() {
     const router = useRouter()
@@ -100,19 +101,24 @@ export default function AdminInvitationsPage() {
     }
 
     if (isLoading) {
-        return <div className="dashboard-page"><p style={{ color: 'white', textAlign: 'center' }}>Cargando...</p></div>
+        return (
+            <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
+                <p className="text-white text-center">Cargando...</p>
+            </div>
+        )
     }
 
     return (
-        <div className="dashboard-page">
-            <div className="dashboard-header">
-                <div className="dashboard-header-content">
-                    <div className="dashboard-accent-line" />
-                    <h1 className="dashboard-title">Invitaciones de Personal</h1>
+        <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
+            {/* Header */}
+            <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-8 bg-indigo-500 rounded-full" />
+                    <Heading level={1} className="tracking-tight text-white">Invitaciones de Personal</Heading>
                 </div>
-                <p className="dashboard-subtitle">
+                <Text size="base" className="text-text-muted font-medium ml-4.5">
                     Invita supervisores y trabajadores al proyecto {projectName} • {companyName}
-                </p>
+                </Text>
             </div>
 
             {companyId && (

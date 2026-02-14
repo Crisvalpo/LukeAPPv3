@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom'
 import Cropper from 'react-easy-crop'
 import { X, RotateCcw, RotateCw, RefreshCw } from 'lucide-react'
 import type { Area } from 'react-easy-crop'
+import { Button } from '@/components/ui/button'
+import { Heading } from '@/components/ui/Typography'
 
 interface ImageEditorProps {
   imageUrl: string
@@ -129,18 +131,22 @@ export default function ImageEditor({
   if (!mounted) return null
 
   return createPortal(
-    <div className="editor-overlay">
-      <div className="editor-modal">
+    <div className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center animate-in fade-in duration-200 backdrop-blur-sm">
+      <div className="bg-bg-surface-1 rounded-xl w-[90%] max-w-[600px] max-h-[90vh] flex flex-col shadow-2xl border border-white/10 overflow-hidden">
         {/* Header */}
-        <div className="editor-header">
-          <h2>{title}</h2>
-          <button onClick={onCancel} className="close-btn" disabled={isSaving}>
+        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+          <Heading level={3} className="m-0 text-lg">{title}</Heading>
+          <button
+            onClick={onCancel}
+            disabled={isSaving}
+            className="text-text-muted hover:text-white p-2 rounded-lg hover:bg-white/5 transition-colors"
+          >
             <X size={20} />
           </button>
         </div>
 
         {/* Cropper Area */}
-        <div className="cropper-container">
+        <div className="relative w-full h-[400px] bg-slate-900">
           <Cropper
             image={imageUrl}
             crop={crop}
@@ -157,10 +163,13 @@ export default function ImageEditor({
         </div>
 
         {/* Controls */}
-        <div className="editor-controls">
+        <div className="p-6 flex flex-col gap-6 border-b border-white/10 bg-bg-surface-1">
           {/* Zoom Slider */}
-          <div className="control-group">
-            <label>Zoom: {zoom.toFixed(1)}x</label>
+          <div className="flex flex-col gap-3">
+            <div className="flex justify-between">
+              <label className="text-sm font-medium text-text-secondary">Zoom</label>
+              <span className="text-sm font-mono text-text-muted">{zoom.toFixed(1)}x</span>
+            </div>
             <input
               type="range"
               min={0.5}
@@ -168,231 +177,64 @@ export default function ImageEditor({
               step={0.1}
               value={zoom}
               onChange={(e) => setZoom(Number(e.target.value))}
-              className="zoom-slider"
+              className="w-full h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-brand-primary"
             />
           </div>
 
           {/* Rotation Buttons */}
-          <div className="control-group">
-            <label>Rotación</label>
-            <div className="rotation-buttons">
-              <button onClick={handleRotateLeft} className="rotate-btn" disabled={isSaving}>
-                <RotateCcw size={18} />
+          <div className="flex flex-col gap-3">
+            <label className="text-sm font-medium text-text-secondary">Rotación</label>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={handleRotateLeft}
+                disabled={isSaving}
+                className="flex-1 gap-2 border-white/10 bg-white/5 hover:bg-white/10 text-white"
+              >
+                <RotateCcw size={16} />
                 <span>-90°</span>
-              </button>
-              <button onClick={handleRotateRight} className="rotate-btn" disabled={isSaving}>
-                <RotateCw size={18} />
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleRotateRight}
+                disabled={isSaving}
+                className="flex-1 gap-2 border-white/10 bg-white/5 hover:bg-white/10 text-white"
+              >
+                <RotateCw size={16} />
                 <span>+90°</span>
-              </button>
-              <button onClick={handleReset} className="rotate-btn" disabled={isSaving}>
-                <RefreshCw size={18} />
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={handleReset}
+                disabled={isSaving}
+                className="flex-1 gap-2 text-text-muted hover:text-white hover:bg-white/5"
+              >
+                <RefreshCw size={16} />
                 <span>Reset</span>
-              </button>
+              </Button>
             </div>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="editor-actions">
-          <button onClick={onCancel} className="btn-secondary" disabled={isSaving}>
+        <div className="p-6 flex gap-4 justify-end bg-white/[0.02]">
+          <Button
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSaving}
+            className="border-white/10 hover:bg-white/5 text-text-secondary hover:text-white"
+          >
             Cancelar
-          </button>
-          <button onClick={handleSave} className="btn-primary" disabled={isSaving}>
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="bg-brand-primary hover:bg-brand-primary/90 text-white min-w-[100px]"
+          >
             {isSaving ? 'Guardando...' : 'Aplicar'}
-          </button>
+          </Button>
         </div>
       </div>
-
-      <style jsx>{`
-        .editor-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.9);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 9999;
-          animation: fadeIn 0.2s;
-        }
-
-        .editor-modal {
-          background: #1e293b;
-          border-radius: 16px;
-          width: 90%;
-          max-width: 600px;
-          max-height: 90vh;
-          display: flex;
-          flex-direction: column;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .editor-header {
-          padding: 1.5rem 2rem;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .editor-header h2 {
-          margin: 0;
-          color: white;
-          font-size: 1.25rem;
-          font-weight: 600;
-        }
-
-        .close-btn {
-          background: transparent;
-          border: none;
-          color: #94a3b8;
-          cursor: pointer;
-          padding: 0.5rem;
-          border-radius: 8px;
-          transition: all 0.2s;
-        }
-
-        .close-btn:hover:not(:disabled) {
-          background: rgba(255, 255, 255, 0.1);
-          color: white;
-        }
-
-        .cropper-container {
-          position: relative;
-          width: 100%;
-          height: 400px;
-          background: #0f172a;
-        }
-
-        .editor-controls {
-          padding: 1.5rem 2rem;
-          display: flex;
-          flex-direction: column;
-          gap: 1.5rem;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .control-group {
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-        }
-
-        .control-group label {
-          color: #cbd5e1;
-          font-size: 0.875rem;
-          font-weight: 600;
-        }
-
-        .zoom-slider {
-          width: 100%;
-          height: 6px;
-          border-radius: 3px;
-          background: rgba(255, 255, 255, 0.1);
-          outline: none;
-          -webkit-appearance: none;
-        }
-
-        .zoom-slider::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          appearance: none;
-          width: 18px;
-          height: 18px;
-          border-radius: 50%;
-          background: #3b82f6;
-          cursor: pointer;
-        }
-
-        .zoom-slider::-moz-range-thumb {
-          width: 18px;
-          height: 18px;
-          border-radius: 50%;
-          background: #3b82f6;
-          cursor: pointer;
-          border: none;
-        }
-
-        .rotation-buttons {
-          display: flex;
-          gap: 0.75rem;
-        }
-
-        .rotate-btn {
-          flex: 1;
-          padding: 0.75rem 1rem;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 8px;
-          color: #cbd5e1;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          font-size: 0.875rem;
-          transition: all 0.2s;
-        }
-
-        .rotate-btn:hover:not(:disabled) {
-          background: rgba(255, 255, 255, 0.1);
-          border-color: rgba(255, 255, 255, 0.2);
-          color: white;
-        }
-
-        .rotate-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .editor-actions {
-          padding: 1.5rem 2rem;
-          display: flex;
-          gap: 1rem;
-          justify-content: flex-end;
-        }
-
-        .btn-secondary, .btn-primary {
-          padding: 0.75rem 1.5rem;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-          border: none;
-          font-size: 0.9rem;
-        }
-
-        .btn-secondary {
-          background: rgba(255, 255, 255, 0.05);
-          color: #cbd5e1;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .btn-secondary:hover:not(:disabled) {
-          background: rgba(255, 255, 255, 0.1);
-          color: white;
-        }
-
-        .btn-primary {
-          background: #3b82f6;
-          color: white;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-          background: #2563eb;
-          box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-        }
-
-        .btn-primary:disabled,
-        .btn-secondary:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-      `}</style>
     </div>,
     document.body
   )

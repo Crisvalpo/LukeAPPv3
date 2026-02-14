@@ -19,11 +19,11 @@ export function Heading({
 }: HeadingProps) {
     // Auto-size based on level if not explicitly set
     const autoSize = size || (
-        level === 1 ? '4xl' :
-            level === 2 ? '3xl' :
-                level === 3 ? '2xl' :
-                    level === 4 ? 'xl' :
-                        level === 5 ? 'lg' : 'base'
+        level === 1 ? '3xl' :
+            level === 2 ? '2xl' :
+                level === 3 ? 'xl' :
+                    level === 4 ? 'lg' :
+                        level === 5 ? 'base' : 'sm'
     )
 
     const classes = `heading heading--${autoSize} heading--${variant} ${className}`

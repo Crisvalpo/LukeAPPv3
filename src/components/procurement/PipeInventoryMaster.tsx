@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { PipeNeed, aggregatePipeNeeds } from '@/services/pipe-inventory'
 import { getConsolidatedMTO } from '@/services/material-consolidation'
 
-import '@/styles/engineering.css'
+// Styles migrated to Tailwind v4
 import { Loader2, Calculator, TrendingUp, Package, AlertTriangle } from 'lucide-react'
 
 interface PipeInventoryMasterProps {

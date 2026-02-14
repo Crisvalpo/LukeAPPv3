@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import { Lock } from 'lucide-react'
-import '@/styles/invitations.css'
+// Styles migrated to Tailwind v4
 
 export default function ResetPasswordPage() {
     const router = useRouter()

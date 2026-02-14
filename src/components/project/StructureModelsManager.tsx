@@ -6,6 +6,8 @@ import { getStructureModelsAction, createStructureModelAction, deleteStructureMo
 import StructureModelCard from './StructureModelCard'
 import StructurePreviewModal from './StructurePreviewModal'
 import { Upload, X, Loader2, Plus, FileCode, ArrowLeft } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Heading, Text } from '@/components/ui/Typography'
 
 export default function StructureModelsManager({
     projectId,
@@ -116,175 +118,109 @@ export default function StructureModelsManager({
     }
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div className="flex flex-col gap-8">
             {/* Header */}
-            <div style={{ marginBottom: '0.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    {onBack && (
-                        <button
-                            onClick={onBack}
-                            title="Volver a Configuración"
-                            style={{
-                                background: 'rgba(255,255,255,0.05)',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                color: 'white',
-                                width: '40px',
-                                height: '40px',
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                padding: 0
-                            }}
-                        >
-                            <ArrowLeft size={20} />
-                        </button>
-                    )}
-                    <div>
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'white', margin: 0, lineHeight: '1.2' }}>Modelos Estructurales (Contexto)</h2>
-                        <p style={{ fontSize: '0.9rem', color: '#94a3b8', margin: 0 }}>
-                            Modelos 3D de contexto (Civil, Estructuras) cargados manualmente.
-                        </p>
-                    </div>
+            <div className="flex items-center gap-4">
+                {onBack && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={onBack}
+                        title="Volver a Configuración"
+                        className="rounded-full w-10 h-10 bg-white/5 hover:bg-white/10 text-white"
+                    >
+                        <ArrowLeft size={20} />
+                    </Button>
+                )}
+                <div>
+                    <Heading level={2} className="m-0 text-2xl font-bold text-white leading-tight">Modelos Estructurales (Contexto)</Heading>
+                    <Text variant="muted" className="m-0 text-sm mt-1">
+                        Modelos 3D de contexto (Civil, Estructuras) cargados manualmente.
+                    </Text>
                 </div>
             </div>
 
             {/* SECTION 1: STRUCTURE MODELS (CONTEXT) */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ flex: 1 }}>
-                    </div>
+            <div className="flex flex-col gap-6">
+                <div className="flex items-center justify-between">
+                    <div className="flex-1"></div>
                     {!showUploadForm && (
-                        <button
+                        <Button
                             onClick={() => setShowUploadForm(true)}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                padding: '0.5rem 1rem',
-                                backgroundColor: '#4f46e5',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '0.375rem',
-                                fontSize: '0.875rem',
-                                cursor: 'pointer',
-                                transition: 'background-color 0.2s'
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4338ca'}
-                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4f46e5'}
+                            className="flex items-center gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white"
                         >
                             <Plus size={16} />
                             Nuevo Contexto
-                        </button>
+                        </Button>
                     )}
                 </div>
 
                 {showUploadForm && (
-                    <div style={{
-                        padding: '1.5rem',
-                        backgroundColor: 'rgba(30, 41, 59, 0.5)',
-                        border: '1px solid #334155',
-                        borderRadius: '0.5rem',
-                        animation: 'fadeIn 0.3s ease-in-out'
-                    }}>
-                        <form onSubmit={handleUpload} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                <h4 style={{ fontSize: '0.875rem', fontWeight: 500, color: '#cbd5e1', margin: 0 }}>Cargar Nuevo Contexto (.glb)</h4>
-                                <button
+                    <div className="p-6 bg-slate-800/50 border border-slate-700/50 rounded-lg animate-in fade-in slide-in-from-top-4">
+                        <form onSubmit={handleUpload} className="flex flex-col gap-4">
+                            <div className="flex justify-between items-start">
+                                <Heading level={4} className="text-sm font-medium text-slate-300 m-0">Cargar Nuevo Contexto (.glb)</Heading>
+                                <Button
                                     type="button"
+                                    variant="ghost"
+                                    size="icon"
                                     onClick={() => setShowUploadForm(false)}
-                                    style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
+                                    className="h-6 w-6 text-text-muted hover:text-white"
                                 >
                                     <X size={16} />
-                                </button>
+                                </Button>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Nombre</label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-xs text-text-muted font-medium">Nombre</label>
+                                    <div className="relative">
+                                        <input
+                                            name="name"
+                                            required
+                                            placeholder="Ej: Nave Principal"
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-primary/50 placeholder:text-slate-600 transition-colors"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs text-text-muted font-medium">Área / Sector</label>
+                                    <div className="relative">
+                                        <input
+                                            name="area"
+                                            placeholder="Ej: Area 100"
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-primary/50 placeholder:text-slate-600 transition-colors"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-xs text-text-muted font-medium">Archivo GLB</label>
+                                <div className="relative">
                                     <input
-                                        name="name"
+                                        type="file"
+                                        name="file"
+                                        accept=".glb"
                                         required
-                                        placeholder="Ej: Nave Principal"
-                                        style={{
-                                            width: '100%',
-                                            backgroundColor: '#0f172a',
-                                            border: '1px solid #334155',
-                                            borderRadius: '0.25rem',
-                                            padding: '0.5rem 0.75rem',
-                                            fontSize: '0.875rem',
-                                            color: '#e2e8f0',
-                                            outline: 'none'
-                                        }}
-                                    />
-                                </div>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Área / Sector</label>
-                                    <input
-                                        name="area"
-                                        placeholder="Ej: Area 100"
-                                        style={{
-                                            width: '100%',
-                                            backgroundColor: '#0f172a',
-                                            border: '1px solid #334155',
-                                            borderRadius: '0.25rem',
-                                            padding: '0.5rem 0.75rem',
-                                            fontSize: '0.875rem',
-                                            color: '#e2e8f0',
-                                            outline: 'none'
-                                        }}
+                                        className="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-slate-800 file:text-brand-primary hover:file:bg-slate-700 cursor-pointer"
                                     />
                                 </div>
                             </div>
 
-                            <div>
-                                <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Archivo GLB</label>
-                                <input
-                                    type="file"
-                                    name="file"
-                                    accept=".glb"
-                                    required
-                                    style={{
-                                        width: '100%',
-                                        fontSize: '0.875rem',
-                                        color: '#94a3b8'
-                                    }}
-                                />
-                            </div>
-
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', paddingTop: '0.5rem' }}>
-                                <button
+                            <div className="flex justify-end gap-2 pt-2">
+                                <Button
                                     type="button"
+                                    variant="ghost"
                                     onClick={() => setShowUploadForm(false)}
-                                    style={{
-                                        padding: '0.5rem 0.75rem',
-                                        backgroundColor: 'transparent',
-                                        color: '#94a3b8',
-                                        border: 'none',
-                                        fontSize: '0.875rem',
-                                        cursor: 'pointer'
-                                    }}
+                                    className="text-text-muted hover:text-white"
                                 >
                                     Cancelar
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                     type="submit"
                                     disabled={isUploading}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem',
-                                        padding: '0.5rem 1rem',
-                                        backgroundColor: '#4f46e5',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '0.375rem',
-                                        fontSize: '0.875rem',
-                                        cursor: isUploading ? 'not-allowed' : 'pointer',
-                                        opacity: isUploading ? 0.7 : 1
-                                    }}
+                                    className="gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white min-w-[140px]"
                                 >
                                     {isUploading ? (
                                         <>
@@ -297,26 +233,19 @@ export default function StructureModelsManager({
                                             Cargar Modelo
                                         </>
                                     )}
-                                </button>
+                                </Button>
                             </div>
                         </form>
                     </div>
                 )}
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div className="flex flex-col gap-3">
                     {loading ? (
-                        <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
-                            <Loader2 size={24} color="#64748b" className="animate-spin" />
+                        <div className="flex justify-center p-8">
+                            <Loader2 size={24} className="text-slate-500 animate-spin" />
                         </div>
                     ) : models.length === 0 ? (
-                        <div style={{
-                            textAlign: 'center',
-                            padding: '2rem',
-                            border: '1px dashed #334155',
-                            borderRadius: '0.5rem',
-                            color: '#64748b',
-                            fontSize: '0.875rem'
-                        }}>
+                        <div className="text-center p-8 border border-dashed border-slate-700 rounded-lg text-slate-500 text-sm bg-slate-900/30">
                             No hay contextos cargados.
                         </div>
                     ) : (
@@ -333,31 +262,24 @@ export default function StructureModelsManager({
             </div>
 
             {/* SECTION 2: ENGINEERING MODELS (READ ONLY) */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1rem', borderTop: '1px solid #334155', paddingTop: '2rem' }}>
+            <div className="flex flex-col gap-6 pt-8 border-t border-white/10">
                 <div>
-                    <h3 style={{ fontSize: '1.125rem', fontWeight: 500, color: '#f1f5f9', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <FileCode size={20} color="#3b82f6" />
+                    <Heading level={3} className="text-lg font-medium text-slate-100 mb-1 flex items-center gap-2">
+                        <FileCode size={20} className="text-blue-500" />
                         Modelos de Ingeniería (Isométricos)
-                    </h3>
-                    <p style={{ fontSize: '0.875rem', color: '#94a3b8' }}>
+                    </Heading>
+                    <Text variant="muted" className="text-sm">
                         Modelos generados automáticamente desde revisiones de ingeniería. (Solo Lectura)
-                    </p>
+                    </Text>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div className="flex flex-col gap-3">
                     {loading ? (
-                        <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
-                            <Loader2 size={24} color="#64748b" className="animate-spin" />
+                        <div className="flex justify-center p-8">
+                            <Loader2 size={24} className="text-slate-500 animate-spin" />
                         </div>
                     ) : revisionModels.length === 0 ? (
-                        <div style={{
-                            textAlign: 'center',
-                            padding: '2rem',
-                            border: '1px dashed #334155',
-                            borderRadius: '0.5rem',
-                            color: '#64748b',
-                            fontSize: '0.875rem'
-                        }}>
+                        <div className="text-center p-8 border border-dashed border-slate-700 rounded-lg text-slate-500 text-sm bg-slate-900/30">
                             No se encontraron isométricos con modelo 3D.
                         </div>
                     ) : (

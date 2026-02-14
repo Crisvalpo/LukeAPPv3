@@ -3,6 +3,13 @@
 import { useState, useEffect } from 'react'
 import { getProjectLocations, createProjectLocation, updateProjectLocation, deactivateLocation, deleteLocation, type ProjectLocation } from '@/services/project-locations'
 import { MapPin, Plus, Building2, Package, Wrench, Truck, CheckCircle, Edit, Trash2, ArrowLeft, RotateCcw } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge' // Assuming this exists, based on file list
+import { Heading, Text } from '@/components/ui/Typography'
+import { InputField } from '@/components/ui/InputField'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/Textarea' // Check casing "Textarea.tsx"
+
 
 // Using lucid-react icons consistent with the project
 const LOCATION_TYPE_ICONS = {
@@ -95,159 +102,157 @@ export default function ProjectLocationsManager({ projectId, onBack }: Props) {
 
     if (loading) {
         return (
-            <div className="loading-container glass-panel">
-                <div className="spinner"></div>
-                <p>Cargando ubicaciones...</p>
-                <style jsx>{`
-                    .loading-container {
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        min-height: 300px;
-                        color: var(--color-text-muted);
-                        padding: 2rem;
-                    }
-                    .spinner {
-                        border: 3px solid rgba(255,255,255,0.1);
-                        border-top: 3px solid var(--color-primary);
-                        border-radius: 50%;
-                        width: 30px;
-                        height: 30px;
-                        animation: spin 1s linear infinite;
-                        margin-bottom: 1rem;
-                    }
-                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                `}</style>
+            <div className="flex flex-col items-center justify-center min-h-[300px] text-text-muted p-8 border border-white/5 rounded-xl bg-white/5 backdrop-blur-sm">
+                <div className="w-8 h-8 border-3 border-white/10 border-t-brand-primary rounded-full animate-spin mb-4" />
+                <Text>Cargando ubicaciones...</Text>
             </div>
         )
     }
 
     return (
-        <div className="locations-manager animate-in">
+        <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Header Integrated */}
-            <div className="manager-header">
-                <div className="header-left">
+            <div className="flex justify-between items-center">
+                <div className="flex items-center gap-4">
                     {onBack && (
-                        <button onClick={onBack} className="btn-back" title="Volver al menú">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={onBack}
+                            title="Volver al menú"
+                            className="rounded-full w-10 h-10 bg-white/5 hover:bg-white/10"
+                        >
                             <ArrowLeft size={20} />
-                        </button>
+                        </Button>
                     )}
                     <div>
-                        <h2>Ubicaciones del Proyecto</h2>
-                        <p>Gestiona sitios de montaje, bodegas y talleres</p>
+                        <Heading level={2}>Ubicaciones del Proyecto</Heading>
+                        <Text variant="muted">Gestiona sitios de montaje, bodegas y talleres</Text>
                     </div>
                 </div>
-                <button
+                <Button
                     onClick={() => {
                         setEditingLocation(null)
                         setShowForm(true)
                     }}
-                    className="btn-primary"
+                    className="gap-2 shadow-lg hover:shadow-brand-primary/20"
                 >
                     <Plus size={18} />
                     Nueva Ubicación
-                </button>
+                </Button>
             </div>
 
             {/* Filters */}
-            <div className="filters-bar glass-panel">
-                <div className="filter-group">
-                    <button
-                        onClick={() => setFilter('active')}
-                        className={`filter-btn ${filter === 'active' ? 'active' : ''}`}
-                    >
-                        Activas ({locations.filter(l => l.is_active).length})
-                    </button>
-                    <button
-                        onClick={() => setFilter('inactive')}
-                        className={`filter-btn ${filter === 'inactive' ? 'active' : ''}`}
-                    >
-                        Inactivas ({locations.filter(l => !l.is_active).length})
-                    </button>
-                    <button
-                        onClick={() => setFilter('all')}
-                        className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
-                    >
-                        Todas ({locations.length})
-                    </button>
-                </div>
+            <div className="p-3 bg-white/5 border border-white/5 rounded-xl flex gap-2 w-fit">
+                <button
+                    onClick={() => setFilter('active')}
+                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${filter === 'active'
+                            ? "bg-brand-primary/10 text-brand-primary ring-1 ring-brand-primary/20"
+                            : "text-text-muted hover:text-white hover:bg-white/5"
+                        }`}
+                >
+                    Activas ({locations.filter(l => l.is_active).length})
+                </button>
+                <button
+                    onClick={() => setFilter('inactive')}
+                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${filter === 'inactive'
+                            ? "bg-brand-primary/10 text-brand-primary ring-1 ring-brand-primary/20"
+                            : "text-text-muted hover:text-white hover:bg-white/5"
+                        }`}
+                >
+                    Inactivas ({locations.filter(l => !l.is_active).length})
+                </button>
+                <button
+                    onClick={() => setFilter('all')}
+                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${filter === 'all'
+                            ? "bg-brand-primary/10 text-brand-primary ring-1 ring-brand-primary/20"
+                            : "text-text-muted hover:text-white hover:bg-white/5"
+                        }`}
+                >
+                    Todas ({locations.length})
+                </button>
             </div>
 
             {/* Locations by Type */}
-            <div className="locations-content">
+            <div className="flex flex-col gap-6">
                 {Object.entries(locationsByType).length > 0 ? (
                     Object.entries(locationsByType).map(([type, locs]) => {
                         const Icon = LOCATION_TYPE_ICONS[type as keyof typeof LOCATION_TYPE_ICONS] || MapPin
                         const label = LOCATION_TYPE_LABELS[type as keyof typeof LOCATION_TYPE_LABELS] || type
 
                         return (
-                            <div key={type} className="type-section glass-panel">
-                                <div className="section-header">
-                                    <span className="section-icon">
-                                        <Icon size={18} />
-                                    </span>
-                                    <h3>{label}</h3>
-                                    <span className="count-pill">{locs.length}</span>
+                            <div key={type} className="bg-bg-surface-1 border border-white/5 rounded-2xl p-6">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="p-2 bg-brand-primary/10 rounded-lg text-brand-primary">
+                                        <Icon size={20} />
+                                    </div>
+                                    <Heading level={3} size="lg" className="m-0 text-lg">{label}</Heading>
+                                    <span className="px-2 py-0.5 bg-white/10 rounded-full text-xs font-semibold text-text-muted">{locs.length}</span>
                                 </div>
 
-                                <div className="locations-grid">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {locs.map(location => (
-                                        <div key={location.id} className="location-card">
-                                            <div className="card-top">
-                                                <div className="card-title">
-                                                    <h4>{location.name}</h4>
+                                        <div key={location.id}
+                                            className="group relative flex flex-col p-5 rounded-xl border border-white/5 bg-white/5 hover:border-brand-primary/30 hover:bg-white/[0.07] transition-all duration-300"
+                                        >
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div>
+                                                    <h4 className="font-bold text-white text-base mb-1">{location.name}</h4>
                                                     {location.code && (
-                                                        <span className="code-badge">{location.code}</span>
+                                                        <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                                            {location.code}
+                                                        </span>
                                                     )}
                                                 </div>
                                                 {!location.is_active && (
-                                                    <span className="inactive-badge">Inactiva</span>
+                                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-400 border border-red-500/20">
+                                                        Inactiva
+                                                    </span>
                                                 )}
                                             </div>
 
                                             {location.description && (
-                                                <p className="card-desc">{location.description}</p>
+                                                <p className="text-sm text-text-muted mb-4 line-clamp-2 flex-grow">{location.description}</p>
                                             )}
 
-                                            <div className="card-meta">
-                                                <Package size={14} />
+                                            <div className="flex items-center gap-2 text-xs text-text-dim mb-4 bg-black/20 w-fit px-2 py-1 rounded">
+                                                <Package size={12} />
                                                 <span>Capacidad: {location.capacity || 'Ilimitada'}</span>
                                             </div>
 
-                                            <div className="card-actions">
+                                            <div className="flex gap-2 mt-auto pt-2 border-t border-white/5 opacity-60 group-hover:opacity-100 transition-opacity">
                                                 <button
                                                     onClick={() => {
                                                         setEditingLocation(location)
                                                         setShowForm(true)
                                                     }}
-                                                    className="btn-action btn-edit"
+                                                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-medium bg-white/5 hover:bg-white/10 text-text-muted hover:text-white transition-colors"
                                                 >
-                                                    <Edit size={14} /> Editar
+                                                    <Edit size={12} /> Editar
                                                 </button>
                                                 {location.is_active ? (
                                                     <button
                                                         onClick={() => handleDelete(location.id)}
-                                                        className="btn-action btn-delete"
+                                                        className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-medium bg-red-500/5 hover:bg-red-500/10 text-red-400 transition-colors"
                                                         title="Desactivar"
                                                     >
-                                                        <Trash2 size={14} /> Desactivar
+                                                        <Trash2 size={12} /> Desactivar
                                                     </button>
                                                 ) : (
                                                     <>
                                                         <button
                                                             onClick={() => handleReactivate(location.id)}
-                                                            className="btn-action btn-reactivate"
+                                                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-medium bg-green-500/5 hover:bg-green-500/10 text-green-400 transition-colors"
                                                             title="Reactivar"
                                                         >
-                                                            <RotateCcw size={14} /> Activar
+                                                            <RotateCcw size={12} /> Activar
                                                         </button>
                                                         <button
                                                             onClick={() => handleHardDelete(location.id)}
-                                                            className="btn-action btn-hard-delete"
+                                                            className="w-8 flex items-center justify-center py-1.5 rounded text-xs font-medium bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors"
                                                             title="Eliminar Permanentemente"
                                                         >
-                                                            <Trash2 size={14} />
+                                                            <Trash2 size={12} />
                                                         </button>
                                                     </>
                                                 )}
@@ -259,19 +264,21 @@ export default function ProjectLocationsManager({ projectId, onBack }: Props) {
                         )
                     })
                 ) : (
-                    <div className="empty-state glass-panel">
-                        <div className="empty-icon">
-                            <MapPin size={40} strokeWidth={1} />
+                    <div className="flex flex-col items-center justify-center py-12 px-6 border-2 border-dashed border-white/5 rounded-2xl bg-white/[0.01]">
+                        <div className="p-4 bg-white/5 rounded-full text-text-dim mb-4">
+                            <MapPin size={32} strokeWidth={1.5} />
                         </div>
-                        <h3>No hay ubicaciones {filter === 'active' ? 'activas' : filter === 'inactive' ? 'inactivas' : ''}</h3>
+                        <Heading level={3} className="mb-2">No hay ubicaciones {filter === 'active' ? 'activas' : filter === 'inactive' ? 'inactivas' : ''}</Heading>
+                        <Text variant="muted" className="mb-6">
+                            Comienza creando las ubicaciones donde se gestionarán los materiales y spools.
+                        </Text>
                         {filter === 'active' && (
-                            <button
+                            <Button
                                 onClick={() => setShowForm(true)}
-                                className="btn-primary text-center"
-                                style={{ marginTop: '1rem', width: 'auto', margin: '1rem auto' }}
+                                className="gap-2"
                             >
                                 <Plus size={18} /> Crear Primera Ubicación
-                            </button>
+                            </Button>
                         )}
                     </div>
                 )}
@@ -293,327 +300,6 @@ export default function ProjectLocationsManager({ projectId, onBack }: Props) {
                     }}
                 />
             )}
-
-            <style jsx>{`
-                .locations-manager {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 1.5rem;
-                }
-
-                .animate-in {
-                    animation: fadeIn 0.3s ease-out;
-                }
-                
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: translateY(10px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-
-                /* Header */
-                .manager-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 0.5rem;
-                }
-
-                .header-left {
-                    display: flex;
-                    align-items: center;
-                    gap: 1rem;
-                }
-
-                .btn-back {
-                    background: rgba(255,255,255,0.05);
-                    border: 1px solid rgba(255,255,255,0.1);
-                    color: var(--color-text-main);
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .btn-back:hover {
-                    background: rgba(255,255,255,0.1);
-                    transform: translateX(-2px);
-                }
-
-                .manager-header h2 {
-                    font-size: 1.5rem;
-                    font-weight: 700;
-                    margin: 0;
-                    color: white;
-                    line-height: 1.2;
-                }
-
-                .manager-header p {
-                    margin: 0;
-                    color: var(--color-text-muted);
-                    font-size: 0.9rem;
-                }
-
-                .btn-primary {
-                    background: linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%);
-                    color: white;
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    padding: 0.6rem 1.2rem;
-                    border-radius: 8px;
-                    font-weight: 500;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                    transition: all 0.2s;
-                    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-                    font-size: 0.9rem;
-                    backdrop-filter: blur(4px);
-                }
-
-                .btn-primary:hover {
-                    background: rgba(30, 41, 59, 1);
-                    border-color: rgba(255, 255, 255, 0.2);
-                    transform: translateY(-1px);
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-                }
-
-                /* Active state or Primary action highlight */
-                .btn-primary:active {
-                    transform: translateY(0);
-                }
-
-                /* Filters */
-                .filters-bar {
-                    background: rgba(255, 255, 255, 0.03);
-                    padding: 12px;
-                    border-radius: 12px;
-                    border: 1px solid rgba(255, 255, 255, 0.05);
-                }
-
-                .filter-group {
-                    display: flex;
-                    gap: 8px;
-                }
-
-                .filter-btn {
-                    padding: 6px 14px;
-                    border-radius: 8px;
-                    border: 1px solid transparent;
-                    background: rgba(255, 255, 255, 0.05);
-                    color: var(--color-text-muted);
-                    font-weight: 500;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    font-size: 0.85rem;
-                }
-
-                .filter-btn:hover {
-                    background: rgba(255, 255, 255, 0.1);
-                    color: white;
-                }
-
-                .filter-btn.active {
-                    background: rgba(59, 130, 246, 0.15);
-                    border-color: rgba(59, 130, 246, 0.3);
-                    color: #93c5fd;
-                }
-
-                /* Sections */
-                .locations-content {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 1.5rem;
-                }
-
-                .type-section {
-                    background: rgba(255, 255, 255, 0.02);
-                    border-radius: 16px;
-                    padding: 1.5rem;
-                    border: 1px solid rgba(255, 255, 255, 0.05);
-                }
-
-                .section-header {
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    margin-bottom: 1rem;
-                }
-
-                .section-icon {
-                    background: rgba(255, 255, 255, 0.05);
-                    color: var(--color-primary);
-                    padding: 6px;
-                    border-radius: 8px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-
-                .section-header h3 {
-                    font-size: 1.1rem;
-                    font-weight: 600;
-                    color: white;
-                    margin: 0;
-                }
-
-                .count-pill {
-                    background: rgba(255, 255, 255, 0.1);
-                    color: var(--color-text-muted);
-                    padding: 1px 8px;
-                    border-radius: 99px;
-                    font-size: 0.75rem;
-                    font-weight: 600;
-                }
-
-                /* Grid */
-                .locations-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                    gap: 1rem;
-                }
-
-                /* Card */
-                .location-card {
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(255, 255, 255, 0.05);
-                    border-radius: 12px;
-                    padding: 1.25rem;
-                    transition: all 0.2s;
-                    display: flex;
-                    flex-direction: column;
-                }
-
-                .location-card:hover {
-                    background: rgba(255, 255, 255, 0.05);
-                    border-color: rgba(255, 255, 255, 0.1);
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-                }
-
-                .card-top {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: flex-start;
-                    margin-bottom: 0.5rem;
-                }
-
-                .card-title h4 {
-                    margin: 0;
-                    font-size: 0.95rem;
-                    font-weight: 700;
-                    color: white;
-                }
-
-                .code-badge {
-                    display: inline-block;
-                    background: rgba(59, 130, 246, 0.15);
-                    color: #93c5fd;
-                    font-size: 0.7rem;
-                    font-weight: 600;
-                    padding: 1px 5px;
-                    border-radius: 4px;
-                    margin-top: 2px;
-                    border: 1px solid rgba(59, 130, 246, 0.3);
-                }
-
-                .inactive-badge {
-                    background: rgba(239, 68, 68, 0.15);
-                    color: #fca5a5;
-                    font-size: 0.7rem;
-                    font-weight: 600;
-                    padding: 1px 6px;
-                    border-radius: 4px;
-                }
-
-                .card-desc {
-                    font-size: 0.85rem;
-                    color: var(--color-text-muted);
-                    margin: 0 0 0.75rem 0;
-                    line-height: 1.4;
-                    flex-grow: 1;
-                }
-
-                .card-meta {
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    font-size: 0.8rem;
-                    color: var(--color-text-dim);
-                    margin-bottom: 1rem;
-                    background: rgba(0,0,0,0.1);
-                    padding: 4px 8px;
-                    border-radius: 6px;
-                    width: fit-content;
-                }
-
-                .card-actions {
-                    display: flex;
-                    gap: 8px;
-                    margin-top: auto;
-                }
-
-                .btn-action {
-                    flex: 1;
-                    padding: 6px;
-                    border-radius: 6px;
-                    border: none;
-                    cursor: pointer;
-                    font-size: 0.8rem;
-                    font-weight: 500;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 4px;
-                    transition: all 0.2s;
-                }
-
-                .btn-edit {
-                    background: rgba(255, 255, 255, 0.05);
-                    color: var(--color-text-muted);
-                }
-                .btn-edit:hover { background: rgba(255, 255, 255, 0.1); color: white; }
-
-                .btn-delete {
-                    background: rgba(239, 68, 68, 0.1);
-                    color: #fca5a5;
-                }
-                .btn-delete:hover { background: rgba(239, 68, 68, 0.2); }
-
-                .btn-reactivate {
-                    background: rgba(34, 197, 94, 0.1);
-                    color: #86efac;
-                }
-                .btn-reactivate:hover { background: rgba(34, 197, 94, 0.2); }
-
-                .btn-hard-delete {
-                    background: rgba(239, 68, 68, 0.2);
-                    color: #fca5a5;
-                    max-width: 40px;
-                }
-                .btn-hard-delete:hover { background: rgba(239, 68, 68, 0.4); color: white; }
-
-                /* Empty State */
-                .empty-state {
-                    text-align: center;
-                    padding: 3rem;
-                    background: rgba(255, 255, 255, 0.02);
-                    border-radius: 12px;
-                    border: 2px dashed rgba(255, 255, 255, 0.05);
-                    color: var(--color-text-muted);
-                }
-                .empty-icon {
-                    color: var(--color-text-dim);
-                    margin-bottom: 1rem;
-                }
-                .empty-state h3 {
-                    font-size: 1.1rem;
-                    color: white;
-                    margin-bottom: 0.5rem;
-                }
-            `}</style>
         </div>
     )
 }
@@ -682,185 +368,85 @@ function LocationFormModal({
     }
 
     return (
-        <div className="modal-overlay">
-            <div className="modal-content glass-panel">
-                <h2>{location ? 'Editar Ubicación' : 'Nueva Ubicación'}</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="w-full max-w-md bg-bg-surface-1 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                <div className="p-6 border-b border-white/5">
+                    <Heading level={3} className="m-0">{location ? 'Editar Ubicación' : 'Nueva Ubicación'}</Heading>
+                </div>
 
-                <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>Nombre *</label>
-                        <input
-                            type="text"
-                            required
-                            value={form.name}
-                            onChange={e => setForm({ ...form, name: e.target.value })}
-                            placeholder="Ej. Bodega Principal"
+                <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
+                    <InputField
+                        label="Nombre *"
+                        value={form.name}
+                        onChange={e => setForm({ ...form, name: e.target.value })}
+                        placeholder="Ej. Bodega Principal"
+                        required
+                    />
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <InputField
+                            label="Código"
+                            value={form.code}
+                            onChange={e => setForm({ ...form, code: e.target.value })}
+                            placeholder="Ej. BDP"
                         />
-                    </div>
 
-                    <div className="form-row">
-                        <div className="form-group half">
-                            <label>Código</label>
-                            <input
-                                type="text"
-                                value={form.code}
-                                onChange={e => setForm({ ...form, code: e.target.value })}
-                                placeholder="Ej. BDP"
-                            />
-                        </div>
-
-                        <div className="form-group half">
-                            <label>Tipo *</label>
-                            <select
-                                required
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-text-muted">Tipo *</label>
+                            <Select
                                 value={form.type}
-                                onChange={e => setForm({ ...form, type: e.target.value as any })}
+                                onValueChange={(val: any) => setForm({ ...form, type: val })}
                             >
-                                <option value="workshop">Maestranza</option>
-                                <option value="storage">Bodega/Acopio</option>
-                                <option value="field">Terreno</option>
-                                <option value="transit">En Tránsito</option>
-                                <option value="other">Otro</option>
-                            </select>
+                                <SelectTrigger className="w-full bg-white/5 border-white/10 text-white hover:bg-white/10 focus:ring-brand-primary">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-bg-surface-1 border-white/10 text-white">
+                                    <SelectItem value="workshop">Maestranza</SelectItem>
+                                    <SelectItem value="storage">Bodega/Acopio</SelectItem>
+                                    <SelectItem value="field">Terreno</SelectItem>
+                                    <SelectItem value="transit">En Tránsito</SelectItem>
+                                    <SelectItem value="other">Otro</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
 
-                    <div className="form-group">
-                        <label>Descripción</label>
-                        <textarea
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-text-muted">Descripción</label>
+                        <Textarea
                             value={form.description}
-                            onChange={e => setForm({ ...form, description: e.target.value })}
+                            onChange={(e: any) => setForm({ ...form, description: e.target.value })}
                             rows={3}
+                            className="bg-white/5 border-white/10 text-white hover:bg-white/10 focus:ring-brand-primary scrollbar-hide"
                         />
                     </div>
 
-                    <div className="form-group">
-                        <label>Capacidad (spools)</label>
-                        <input
-                            type="number"
-                            value={form.capacity}
-                            onChange={e => setForm({ ...form, capacity: e.target.value })}
-                        />
-                    </div>
+                    <InputField
+                        label="Capacidad (spools)"
+                        type="number"
+                        value={form.capacity}
+                        onChange={e => setForm({ ...form, capacity: e.target.value })}
+                    />
 
-                    <div className="modal-actions">
-                        <button type="button" onClick={onClose} className="btn-cancel">
+                    <div className="flex gap-3 mt-4 pt-4 border-t border-white/5">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={onClose}
+                            className="flex-1 hover:bg-white/5 hover:text-white"
+                        >
                             Cancelar
-                        </button>
-                        <button type="submit" disabled={saving} className="btn-save">
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={saving}
+                            className="flex-1 bg-brand-primary hover:bg-brand-primary-hover text-white shadow-lg shadow-brand-primary/20"
+                        >
                             {saving ? 'Guardando...' : 'Guardar'}
-                        </button>
+                        </Button>
                     </div>
                 </form>
             </div>
-
-            <style jsx>{`
-                .modal-overlay {
-                    position: fixed;
-                    inset: 0;
-                    background: rgba(0, 0, 0, 0.7);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 999;
-                    padding: 20px;
-                    backdrop-filter: blur(4px);
-                }
-
-                .modal-content {
-                    background: #0f172a;
-                    background: linear-gradient(145deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 16px;
-                    width: 100%;
-                    max-width: 500px;
-                    padding: 2rem;
-                    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-                    color: white;
-                }
-
-                .modal-content h2 {
-                    margin: 0 0 1.5rem 0;
-                    font-size: 1.3rem;
-                    font-weight: 700;
-                    color: white;
-                }
-
-                .form-group {
-                    margin-bottom: 1rem;
-                }
-                
-                .form-row {
-                    display: flex;
-                    gap: 1rem;
-                }
-                
-                .half { flex: 1; }
-
-                .form-group label {
-                    display: block;
-                    font-size: 0.85rem;
-                    font-weight: 500;
-                    color: var(--color-text-muted);
-                    margin-bottom: 0.4rem;
-                }
-
-                .form-group input,
-                .form-group select,
-                .form-group textarea {
-                    width: 100%;
-                    padding: 0.6rem 0.8rem;
-                    background: rgba(0, 0, 0, 0.2);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 8px;
-                    font-size: 0.9rem;
-                    color: white;
-                    transition: border-color 0.2s;
-                    box-sizing: border-box;
-                }
-
-                .form-group input:focus,
-                .form-group select:focus,
-                .form-group textarea:focus {
-                    outline: none;
-                    border-color: var(--color-primary);
-                    background: rgba(0, 0, 0, 0.3);
-                }
-
-                .form-group select option {
-                    background: #0f172a;
-                    color: white;
-                }
-
-                .modal-actions {
-                    display: flex;
-                    gap: 1rem;
-                    margin-top: 2rem;
-                }
-
-                .modal-actions button {
-                    flex: 1;
-                    padding: 0.7rem;
-                    border-radius: 8px;
-                    border: none;
-                    font-weight: 600;
-                    cursor: pointer;
-                    font-size: 0.9rem;
-                }
-
-                .btn-cancel {
-                    background: rgba(255, 255, 255, 0.05);
-                    color: var(--color-text-muted);
-                }
-                .btn-cancel:hover { background: rgba(255, 255, 255, 0.1); color: white; }
-
-                .btn-save {
-                    background: var(--color-primary);
-                    color: white;
-                }
-                .btn-save:hover { background: var(--color-primary-hover); }
-                .btn-save:disabled { opacity: 0.7; cursor: not-allowed; }
-            `}</style>
         </div>
     )
 }

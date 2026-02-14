@@ -1,9 +1,12 @@
 import React, { useState } from 'react'
-import { Upload, Image as ImageIcon, Check, ArrowLeft } from 'lucide-react'
+import { Upload, Image as ImageIcon, Check, ArrowLeft, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import ImageEditor, { type CropSettings } from './ImageEditor'
 import LogoCanvas from './LogoCanvas'
 import { getProjectFilePath } from '@/lib/storage-paths'
+import { Button } from '@/components/ui/button'
+import { Heading, Text } from '@/components/ui/Typography'
+import { Badge } from '@/components/ui/badge'
 
 interface ProjectLogosManagerProps {
     projectId: string
@@ -207,43 +210,30 @@ export default function ProjectLogosManager({
     }
 
     return (
-        <div className="logos-manager">
+        <div className="flex flex-col gap-8 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Header */}
-            <div style={{ marginBottom: '0.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    {onBack && (
-                        <button
-                            onClick={onBack}
-                            title="Volver a Configuración"
-                            style={{
-                                background: 'rgba(255,255,255,0.05)',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                color: 'white',
-                                width: '40px',
-                                height: '40px',
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                padding: 0
-                            }}
-                        >
-                            <ArrowLeft size={20} />
-                        </button>
-                    )}
-                    <div>
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'white', margin: 0, lineHeight: '1.2' }}>Logos del Proyecto</h2>
-                        <p style={{ fontSize: '0.9rem', color: '#94a3b8', margin: 0 }}>
-                            Configura hasta dos logos para incluir en los documentos MIR. Usa el editor integrado para ajustar el recorte y zoom.
-                        </p>
-                    </div>
+            <div className="flex items-center gap-4 mb-2">
+                {onBack && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={onBack}
+                        title="Volver a Configuración"
+                        className="rounded-full w-10 h-10 bg-white/5 hover:bg-white/10"
+                    >
+                        <ArrowLeft size={20} />
+                    </Button>
+                )}
+                <div>
+                    <Heading level={2}>Logos del Proyecto</Heading>
+                    <Text variant="muted">
+                        Configura hasta dos logos para incluir en los documentos MIR. Usa el editor integrado para ajustar el recorte y zoom.
+                    </Text>
                 </div>
             </div>
 
             {/* Cards Grid */}
-            <div className="logos-grid">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 {/* Primary Logo Card */}
                 <LogoCard
                     title="Logo Principal"
@@ -268,10 +258,12 @@ export default function ProjectLogosManager({
 
             {/* Canvas Preview */}
             {(primaryLogo || secondaryLogo) && (
-                <div className="preview-section">
-                    <h3>Preview Final</h3>
-                    <p className="preview-desc">Así se verán los logos en los documentos PDF</p>
-                    <LogoCanvas primaryLogoUrl={primaryLogo} secondaryLogoUrl={secondaryLogo} />
+                <div className="pt-8 border-t border-white/5">
+                    <Heading level={3} className="mb-2 text-lg">Vista Previa Final</Heading>
+                    <Text variant="muted" className="mb-6">Así se verán los logos en los documentos PDF generados.</Text>
+                    <div className="p-4 bg-white/5 rounded-xl border border-white/5 backdrop-blur-sm">
+                        <LogoCanvas primaryLogoUrl={primaryLogo} secondaryLogoUrl={secondaryLogo} />
+                    </div>
                 </div>
             )}
 
@@ -284,51 +276,6 @@ export default function ProjectLogosManager({
                     onCancel={handleCancelEdit}
                 />
             )}
-
-            <style jsx>{`
-        .logos-manager {
-          max-width: 800px;
-        }
-
-        h2 {
-          color: white;
-          font-size: 1.5rem;
-          font-weight: 600;
-          margin: 0 0 0.5rem;
-        }
-
-        .description {
-          color: #94a3b8;
-          margin: 0 0 2rem;
-          line-height: 1.6;
-        }
-
-        .logos-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap: 1.5rem;
-          margin-bottom: 2rem;
-        }
-
-        .preview-section {
-          margin-top: 3rem;
-          padding-top: 2rem;
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .preview-section h3 {
-          color: white;
-          font-size: 1.125rem;
-          font-weight: 600;
-          margin: 0 0 0.5rem;
-        }
-
-        .preview-desc {
-          color: #94a3b8;
-          margin: 0 0 1.5rem;
-          font-size: 0.875rem;
-        }
-      `}</style>
         </div>
     )
 }
@@ -348,56 +295,70 @@ function LogoCard({ title, subtitle, logoUrl, onFileSelect, onRemove, isUploadin
     const fileInputRef = React.useRef<HTMLInputElement>(null)
 
     return (
-        <div className="logo-card">
-            <div className="card-header">
+        <div className="flex flex-col bg-bg-surface-1 border border-white/10 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:border-white/20 transition-all duration-300">
+            <div className="p-5 border-b border-white/5 flex justify-between items-start bg-white/[0.02]">
                 <div>
-                    <h3>{title}</h3>
-                    <p>{subtitle}</p>
+                    <Heading level={4} className="m-0 text-base font-semibold">{title}</Heading>
+                    <Text size="sm" variant="muted">{subtitle}</Text>
                 </div>
-                {isOptional && <span className="optional-badge">Opcional</span>}
+                {isOptional && (
+                    <Badge variant="secondary" className="bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20">
+                        Opcional
+                    </Badge>
+                )}
             </div>
 
-            <div className="card-body">
+            <div className="p-5 flex-grow flex flex-col justify-center">
                 {logoUrl ? (
-                    <div className="logo-preview">
-                        <img
-                            key={logoUrl}
-                            src={logoUrl}
-                            alt={title}
-                            onLoad={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.opacity = '1';
-                            }}
-                            onError={(e) => {
-                                console.error('Error loading logo image:', logoUrl);
-                                const target = e.target as HTMLImageElement;
-                                target.style.opacity = '0.5';
-                                target.style.border = '1px solid red';
-                            }}
-                            style={{ opacity: 0, transition: 'opacity 0.3s' }}
-                        />
-                        <div className="logo-actions">
-                            <button
+                    <div className="flex flex-col gap-4 w-full">
+                        <div className="bg-checkered p-4 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center min-h-[160px]">
+                            <img
+                                key={logoUrl}
+                                src={logoUrl}
+                                alt={title}
+                                onLoad={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.opacity = '1';
+                                }}
+                                onError={(e) => {
+                                    console.error('Error loading logo image:', logoUrl);
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.opacity = '0.5';
+                                    target.style.border = '1px solid red';
+                                }}
+                                className="max-w-full h-auto max-h-[120px] object-contain transition-opacity duration-300 opacity-0"
+                            />
+                        </div>
+                        <div className="flex gap-3">
+                            <Button
                                 onClick={() => fileInputRef.current?.click()}
-                                className="action-btn"
+                                variant="outline"
                                 disabled={isUploading}
+                                className="flex-1 bg-white/5 hover:bg-white/10 border-white/10 text-white"
                             >
                                 Cambiar
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 onClick={onRemove}
-                                className="action-btn remove"
+                                variant="destructive"
                                 disabled={isUploading}
+                                className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/30"
                             >
+                                <Trash2 size={16} className="mr-2" />
                                 Eliminar
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 ) : (
-                    <div className="upload-area" onClick={() => fileInputRef.current?.click()}>
-                        <Upload size={32} className="upload-icon" />
-                        <p className="upload-text">Click para subir</p>
-                        <p className="upload-hint">PNG o JPG, máx. 5MB</p>
+                    <div
+                        className="group flex flex-col items-center justify-center p-8 border-2 border-dashed border-white/10 rounded-lg cursor-pointer hover:border-brand-primary/50 hover:bg-brand-primary/5 transition-all duration-300 min-h-[200px]"
+                        onClick={() => fileInputRef.current?.click()}
+                    >
+                        <div className="p-4 bg-white/5 rounded-full mb-4 group-hover:scale-110 group-hover:bg-brand-primary/10 transition-all duration-300">
+                            <Upload size={32} className="text-white/40 group-hover:text-brand-primary" />
+                        </div>
+                        <p className="text-white font-medium mb-1 group-hover:text-brand-primary transition-colors">Click para subir imagen</p>
+                        <p className="text-xs text-text-muted">PNG o JPG, máx. 5MB</p>
                     </div>
                 )}
             </div>
@@ -412,188 +373,6 @@ function LogoCard({ title, subtitle, logoUrl, onFileSelect, onRemove, isUploadin
                 }}
                 style={{ display: 'none' }}
             />
-
-            <style jsx>{`
-        .logos-manager {
-          display: flex;
-          flex-direction: column;
-          gap: 1.5rem;
-        }
-
-        .manager-header {
-          margin-bottom: 0.5rem;
-        }
-
-        .header-left {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-
-        .btn-back {
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.1);
-          color: white;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.2s;
-          padding: 0;
-        }
-
-        .btn-back:hover {
-          background: rgba(255,255,255,0.1);
-          transform: translateX(-2px);
-          border-color: rgba(255,255,255,0.2);
-        }
-
-        h2 {
-          color: white;
-          font-size: 1.5rem;
-          font-weight: 700;
-          margin: 0;
-          line-height: 1.2;
-        }
-
-        .description {
-          color: #94a3b8;
-          font-size: 0.9rem;
-          margin: 0;
-        }
-
-        .logos-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 1.5rem;
-        }
-
-        .logo-card {
-          background: rgba(30, 41, 59, 0.7);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 12px;
-          overflow: hidden;
-        }
-
-        .card-header {
-          padding: 1.25rem;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-        }
-
-        .card-header h3 {
-          color: white;
-          font-size: 1rem;
-          font-weight: 600;
-          margin: 0 0 0.25rem;
-        }
-
-        .card-header p {
-          color: #94a3b8;
-          font-size: 0.875rem;
-          margin: 0;
-        }
-
-        .optional-badge {
-          background: rgba(59, 130, 246, 0.2);
-          color: #60a5fa;
-          padding: 0.25rem 0.75rem;
-          border-radius: 999px;
-          font-size: 0.75rem;
-          font-weight: 600;
-        }
-
-        .card-body {
-          padding: 1.25rem;
-        }
-
-        .upload-area {
-          border: 2px dashed rgba(255, 255, 255, 0.2);
-          border-radius: 8px;
-          padding: 2rem;
-          text-align: center;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .upload-area:hover {
-          border-color: rgba(59, 130, 246, 0.5);
-          background: rgba(59, 130, 246, 0.05);
-        }
-
-        .upload-icon {
-          margin: 0 auto 1rem;
-          opacity: 0.5;
-          color: #cbd5e1;
-        }
-
-        .upload-text {
-          margin: 0 0 0.5rem;
-          color: #cbd5e1;
-          font-weight: 500;
-        }
-
-        .upload-hint {
-          margin: 0;
-          color: #64748b;
-          font-size: 0.75rem;
-        }
-
-        .logo-preview {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-
-        .logo-preview img {
-          width: 100%;
-          height: 150px;
-          object-fit: contain;
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 8px;
-          padding: 1rem;
-        }
-
-        .logo-actions {
-          display: flex;
-          gap: 0.75rem;
-        }
-
-        .action-btn {
-          flex: 1;
-          padding: 0.625rem 1rem;
-          border-radius: 8px;
-          font-weight: 600;
-          font-size: 0.875rem;
-          cursor: pointer;
-          transition: all 0.2s;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          background: rgba(255, 255, 255, 0.05);
-          color: #cbd5e1;
-        }
-
-        .action-btn:hover:not(:disabled) {
-          background: rgba(255, 255, 255, 0.1);
-          border-color: rgba(255, 255, 255, 0.2);
-          color: white;
-        }
-
-        .action-btn.remove:hover:not(:disabled) {
-          background: rgba(239, 68, 68, 0.1);
-          border-color: rgba(239, 68, 68, 0.3);
-          color: #fca5a5;
-        }
-
-        .action-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-      `}</style>
         </div>
     )
 }

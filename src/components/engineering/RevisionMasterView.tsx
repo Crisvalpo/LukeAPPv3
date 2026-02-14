@@ -20,37 +20,49 @@ export default function RevisionMasterView({ revisionId, projectId, glbModelUrl,
     const [activeTab, setActiveTab] = useState<TabType>('SPOOLS')
 
     return (
-        <div className="revision-master-view">
+        <div className="bg-bg-surface-1/40 backdrop-blur-xl border-t border-glass-border/30 rounded-b-xl overflow-hidden animate-in fade-in duration-500">
             {/* Tabs Header */}
-            <div className="tabs-header">
+            <div className="flex px-4 border-b border-glass-border/30 bg-white/5 gap-1 overflow-x-auto custom-scrollbar">
                 <button
-                    className={`tab-btn ${activeTab === 'SPOOLS' ? 'active' : ''}`}
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2.5 transition-all whitespace-nowrap ${activeTab === 'SPOOLS'
+                            ? 'text-brand-primary border-brand-primary bg-brand-primary/5'
+                            : 'text-text-muted border-transparent hover:text-white hover:bg-white/5'
+                        }`}
                     onClick={() => setActiveTab('SPOOLS')}
                 >
-                    <span className="icon">🏷️</span> Spools
+                    <span className="text-lg">🏷️</span> Spools
                 </button>
                 <button
-                    className={`tab-btn ${activeTab === 'WELDS' ? 'active' : ''}`}
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2.5 transition-all whitespace-nowrap ${activeTab === 'WELDS'
+                            ? 'text-brand-primary border-brand-primary bg-brand-primary/5'
+                            : 'text-text-muted border-transparent hover:text-white hover:bg-white/5'
+                        }`}
                     onClick={() => setActiveTab('WELDS')}
                 >
-                    <span className="icon">🔥</span> Uniones
+                    <span className="text-lg">🔥</span> Uniones
                 </button>
                 <button
-                    className={`tab-btn ${activeTab === 'MATERIALS' ? 'active' : ''}`}
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2.5 transition-all whitespace-nowrap ${activeTab === 'MATERIALS'
+                            ? 'text-brand-primary border-brand-primary bg-brand-primary/5'
+                            : 'text-text-muted border-transparent hover:text-white hover:bg-white/5'
+                        }`}
                     onClick={() => setActiveTab('MATERIALS')}
                 >
-                    <span className="icon">📦</span> Materiales
+                    <span className="text-lg">📦</span> Materiales
                 </button>
                 <button
-                    className={`tab-btn ${activeTab === 'JOINTS' ? 'active' : ''}`}
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2.5 transition-all whitespace-nowrap ${activeTab === 'JOINTS'
+                            ? 'text-brand-primary border-brand-primary bg-brand-primary/5'
+                            : 'text-text-muted border-transparent hover:text-white hover:bg-white/5'
+                        }`}
                     onClick={() => setActiveTab('JOINTS')}
                 >
-                    <span className="icon">🔧</span> Juntas
+                    <span className="text-lg">🔧</span> Juntas
                 </button>
             </div>
 
             {/* Tab Content */}
-            <div className="tab-content">
+            <div className="min-h-[200px] bg-black/20">
                 {activeTab === 'SPOOLS' && (
                     <RevisionSpoolsList revisionId={revisionId} projectId={projectId} />
                 )}
@@ -63,64 +75,7 @@ export default function RevisionMasterView({ revisionId, projectId, glbModelUrl,
                 {activeTab === 'JOINTS' && (
                     <RevisionJointsList revisionId={revisionId} projectId={projectId} />
                 )}
-
             </div>
-
-            <style jsx>{`
-                .revision-master-view {
-                    background: rgba(0, 0, 0, 0.2);
-                    border-radius: 0 0 12px 12px;
-                    border-top: 1px solid var(--glass-border);
-                    margin-top: -1px;
-                    overflow: hidden;
-                }
-
-                .tabs-header {
-                    display: flex;
-                    gap: 2px;
-                    padding: 0 1rem;
-                    background: rgba(255, 255, 255, 0.03);
-                    border-bottom: 1px solid var(--glass-border);
-                }
-
-                .tab-btn {
-                    padding: 12px 16px;
-                    background: transparent;
-                    border: none;
-                    border-bottom: 2px solid transparent;
-                    color: var(--color-text-muted);
-                    font-size: 0.85rem;
-                    font-weight: 600;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    transition: all 0.2s;
-                }
-
-                .tab-btn:hover {
-                    color: var(--color-text-main);
-                    background: rgba(255, 255, 255, 0.05);
-                }
-
-                .tab-btn.active {
-                    color: #d8b4fe; /* Purple primary */
-                    border-bottom-color: #d8b4fe;
-                    background: rgba(126, 34, 206, 0.1);
-                }
-
-                .tab-content {
-                    padding: 0;
-                    min-height: 200px;
-                }
-
-                .placeholder-tab {
-                    padding: 2rem;
-                    text-align: center;
-                    color: var(--color-text-dim);
-                    font-style: italic;
-                }
-            `}</style>
         </div>
     )
 }

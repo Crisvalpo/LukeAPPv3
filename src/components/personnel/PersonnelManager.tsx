@@ -5,11 +5,13 @@ import { Users, Upload, Plus, Search, Trash2, UserCog, FileDown } from 'lucide-r
 import { getProjectPersonnel, deletePerson, ProjectPersonnel } from '@/services/workforce'
 import BulkImportModal from '@/components/personnel/BulkImportModal'
 import AddPersonnelModal from '@/components/personnel/AddPersonnelModal'
-import '@/styles/views/personnel.css' // Import Vanilla CSS
+import { Button } from '@/components/ui/button'
+import { Heading, Text } from '@/components/ui/Typography'
+import { Badge } from '@/components/ui/badge'
 
 interface PersonnelManagerProps {
     projectId: string
-    isAdmin?: boolean // To conditionally show actions if needed
+    isAdmin?: boolean
 }
 
 export default function PersonnelManager({ projectId, isAdmin = true }: PersonnelManagerProps) {
@@ -47,126 +49,145 @@ export default function PersonnelManager({ projectId, isAdmin = true }: Personne
     )
 
     return (
-        <div className="personnel-manager">
-            {/* Header / Actions */}
-            <div className="personnel-header">
+        <div className="flex flex-col gap-6">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                 <div>
-                    <h3 className="personnel-title">
-                        <Users size={24} style={{ color: 'var(--primary)' }} />
+                    <Heading level={3} className="flex items-center gap-3 mb-2 text-white">
+                        <Users size={24} className="text-brand-primary" />
                         Dotación del Proyecto
-                    </h3>
-                    <p className="personnel-subtitle">
-                        Total: <span className="personnel-count">{filteredPersonnel.length}</span> trabajadores activos
-                    </p>
+                    </Heading>
+                    <Text variant="muted" className="text-sm">
+                        Total: <span className="font-bold text-white">{filteredPersonnel.length}</span> trabajadores activos
+                    </Text>
                 </div>
-                <div className="personnel-actions">
-                    <button
+                <div className="flex flex-wrap gap-2">
+                    <Button
                         onClick={() => import('@/utils/excel-templates').then(m => m.downloadPersonnelTemplate())}
-                        className="btn-secondary"
+                        variant="outline"
+                        className="gap-2"
                         title="Descargar Plantilla Excel"
                     >
                         <FileDown size={16} />
                         Plantilla
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         onClick={() => setIsImportModalOpen(true)}
-                        className="btn-primary"
+                        className="gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white"
                     >
                         <Upload size={16} />
                         Carga Masiva
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         onClick={() => setIsAddModalOpen(true)}
-                        className="btn-secondary"
+                        variant="secondary"
+                        className="gap-2"
                     >
                         <Plus size={16} />
                         Manual
-                    </button>
+                    </Button>
                 </div>
             </div>
 
-            {/* Filters */}
-            <div className="personnel-filters">
-                <div className="search-container">
-                    <Search className="search-icon" />
+            {/* Search */}
+            <div className="bg-bg-surface-1 border border-glass-border rounded-lg p-4">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                     <input
                         type="text"
                         placeholder="Buscar por RUT, nombre o cargo..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="search-input"
+                        className="w-full bg-bg-app border border-glass-border rounded-lg pl-10 pr-4 py-2.5 text-text-main placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 transition-all"
                     />
                 </div>
             </div>
 
             {/* Table */}
-            <div className="personnel-table-container">
-                <div className="personnel-table-wrapper">
-                    <table className="personnel-table">
-                        <thead>
+            <div className="bg-bg-surface-1/40 border border-glass-border rounded-xl shadow-xl overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                        <thead className="bg-bg-surface-2/50 text-text-dim border-b border-glass-border">
                             <tr>
-                                <th className="col-id text-xs w-20">ID</th>
-                                <th className="col-rut">RUT</th>
-                                <th>Nombre Completo</th>
-                                <th>Cargo</th>
-                                <th>Jornada</th>
-                                <th>Turno</th>
-                                <th className="text-right">Acciones</th>
+                                <th className="px-6 py-4 text-xs uppercase font-bold tracking-wider">ID</th>
+                                <th className="px-6 py-4 text-xs uppercase font-bold tracking-wider">RUT</th>
+                                <th className="px-6 py-4 text-xs uppercase font-bold tracking-wider">Nombre Completo</th>
+                                <th className="px-6 py-4 text-xs uppercase font-bold tracking-wider">Cargo</th>
+                                <th className="px-6 py-4 text-xs uppercase font-bold tracking-wider">Jornada</th>
+                                <th className="px-6 py-4 text-xs uppercase font-bold tracking-wider">Turno</th>
+                                <th className="px-6 py-4 text-xs uppercase font-bold tracking-wider text-right">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-glass-border">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={7} className="empty-state">
-                                        <div className="text-secondary">Cargando personal...</div>
+                                    <td colSpan={7} className="px-6 py-12 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
+                                            <Text variant="muted">Cargando personal...</Text>
+                                        </div>
                                     </td>
                                 </tr>
                             ) : filteredPersonnel.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="empty-state">
-                                        <div className="empty-icon-container">
-                                            <Users size={24} style={{ color: 'var(--text-muted)' }} />
+                                    <td colSpan={7} className="px-6 py-12 text-center">
+                                        <div className="flex flex-col items-center gap-4">
+                                            <div className="bg-white/5 w-16 h-16 rounded-full flex items-center justify-center">
+                                                <Users size={32} className="text-text-dim" />
+                                            </div>
+                                            <div>
+                                                <Heading level={4} className="text-white mb-1">No se encontraron registros</Heading>
+                                                <Text variant="muted" className="text-sm">
+                                                    {searchTerm ? 'Intenta con otros términos de búsqueda.' : 'Utiliza el botón "Carga Masiva" para importar datos.'}
+                                                </Text>
+                                            </div>
                                         </div>
-                                        <p className="empty-title">
-                                            No se encontraron registros.
-                                        </p>
                                     </td>
                                 </tr>
                             ) : (
                                 filteredPersonnel.map((person) => (
-                                    <tr key={person.id} className="personnel-row">
-                                        <td className="font-mono text-xs text-slate-500">{person.internal_id || '-'}</td>
-                                        <td className="col-rut">{person.rut}</td>
-                                        <td className="col-name">
+                                    <tr key={person.id} className="group hover:bg-white/[0.02] transition-colors">
+                                        <td className="px-6 py-4 font-mono text-xs text-slate-500">{person.internal_id || '-'}</td>
+                                        <td className="px-6 py-4 font-mono text-brand-primary font-bold">{person.rut}</td>
+                                        <td className="px-6 py-4 font-medium text-text-main">
                                             {person.first_name} {person.last_name}
                                         </td>
-                                        <td>
-                                            <span className="role-badge">
+                                        <td className="px-6 py-4">
+                                            <Badge variant="default" className="bg-brand-primary/10 text-brand-primary border-brand-primary/20">
                                                 {person.role_tag}
-                                            </span>
+                                            </Badge>
                                         </td>
-                                        <td>{person.schedule_name || '-'}</td>
-                                        <td>
+                                        <td className="px-6 py-4 text-text-muted">{person.schedule_name || '-'}</td>
+                                        <td className="px-6 py-4">
                                             {person.shift_type && (
-                                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${person.shift_type === 'NOCHE'
-                                                    ? 'bg-indigo-900/50 text-indigo-300 border border-indigo-800'
-                                                    : 'bg-amber-900/30 text-amber-300 border border-amber-800'
-                                                    }`}>
+                                                <Badge
+                                                    variant="outline"
+                                                    className={person.shift_type === 'NOCHE'
+                                                        ? 'bg-indigo-900/50 text-indigo-300 border-indigo-800'
+                                                        : 'bg-amber-900/30 text-amber-300 border-amber-800'
+                                                    }
+                                                >
                                                     {person.shift_type}
-                                                </span>
+                                                </Badge>
                                             )}
                                         </td>
-                                        <td className="actions-cell">
-                                            <div className="action-buttons">
-                                                <button className="btn-icon">
+                                        <td className="px-6 py-4">
+                                            <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="w-8 h-8 rounded hover:bg-brand-primary/10 hover:text-brand-primary transition-colors border border-transparent hover:border-brand-primary/20"
+                                                >
                                                     <UserCog size={16} />
-                                                </button>
-                                                <button
+                                                </Button>
+                                                <Button
                                                     onClick={() => handleDelete(person.id, `${person.first_name} ${person.last_name}`)}
-                                                    className="btn-icon danger"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="w-8 h-8 rounded hover:bg-red-500/10 hover:text-red-400 transition-colors border border-transparent hover:border-red-500/20"
                                                 >
                                                     <Trash2 size={16} />
-                                                </button>
+                                                </Button>
                                             </div>
                                         </td>
                                     </tr>
@@ -177,7 +198,7 @@ export default function PersonnelManager({ projectId, isAdmin = true }: Personne
                 </div>
             </div>
 
-            {/* Modal */}
+            {/* Modals */}
             {isImportModalOpen && (
                 <BulkImportModal
                     projectId={projectId}

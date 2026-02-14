@@ -22,7 +22,9 @@ import WeldDetailModal from './viewer/WeldDetailModal'
 import SpoolExpandedContent from './viewer/SpoolExpandedContent'
 import UnassignedJointsPanel from './viewer/UnassignedJointsPanel'
 import { assignJointToSpoolAction } from '@/actions/joints'
-import { FileText, Trash2, ExternalLink, Box, Wrench, Split } from 'lucide-react'
+import { FileText, Trash2, ExternalLink, Box, Wrench, Split, Loader2, MoreVertical, ChevronDown } from 'lucide-react'
+import * as Icons from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { SplitSpoolModal } from './viewer/SplitSpoolModal'
 import { useViewerStore } from './viewer/ViewerLogic'
 
@@ -447,54 +449,20 @@ function IsometricViewerWrapper({
     }
 
     const content = (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: '#0f172a',
-            zIndex: 100000,
-            display: 'flex',
-            flexDirection: 'row'
-        }}>
+        <div className="fixed inset-0 z-[100000] flex flex-row bg-slate-900">
             {/* Sidebar for Viewer Context (Expanded Width for Spools) */}
-            <div style={{
-                width: '300px', // Expanded to show spools
-                backgroundColor: '#1e1e2e',
-                borderRight: '1px solid #334155',
-                display: 'flex',
-                flexDirection: 'column',
-                paddingTop: '0px'
-            }}>
+            <div className="w-[300px] bg-slate-800 border-r border-slate-700 flex flex-col pt-0">
                 {/* Sidebar Header */}
-                <div style={{
-                    padding: '16px',
-                    borderBottom: '1px solid #334155',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px'
-                }}>
-                    <div style={{
-                        width: '32px',
-                        height: '32px',
-                        backgroundColor: '#3b82f6',
-                        borderRadius: '6px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
-                        fontWeight: 'bold',
-                        fontSize: '0.8rem'
-                    }}>
+                <div className="p-4 border-b border-slate-700 flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center text-white font-bold text-xs">
                         3D
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ color: '#e2e8f0', fontWeight: '500', fontSize: '0.9rem' }}>
+                    <div className="flex flex-col">
+                        <span className="text-slate-200 font-medium text-sm">
                             Spools ({spools.length})
                         </span>
                         {selectedIds.length > 0 && (
-                            <span style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: '600' }}>
+                            <span className="text-amber-500 text-xs font-semibold">
                                 {selectedIds.length} elementos seleccionados
                             </span>
                         )}
@@ -502,13 +470,13 @@ function IsometricViewerWrapper({
                 </div>
 
                 {/* Spools List */}
-                <div style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
+                <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
                     {loading ? (
-                        <div style={{ color: '#94a3b8', textAlign: 'center', marginTop: '20px', fontSize: '0.9rem' }}>
+                        <div className="text-slate-400 text-center mt-5 text-sm">
                             Cargando spools...
                         </div>
                     ) : spools.length === 0 ? (
-                        <div style={{ color: '#94a3b8', textAlign: 'center', marginTop: '20px', fontSize: '0.9rem' }}>
+                        <div className="text-slate-400 text-center mt-5 text-sm">
                             No hay spools asociados
                         </div>
                     ) : (
@@ -534,168 +502,141 @@ function IsometricViewerWrapper({
 
                             const isDisabled = canAssign && isAssignedToOtherSpool && !isAssignedToThisSpool // Only disable if stealing
 
-                            // Determine Base Color based on Status
-                            let baseColor = '#facc15' // Default Yellow (Pending)
-                            let baseBg = 'rgba(250, 204, 21, 0.1)'
-                            let baseBorder = '#eab308'
+                            // Classes for styling based on state
+                            let cardClasses = `mb-2 rounded-md p-2.5 transition-all duration-200 flex flex-col gap-1.5 relative overflow-hidden group border `
 
-                            if (spool.status === 'INSTALLED') {
-                                baseColor = '#4ade80' // Green
-                                baseBg = 'rgba(74, 222, 128, 0.1)'
-                                baseBorder = '#22c55e'
-                            } else if (spool.status === 'FABRICATED' || spool.status === 'DISPATCHED') {
-                                baseColor = '#3b82f6' // Blue-500
-                                baseBg = 'rgba(59, 130, 246, 0.1)'
-                                baseBorder = '#2563eb'
-                            } else if (spool.status === 'IN_FABRICATION') {
-                                baseColor = '#38bdf8' // Sky-400
-                                baseBg = 'rgba(56, 189, 248, 0.1)'
-                                baseBorder = '#0ea5e9'
+                            // Base styles
+                            if (canAssign) {
+                                if (isAssignedToThisSpool) {
+                                    cardClasses += "bg-red-500/10 border-red-500/20 "
+                                } else if (isAssigned) {
+                                    cardClasses += "bg-slate-700/50 " // Will be overridden by status colors
+                                } else {
+                                    cardClasses += "bg-slate-700/50 border-slate-700 "
+                                }
+                            } else {
+                                if (isAssigned) {
+                                    cardClasses += "bg-slate-700/50 "
+                                } else {
+                                    cardClasses += "bg-slate-700/50 border-slate-700 "
+                                }
                             }
 
-                            // Override for Selection Highlight (This Card is "Active")
-                            if (isSelectedInModel) {
-                                baseBg = 'rgba(255, 255, 255, 0.15)' // Bright highlight
-                                baseBorder = baseColor // Keep status color for border but make it pop
-                            } else if (isActiveHighlight) {
-                                // Explicit Card Selection Highlight (Purple)
-                                baseBg = 'rgba(168, 85, 247, 0.15)'
-                                baseBorder = '#a855f7'
+                            // Dynamic Border & Shadow
+                            if (isAssigned) {
+                                if (isSelectedInModel || isActiveHighlight) {
+                                    cardClasses += "border-2 shadow-[0_0_15px_rgba(var(--tw-shadow-color),0.25)] "
+                                    if (isActiveHighlight) cardClasses += "shadow-purple-500/40 border-purple-500 "
+                                    else if (isSelectedInModel) cardClasses += "shadow-white/40 border-white/50 "
+                                } else {
+                                    cardClasses += "border-opacity-50 "
+                                }
+                            } else if (isDisabled) {
+                                cardClasses += "border-slate-600 opacity-50 cursor-not-allowed "
+                            } else {
+                                cardClasses += "border-slate-700 cursor-pointer hover:border-slate-500 "
                             }
+
+                            // Determine Status Colors for Badge & Border if assigned
+                            const statusColorMap: Record<string, string> = {
+                                'PENDING': 'text-slate-400 border-slate-600 bg-slate-800/50',
+                                'IN_FABRICATION': 'text-sky-400 border-sky-500 bg-sky-500/10',
+                                'FABRICATED': 'text-blue-500 border-blue-600 bg-blue-600/10',
+                                'PAINTING': 'text-pink-400 border-pink-500 bg-pink-500/10',
+                                'SHIPPED': 'text-indigo-400 border-indigo-500 bg-indigo-500/10',
+                                'DELIVERED': 'text-cyan-400 border-cyan-500 bg-cyan-500/10',
+                                'INSTALLED': 'text-green-400 border-green-500 bg-green-500/10',
+                                'COMPLETED': 'text-emerald-400 border-emerald-500 bg-emerald-500/10'
+                            }
+                            const statusStyle = statusColorMap[spool.status] || statusColorMap['PENDING']
+
+                            // Dynamic Border Color integration
+                            // This part is tricky with just classes because distinct colors map to distinct border classes
+                            // We can use style for the specific color-dependent properties to keep it clean, OR use comprehensive map
+                            // For simplicity, let's keep using style for the dynamic border/bg colors that depend on status heavily
+                            // BUT we will use Tailwind for layout/spacing/typography.
+
+                            // ... actually we can use Tailwind arbitrary values or just specific styles for the color bits
+                            let statusBorderColor = '#eab308' // yellow
+                            if (spool.status === 'INSTALLED') statusBorderColor = '#22c55e'
+                            else if (spool.status === 'FABRICATED') statusBorderColor = '#2563eb'
+                            else if (spool.status === 'IN_FABRICATION') statusBorderColor = '#0ea5e9'
+
+                            // Override for Selection
+                            if (isActiveHighlight) statusBorderColor = '#a855f7'
 
                             return (
                                 <div
                                     key={spool.id}
+                                    className={cardClasses}
                                     onDragOver={(e) => {
                                         e.preventDefault()
                                         e.dataTransfer.dropEffect = 'move'
-                                        e.currentTarget.style.border = '2px dashed #3b82f6'
+                                        e.currentTarget.style.borderColor = '#3b82f6'
+                                        e.currentTarget.style.borderStyle = 'dashed'
+                                        e.currentTarget.style.borderWidth = '2px'
                                     }}
                                     onDragLeave={(e) => {
-                                        e.currentTarget.style.border = isAssigned
-                                            ? (isSelectedInModel || isActiveHighlight ? `2px solid ${baseBorder}` : `1px solid ${baseBorder}`)
-                                            : (isDisabled ? '1px solid #475569' : '1px solid #334155')
+                                        e.currentTarget.style.borderColor = isAssigned ? statusBorderColor : (isDisabled ? '#475569' : '#334155')
+                                        e.currentTarget.style.borderStyle = 'solid'
+                                        e.currentTarget.style.borderWidth = (isSelectedInModel || isActiveHighlight) ? '2px' : '1px'
                                     }}
-                                    onDrop={(e) => handleJointDrop(e, spool.id)}
+                                    onDrop={(e) => {
+                                        e.currentTarget.style.borderStyle = 'solid' // reset from dashed
+                                        // Border width reset will happen on next render or mouse leave
+                                        handleJointDrop(e, spool.id)
+                                    }}
                                     style={{
-                                        backgroundColor: canAssign
-                                            ? (isAssignedToThisSpool ? 'rgba(239, 68, 68, 0.1)' : (isAssigned ? baseBg : '#2d3b4e'))
-                                            : (isAssigned ? baseBg : '#2d3b4e'),
-                                        marginBottom: '8px',
-                                        borderRadius: '6px',
-                                        padding: '10px',
-                                        // Highlight Border if Selected in Model or Active
-                                        border: isAssigned
-                                            ? (isSelectedInModel || isActiveHighlight ? `2px solid ${baseBorder}` : `1px solid ${baseBorder}`)
-                                            : (isDisabled ? '1px solid #475569' : '1px solid #334155'),
-                                        // Glow effect if Selected or Active
-                                        boxShadow: (isSelectedInModel || isActiveHighlight) ? `0 0 15px ${baseBorder}40` : 'none',
-                                        cursor: isDisabled ? 'not-allowed' : 'pointer',
-                                        opacity: isDisabled ? 0.5 : 1,
-                                        transition: 'all 0.2s ease',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '6px',
-                                        position: 'relative',
-                                        overflow: 'hidden'
+                                        borderColor: isAssigned ? statusBorderColor : undefined,
+                                        backgroundColor: isAssigned
+                                            ? (isActiveHighlight ? 'rgba(168, 85, 247, 0.15)' : undefined)
+                                            : undefined
+                                        // We keep some inline styles for the dynamic status colors to avoid huge class maps
+                                        // But we moved layout to classes
                                     }}
                                     onClick={() => !isDisabled && handleAssignToSpool(spool.id)}
-                                    // Hover effect logic
-                                    onMouseEnter={(e) => {
-                                        if (canAssign && !isDisabled) {
-                                            if (isAssignedToThisSpool) {
-                                                // Unassign warning hover
-                                                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'
-                                                e.currentTarget.style.borderColor = '#f87171'
-                                            } else {
-                                                // Assign hover
-                                                e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)'
-                                                e.currentTarget.style.borderColor = '#60a5fa'
-                                            }
-                                        }
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        // Reset to base state
-                                        const finalBg = isAssigned ? baseBg : '#2d3b4e'
-                                        e.currentTarget.style.backgroundColor = finalBg
-                                        e.currentTarget.style.borderColor = isAssigned
-                                            ? (isSelectedInModel || isActiveHighlight ? baseBorder : baseBorder)
-                                            : '#334155'
-                                    }}
                                 >
                                     {/* Action Indicator Overlay */}
                                     {canAssign && (
-                                        <div style={{
-                                            position: 'absolute',
-                                            top: 0,
-                                            right: 0,
-                                            backgroundColor: isDisabled ? '#64748b' : (isAssignedToThisSpool ? '#ef4444' : '#3b82f6'),
-                                            color: 'white',
-                                            fontSize: '0.6rem',
-                                            padding: '2px 6px',
-                                            borderBottomLeftRadius: '6px',
-                                            fontWeight: 'bold'
-                                        }}>
+                                        <div className={`absolute top-0 right-0 text-white text-[0.6rem] px-1.5 py-0.5 rounded-bl-md font-bold ${isDisabled ? 'bg-slate-500' : (isAssignedToThisSpool ? 'bg-red-500' : 'bg-blue-500')
+                                            }`}>
                                             {isDisabled
                                                 ? 'BLOQUEADO'
                                                 : (isAssignedToThisSpool ? 'DESVINCULAR' : 'ASIGNAR')}
                                         </div>
                                     )}
 
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{
-                                            color: isAssigned ? (isActiveHighlight ? '#d8b4fe' : baseColor) : 'white',
-                                            fontWeight: 'bold',
-                                            fontSize: '0.95rem'
-                                        }}>
+                                    <div className="flex justify-between items-center">
+                                        <span className={`font-bold text-sm ${isAssigned ? (isActiveHighlight ? 'text-purple-400' : 'text-white') : 'text-white' // assigned usually has color text but white looks better on dark
+                                            }`}>
                                             {spool.name}
                                         </span>
                                         {spool.tag && (
-                                            <span style={{
-                                                fontFamily: 'monospace',
-                                                fontSize: '0.75rem',
-                                                color: '#d8b4fe',
-                                                backgroundColor: 'rgba(126, 34, 206, 0.2)',
-                                                padding: '2px 6px',
-                                                borderRadius: '4px'
-                                            }}>
+                                            <span className="font-mono text-xs text-purple-400 bg-purple-500/20 px-1.5 py-0.5 rounded">
                                                 {spool.tag}
                                             </span>
                                         )}
                                     </div>
 
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                                    <div className="flex justify-between items-center mt-1">
                                         {spool.location ? (
-                                            <span style={{
-                                                fontSize: '0.75rem',
-                                                color: '#cbd5e1',
-                                                backgroundColor: 'rgba(255,255,255,0.1)',
-                                                padding: '2px 6px',
-                                                borderRadius: '4px'
-                                            }}>
+                                            <span className="text-xs text-slate-300 bg-white/10 px-1.5 py-0.5 rounded">
                                                 📍 {spool.location.code}
                                             </span>
                                         ) : (
-                                            <span style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic' }}>
+                                            <span className="text-xs text-slate-500 italic">
                                                 Sin ubicación
                                             </span>
                                         )}
 
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <div className="flex items-center gap-2">
                                             {/* Isometric Box Icon - Only if assigned */}
                                             {isAssigned && (
-                                                <Box size={14} color="#94a3b8" />
+                                                <Box size={14} className="text-slate-400" />
                                             )}
 
                                             {/* Status Badge */}
-                                            <span style={{
-                                                fontSize: '0.7rem',
-                                                color: spool.status === 'PENDING' ? '#94a3b8' : (spool.status === 'INSTALLED' ? '#4ade80' : '#60a5fa'),
-                                                backgroundColor: 'rgba(0,0,0,0.2)',
-                                                padding: '2px 8px',
-                                                borderRadius: '99px',
-                                                border: `1px solid ${spool.status === 'PENDING' ? '#475569' : (spool.status === 'INSTALLED' ? '#22c55e' : '#3b82f6')}`
-                                            }}>
+                                            <span className={`text-[0.65rem] px-2 py-0.5 rounded-full border ${statusStyle}`}>
                                                 {{
                                                     'PENDING': 'PENDIENTE',
                                                     'IN_FABRICATION': 'EN FABRICACIÓN',
@@ -714,21 +655,9 @@ function IsometricViewerWrapper({
                                                     e.stopPropagation()
                                                     handleToggleExpand(spool.id, spool.name)
                                                 }}
-                                                style={{
-                                                    background: 'none',
-                                                    border: 'none',
-                                                    padding: 0,
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    color: '#94a3b8',
-                                                    transition: 'color 0.2s',
-                                                    marginLeft: '4px'
-                                                }}
-                                                onMouseEnter={(e) => e.currentTarget.style.color = 'white'}
-                                                onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
+                                                className="bg-none border-none p-0 cursor-pointer flex items-center text-slate-400 transition-colors hover:text-white ml-1"
                                             >
-                                                {expandedSpoolId === spool.id ? '▼' : '▶'}
+                                                {expandedSpoolId === spool.id ? <ChevronDown size={14} /> : '▶'}
                                             </button>
                                         </div>
                                     </div>
@@ -1774,434 +1703,276 @@ export default function IsometricRevisionCard({
 
 
     return (
-        <div className="isometric-card">
+        <div className="bg-bg-surface-1/40 backdrop-blur-xl border border-glass-border rounded-2xl overflow-hidden transition-all duration-300 hover:border-brand-primary/30 hover:shadow-2xl hover:shadow-brand-primary/5 group/card mb-4">
             {/* Header / Summary */}
-            <div className="isometric-card-header">
-                <div className="header-main">
-                    <div className="iso-identity">
-                        <div className="iso-icon">📐</div>
-                        <div className="iso-info">
-                            <h3>{isoNumber}</h3>
-                            <span
-                                className="current-status-badge"
-                                style={{ background: statusColor }}
-                            >
-                                {currentStatus} {currentRevision ? `- Rev ${currentRevision.rev_code} ` : ''}
-                            </span>
-                        </div>
+            <div className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-glass-border/50 bg-white/5">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-brand-primary/10 flex items-center justify-center text-xl shadow-inner border border-brand-primary/20 group-hover/card:scale-110 transition-transform duration-500">
+                        📐
                     </div>
-
-                    <div className="iso-quick-stats">
-                        <div className="quick-stat" title="Total Revisiones">
-                            <span className="label">Total</span>
-                            <span className="value">{stats.total}</span>
-                        </div>
-                        {stats.obsoletas > 0 && (
-                            <div className="quick-stat warning" title="Obsoletas">
-                                <span className="label">Obs.</span>
-                                <span className="value">{stats.obsoletas}</span>
-                            </div>
-                        )}
-                        <div className="quick-stat info" title="Revisiones Spooleadas">
-                            <span className="label">Spooleadas</span>
-                            <span className="value">{stats.spooleadas}</span>
+                    <div className="space-y-1">
+                        <h3 className="text-lg font-bold text-white tracking-tight leading-none">
+                            {isoNumber}
+                        </h3>
+                        <div className="flex items-center gap-2">
+                            <span
+                                className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1.5"
+                                style={{
+                                    backgroundColor: `${statusColor}15`,
+                                    color: statusColor,
+                                    borderColor: `${statusColor}30`
+                                }}
+                            >
+                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: statusColor, boxShadow: `0 0 8px ${statusColor}` }} />
+                                {currentStatus} {currentRevision ? `• REV ${currentRevision.rev_code} ` : ''}
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                <div className="card-controls">
-                    {/* Could add bulk actions here */}
+                <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-4 px-4 py-2 bg-black/20 rounded-xl border border-white/5 shadow-inner">
+                        <div className="flex flex-col items-center">
+                            <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest">Total</span>
+                            <span className="text-sm font-mono font-bold text-white">{stats.total}</span>
+                        </div>
+                        {stats.obsoletas > 0 && (
+                            <div className="w-px h-6 bg-white/10" />
+                        )}
+                        {stats.obsoletas > 0 && (
+                            <div className="flex flex-col items-center">
+                                <span className="text-[10px] font-bold text-amber-500/80 uppercase tracking-widest">Obs</span>
+                                <span className="text-sm font-mono font-bold text-amber-400">{stats.obsoletas}</span>
+                            </div>
+                        )}
+                        <div className="w-px h-6 bg-white/10" />
+                        <div className="flex flex-col items-center">
+                            <span className="text-[10px] font-bold text-brand-primary/80 uppercase tracking-widest">Spool</span>
+                            <span className="text-sm font-mono font-bold text-brand-primary">{stats.spooleadas}</span>
+                        </div>
+                    </div>
 
-                    <button
-                        className={`btn-expand ${isExpanded ? 'active' : ''}`}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`rounded-xl border border-white/5 hover:bg-white/10 text-xs font-semibold gap-2 transition-all ${isExpanded ? 'bg-white/10 border-white/20 text-white' : 'text-text-dim'}`}
                         onClick={() => setIsExpanded(!isExpanded)}
                     >
                         {isExpanded ? 'Ocultar Historial' : 'Ver Historial'}
-                        <span className="chevron">▼</span>
-                    </button>
+                        <Icons.ChevronDown size={14} className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                    </Button>
                 </div>
             </div>
 
             {/* Expanded History */}
-            {
-                isExpanded && (
-                    <div className="isometric-history">
-                        <div className="history-table-wrapper">
-                            <table className="history-table">
-                                <thead>
-                                    <tr>
-                                        <th>Rev</th>
-                                        <th>Estado</th>
-                                        <th>Datos</th>
-                                        <th>Material</th>
-                                        <th>Fab</th>
-                                        <th>F. Anuncio</th>
-                                        <th>Uniones</th>
-                                        <th>Spools</th>
-                                        <th style={{ textAlign: 'center' }}>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {sortedRevisions.map(rev => (
-                                        <Fragment key={rev.id}>
-                                            <tr className={rev.id === currentRevision?.id ? 'active-row' : ''}>
-                                                <td className="col-rev">
-                                                    <span className="rev-circle">{rev.rev_code}</span>
-                                                </td>
-                                                <td>
-                                                    <span
-                                                        className="status-pill"
-                                                        style={{
-                                                            color: statusColors[rev.revision_status] || '#ccc',
-                                                            borderColor: statusColors[rev.revision_status] || '#ccc',
-                                                            background: `${statusColors[rev.revision_status] || '#ccc'} 15` // 15 = hex opacity approx 8%
-                                                        }}
-                                                    >
-                                                        {rev.revision_status}
+            {isExpanded && (
+                <div className="p-0 overflow-x-auto bg-black/10 backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="border-b border-glass-border/30 bg-white/5">
+                                <th className="px-5 py-3 text-[10px] font-bold text-text-dim uppercase tracking-widest">Rev</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-text-dim uppercase tracking-widest">Estado</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-text-dim uppercase tracking-widest">Datos</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-text-dim uppercase tracking-widest">Material</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-text-dim uppercase tracking-widest text-center">Fab</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-text-dim uppercase tracking-widest">F. Anuncio</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-text-dim uppercase tracking-widest">Uniones</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-text-dim uppercase tracking-widest">Spools</th>
+                                <th className="px-5 py-3 text-[10px] font-bold text-text-dim uppercase tracking-widest text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-glass-border/20">
+                            {sortedRevisions.map(rev => (
+                                <Fragment key={rev.id}>
+                                    <tr className={`hover:bg-white/5 transition-colors group/row ${rev.id === currentRevision?.id ? 'bg-brand-primary/5' : ''}`}>
+                                        <td className="px-5 py-4">
+                                            <div className="w-8 h-8 rounded-lg bg-bg-surface-2 border border-glass-border flex items-center justify-center font-mono font-bold text-white group-hover/row:border-brand-primary/50 transition-colors">
+                                                {rev.rev_code}
+                                            </div>
+                                        </td>
+                                        <td className="px-5 py-4">
+                                            <span
+                                                className="px-2 py-0.5 rounded-full text-[10px] font-bold border"
+                                                style={{
+                                                    color: statusColors[rev.revision_status] || '#ccc',
+                                                    borderColor: `${statusColors[rev.revision_status] || '#ccc'}40`,
+                                                    backgroundColor: `${statusColors[rev.revision_status] || '#ccc'}10`
+                                                }}
+                                            >
+                                                {rev.revision_status}
+                                            </span>
+                                        </td>
+                                        <td className="px-5 py-4">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className={`w-1.5 h-1.5 rounded-full ${revisionStatuses[rev.id]?.data === 'COMPLETO' ? 'bg-green-500 shadow-[0_0_8px_#10b981]' : 'bg-amber-500 shadow-[0_0_8px_#f59e0b]'}`} />
+                                                <span className={`text-[10px] font-bold ${revisionStatuses[rev.id]?.data === 'COMPLETO' ? 'text-green-400' : 'text-amber-400'}`}>
+                                                    {revisionStatuses[rev.id]?.data || '...'}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-5 py-4">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className={`w-1.5 h-1.5 rounded-full ${revisionStatuses[rev.id]?.material === 'DISPONIBLE' ? 'bg-green-500 shadow-[0_0_8px_#10b981]' : 'bg-slate-500 shadow-[0_0_8px_#64748b]'}`} />
+                                                <span className={`text-[10px] font-bold ${revisionStatuses[rev.id]?.material === 'DISPONIBLE' ? 'text-green-400' : 'text-slate-400'}`}>
+                                                    {revisionStatuses[rev.id]?.material || '...'}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-5 py-4 text-center">
+                                            {revisionStatuses[rev.id]?.fabricable ? (
+                                                <span title="Fabricable" className="text-green-500 drop-shadow-[0_0_5px_rgba(74,222,128,0.5)]">●</span>
+                                            ) : (
+                                                <span title="No fabricable" className="text-red-500 drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">●</span>
+                                            )}
+                                        </td>
+                                        <td className="px-5 py-4">
+                                            <div className="flex flex-col">
+                                                <span className="text-xs text-white font-medium">
+                                                    {rev.announcement_date
+                                                        ? new Date(rev.announcement_date).toLocaleDateString('es-CL')
+                                                        : '-'
+                                                    }
+                                                </span>
+                                                {rev.transmittal && (
+                                                    <span className="text-[10px] text-text-dim font-mono mt-0.5">
+                                                        {rev.transmittal}
                                                     </span>
-                                                </td>
-                                                <td>
-                                                    <span
-                                                        className="status-pill"
-                                                        style={{
-                                                            fontSize: '0.75rem',
-                                                            color: revisionStatuses[rev.id]?.data === 'COMPLETO' ? '#10b981' : '#fbbf24',
-                                                            borderColor: revisionStatuses[rev.id]?.data === 'COMPLETO' ? '#10b981' : '#fbbf24'
-                                                        }}
-                                                    >
-                                                        {revisionStatuses[rev.id]?.data || '...'}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <span
-                                                        className="status-pill"
-                                                        style={{
-                                                            fontSize: '0.75rem',
-                                                            color: revisionStatuses[rev.id]?.material === 'DISPONIBLE' ? '#10b981' : '#6b7280',
-                                                            borderColor: revisionStatuses[rev.id]?.material === 'DISPONIBLE' ? '#10b981' : '#6b7280'
-                                                        }}
-                                                    >
-                                                        {revisionStatuses[rev.id]?.material || '...'}
-                                                    </span>
-                                                </td>
-                                                <td style={{ textAlign: 'center', fontSize: '1.2rem' }}>
-                                                    {revisionStatuses[rev.id]?.fabricable ? '🟢' : '🔴'}
-                                                </td>
-                                                <td title={rev.transmittal ? `TML: ${rev.transmittal}` : 'Sin transmittal'}>
-                                                    <span style={{ fontSize: '0.9rem' }}>
-                                                        {rev.announcement_date
-                                                            ? new Date(rev.announcement_date).toLocaleDateString('es-CL')
-                                                            : '-'
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-5 py-4 text-sm font-mono text-white font-bold">{rev.welds_count || 0}</td>
+                                        <td className="px-5 py-4 text-sm font-mono text-white font-bold">{rev.spools_count || 0}</td>
+                                        <td className="px-5 py-4 text-center">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className={`w-8 h-8 rounded-lg hover:bg-white/10 transition-all ${openRevId === rev.id ? 'bg-white/10 text-brand-primary' : 'text-text-dim'}`}
+                                                    onClick={() => setOpenRevId(openRevId === rev.id ? null : rev.id)}
+                                                    title="Ver detalles"
+                                                >
+                                                    <Icons.ChevronDown size={14} className={`transition-transform duration-300 ${openRevId === rev.id ? 'rotate-180' : ''}`} />
+                                                </Button>
+
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className={`px-3 py-1 h-8 rounded-lg text-[10px] font-bold font-mono transition-all ${rev.glb_model_url ? 'text-green-400 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20' : 'text-text-dim bg-white/5 hover:bg-white/10 border border-white/5'}`}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        if (uploadingModelRevId === rev.id) return
+                                                        if (rev.glb_model_url) {
+                                                            setViewerModalRevision({
+                                                                id: rev.id,
+                                                                glbUrl: rev.glb_model_url!,
+                                                                modelData: rev.model_data,
+                                                                isoNumber: isoNumber,
+                                                                projectId: rev.project_id,
+                                                                pdfUrl: rev.pdf_url
+                                                            })
+                                                        } else {
+                                                            handleModelUploadClick(rev.id)
                                                         }
-                                                    </span>
-                                                    {rev.transmittal && (
-                                                        <div style={{ fontSize: '0.65rem', color: '#9ca3af', marginTop: '2px' }}>
-                                                            {rev.transmittal}
-                                                        </div>
-                                                    )}
-                                                </td>
-                                                <td><strong>{rev.welds_count || 0}</strong></td>
-                                                <td><strong>{rev.spools_count || 0}</strong></td>
-                                                <td style={{ textAlign: 'center' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                                                        {/* Expand/Collapse */}
-                                                        <button
-                                                            className="btn-icon-secondary"
-                                                            onClick={() => setOpenRevId(openRevId === rev.id ? null : rev.id)}
-                                                            title="Ver detalles"
-                                                            style={{
-                                                                transform: openRevId === rev.id ? 'rotate(180deg)' : 'rotate(0deg)',
-                                                                transition: 'transform 0.2s ease',
-                                                                color: 'white',
-                                                                fontSize: '0.9rem'
-                                                            }}
-                                                        >
-                                                            ▼
-                                                        </button>
+                                                    }}
+                                                    disabled={uploadingModelRevId === rev.id}
+                                                >
+                                                    {uploadingModelRevId === rev.id ? <Icons.Loader2 size={14} className="animate-spin" /> : '3D'}
+                                                </Button>
 
-                                                        {/* 3D Model Button */}
-                                                        {/* 3D Model Button */}
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation()
-                                                                if (uploadingModelRevId === rev.id) return
-                                                                if (rev.glb_model_url) {
-                                                                    // Direct Viewer Open
-                                                                    setViewerModalRevision({
-                                                                        id: rev.id,
-                                                                        glbUrl: rev.glb_model_url!,
-                                                                        modelData: rev.model_data,
-                                                                        isoNumber: isoNumber,
-                                                                        projectId: rev.project_id,
-                                                                        pdfUrl: rev.pdf_url
-                                                                    })
-                                                                } else {
-                                                                    handleModelUploadClick(rev.id)
-                                                                }
-                                                            }}
-                                                            style={{
-                                                                fontFamily: 'monospace',
-                                                                fontSize: '0.75rem',
-                                                                fontWeight: 'bold',
-                                                                padding: '4px 8px',
-                                                                borderRadius: '4px',
-                                                                border: 'none',
-                                                                cursor: uploadingModelRevId === rev.id ? 'wait' : 'pointer',
-                                                                transition: 'all 0.2s ease',
-                                                                color: uploadingModelRevId === rev.id ? '#fbbf24' : (rev.glb_model_url ? '#22c55e' : '#94a3b8'),
-                                                                backgroundColor: uploadingModelRevId === rev.id ? 'rgba(251, 191, 36, 0.1)' : 'transparent',
-                                                                display: 'inline-flex',
-                                                                alignItems: 'center',
-                                                                gap: '4px',
-                                                                opacity: uploadingModelRevId === rev.id ? 0.7 : 1
-                                                            }}
-                                                            onMouseEnter={(e) => {
-                                                                if (rev.glb_model_url) {
-                                                                    e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.1)'
-                                                                } else {
-                                                                    e.currentTarget.style.backgroundColor = 'rgba(71, 85, 105, 0.5)'
-                                                                    e.currentTarget.style.color = '#cbd5e1'
-                                                                }
-                                                            }}
-                                                            onMouseLeave={(e) => {
-                                                                e.currentTarget.style.backgroundColor = 'transparent'
-                                                                e.currentTarget.style.color = rev.glb_model_url ? '#22c55e' : '#94a3b8'
-                                                            }}
-                                                            title={uploadingModelRevId === rev.id ? 'Cargando Modelo...' : (rev.glb_model_url ? 'Ver Modelo 3D' : 'Cargar Modelo 3D')}
-                                                            disabled={uploadingModelRevId === rev.id}
-                                                        >
-                                                            {uploadingModelRevId === rev.id ? (
-                                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                                                    <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>⏳</span>
-                                                                </span>
-                                                            ) : (
-                                                                '3D'
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className={`px-3 py-1 h-8 rounded-lg transition-all ${rev.pdf_url ? 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20' : 'text-text-dim bg-white/5 hover:bg-white/10 border border-white/5'}`}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        if (uploadingPdfRevId === rev.id) return
+                                                        if (rev.pdf_url) {
+                                                            window.open(rev.pdf_url, '_blank')
+                                                        } else {
+                                                            handlePdfUploadClick(rev.id)
+                                                        }
+                                                    }}
+                                                    disabled={uploadingPdfRevId === rev.id}
+                                                >
+                                                    {uploadingPdfRevId === rev.id ? <Icons.Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
+                                                </Button>
+
+                                                <div className="relative">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className={`w-8 h-8 rounded-lg hover:bg-white/10 text-text-dim transition-all ${openMenuRevId === rev.id ? 'bg-white/10' : ''}`}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            setOpenMenuRevId(openMenuRevId === rev.id ? null : rev.id)
+                                                        }}
+                                                    >
+                                                        <Icons.MoreVertical size={14} />
+                                                    </Button>
+
+                                                    {openMenuRevId === rev.id && (
+                                                        <div className="absolute top-full right-0 mt-2 w-48 bg-bg-surface-2 border border-glass-border rounded-xl shadow-2xl z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                                            {rev.pdf_url && (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        setOpenMenuRevId(null)
+                                                                        handleDeletePdf(rev.id, rev.pdf_url!)
+                                                                    }}
+                                                                    className="w-full px-4 py-2.5 text-left text-xs font-semibold text-red-400 hover:bg-red-500/10 flex items-center gap-2 transition-colors"
+                                                                >
+                                                                    <Trash2 size={14} /> Eliminar PDF
+                                                                </button>
                                                             )}
-                                                        </button>
-
-                                                        {/* PDF Button */}
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation()
-                                                                if (uploadingPdfRevId === rev.id) return
-                                                                if (rev.pdf_url) {
-                                                                    window.open(rev.pdf_url, '_blank')
-                                                                } else {
-                                                                    handlePdfUploadClick(rev.id)
-                                                                }
-                                                            }}
-                                                            style={{
-                                                                fontFamily: 'monospace',
-                                                                fontSize: '0.75rem',
-                                                                fontWeight: 'bold',
-                                                                padding: '4px 8px',
-                                                                borderRadius: '4px',
-                                                                border: 'none',
-                                                                cursor: uploadingPdfRevId === rev.id ? 'wait' : 'pointer',
-                                                                transition: 'all 0.2s ease',
-                                                                color: uploadingPdfRevId === rev.id ? '#fbbf24' : (rev.pdf_url ? '#22c55e' : '#94a3b8'),
-                                                                backgroundColor: uploadingPdfRevId === rev.id ? 'rgba(251, 191, 36, 0.1)' : 'transparent',
-                                                                display: 'inline-flex',
-                                                                alignItems: 'center',
-                                                                gap: '4px',
-                                                                opacity: uploadingPdfRevId === rev.id ? 0.7 : 1
-                                                            }}
-                                                            onMouseEnter={(e) => {
-                                                                if (rev.pdf_url) {
-                                                                    e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.1)'
-                                                                } else {
-                                                                    e.currentTarget.style.backgroundColor = 'rgba(71, 85, 105, 0.5)'
-                                                                    e.currentTarget.style.color = '#cbd5e1'
-                                                                }
-                                                            }}
-                                                            onMouseLeave={(e) => {
-                                                                e.currentTarget.style.backgroundColor = 'transparent'
-                                                                e.currentTarget.style.color = rev.pdf_url ? '#22c55e' : '#94a3b8'
-                                                            }}
-                                                            title={uploadingPdfRevId === rev.id ? 'Cargando PDF...' : (rev.pdf_url ? 'Ver PDF' : 'Cargar PDF')}
-                                                            disabled={uploadingPdfRevId === rev.id}
-                                                        >
-                                                            {uploadingPdfRevId === rev.id ? (
-                                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                                                    <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>⏳</span>
-                                                                </span>
-                                                            ) : (
-                                                                <FileText size={14} />
+                                                            {rev.glb_model_url && (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        setOpenMenuRevId(null)
+                                                                        handleDeleteModel(rev.id, rev.glb_model_url!)
+                                                                    }}
+                                                                    className="w-full px-4 py-2.5 text-left text-xs font-semibold text-red-400 hover:bg-red-500/10 flex items-center gap-2 transition-colors"
+                                                                >
+                                                                    <Trash2 size={14} /> Eliminar Modelo 3D
+                                                                </button>
                                                             )}
-                                                        </button>
-
-                                                        {/* Options Menu Button */}
-                                                        <div style={{ position: 'relative', display: 'inline-block' }}>
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation()
-                                                                    setOpenMenuRevId(openMenuRevId === rev.id ? null : rev.id)
+                                                                    setOpenMenuRevId(null)
+                                                                    handleDelete(rev.id, rev.rev_code)
                                                                 }}
-                                                                style={{
-                                                                    fontFamily: 'monospace',
-                                                                    fontSize: '1rem',
-                                                                    fontWeight: 'bold',
-                                                                    padding: '4px 8px',
-                                                                    borderRadius: '4px',
-                                                                    border: 'none',
-                                                                    cursor: 'pointer',
-                                                                    transition: 'all 0.2s ease',
-                                                                    color: '#94a3b8',
-                                                                    backgroundColor: openMenuRevId === rev.id ? 'rgba(71, 85, 105, 0.3)' : 'transparent'
-                                                                }}
-                                                                onMouseEnter={(e) => {
-                                                                    e.currentTarget.style.backgroundColor = 'rgba(71, 85, 105, 0.5)'
-                                                                    e.currentTarget.style.color = '#cbd5e1'
-                                                                }}
-                                                                onMouseLeave={(e) => {
-                                                                    if (openMenuRevId !== rev.id) {
-                                                                        e.currentTarget.style.backgroundColor = 'transparent'
-                                                                    }
-                                                                    e.currentTarget.style.color = '#94a3b8'
-                                                                }}
-                                                                title="Más opciones"
+                                                                disabled={isDeleting === rev.id}
+                                                                className="w-full px-4 py-2.5 text-left text-xs font-bold text-red-500 hover:bg-red-500/15 flex items-center gap-2 border-t border-glass-border/30 transition-colors"
                                                             >
-                                                                ⋮
+                                                                <Trash2 size={14} /> {isDeleting === rev.id ? 'Eliminando...' : 'Eliminar Revisión'}
                                                             </button>
-
-                                                            {/* Dropdown Menu */}
-                                                            {openMenuRevId === rev.id && (
-                                                                <div
-                                                                    style={{
-                                                                        position: 'absolute',
-                                                                        top: '100%',
-                                                                        right: 0,
-                                                                        marginTop: '4px',
-                                                                        background: '#1e293b',
-                                                                        border: '1px solid #475569',
-                                                                        borderRadius: '8px',
-                                                                        boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
-                                                                        zIndex: 1000,
-                                                                        minWidth: '180px',
-                                                                        overflow: 'hidden'
-                                                                    }}
-                                                                >
-                                                                    {/* Delete PDF */}
-                                                                    {rev.pdf_url && (
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation()
-                                                                                setOpenMenuRevId(null)
-                                                                                handleDeletePdf(rev.id, rev.pdf_url!)
-                                                                            }}
-                                                                            style={{
-                                                                                width: '100%',
-                                                                                padding: '10px 16px',
-                                                                                border: 'none',
-                                                                                background: 'transparent',
-                                                                                color: '#ef4444',
-                                                                                textAlign: 'left',
-                                                                                cursor: 'pointer',
-                                                                                fontSize: '0.875rem',
-                                                                                display: 'flex',
-                                                                                alignItems: 'center',
-                                                                                gap: '8px',
-                                                                                transition: 'background 0.15s'
-                                                                            }}
-                                                                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
-                                                                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                                                        >
-                                                                            🗑️ Eliminar PDF
-                                                                        </button>
-                                                                    )}
-
-
-
-                                                                    {/* Delete 3D Model */}
-                                                                    {rev.glb_model_url && (
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation()
-                                                                                setOpenMenuRevId(null)
-                                                                                handleDeleteModel(rev.id, rev.glb_model_url!)
-                                                                            }}
-                                                                            style={{
-                                                                                width: '100%',
-                                                                                padding: '10px 16px',
-                                                                                border: 'none',
-                                                                                background: 'transparent',
-                                                                                color: '#ef4444',
-                                                                                textAlign: 'left',
-                                                                                cursor: 'pointer',
-                                                                                fontSize: '0.875rem',
-                                                                                display: 'flex',
-                                                                                alignItems: 'center',
-                                                                                gap: '8px',
-                                                                                transition: 'background 0.15s'
-                                                                            }}
-                                                                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
-                                                                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                                                        >
-                                                                            🗑️ Eliminar Modelo 3D
-                                                                        </button>
-                                                                    )}
-
-                                                                    {/* Delete Revision */}
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation()
-                                                                            setOpenMenuRevId(null)
-                                                                            handleDelete(rev.id, rev.rev_code)
-                                                                        }}
-                                                                        disabled={isDeleting === rev.id}
-                                                                        style={{
-                                                                            width: '100%',
-                                                                            padding: '10px 16px',
-                                                                            border: 'none',
-                                                                            background: 'transparent',
-                                                                            color: '#ef4444',
-                                                                            textAlign: 'left',
-                                                                            cursor: isDeleting === rev.id ? 'not-allowed' : 'pointer',
-                                                                            fontSize: '0.875rem',
-                                                                            display: 'flex',
-                                                                            alignItems: 'center',
-                                                                            gap: '8px',
-                                                                            transition: 'background 0.15s',
-                                                                            opacity: isDeleting === rev.id ? 0.5 : 1
-                                                                        }}
-                                                                        onMouseEnter={(e) => !isDeleting && (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)')}
-                                                                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                                                        title="Eliminar Revisión"
-                                                                    >
-                                                                        {isDeleting === rev.id ? '⏳ Eliminando...' : '🗑️ Eliminar Revisión'}
-                                                                    </button>
-                                                                </div>
-                                                            )}
                                                         </div>
-                                                    </div>
-
-
-                                                </td>
-                                            </tr>
-                                            {openRevId === rev.id && (
-                                                <tr>
-                                                    <td colSpan={9} style={{ padding: 0, borderBottom: 'none' }}>
-                                                        <RevisionMasterView
-                                                            revisionId={rev.id}
-                                                            projectId={rev.project_id}
-                                                            glbModelUrl={rev.glb_model_url}
-                                                            modelData={rev.model_data}
-                                                        // TODO: Pass spools data here. For now it will prompt empty list.
-                                                        // Ideally we fetch spools in MasterView or lift state.
-                                                        />
-                                                    </td>
-                                                </tr>
-                                            )}
-                                        </Fragment>
-                                    ))}
-
-
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                )
-            }
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {openRevId === rev.id && (
+                                        <tr className="bg-black/20">
+                                            <td colSpan={9} className="p-0 border-none">
+                                                <div className="p-4 bg-white/5 border-l-2 border-brand-primary/50 ml-5 mr-5 my-4 rounded-xl">
+                                                    <RevisionMasterView
+                                                        revisionId={rev.id}
+                                                        projectId={rev.project_id}
+                                                        glbModelUrl={rev.glb_model_url}
+                                                        modelData={rev.model_data}
+                                                    />
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </Fragment>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
 
             {/* Hidden PDF Input */}
             <input

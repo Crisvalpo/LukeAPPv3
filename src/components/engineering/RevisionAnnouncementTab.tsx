@@ -20,7 +20,10 @@ import {
     validateAnnouncementData,
     type AnnouncementResult
 } from '@/services/revision-announcements'
-import '@/styles/engineering-details.css'
+import { Megaphone, Download, Upload, FileText, X, AlertTriangle, CheckCircle2, UploadCloud, Loader2, RefreshCw } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Heading } from '@/components/ui/Typography'
+// Styles migrated to Tailwind v4
 
 interface Props {
     projectId: string
@@ -144,83 +147,94 @@ export default function RevisionAnnouncementTab({
     }
 
     return (
-        <div className="detail-section">
-            <div className="section-header">
-                <div className="icon">📢</div>
-                <div>
-                    <h3>1. Anuncio de Ingeniería</h3>
-                    <p>
-                        Carga el Excel con isométricos y sus revisiones para iniciar el flujo de ingeniería.
-                        <button
-                            className="btn-link"
-                            onClick={downloadAnnouncementTemplate}
-                            style={{ marginLeft: '10px' }}
-                        >
-                            📥 Descargar Plantilla
-                        </button>
-                    </p>
+        <div className="w-full space-y-6">
+            <div className="bg-bg-surface-1/40 backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-lg">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-brand-secondary/20 flex items-center justify-center text-brand-secondary border border-brand-secondary/20 shadow-lg shadow-brand-secondary/5">
+                            <Megaphone size={24} />
+                        </div>
+                        <div>
+                            <Heading title="Anuncio de Ingeniería" size="lg" className="mb-1" />
+                            <p className="text-text-dim text-sm">
+                                Carga el Excel con isométricos y sus revisiones para iniciar el flujo de ingeniería.
+                            </p>
+                        </div>
+                    </div>
+                    <Button
+                        variant="ghost"
+                        onClick={downloadAnnouncementTemplate}
+                        className="gap-2 text-brand-secondary hover:text-brand-secondary hover:bg-brand-secondary/10 border border-brand-secondary/20"
+                    >
+                        <Download size={16} /> Descargar Plantilla
+                    </Button>
                 </div>
-            </div>
 
-            {!file && !result && (
-                <div className="detail-uploader">
-                    <div className="file-input-wrapper">
+                {!file && !result && (
+                    <div className="border-2 border-dashed border-glass-border/50 rounded-2xl p-10 flex flex-col items-center justify-center bg-black/5 hover:bg-black/10 transition-colors cursor-pointer group relative overflow-hidden">
                         <input
                             type="file"
                             accept=".xlsx, .xls"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                             onChange={(e) => {
                                 if (e.target.files?.[0]) handleFileSelect(e.target.files[0])
                             }}
                         />
-                        <div className="fake-btn">📂 Seleccionar Excel</div>
+                        <div className="w-20 h-20 rounded-full bg-bg-surface-2/50 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 border border-glass-border">
+                            <Upload className="text-brand-primary w-8 h-8" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-white mb-2">Arrastra tu archivo Excel aquí</h3>
+                        <p className="text-text-dim text-sm mb-6">o haz clic para seleccionar</p>
+                        <div className="px-4 py-1.5 rounded-full bg-brand-primary/10 text-brand-primary text-xs font-medium border border-brand-primary/20">
+                            Soporta .xlsx, .xls
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {file && !result && (
-                <div className="file-section">
-                    <FilePreview
-                        file={file}
-                        preview={preview}
-                        validationErrors={validationErrors}
-                        onRemove={handleReset}
+                {file && !result && (
+                    <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
+                        <FilePreview
+                            file={file}
+                            preview={preview}
+                            validationErrors={validationErrors}
+                            onRemove={handleReset}
+                        />
+
+                        <div className="flex justify-end gap-3 pt-4 border-t border-glass-border/30">
+                            <Button
+                                variant="ghost"
+                                onClick={handleReset}
+                                disabled={isUploading}
+                                className="hover:bg-status-error/10 hover:text-status-error"
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                onClick={handleUpload}
+                                disabled={isUploading || validationErrors.length > 0}
+                                className="bg-brand-primary text-white hover:bg-brand-primary/90 gap-2 min-w-[160px]"
+                            >
+                                {isUploading ? (
+                                    <>
+                                        <Loader2 size={18} className="animate-spin" /> Procesando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <UploadCloud size={18} /> Importar Anuncio
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                {result && (
+                    <ResultsDisplay
+                        result={result}
+                        onReset={handleReset}
                     />
-
-                    <div className="upload-actions">
-                        <button
-                            className="btn-secondary"
-                            onClick={handleReset}
-                            disabled={isUploading}
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            className="btn-primary"
-                            onClick={handleUpload}
-                            disabled={isUploading || validationErrors.length > 0}
-                        >
-                            {isUploading ? (
-                                <>
-                                    <span className="spinner" />
-                                    Procesando...
-                                </>
-                            ) : (
-                                <>
-                                    <span>⬆️</span>
-                                    Importar Anuncio
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {result && (
-                <ResultsDisplay
-                    result={result}
-                    onReset={handleReset}
-                />
-            )}
+                )}
+            </div>
         </div>
     )
 }
@@ -244,29 +258,43 @@ function FilePreview({
     onRemove: () => void
 }) {
     return (
-        <div className="file-preview">
-            <div className="file-info">
-                <div className="file-icon">📄</div>
-                <div className="file-details">
-                    <h4>{file.name}</h4>
-                    <span className="file-size">{formatFileSize(file.size)}</span>
-                    {preview && <span className="file-rows">{preview.length}+ filas detectadas</span>}
+        <div className="bg-black/20 rounded-xl border border-glass-border/50 overflow-hidden">
+            <div className="p-4 flex items-center justify-between border-b border-glass-border/30 bg-white/5">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/20">
+                        <FileText size={20} />
+                    </div>
+                    <div>
+                        <h4 className="font-medium text-white text-sm">{file.name}</h4>
+                        <div className="flex items-center gap-2 text-xs text-text-dim mt-0.5">
+                            <span className="bg-white/10 px-1.5 py-0.5 rounded text-white/70">{formatFileSize(file.size)}</span>
+                            {preview && <span>• {preview.length}+ filas detectadas</span>}
+                        </div>
+                    </div>
                 </div>
-                <button className="btn-remove" onClick={onRemove}>✕</button>
+                <button
+                    className="p-2 hover:bg-status-error/20 hover:text-status-error text-text-dim rounded-lg transition-colors"
+                    onClick={onRemove}
+                >
+                    <X size={18} />
+                </button>
             </div>
 
             {validationErrors.length > 0 && (
-                <div className="validation-errors">
-                    <h5>⚠️ Errores de Validación</h5>
-                    <ul>
+                <div className="p-4 bg-status-error/10 border-b border-status-error/20">
+                    <div className="flex items-center gap-2 text-status-error font-semibold mb-2 text-sm">
+                        <AlertTriangle size={16} /> Errores de Validación
+                    </div>
+                    <ul className="space-y-1.5 mb-2">
                         {validationErrors.slice(0, 5).map((error, i) => (
-                            <li key={i}>
-                                <strong>Fila {error.row}:</strong> {error.message}
+                            <li key={i} className="text-xs text-status-error/90 flex gap-2">
+                                <span className="font-mono bg-status-error/20 px-1 rounded h-fit">Fila {error.row}</span>
+                                <span>{error.message}</span>
                             </li>
                         ))}
                     </ul>
                     {validationErrors.length > 5 && (
-                        <p className="more-errors">
+                        <p className="text-xs text-status-error/70 italic">
                             y {validationErrors.length - 5} errores más...
                         </p>
                     )}
@@ -274,28 +302,28 @@ function FilePreview({
             )}
 
             {preview && validationErrors.length === 0 && (
-                <div className="preview-table">
-                    <h5>✅ Vista Previa (primeras 10 filas)</h5>
-                    <div className="table-scroll">
-                        <table>
-                            <thead>
-                                <tr>
-                                    {Object.keys(preview[0] || {}).map(key => (
-                                        <th key={key}>{key}</th>
+                <div className="p-0 overflow-x-auto">
+                    <div className="px-4 py-2 bg-emerald-900/10 border-b border-emerald-500/10 text-emerald-400 text-xs font-medium flex items-center gap-2">
+                        <CheckCircle2 size={12} /> Vista Previa (primeras 10 filas)
+                    </div>
+                    <table className="w-full text-left border-collapse text-xs">
+                        <thead className="bg-white/5 text-text-dim uppercase tracking-wider font-semibold">
+                            <tr>
+                                {Object.keys(preview[0] || {}).map(key => (
+                                    <th key={key} className="px-4 py-2.5 border-b border-glass-border/30 whitespace-nowrap min-w-[100px]">{key}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-glass-border/30 text-white/80">
+                            {preview.map((row, i) => (
+                                <tr key={i} className="hover:bg-white/5 transition-colors">
+                                    {Object.values(row).map((val: any, j) => (
+                                        <td key={j} className="px-4 py-2 whitespace-nowrap">{String(val)}</td>
                                     ))}
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {preview.map((row, i) => (
-                                    <tr key={i}>
-                                        {Object.values(row).map((val: any, j) => (
-                                            <td key={j}>{String(val)}</td>
-                                        ))}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             )}
         </div>
@@ -312,71 +340,76 @@ function ResultsDisplay({
     result: AnnouncementResult
     onReset: () => void
 }) {
+    const isSuccess = result.success;
+
     return (
-        <div className="upload-results">
-            <div className={`results-header ${result.success ? 'success' : 'error'}`}>
-                <div className="icon">{result.success ? '✅' : '⚠️'}</div>
+        <div className="space-y-6">
+            <div className={`rounded-xl p-6 border ${isSuccess ? 'bg-status-success/10 border-status-success/30' : 'bg-status-error/10 border-status-error/30'} flex gap-4 items-start`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isSuccess ? 'bg-status-success/20 text-status-success' : 'bg-status-error/20 text-status-error'}`}>
+                    {isSuccess ? <CheckCircle2 size={24} /> : <AlertTriangle size={24} />}
+                </div>
                 <div>
-                    <h3>{result.success ? 'Importación Exitosa' : 'Importación con Errores'}</h3>
-                    <p>
+                    <h3 className={`text-lg font-bold mb-1 ${isSuccess ? 'text-status-success' : 'text-status-error'}`}>
+                        {result.success ? 'Importación Exitosa' : 'Importación con Errores'}
+                    </h3>
+                    <p className="text-white/80 text-sm">
                         {result.success
-                            ? 'Los anuncios de revisión fueron procesados correctamente'
-                            : 'Se encontraron errores durante la importación'
+                            ? 'Los anuncios de revisión fueron procesados correctamente. Se han generado las tareas correspondientes.'
+                            : 'Se encontraron errores durante la importación. Por favor revisa los detalles abajo.'
                         }
                     </p>
                 </div>
             </div>
 
-            <div className="results-summary">
-                <div className="summary-grid">
-                    <div className="summary-item">
-                        <span className="label">Total Procesadas</span>
-                        <span className="value">{result.summary.total}</span>
-                    </div>
-                    <div className="summary-item success">
-                        <span className="label">Isométricos Creados</span>
-                        <span className="value">{result.summary.isometricsCreated}</span>
-                    </div>
-                    <div className="summary-item info">
-                        <span className="label">Revisiones Creadas</span>
-                        <span className="value">{result.summary.revisionsCreated}</span>
-                    </div>
-                    <div className="summary-item warning">
-                        <span className="label">Omitidos (Duplicados)</span>
-                        <span className="value">{result.summary.revisionsSkipped}</span>
-                    </div>
-                    {result.summary.errors > 0 && (
-                        <div className="summary-item error">
-                            <span className="label">Errores</span>
-                            <span className="value">{result.summary.errors}</span>
-                        </div>
-                    )}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-black/20 border border-glass-border/30 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                    <span className="text-text-dim text-xs uppercase font-bold tracking-wider mb-1">Total Procesadas</span>
+                    <span className="text-2xl font-bold text-white">{result.summary.total}</span>
+                </div>
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                    <span className="text-emerald-400 text-xs uppercase font-bold tracking-wider mb-1">Isométricos</span>
+                    <span className="text-2xl font-bold text-emerald-400">{result.summary.isometricsCreated}</span>
+                </div>
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                    <span className="text-blue-400 text-xs uppercase font-bold tracking-wider mb-1">Revisiones</span>
+                    <span className="text-2xl font-bold text-blue-400">{result.summary.revisionsCreated}</span>
+                </div>
+                <div className={`border rounded-xl p-4 flex flex-col items-center justify-center text-center ${result.summary.errors > 0 ? 'bg-status-error/10 border-status-error/20' : 'bg-orange-500/10 border-orange-500/20'}`}>
+                    <span className={`${result.summary.errors > 0 ? 'text-status-error' : 'text-orange-400'} text-xs uppercase font-bold tracking-wider mb-1`}>
+                        {result.summary.errors > 0 ? 'Errores' : 'Omitidos'}
+                    </span>
+                    <span className={`text-2xl font-bold ${result.summary.errors > 0 ? 'text-status-error' : 'text-orange-400'}`}>
+                        {result.summary.errors > 0 ? result.summary.errors : result.summary.revisionsSkipped}
+                    </span>
                 </div>
             </div>
 
             {result.details.length > 0 && (
-                <div className="results-details">
-                    <h4>Detalles</h4>
-                    <div className="details-list">
-                        {result.details.slice(0, 20).map((detail, i) => (
-                            <div key={i} className={`detail-item ${detail.action}`}>
-                                <span className="detail-icon">
-                                    {detail.action === 'created' && '✅'}
-                                    {detail.action === 'updated' && '🔄'}
-                                    {detail.action === 'skipped' && '⏭️'}
-                                    {detail.action === 'error' && '❌'}
+                <div className="bg-black/20 border border-glass-border/30 rounded-xl overflow-hidden">
+                    <div className="px-4 py-3 border-b border-glass-border/30 bg-white/5 font-semibold text-white flex items-center gap-2">
+                        <FileText size={16} /> Detalles del Proceso
+                    </div>
+                    <div className="max-h-[300px] overflow-y-auto divide-y divide-glass-border/20 p-2">
+                        {result.details.slice(0, 50).map((detail, i) => (
+                            <div key={i} className={`flex items-start gap-3 p-2 text-sm rounded hover:bg-white/5 transition-colors ${detail.action === 'error' ? 'bg-status-error/5' : ''
+                                }`}>
+                                <span className="mt-0.5 shrink-0">
+                                    {detail.action === 'created' && <span className="text-emerald-400 font-mono text-xs px-1.5 py-0.5 bg-emerald-400/10 rounded">NUEVO</span>}
+                                    {detail.action === 'updated' && <span className="text-blue-400 font-mono text-xs px-1.5 py-0.5 bg-blue-400/10 rounded">ACT</span>}
+                                    {detail.action === 'skipped' && <span className="text-orange-400 font-mono text-xs px-1.5 py-0.5 bg-orange-400/10 rounded">OMIT</span>}
+                                    {detail.action === 'error' && <span className="text-status-error font-mono text-xs px-1.5 py-0.5 bg-status-error/10 rounded">ERROR</span>}
                                 </span>
-                                <span className="detail-text">{detail.message}</span>
+                                <span className="text-text-dim">{detail.message}</span>
                             </div>
                         ))}
                     </div>
                 </div>
             )}
 
-            <div className="results-actions">
-                <button className="btn-primary" onClick={onReset}>
-                    Importar Otro Archivo
-                </button>
+            <div className="flex justify-end pt-4">
+                <Button onClick={onReset} className="gap-2 bg-brand-primary text-white hover:bg-brand-primary/90">
+                    <RefreshCw size={16} /> Importar Otro Archivo
+                </Button>
             </div>
         </div>
     )

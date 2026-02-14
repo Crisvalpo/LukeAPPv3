@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react';
 import { createRole, updateRole } from '@/services/roles';
 import type { CompanyRole, RolePermissions, CreateCompanyRoleParams, UpdateCompanyRoleParams } from '@/types';
 import { MODULES } from '@/constants/modules';
-import '@/styles/modal.css';
+import { X, Check, Save } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Heading, Text } from '@/components/ui/Typography';
 
 interface RoleEditorModalProps {
     isOpen: boolean;
@@ -65,7 +67,7 @@ export default function RoleEditorModal({
         } else {
             resetForm();
         }
-    }, [roleToEdit]);
+    }, [roleToEdit, isOpen]);
 
     function resetForm() {
         setFormData({
@@ -81,15 +83,15 @@ export default function RoleEditorModal({
     function handleModuleToggle(moduleId: string) {
         setFormData((prev) => {
             const newPermissions = { ...prev.permissions };
-            // Deep clone modules to avoid mutation
             newPermissions.modules = { ...(newPermissions.modules || {}) };
 
             const currentModule = newPermissions.modules[moduleId];
+            const isNowEnabled = !currentModule?.enabled;
 
             // Toggle enabled state
             newPermissions.modules[moduleId] = {
-                enabled: !currentModule?.enabled,
-                is_home: currentModule?.is_home || false
+                enabled: isNowEnabled,
+                is_home: isNowEnabled ? currentModule?.is_home : false
             };
 
             return { ...prev, permissions: newPermissions };
@@ -99,11 +101,9 @@ export default function RoleEditorModal({
     function handleSetHomeModule(moduleId: string) {
         setFormData((prev) => {
             const newPermissions = { ...prev.permissions };
-            // Deep clone modules
             const modules = { ...(newPermissions.modules || {}) };
             newPermissions.modules = modules;
 
-            // Unset all is_home flags
             Object.keys(modules).forEach((key) => {
                 const mod = modules[key];
                 if (mod) {
@@ -111,7 +111,6 @@ export default function RoleEditorModal({
                 }
             });
 
-            // Set this module as home (and enable it)
             const targetMod = modules[moduleId];
             if (!targetMod) {
                 modules[moduleId] = { enabled: true, is_home: true };
@@ -127,28 +126,20 @@ export default function RoleEditorModal({
         e.preventDefault();
         setError('');
 
-        // Validation
         if (!formData.name.trim()) {
             setError('El nombre del rol es obligatorio');
             return;
         }
 
         const modules = formData.permissions.modules || {};
-
-        // Check if at least one module is enabled
-        const hasEnabledModule = Object.values(modules).some(
-            (m) => m?.enabled
-        );
+        const hasEnabledModule = Object.values(modules).some((m) => m?.enabled);
 
         if (!hasEnabledModule) {
             setError('Debes habilitar al menos un módulo');
             return;
         }
 
-        // Check if a home module is set
-        const hasHomeModule = Object.values(modules).some(
-            (m) => m?.is_home
-        );
+        const hasHomeModule = Object.values(modules).some((m) => m?.is_home);
 
         if (!hasHomeModule) {
             setError('Debes marcar un módulo como "Inicio"');
@@ -161,7 +152,6 @@ export default function RoleEditorModal({
             let result;
 
             if (roleToEdit) {
-                // Update existing role
                 const updates: UpdateCompanyRoleParams = {
                     name: formData.name,
                     description: formData.description || undefined,
@@ -171,7 +161,6 @@ export default function RoleEditorModal({
                 };
                 result = await updateRole(roleToEdit.id, updates);
             } else {
-                // Create new role
                 const params: CreateCompanyRoleParams = {
                     company_id: companyId,
                     name: formData.name,
@@ -199,140 +188,189 @@ export default function RoleEditorModal({
 
     if (!isOpen) return null;
 
-    const modules = formData.permissions.modules || {};
-    const enabledModules = Object.entries(modules)
-        .filter(([_, config]) => config?.enabled)
-        .map(([id]) => id);
+    const currentModules = formData.permissions.modules || {};
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-header">
-                    <h2>{roleToEdit ? 'Editar Rol' : 'Crear Nuevo Rol'}</h2>
-                    <button className="modal-close" onClick={onClose}>
-                        ✕
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in px-4">
+            <div
+                className="bg-bg-surface-1/90 backdrop-blur-2xl border border-glass-border w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-scale-in"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Header */}
+                <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-white/5">
+                    <div className="flex items-center gap-3">
+                        <div className="w-1.2 h-6 bg-brand-primary rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
+                        <Heading level={2} className="text-xl font-bold tracking-tight">
+                            {roleToEdit ? 'Editar Rol' : 'Crear Nuevo Rol'}
+                        </Heading>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2 hover:bg-white/10 rounded-xl transition-colors text-text-dim hover:text-white"
+                    >
+                        <X size={20} />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="modal-body">
-                    {/* Name */}
-                    <div className="form-group">
-                        <label htmlFor="name" className="form-label">
-                            Nombre del Rol *
-                        </label>
-                        <input
-                            id="name"
-                            type="text"
-                            className="form-input"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            placeholder="Ej: Jefe de Calidad"
-                            required
-                        />
-                    </div>
+                <form onSubmit={handleSubmit} className="p-8 max-h-[80vh] overflow-y-auto custom-scrollbar space-y-8">
+                    {/* Basic Info */}
+                    <div className="space-y-6">
+                        <div className="space-y-2">
+                            <label htmlFor="name" className="text-sm font-bold text-text-muted ml-1 flex items-center gap-2">
+                                Nombre del Rol <span className="text-brand-primary">*</span>
+                            </label>
+                            <input
+                                id="name"
+                                type="text"
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all placeholder:text-text-dim"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                placeholder="Ej: Jefe de Calidad"
+                                required
+                            />
+                        </div>
 
-                    {/* Description */}
-                    <div className="form-group">
-                        <label htmlFor="description" className="form-label">
-                            Descripción
-                        </label>
-                        <textarea
-                            id="description"
-                            className="form-textarea"
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            placeholder="Describe las responsabilidades de este rol"
-                            rows={3}
-                        />
-                    </div>
+                        <div className="space-y-2">
+                            <label htmlFor="description" className="text-sm font-bold text-text-muted ml-1">
+                                Descripción
+                            </label>
+                            <textarea
+                                id="description"
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all placeholder:text-text-dim min-h-[100px] resize-none"
+                                value={formData.description}
+                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                placeholder="Describe las responsabilidades de este rol"
+                                rows={3}
+                            />
+                        </div>
 
-                    {/* Color Picker */}
-                    <div className="form-group">
-                        <label className="form-label">Color del Badge</label>
-                        <div className="color-picker">
-                            {PRESET_COLORS.map((color) => (
-                                <button
-                                    key={color}
-                                    type="button"
-                                    className={`color-swatch ${formData.color === color ? 'active' : ''}`}
-                                    style={{ backgroundColor: color }}
-                                    onClick={() => setFormData({ ...formData, color })}
-                                    title={color}
-                                />
-                            ))}
+                        {/* Color Picker */}
+                        <div className="space-y-3">
+                            <label className="text-sm font-bold text-text-muted ml-1">Color del Badge</label>
+                            <div className="flex flex-wrap gap-2.5">
+                                {PRESET_COLORS.map((color) => (
+                                    <button
+                                        key={color}
+                                        type="button"
+                                        className={`w-10 h-10 rounded-xl transition-all duration-300 flex items-center justify-center transform hover:scale-110 active:scale-95 ${formData.color === color
+                                            ? 'ring-2 ring-white ring-offset-4 ring-offset-bg-surface-1 scale-105'
+                                            : 'hover:opacity-80'
+                                            }`}
+                                        style={{ backgroundColor: color }}
+                                        onClick={() => setFormData({ ...formData, color })}
+                                        title={color}
+                                    >
+                                        {formData.color === color && <Check size={18} className="text-white drop-shadow-md" />}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Base Role */}
+                        <div className="space-y-3">
+                            <label htmlFor="base_role" className="text-sm font-bold text-text-muted ml-1 flex items-center gap-2">
+                                Nivel de Sistema <span className="text-text-dim font-normal text-xs">(Seguridad RLS)</span>
+                            </label>
+                            <div className="relative group">
+                                <select
+                                    id="base_role"
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm appearance-none focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all cursor-pointer"
+                                    value={formData.base_role}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            base_role: e.target.value as 'admin' | 'supervisor' | 'worker'
+                                        })
+                                    }
+                                    required
+                                >
+                                    <option value="worker" className="bg-slate-900">Worker - Acceso básico</option>
+                                    <option value="supervisor" className="bg-slate-900">Supervisor - Acceso medio</option>
+                                    <option value="admin" className="bg-slate-900">Admin - Acceso completo</option>
+                                </select>
+                                <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-text-dim group-hover:text-white transition-colors">
+                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <Text size="xs" className="text-text-dim italic ml-1">
+                                Define los permisos a nivel de base de datos.
+                            </Text>
                         </div>
                     </div>
 
-                    {/* Base Role */}
-                    <div className="form-group">
-                        <label htmlFor="base_role" className="form-label">
-                            Nivel de Sistema (para seguridad RLS) *
-                        </label>
-                        <select
-                            id="base_role"
-                            className="form-select"
-                            value={formData.base_role}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    base_role: e.target.value as 'admin' | 'supervisor' | 'worker'
-                                })
-                            }
-                            required
-                        >
-                            <option value="worker">Worker - Acceso básico</option>
-                            <option value="supervisor">Supervisor - Acceso medio</option>
-                            <option value="admin">Admin - Acceso completo</option>
-                        </select>
-                        <p className="form-hint">
-                            Define los permisos de base de datos. No afecta la UX.
-                        </p>
-                    </div>
-
                     {/* Module Permissions */}
-                    <div className="form-group">
-                        <label className="form-label">Módulos Habilitados *</label>
-                        <p className="form-hint">
-                            Selecciona a qué módulos tendrá acceso este rol. Marca uno como "Inicio".
-                        </p>
-                        <div className="module-toggles">
+                    <div className="space-y-4 pt-4 border-t border-white/5">
+                        <div className="space-y-1">
+                            <label className="text-sm font-bold text-text-muted ml-1">Módulos Habilitados</label>
+                            <Text size="xs" className="text-text-dim ml-1">Selecciona los módulos y define la página de inicio.</Text>
+                        </div>
+
+                        <div className="space-y-3">
                             {Object.entries(MODULES).map(([key, module]) => {
                                 const moduleId = module.id;
-                                const isEnabled = modules[moduleId]?.enabled;
-                                const isHome = modules[moduleId]?.is_home;
+                                const isEnabled = currentModules[moduleId]?.enabled;
+                                const isHome = currentModules[moduleId]?.is_home;
 
                                 return (
                                     <div
                                         key={moduleId}
-                                        className={`module-toggle ${isEnabled ? 'enabled' : ''}`}
+                                        className={`group/module border rounded-[1.5rem] transition-all duration-300 relative overflow-hidden ${isEnabled
+                                            ? 'bg-brand-primary/5 border-brand-primary/30'
+                                            : 'bg-white/5 border-white/5 hover:border-white/10 opacity-70 hover:opacity-100'
+                                            }`}
                                     >
-                                        <div className="module-toggle-header">
-                                            <div className="module-info">
-                                                <span className="module-icon">{module.icon}</span>
-                                                <div>
-                                                    <div className="module-name">{module.name}</div>
-                                                    <div className="module-desc">{module.description}</div>
+                                        <div className="p-5 flex items-center justify-between gap-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner border transition-colors ${isEnabled ? 'bg-brand-primary/20 border-brand-primary/40' : 'bg-white/5 border-white/5'
+                                                    }`}>
+                                                    {module.icon}
+                                                </div>
+                                                <div className="space-y-0.5">
+                                                    <span className={`text-sm font-bold transition-colors ${isEnabled ? 'text-white' : 'text-text-muted'}`}>
+                                                        {module.name}
+                                                    </span>
+                                                    <p className="text-[11px] text-text-dim leading-tight sm:block hidden max-w-[200px] truncate">
+                                                        {module.description}
+                                                    </p>
                                                 </div>
                                             </div>
-                                            <label className="toggle-switch">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isEnabled || false}
-                                                    onChange={() => handleModuleToggle(moduleId)}
-                                                />
-                                                <span className="toggle-slider"></span>
-                                            </label>
+
+                                            {/* Premium Switch */}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleModuleToggle(moduleId)}
+                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 outline-none ${isEnabled ? 'bg-brand-primary' : 'bg-white/10'
+                                                    }`}
+                                            >
+                                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${isEnabled ? 'translate-x-6' : 'translate-x-1'
+                                                    }`} />
+                                            </button>
                                         </div>
+
+                                        {/* Home Module Option */}
                                         {isEnabled && (
-                                            <div className="module-home-option">
-                                                <label className="home-checkbox">
+                                            <div className="px-5 pb-5 pt-0 flex items-center gap-3 animate-slide-down">
+                                                <div className="w-12 flex justify-center">
+                                                    <div className="w-px h-4 bg-brand-primary/30" />
+                                                </div>
+                                                <label className="flex items-center gap-2.5 cursor-pointer group/home">
                                                     <input
                                                         type="radio"
                                                         name="home_module"
+                                                        className="sr-only"
                                                         checked={isHome || false}
                                                         onChange={() => handleSetHomeModule(moduleId)}
                                                     />
-                                                    <span>Marcar como Inicio</span>
+                                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${isHome ? 'border-brand-primary bg-brand-primary' : 'border-white/20 group-hover:border-white/40'
+                                                        }`}>
+                                                        {isHome && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                    </div>
+                                                    <span className={`text-[11px] font-bold uppercase tracking-wider transition-colors ${isHome ? 'text-brand-primary' : 'text-text-dim group-hover:text-text-muted'
+                                                        }`}>
+                                                        Marcar como Inicio
+                                                    </span>
                                                 </label>
                                             </div>
                                         )}
@@ -344,26 +382,42 @@ export default function RoleEditorModal({
 
                     {/* Error Message */}
                     {error && (
-                        <div className="error-message">
-                            <span className="error-icon">⚠️</span>
-                            {error}
+                        <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-4 flex items-start gap-3 animate-shake">
+                            <X className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                            <Text size="sm" className="text-destructive font-medium">{error}</Text>
                         </div>
                     )}
-
-                    {/* Action Buttons */}
-                    <div className="modal-actions">
-                        <button type="button" className="btn-cancel" onClick={onClose}>
-                            Cancelar
-                        </button>
-                        <button
-                            type="submit"
-                            className="btn-submit"
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? 'Guardando...' : roleToEdit ? 'Actualizar Rol' : 'Crear Rol'}
-                        </button>
-                    </div>
                 </form>
+
+                {/* Footer Actions */}
+                <div className="p-8 border-t border-white/5 flex gap-4 bg-white/5">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        className="flex-1 rounded-2xl h-14 font-bold text-text-muted hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5"
+                        onClick={onClose}
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        type="submit"
+                        className="flex-1 rounded-2xl h-14 bg-brand-primary hover:bg-brand-primary/90 text-white font-bold shadow-lg shadow-brand-primary/20 disabled:opacity-50"
+                        disabled={isSubmitting}
+                        onClick={handleSubmit}
+                    >
+                        {isSubmitting ? (
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <span>Guardando...</span>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <Save size={18} />
+                                <span>{roleToEdit ? 'Actualizar Rol' : 'Crear Rol'}</span>
+                            </div>
+                        )}
+                    </Button>
+                </div>
             </div>
         </div>
     );

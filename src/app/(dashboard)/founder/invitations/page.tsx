@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { createInvitation, getPendingInvitations, revokeInvitation, type Invitation } from '@/services/invitations'
 import { getProjectsByCompany, type Project } from '@/services/projects'
 import InvitationManager from '@/components/invitations/InvitationManager' // Import reusable component
-import '@/styles/dashboard.css'
+// Styles migrated to Tailwind v4
 import { Heading, Text } from '@/components/ui/Typography'
 
 export default function FounderInvitationsPage() {
@@ -101,15 +101,16 @@ export default function FounderInvitationsPage() {
     }
 
     return (
-        <div className="dashboard-page">
-            <div className="dashboard-header">
-                <div className="dashboard-header-content-wrapper">
-                    <div className="dashboard-header-content">
-                        <div className="dashboard-accent-line" />
-                        <Heading level={1} className="dashboard-title">Gestión de Invitaciones</Heading>
-                    </div>
-                    <Text size="base" className="dashboard-subtitle">Invita administradores y trabajadores a tus proyectos en {companyName}</Text>
+        <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
+            {/* Header */}
+            <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-8 bg-indigo-500 rounded-full" />
+                    <Heading level={1} className="tracking-tight text-white">Centro de Invitaciones</Heading>
                 </div>
+                <Text size="base" className="text-text-muted font-medium ml-4.5">
+                    Envía invitaciones a nuevos miembros y gestiona el acceso a tu organización.
+                </Text>
             </div>
 
             {/* REUSABLE COMPONENT IN ACTION */}

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import { acceptInvitation } from '@/services/invitations'
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
-import '@/styles/invitations.css'
+// Styles migrated to Tailwind v4
 
 import { Suspense } from 'react'
 

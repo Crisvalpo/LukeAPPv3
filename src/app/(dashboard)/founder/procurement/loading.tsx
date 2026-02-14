@@ -1,11 +1,9 @@
 export default function ProcurementLoading() {
     return (
-        <div className="dashboard-page">
-            <div className="dashboard-header">
-                <div>
-                    <div className="skeleton" style={{ width: '200px', height: '32px', marginBottom: '8px' }}></div>
-                    <div className="skeleton" style={{ width: '300px', height: '20px' }}></div>
-                </div>
+        <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
+            <div className="space-y-4">
+                <div className="skeleton" style={{ width: '200px', height: '32px' }}></div>
+                <div className="skeleton ml-4.5" style={{ width: '300px', height: '20px' }}></div>
             </div>
 
             <div className="tabs-nav">

@@ -7,7 +7,8 @@ import { getProjectsByCompany, type Project } from '@/services/projects'
 import { ListView } from '@/components/views/ListView'
 import { ProjectSchema } from '@/schemas/project'
 import { Building2, ChevronRight } from 'lucide-react'
-import '@/styles/dashboard.css'
+import { Heading, Text } from '@/components/ui/Typography'
+import { Button } from '@/components/ui/button'
 
 interface Company {
     id: string
@@ -71,54 +72,51 @@ export default function StaffProjectsPage() {
     }
 
     if (isLoading) {
-        return <div className="dashboard-page"><p style={{ color: 'white', textAlign: 'center' }}>Cargando...</p></div>
+        return (
+            <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
+                <p className="text-white text-center">Cargando...</p>
+            </div>
+        )
     }
 
     return (
-        <div className="dashboard-page">
-            <div className="dashboard-header">
-                <div className="dashboard-header-content">
-                    <div className="dashboard-accent-line" />
-                    <h1 className="dashboard-title">Proyectos Globales</h1>
+        <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in text-text-main">
+            {/* Header */}
+            <div className="space-y-2 relative group">
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-8 bg-indigo-500 rounded-full" />
+                    <Heading level={1} className="tracking-tight text-white">Proyectos Globales</Heading>
                 </div>
-                <p className="dashboard-subtitle">Auditoría y revisión de proyectos por empresa.</p>
+                <Text size="base" className="text-text-muted text-sm font-medium ml-4.5">
+                    Auditoría y revisión de proyectos por empresa.
+                </Text>
             </div>
 
             {/* COMPANY SELECTOR */}
             {!selectedCompany ? (
-                <div className="company-form-container" style={{ maxWidth: '800px', margin: '0 auto' }}>
-                    <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-                        <Building2 size={48} color="#60a5fa" style={{ margin: '0 auto 1rem', opacity: 0.8 }} />
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'white', marginBottom: '0.5rem' }}>
+                <div className="max-w-3xl mx-auto w-full">
+                    <div className="bg-bg-surface-1 border border-glass-border rounded-2xl p-8 shadow-2xl text-center mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
+                        <Building2 size={48} className="text-brand-primary mx-auto mb-4 opacity-80" />
+                        <Heading level={2} className="text-2xl font-bold text-white mb-2">
                             Selecciona una Empresa
-                        </h2>
-                        <p style={{ color: '#94a3b8' }}>
+                        </Heading>
+                        <Text className="text-text-muted">
                             Elige la empresa para ver sus proyectos activos e históricos.
-                        </p>
+                        </Text>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {companies.map(company => (
                             <button
                                 key={company.id}
                                 onClick={() => setSelectedCompany(company)}
-                                className="action-button"
-                                style={{
-                                    width: '100%',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'flex-start',
-                                    padding: '1.5rem',
-                                    background: 'rgba(30, 41, 59, 0.4)',
-                                    height: 'auto',
-                                    gap: '0.5rem'
-                                }}
+                                className="group flex flex-col items-start p-6 bg-bg-surface-1/40 hover:bg-bg-surface-1 border border-glass-border hover:border-brand-primary/50 rounded-xl transition-all duration-300 text-left shadow-lg hover:shadow-brand-primary/10"
                             >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                                    <span style={{ fontWeight: '600', color: 'white', fontSize: '1.1rem' }}>{company.name}</span>
-                                    <ChevronRight size={16} color="#64748b" />
+                                <div className="flex justify-between w-full items-center mb-2">
+                                    <span className="font-bold text-text-main text-lg group-hover:text-brand-primary transition-colors">{company.name}</span>
+                                    <ChevronRight size={18} className="text-text-dim group-hover:translate-x-1 transition-transform" />
                                 </div>
-                                <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontFamily: 'monospace' }}>
+                                <span className="text-[10px] font-mono text-text-dim uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded">
                                     {company.code}
                                 </span>
                             </button>
@@ -128,31 +126,23 @@ export default function StaffProjectsPage() {
             ) : (
                 <>
                     {/* CONTEXT BAR */}
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '1rem 1.5rem',
-                        background: 'rgba(5b, 33, 182, 0.2)',
-                        border: '1px solid rgba(139, 92, 246, 0.3)',
-                        borderRadius: '0.75rem',
-                        marginBottom: '2rem'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                            <div className="company-logo-box" style={{ width: '2.5rem', height: '2.5rem', fontSize: '1.25rem' }}>
-                                <Building2 size={20} />
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-brand-primary/10 border border-brand-primary/20 rounded-xl mb-8">
+                        <div className="flex items-center gap-4 w-full sm:w-auto">
+                            <div className="w-12 h-12 flex items-center justify-center bg-brand-primary rounded-xl text-white shadow-lg shadow-brand-primary/20 shrink-0">
+                                <Building2 size={24} />
                             </div>
                             <div>
-                                <div style={{ fontSize: '0.75rem', color: '#a78bfa', textTransform: 'uppercase', fontWeight: 'bold' }}>Empresa Seleccionada</div>
-                                <div style={{ color: 'white', fontWeight: '600', fontSize: '1.1rem' }}>{selectedCompany.name}</div>
+                                <div className="text-[10px] font-bold text-brand-primary uppercase tracking-tighter">Empresa Seleccionada</div>
+                                <div className="text-white font-bold text-xl">{selectedCompany.name}</div>
                             </div>
                         </div>
-                        <button
+                        <Button
                             onClick={() => setSelectedCompany(null)}
-                            className="action-button"
+                            variant="secondary"
+                            className="w-full sm:w-auto font-bold"
                         >
                             Cambiar Empresa
-                        </button>
+                        </Button>
                     </div>
 
                     {/* REUSABLE PROJECTS LIST (View System) */}

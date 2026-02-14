@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { validateInvitationToken, acceptInvitation } from '@/services/invitations'
 import { createBrowserClient } from '@supabase/ssr'
 import { UserPlus, X } from 'lucide-react'
-import '@/styles/invitations.css'
+// Styles migrated to Tailwind v4 immutablyhandled
 
 export default function AcceptInvitationPage({ params }: { params: Promise<{ token: string }> }) {
     const router = useRouter()

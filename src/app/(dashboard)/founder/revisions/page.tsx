@@ -14,8 +14,8 @@ import { fetchProjectRevisions } from '@/actions/revisions'
 import type { EngineeringRevision } from '@/types'
 import { REVISION_STATUS_LABELS } from '@/constants'
 import { ClipboardList, Hourglass, CheckCircle2, FileText, Inbox } from 'lucide-react'
-import '@/styles/dashboard.css'
-import '@/styles/revisions.css'
+import { Heading, Text } from '@/components/ui/Typography'
+// Styles migrated to Tailwind v4
 
 export default function RevisionsPage() {
     const router = useRouter()
@@ -127,22 +127,16 @@ export default function RevisionsPage() {
 
     if (isLoading) {
         return (
-            <div className="dashboard-page">
-                <p style={{ color: 'white', textAlign: 'center' }}>Cargando...</p>
+            <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
+                <p className="text-white text-center">Cargando...</p>
             </div>
         )
     }
 
     if (error) {
         return (
-            <div className="dashboard-page">
-                <div style={{
-                    padding: '1rem',
-                    background: 'rgba(239, 68, 68, 0.1)',
-                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                    borderRadius: '0.5rem',
-                    color: '#f87171'
-                }}>
+            <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
+                <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400">
                     {error}
                 </div>
             </div>
@@ -150,15 +144,16 @@ export default function RevisionsPage() {
     }
 
     return (
-        <div className="dashboard-page">
+        <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
             {/* Header */}
-            <div className="dashboard-header">
-                <div>
-                    <h1>Revisiones de Ingeniería</h1>
-                    <p className="dashboard-subtitle">
-                        Control de cambios y gestión de impactos
-                    </p>
+            <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-8 bg-indigo-500 rounded-full" />
+                    <Heading level={1} className="tracking-tight text-white">Revisiones de Ingeniería</Heading>
                 </div>
+                <Text size="base" className="text-text-muted font-medium ml-4.5">
+                    Control de cambios y gestión de impactos
+                </Text>
             </div>
 
             {/* Stats Cards */}

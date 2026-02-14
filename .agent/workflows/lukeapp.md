@@ -87,9 +87,10 @@ Only shared domain models and types are allowed.
 
 #### Satellite App Architecture (New Jan 2026)
 - **Web Core (lukeapp.me)**: 
-    - Tech: Next.js + Vanilla CSS (Glassmorphism)
+    - Tech: Next.js + Tailwind CSS v4 + Design System CSS Variables
     - Role: Admin, Engineering, Management
     - State: Online necessary (Self-hosted Ubuntu)
+    - Style: Tailwind utilities for layout, CSS variables for design tokens
 
 - **Field Satellites (field.lukeapp.me, etc)**:
     - Tech: Next.js PWA + Tailwind CSS (Mobile First)
@@ -97,7 +98,7 @@ Only shared domain models and types are allowed.
     - State: Offline First (Service Worker + Local DB)
     - UX: Big buttons, scanner-ready, dark mode default
 
-**Exception Rule**: While Web Core enforces Vanilla CSS, Satellite Apps MAY use Tailwind CSS for rapid mobile UI development and performance.
+**Style Rule**: Both Web Core and Satellite Apps use Tailwind CSS. Design tokens (colors, spacing, radii) remain in CSS variables for consistency.
 
 ### 4️⃣ Offline-first real (no simulación)
 
@@ -159,11 +160,11 @@ Any solution that cannot scale to multiple companies, projects, and teams is inv
 
 ---
 
-## 🎨 DESIGN SYSTEM (Vanilla CSS)
+## 🎨 DESIGN SYSTEM (Tailwind CSS v4 + CSS Variables)
 
 ### Regla de Estilo
 
-**CRÍTICO:** LukeAPP usa **Vanilla CSS puro** con variables CSS. NO usar Tailwind, NO usar frameworks de componentes externos (salvo que el usuario lo solicite explícitamente).
+**CRÍTICO:** LukeAPP usa **Tailwind CSS v4** para layout y utilidades, combinado con **CSS Variables** del design-system.css para tokens de diseno. Las clases utilitarias de Tailwind son la forma preferida para posicionamiento, flexbox, grid y responsividad.
 
 ### Variables de Color Definidas
 
@@ -315,18 +316,15 @@ Todos implementados en Vanilla CSS (`src/components/ui/`):
 ### Reglas de Uso del Design System
 
 **🚫 PROHIBIDO:**
-- Usar colores hexadecimales directos (ej. `#FFFFFF`, `#3b82f6`)
-- Usar píxeles fijos para colores o espaciado en componentes
-- Usar `style={{...}}` para propiedades visuales (color, padding, margin, etc.)
+- Usar colores hexadecimales directos sin variable
+- Usar `style={{...}}` para layout (usar Tailwind)
 - Importar iconos directamente de lucide-react (usar `Icons` mapping)
-- Hardcodear tamaños de fuente (usar `Typography` components o variables)
 
 **✅ REQUERIDO:**
-- Usar variables CSS: `var(--color-primary)`, `var(--spacing-4)`, etc.
-- Usar componentes UI en lugar de HTML crudo
-- Agregar nuevos componentes al Style Guide (`/staff/styleguide`) antes de usar en producción
-- Referenciar clases del design system (`.glass-panel`, `.text-gradient`, `.card-3d`)
-- Usar `Icons.NombreSemántico` en lugar de importar componentes individuales
+- Usar Tailwind CSS para layout: flex, grid, mx-auto, items-center, gap-4, etc.
+- Usar variables CSS para colores de marca: var(--color-primary), bg-brand-primary, etc.
+- Usar componentes UI para elementos interactivos
+- Usar Icons.NombreSemantico en lugar de importar componentes individuales
 
 ### ⚠️ Protección de Componentes Especiales
 
@@ -338,11 +336,11 @@ Todos implementados en Vanilla CSS (`src/components/ui/`):
 
 ### Convenciones de Estilo
 
-1. **BEM Naming**: `.component__element--modifier`
-2. **CSS en archivos separados**: Cada componente tiene su `.css`
-3. **Importar CSS en componente**: `import './component.css'`
-4. **Usar variables**: Siempre preferir variables CSS del design system
-5. **No hardcodear colores**: Nunca usar `#fff`, `rgba()`, etc. directamente
+1. **Tailwind-first**: Usar clases utilitarias para layout, spacing, y responsividad
+2. **CSS Variables para tokens**: Colores de marca, sombras, y radii del design system
+3. **CSS custom**: Solo cuando Tailwind no es suficiente para componentes complejos
+4. **@theme block**: Tokens personalizados en globals.css
+5. **No hardcodear colores**: Usar bg-brand-primary, text-slate-400, o var(--color-*)
 
 ---
 

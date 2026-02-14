@@ -2,8 +2,7 @@
 
 import { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import '@/styles/dashboard.css'
-import '@/styles/staff-dashboard.css'
+// Styles migrated to Tailwind v4
 
 interface StatCardProps {
     title: string
@@ -25,30 +24,30 @@ export default function StatCard({
     disabled = false
 }: StatCardProps) {
 
-    // Map standard colors to RGBA/Hex for consistent design system
-    const colorMap: Record<string, { bg: string, border: string, iconBg: string, text: string }> = {
-        blue: { bg: 'rgba(59, 130, 246, 0.1)', border: 'rgba(59, 130, 246, 0.3)', iconBg: 'rgba(59, 130, 246, 0.1)', text: '#60a5fa' },
-        purple: { bg: 'rgba(139, 92, 246, 0.1)', border: 'rgba(139, 92, 246, 0.3)', iconBg: 'rgba(139, 92, 246, 0.1)', text: '#a78bfa' },
-        green: { bg: 'rgba(34, 197, 94, 0.1)', border: 'rgba(34, 197, 94, 0.3)', iconBg: 'rgba(34, 197, 94, 0.1)', text: '#4ade80' },
-        orange: { bg: 'rgba(251, 146, 60, 0.1)', border: 'rgba(251, 146, 60, 0.3)', iconBg: 'rgba(251, 146, 60, 0.1)', text: '#fb923c' },
-        red: { bg: 'rgba(248, 113, 113, 0.1)', border: 'rgba(248, 113, 113, 0.3)', iconBg: 'rgba(248, 113, 113, 0.1)', text: '#f87171' },
+    // Map standard colors to Tailwind classes
+    const colorClasses: Record<string, { bg: string, border: string, text: string, iconBg: string }> = {
+        blue: { bg: 'bg-brand-primary/10', border: 'border-brand-primary/20', text: 'text-brand-primary', iconBg: 'bg-brand-primary/10' },
+        purple: { bg: 'bg-purple-500/10', border: 'border-purple-500/20', text: 'text-purple-400', iconBg: 'bg-purple-500/10' },
+        green: { bg: 'bg-green-500/10', border: 'border-green-500/20', text: 'text-green-400', iconBg: 'bg-green-500/10' },
+        orange: { bg: 'bg-orange-500/10', border: 'border-orange-500/20', text: 'text-orange-400', iconBg: 'bg-orange-500/10' },
+        red: { bg: 'bg-red-500/10', border: 'border-red-500/20', text: 'text-red-400', iconBg: 'bg-red-500/10' },
     }
 
-    const theme = colorMap[color] || colorMap['blue']
+    const theme = colorClasses[color] || colorClasses['blue']
 
     return (
-        <div className="company-form-container stat-card">
-            <div className="stat-card__header">
-                <div className="stat-card__content">
-                    <div className="stat-card__title">
+        <div className={`glass-panel p-6 flex flex-col gap-4 group transition-all hover:bg-white/5 ${theme.border}`}>
+            <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                    <p className="text-xs font-semibold text-text-dim uppercase tracking-wider">
                         {title}
-                    </div>
-                    <div className="stat-card__value">
+                    </p>
+                    <p className="text-2xl md:text-3xl font-bold text-text-main">
                         {value}
-                    </div>
+                    </p>
                 </div>
-                <div className={`stat-card__icon stat-card__icon--${color}`}>
-                    <Icon size={24} color={theme.text} />
+                <div className={`p-3 rounded-xl ${theme.iconBg} ${theme.text}`}>
+                    <Icon size={24} />
                 </div>
             </div>
 
@@ -58,9 +57,10 @@ export default function StatCard({
                     disabled={disabled}
                     variant="ghost"
                     size="sm"
-                    className={`stat-card__button stat-card__button--${color}`}
+                    className={`w-full justify-between hover:${theme.bg} ${theme.text} border border-transparent hover:${theme.border}`}
                 >
                     {disabled ? 'Próximamente' : buttonText}
+                    <Icon size={14} className="ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
             )}
         </div>

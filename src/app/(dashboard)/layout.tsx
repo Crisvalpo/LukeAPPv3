@@ -75,52 +75,50 @@ export default async function DashboardLayout({
     // 3. Fetch company details for non-staff users (for Sidebar header)
     let companyName: string | null = null
     let planTier: string | null = null
+    let companyLogoUrl: string | null = null
 
     if (role !== 'super_admin' && memberData.company_id) {
         const { data: companyData } = await supabase
             .from('companies')
-            .select('name, subscription_tier')
+            .select('name, subscription_tier, logo_url')
             .eq('id', memberData.company_id)
             .single()
 
         if (companyData) {
             companyName = companyData.name
             planTier = companyData.subscription_tier
+            companyLogoUrl = companyData.logo_url
         }
     }
 
     return (
-        <div style={{ display: 'flex', height: '100vh', background: '#0f172a', color: '#f1f5f9', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-            {/* Left Sidebar (Fixed) - Role Aware */}
+        <div
+            className="flex flex-col min-h-screen bg-bg-app text-text-main font-sans overflow-hidden"
+        >
+            {/* 📱 Mobile Navbar - Added ml-12 to avoid overlap with fixed hamburger button */}
+            <div className="md:hidden flex items-center justify-between p-4 bg-bg-surface-1 border-b border-glass-border">
+                <span className="text-xl font-bold text-brand-primary ml-12">LukeAPP</span>
+            </div>
+
+            {/* Left Sidebar (Fixed on Desktop, Overlay on Mobile) */}
             <Sidebar
                 role={role}
                 companyName={companyName}
                 companyId={memberData.company_id}
+                companyLogoUrl={companyLogoUrl}
                 planTier={planTier}
                 userEmail={user.email}
                 functionalRoleName={functionalRoleName}
             />
 
-            {/* Main Content Area (Scrollable) */}
-            <main style={{
-                marginLeft: '16rem',
-                width: 'calc(100% - 16rem)',
-                flex: 1,
-                overflowY: 'auto',
-                position: 'relative',
-                background: '#0f172a'
-            }}>
+            {/* Main Content Area - Dynamic padding in desktop based on sidebar state */}
+            <main className="flex-1 overflow-y-auto relative bg-bg-app md:pl-[var(--sidebar-width)] transition-[padding] duration-300">
                 <DashboardContent companyId={memberData.company_id} userRole={role}>
                     {/* 🚨 QUOTA BANNER */}
                     <QuotaLimitBanner companyId={memberData.company_id} roleId={role} />
 
-                    {/* Page Content */}
-                    <div style={{
-                        padding: '2rem',
-                        maxWidth: '80rem',
-                        marginLeft: 'auto',
-                        marginRight: 'auto'
-                    }}>
+                    {/* Page Content - Added pt-14 on mobile to avoid overlap with hamburger button. Pages handle their own pt-8. */}
+                    <div className="pt-14 p-4 md:pt-0 md:px-8 max-w-[80rem] mx-auto w-full">
                         {children}
                     </div>
                 </DashboardContent>

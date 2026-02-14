@@ -109,62 +109,101 @@ export default function CreateMIRModal({
     if (!isOpen) return null
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-header">
-                    <h2>{requestType === 'CLIENT_MIR' ? 'Nueva Solicitud de Material (MIR)' : 'Nueva Orden de Compra'}</h2>
-                    <button onClick={onClose} className="modal-close">✕</button>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity" onClick={onClose} />
+
+            <div className="relative w-full max-w-2xl bg-bg-surface-1 border border-glass-border rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                <div className="p-6 border-b border-glass-border/30 flex justify-between items-center bg-white/5">
+                    <div>
+                        <h2 className="text-xl font-bold text-white mb-1">
+                            {requestType === 'CLIENT_MIR' ? 'Nueva Solicitud de Material (MIR)' : 'Nueva Orden de Compra'}
+                        </h2>
+                        <p className="text-text-dim text-sm">
+                            {requestType === 'CLIENT_MIR' ? 'Solicita materiales suministrados por el cliente.' : 'Genera una orden de compra interna.'}
+                        </p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2 rounded-full hover:bg-white/10 text-text-dim hover:text-white transition-colors"
+                    >
+                        ✕
+                    </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="modal-body">
+                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
                     {/* Request Type */}
-                    <div className="form-group">
-                        <label>Tipo de Solicitud</label>
-                        <select
-                            value={requestType}
-                            onChange={(e) => setRequestType(e.target.value as MaterialRequestTypeEnum)}
-                            className="form-select"
-                        >
-                            <option value="CLIENT_MIR">Material del Cliente (MIR)</option>
-                            <option value="CONTRACTOR_PO">Compra Contractor (PO)</option>
-                        </select>
-                        <small>MIR = Material suministrado por el cliente | PO = Material a comprar</small>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-text-dim">Tipo de Solicitud</label>
+                        <div className="grid grid-cols-2 gap-4">
+                            <button
+                                type="button"
+                                onClick={() => setRequestType(MaterialRequestTypeEnum.CLIENT_MIR)}
+                                className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${requestType === 'CLIENT_MIR'
+                                        ? 'bg-brand-primary/20 border-brand-primary text-white shadow-lg shadow-brand-primary/10'
+                                        : 'bg-white/5 border-glass-border/30 text-text-dim hover:bg-white/10 hover:border-white/20'
+                                    }`}
+                            >
+                                <span className="text-2xl">👷</span>
+                                <span className="font-semibold">Material del Cliente (MIR)</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setRequestType(MaterialRequestTypeEnum.CONTRACTOR_PO)}
+                                className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${requestType === 'CONTRACTOR_PO'
+                                        ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-lg shadow-emerald-500/10'
+                                        : 'bg-white/5 border-glass-border/30 text-text-dim hover:bg-white/10 hover:border-white/20'
+                                    }`}
+                            >
+                                <span className="text-2xl">🏭</span>
+                                <span className="font-semibold">Compra Contractor (PO)</span>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Items */}
-                    <div className="form-group">
-                        <div className="items-header">
-                            <label>Items de Material</label>
-                            <button type="button" onClick={addItem} className="btn-add">
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <label className="text-sm font-medium text-text-dim">Ítems de Material</label>
+                            <button
+                                type="button"
+                                onClick={addItem}
+                                className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs font-medium text-brand-primary hover:bg-brand-primary/10 hover:border-brand-primary/30 transition-all flex items-center gap-1.5"
+                            >
                                 + Agregar Ítem
                             </button>
                         </div>
 
-                        <div className="items-list">
+                        <div className="space-y-3">
                             {items.map((item, index) => (
-                                <div key={index} className="item-row">
-                                    <input
-                                        type="text"
-                                        placeholder="Especificación (ej: ELBOW 90 4IN SCH40)"
-                                        value={item.material_spec}
-                                        onChange={(e) => updateItem(index, 'material_spec', e.target.value)}
-                                        className="item-spec"
-                                        required
-                                    />
-                                    <input
-                                        type="number"
-                                        placeholder="Cant."
-                                        value={item.quantity_requested}
-                                        onChange={(e) => updateItem(index, 'quantity_requested', parseFloat(e.target.value))}
-                                        className="item-quantity"
-                                        min="0.01"
-                                        step="0.01"
-                                        required
-                                    />
+                                <div key={index} className="grid grid-cols-[1fr,100px,auto] gap-3 items-start animate-in fade-in slide-in-from-left-4 duration-300">
+                                    <div className="space-y-1">
+                                        <input
+                                            type="text"
+                                            placeholder="Especificación (ej: ELBOW 90 4IN SCH40)"
+                                            value={item.material_spec}
+                                            onChange={(e) => updateItem(index, 'material_spec', e.target.value)}
+                                            className="w-full px-4 py-2.5 bg-black/30 border border-glass-border/50 rounded-lg text-white focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary/50 outline-none transition-all placeholder:text-text-dim/50 text-sm font-mono"
+                                            required
+                                            autoFocus={items.length > 1 && index === items.length - 1} // Focus new item
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <input
+                                            type="number"
+                                            placeholder="Cant."
+                                            value={item.quantity_requested}
+                                            onChange={(e) => updateItem(index, 'quantity_requested', parseFloat(e.target.value))}
+                                            className="w-full px-4 py-2.5 bg-black/30 border border-glass-border/50 rounded-lg text-white focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary/50 outline-none transition-all placeholder:text-text-dim/50 text-sm text-center font-mono"
+                                            min="0.01"
+                                            step="0.01"
+                                            required
+                                        />
+                                    </div>
                                     <button
                                         type="button"
                                         onClick={() => removeItem(index)}
-                                        className="btn-remove"
+                                        className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 hover:border-rose-500/40 transition-all h-[42px] width-[42px] flex items-center justify-center"
+                                        title="Eliminar ítem"
                                     >
                                         🗑️
                                     </button>
@@ -172,257 +211,57 @@ export default function CreateMIRModal({
                             ))}
 
                             {items.length === 0 && (
-                                <p className="empty-items">
-                                    No hay ítems. Haz clic en "Agregar Ítem" para comenzar.
-                                </p>
+                                <div className="p-8 border-2 border-dashed border-glass-border/30 rounded-xl bg-white/5 flex flex-col items-center justify-center text-center gap-2">
+                                    <span className="text-2xl opacity-50">📋</span>
+                                    <p className="text-text-dim text-sm">No hay ítems agregados.<br />Haz clic en "Agregar Ítem" para comenzar.</p>
+                                </div>
                             )}
                         </div>
                     </div>
 
                     {/* Notes */}
-                    <div className="form-group">
-                        <label>Notas (Opcional)</label>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-text-dim">Notas (Opcional)</label>
                         <textarea
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
-                            placeholder="Observaciones, instrucciones especiales..."
-                            className="form-textarea"
-                            rows={3}
+                            placeholder="Observaciones, instrucciones especiales o referencias adicionales..."
+                            className="w-full px-4 py-3 bg-black/30 border border-glass-border/50 rounded-lg text-white focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary/50 outline-none transition-all placeholder:text-text-dim/50 min-h-[100px] resize-none"
                         />
                     </div>
 
                     {/* Error */}
                     {error && (
-                        <div className="error-message">{error}</div>
+                        <div className="p-4 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-200 text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                            ⚠️ {error}
+                        </div>
                     )}
-
-                    {/* Actions */}
-                    <div className="modal-actions">
-                        <button type="button" onClick={onClose} className="btn-cancel">
-                            Cancelar
-                        </button>
-                        <button type="submit" disabled={loading} className="btn-submit">
-                            {loading ? 'Creando...' : 'Crear Solicitud'}
-                        </button>
-                    </div>
                 </form>
 
-                <style jsx>{`
-                    .modal-overlay {
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        right: 0;
-                        bottom: 0;
-                        background: rgba(0, 0, 0, 0.7);
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        z-index: 1000;
-                        padding: 1rem;
-                    }
-
-                    .modal-content {
-                        background: #1a202c;
-                        border-radius: 12px;
-                        max-width: 700px;
-                        width: 100%;
-                        max-height: 90vh;
-                        display: flex;
-                        flex-direction: column;
-                        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-                    }
-
-                    .modal-header {
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        padding: 1.5rem;
-                        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                        flex-shrink: 0;
-                    }
-
-                    .modal-header h2 {
-                        font-size: 1.5rem;
-                        font-weight: 600;
-                        color: #f7fafc;
-                        margin: 0;
-                    }
-
-                    .modal-close {
-                        background: none;
-                        border: none;
-                        color: #cbd5e0;
-                        font-size: 1.5rem;
-                        cursor: pointer;
-                        padding: 0.5rem;
-                        line-height: 1;
-                    }
-
-                    .modal-close:hover {
-                        color: #e53e3e;
-                    }
-
-                    .modal-body {
-                        padding: 1.5rem;
-                        overflow-y: auto;
-                        flex: 1;
-                    }
-
-                    .form-group {
-                        margin-bottom: 1.5rem;
-                    }
-
-                    .form-group label {
-                        display: block;
-                        font-weight: 500;
-                        color: #e2e8f0;
-                        margin-bottom: 0.5rem;
-                    }
-
-                    .form-group small {
-                        display: block;
-                        color: #a0aec0;
-                        font-size: 0.85rem;
-                        margin-top: 0.25rem;
-                    }
-
-                    .form-select,
-                    .form-textarea {
-                        width: 100%;
-                        background: rgba(0, 0, 0, 0.3);
-                        border: 1px solid rgba(255, 255, 255, 0.1);
-                        border-radius: 6px;
-                        padding: 0.75rem;
-                        color: #f7fafc;
-                        font-size: 1rem;
-                    }
-
-                    .form-select:focus,
-                    .form-textarea:focus {
-                        outline: none;
-                        border-color: #63b3ed;
-                    }
-
-                    .items-header {
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        margin-bottom: 1rem;
-                    }
-
-                    .btn-add {
-                        background: #48bb78;
-                        color: white;
-                        border: none;
-                        padding: 0.5rem 1rem;
-                        border-radius: 6px;
-                        font-size: 0.9rem;
-                        cursor: pointer;
-                        font-weight: 500;
-                    }
-
-                    .btn-add:hover {
-                        background: #38a169;
-                    }
-
-                    .items-list {
-                        display: flex;
-                        flex-direction: column;
-                        gap: 0.75rem;
-                    }
-
-                    .item-row {
-                        display: grid;
-                        grid-template-columns: 1fr auto auto;
-                        gap: 0.5rem;
-                        align-items: center;
-                    }
-
-                    .item-spec,
-                    .item-quantity {
-                        background: rgba(0, 0, 0, 0.3);
-                        border: 1px solid rgba(255, 255, 255, 0.1);
-                        border-radius: 6px;
-                        padding: 0.75rem;
-                        color: #f7fafc;
-                        font-size: 0.95rem;
-                    }
-
-                    .item-quantity {
-                        width: 100px;
-                    }
-
-                    .btn-remove {
-                        background: none;
-                        border: none;
-                        font-size: 1.2rem;
-                        cursor: pointer;
-                        padding: 0.5rem;
-                        opacity: 0.6;
-                    }
-
-                    .btn-remove:hover {
-                        opacity: 1;
-                    }
-
-                    .empty-items {
-                        text-align: center;
-                        color: #718096;
-                        padding: 2rem;
-                        font-style: italic;
-                    }
-
-                    .error-message {
-                        background: rgba(245, 101, 101, 0.1);
-                        border: 1px solid #fc8181;
-                        border-radius: 6px;
-                        padding: 0.75rem;
-                        color: #fc8181;
-                        margin-bottom: 1rem;
-                    }
-
-                    .modal-actions {
-                        display: flex;
-                        gap: 1rem;
-                        justify-content: flex-end;
-                        padding-top: 1rem;
-                        border-top: 1px solid rgba(255, 255, 255, 0.1);
-                    }
-
-                    .btn-cancel,
-                    .btn-submit {
-                        padding: 0.75rem 1.5rem;
-                        border-radius: 6px;
-                        font-weight: 500;
-                        cursor: pointer;
-                        border: none;
-                        font-size: 1rem;
-                    }
-
-                    .btn-cancel {
-                        background: rgba(255, 255, 255, 0.1);
-                        color: #e2e8f0;
-                    }
-
-                    .btn-cancel:hover {
-                        background: rgba(255, 255, 255, 0.15);
-                    }
-
-                    .btn-submit {
-                        background: #4299e1;
-                        color: white;
-                    }
-
-                    .btn-submit:hover:not(:disabled) {
-                        background: #3182ce;
-                    }
-
-                    .btn-submit:disabled {
-                        opacity: 0.5;
-                        cursor: not-allowed;
-                    }
-                `}</style>
+                <div className="p-6 border-t border-glass-border/30 bg-black/20 flex gap-3">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="flex-1 py-3 px-4 rounded-xl border border-glass-border/50 text-text-dim font-semibold hover:bg-white/5 hover:text-white transition-colors disabled:opacity-50"
+                        disabled={loading}
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={loading || items.length === 0}
+                        className="flex-1 py-3 px-4 rounded-xl bg-brand-primary text-white font-bold hover:bg-brand-primary/90 transition-colors shadow-lg shadow-brand-primary/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                        {loading ? (
+                            <>
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                Creando...
+                            </>
+                        ) : (
+                            'Crear Solicitud'
+                        )}
+                    </button>
+                </div>
             </div>
         </div>
     )

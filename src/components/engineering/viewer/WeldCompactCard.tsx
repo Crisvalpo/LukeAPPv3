@@ -77,66 +77,34 @@ export default function WeldCompactCard({ weld, weldTypeConfig, onClick }: WeldC
                 e.stopPropagation() // Prevent event from bubbling to parent spool card
                 onClick()
             }}
-            style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '8px 12px',
-                backgroundColor: '#1a1d2e',
-                borderRadius: '6px',
-                border: '1px solid #334155',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                fontSize: '0.85rem',
-                marginBottom: '4px'
-            }}
-            onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)'
-                e.currentTarget.style.borderColor = '#3b82f6'
-            }}
-            onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#1a1d2e'
-                e.currentTarget.style.borderColor = '#334155'
-            }}
+            className="flex items-center gap-3 p-2 bg-slate-900/50 rounded-md border border-slate-700 cursor-pointer transition-all duration-150 text-sm mb-1 hover:bg-blue-500/10 hover:border-blue-500 group"
         >
             {/* Dynamic Icon */}
-            <span style={{ fontSize: '1.1rem' }}>{weldIcon}</span>
+            <span className="text-lg">{weldIcon}</span>
 
             {/* Weld Number */}
-            <span style={{
-                fontWeight: 'bold',
-                color: '#e2e8f0',
-                fontSize: '0.9rem'
-            }}>
+            <span className="font-bold text-slate-200 text-sm">
                 {weld.weld_number}
             </span>
 
             {/* NPS */}
             {weld.nps && (
-                <span style={{
-                    color: '#94a3b8',
-                    fontSize: '0.8rem',
-                    fontFamily: 'monospace'
-                }}>
+                <span className="text-slate-400 text-xs font-mono">
                     {weld.nps.endsWith('"') ? weld.nps : `${weld.nps}"`}
                 </span>
             )}
 
             {/* Spacer */}
-            <div style={{ flex: 1 }} />
+            <div className="flex-1" />
 
             {/* Status Button Indicator */}
-            <div style={{
-                width: '18px',
-                height: '18px',
-                borderRadius: '50%',
-                backgroundColor: statusColor.fill,
-                boxShadow: `0 0 8px ${statusColor.text}40`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#1a1d2e' // Dark icon color for contrast against bright fill
-            }}>
+            <div
+                className="w-[18px] h-[18px] rounded-full flex items-center justify-center text-slate-900"
+                style={{
+                    backgroundColor: statusColor.fill,
+                    boxShadow: `0 0 8px ${statusColor.text}40`,
+                }}
+            >
                 {isExecuted && <Check size={12} strokeWidth={4} />}
                 {isDeleted && <X size={12} strokeWidth={4} />}
             </div>

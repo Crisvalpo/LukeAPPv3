@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { getOnboardingStatus, type OnboardingStatus, type OnboardingStep } from '@/actions/onboarding';
 import { ONBOARDING_MESSAGES } from '@/config/onboarding-messages';
 import { CheckCircle, Lock, ChevronDown } from 'lucide-react';
-import '@/styles/onboarding.css';
+// Styles migrated to Tailwind v4
 
 import Confetti from './Confetti'; // Add import
 

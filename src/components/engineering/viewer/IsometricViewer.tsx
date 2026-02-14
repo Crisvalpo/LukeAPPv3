@@ -435,14 +435,7 @@ export default function IsometricViewer({
     console.log('[IsometricViewer] Version check: Conditional Transparency Logic v3') // Debug log
 
     return (
-        <div style={{
-            position: 'relative',
-            width: '100%',
-            height: '100%',
-            backgroundColor: '#1e293b',
-            borderRadius: '12px',
-            overflow: 'hidden',
-        }}>
+        <div className="relative w-full h-full bg-slate-800 rounded-xl overflow-hidden">
             <Canvas shadows dpr={[1, 2]} camera={{ position: [10, 10, 10], fov: 45 }}>
                 <color attach="background" args={['#1e293b']} />
 

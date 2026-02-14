@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import '@/styles/views/form-view.css'
+// Styles migrated to Tailwind v4
 import { ViewSchema } from '@/schemas/company' // Assuming shared type
 import { InputField } from '@/components/ui/InputField'
 import { Button } from '@/components/ui/button'

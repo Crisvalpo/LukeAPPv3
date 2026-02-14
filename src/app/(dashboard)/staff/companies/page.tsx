@@ -8,8 +8,6 @@ import { Heading, Text } from '@/components/ui/Typography'
 import { ListView } from '@/components/views/ListView'
 import { FormView } from '@/components/views/FormView'
 import { CompanySchema } from '@/schemas/company'
-import '@/styles/dashboard.css'
-import '@/styles/companies.css'
 
 export default function CompaniesPage() {
     const router = useRouter()
@@ -45,30 +43,31 @@ export default function CompaniesPage() {
 
     if (loading) {
         return (
-            <div className="dashboard-page">
-                <Text size="base" style={{ textAlign: 'center' }}>Cargando...</Text>
+            <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+                <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+                <Text size="base" className="text-slate-400 animate-pulse font-medium">Cargando empresas...</Text>
             </div>
         )
     }
 
     return (
-        <div className="dashboard-page companies-page">
+        <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
             {/* Header */}
-            <div className="dashboard-header">
-                <div className="dashboard-header-content">
-                    <div className="dashboard-accent-line" />
-                    <Heading level={1} className="dashboard-title">Gestión de Empresas</Heading>
+            <div className="relative">
+                <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-8 bg-indigo-500 rounded-full" />
+                        <Heading level={1} className="text-white tracking-tight">Gestión de Empresas</Heading>
+                    </div>
+                    <Text size="base" className="text-slate-400 text-sm font-medium ml-4.5">
+                        Administra las empresas y sus suscripciones en la plataforma
+                    </Text>
                 </div>
-                <Text size="base" className="dashboard-subtitle">Administra las empresas que utilizan la plataforma</Text>
             </div>
-
-            {/* Actions Bar removed - integrated into ListView */}
-
-            {/* Form Section */}
 
             {/* Form Section */}
             {showCreateForm && (
-                <div className="company-form-container">
+                <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-8 shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500 backdrop-blur-xl">
                     <FormView
                         schema={CompanySchema}
                         title="Nueva Empresa"
@@ -90,7 +89,6 @@ export default function CompaniesPage() {
                             if (result.success) {
                                 setSuccess(true)
                                 loadCompanies()
-                                // Optional: Auto-close form on success after short delay or immediately
                                 setTimeout(() => {
                                     setShowCreateForm(false)
                                     setSuccess(false)
@@ -102,23 +100,27 @@ export default function CompaniesPage() {
                         }}
                         isSubmitting={submitting}
                     />
-                    {/* Success Message outside form or custom handling */}
+                    {/* Success Message */}
                     {success && (
-                        <div className="company-success">
-                            <Heading level={3} className="company-success-title">✅ Empresa creada exitosamente</Heading>
-                            <Text size="sm" className="company-success-text">La lista se ha actualizado.</Text>
+                        <div className="mt-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-3 animate-in zoom-in-95 duration-300">
+                            <span className="text-2xl text-emerald-400">✨</span>
+                            <div>
+                                <Heading level={3} className="text-emerald-400 font-bold">Empresa creada exitosamente</Heading>
+                                <Text size="sm" className="text-emerald-400/70">La lista se ha actualizado automáticamente.</Text>
+                            </div>
                         </div>
                     )}
                     {error && (
-                        <div className="error-message">
-                            {error}
+                        <div className="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 flex items-center gap-3">
+                            <span className="text-xl">⚠️</span>
+                            <span className="font-medium">{error}</span>
                         </div>
                     )}
                 </div>
             )}
 
             {/* Companies List */}
-            <div className="companies-list-wrapper">
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
                 <ListView
                     schema={CompanySchema}
                     data={companies}

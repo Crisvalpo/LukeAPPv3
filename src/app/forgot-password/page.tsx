@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import { Mail, ArrowLeft } from 'lucide-react'
-import '@/styles/invitations.css'
+// Styles migrated to Tailwind v4
 
 export default function ForgotPasswordPage() {
     const router = useRouter()

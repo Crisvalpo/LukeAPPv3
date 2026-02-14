@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { getProjectById, deleteProjectComplete, type Project } from '@/services/projects'
-import { ArrowLeft, FileText, Trash2, LayoutDashboard, AlertTriangle } from 'lucide-react'
-import '@/styles/dashboard.css'
-import '@/styles/companies.css'
+import { ArrowLeft, FileText, Trash2, LayoutDashboard, AlertTriangle, Building2 } from 'lucide-react'
+import { Heading, Text } from '@/components/ui/Typography'
+import { Button } from '@/components/ui/button'
 
 interface ProjectDetails extends Project {
     contract_number?: string
@@ -65,99 +65,112 @@ export default function StaffProjectDetailPage() {
     }
 
     if (isLoading) {
-        return <div className="dashboard-page"><p style={{ color: 'white', textAlign: 'center' }}>Cargando...</p></div>
+        return (
+            <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
+                <p className="text-white text-center">Cargando...</p>
+            </div>
+        )
     }
 
     if (!project) {
-        return <div className="dashboard-page"><p style={{ color: 'white', textAlign: 'center' }}>Proyecto no encontrado</p></div>
+        return (
+            <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
+                <p className="text-white text-center">Proyecto no encontrado</p>
+            </div>
+        )
     }
 
     return (
-        <div className="dashboard-page">
+        <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in text-text-main">
             {/* Header */}
-            <div className="dashboard-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                    <button
-                        onClick={() => router.push('/staff/projects')}
-                        className="action-button"
-                        style={{ padding: '0.5rem', width: 'auto' }}
-                    >
-                        <ArrowLeft size={20} />
-                    </button>
-                    <div className="dashboard-header-content">
-                        <div className="dashboard-accent-line" />
-                        <h1 className="dashboard-title">
-                            {project.name}
-                        </h1>
+            <div className="space-y-2 relative group">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div className="flex items-center gap-4">
+                        <Button
+                            onClick={() => router.push('/staff/projects')}
+                            variant="ghost"
+                            size="icon"
+                            className="w-10 h-10 rounded-full hover:bg-white/5 border border-white/5"
+                        >
+                            <ArrowLeft size={20} />
+                        </Button>
+                        <div className="flex items-center gap-3">
+                            <div className="w-1.5 h-8 bg-indigo-500 rounded-full" />
+                            <Heading level={1} className="tracking-tight text-white">
+                                {project.name}
+                            </Heading>
+                        </div>
                     </div>
                 </div>
-                <p className="dashboard-subtitle">
-                    {project.code} • <span style={{ textTransform: 'capitalize' }}>{project.status.replace('_', ' ')}</span>
-                </p>
+                <div className="flex items-center gap-3 ml-18">
+                    <span className="text-[10px] font-mono text-text-dim uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded">
+                        {project.code}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${project.status === 'active'
+                        ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                        : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                        }`}>
+                        {project.status.replace('_', ' ')}
+                    </span>
+                </div>
             </div>
 
-            <div className="company-form-container">
-                <div style={{ padding: '1rem' }}>
+            <div className="bg-bg-surface-1 border border-glass-border rounded-2xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="p-8">
                     {/* Info Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
-                        <div>
-                            <h3 style={{ fontSize: '0.875rem', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '0.5rem', fontWeight: '600' }}>
-                                Cliente
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+                        <div className="space-y-2">
+                            <h3 className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                <Building2 size={12} className="text-brand-primary" /> Cliente
                             </h3>
-                            <div style={{ fontSize: '1.125rem', color: 'white', fontWeight: '500' }}>
-                                {project.client_name || <span style={{ color: '#475569', fontStyle: 'italic' }}>No especificado</span>}
+                            <div className="text-lg text-white font-medium">
+                                {project.client_name || <span className="text-text-dim/40 italic font-normal">No especificado</span>}
                             </div>
                         </div>
 
-                        <div>
-                            <h3 style={{ fontSize: '0.875rem', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '0.5rem', fontWeight: '600' }}>
-                                Contrato
+                        <div className="space-y-2">
+                            <h3 className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                <FileText size={12} className="text-brand-primary" /> Contrato
                             </h3>
-                            <div style={{ fontSize: '1.125rem', color: 'white', fontWeight: '500', fontFamily: 'monospace' }}>
-                                {project.contract_number || <span style={{ color: '#475569', fontStyle: 'italic', fontFamily: 'sans-serif' }}>No especificado</span>}
+                            <div className="text-lg text-white font-mono">
+                                {project.contract_number || <span className="text-text-dim/40 italic font-normal font-sans">No especificado</span>}
                             </div>
                         </div>
 
-                        <div>
-                            <h3 style={{ fontSize: '0.875rem', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '0.5rem', fontWeight: '600' }}>
-                                Descripción
+                        <div className="space-y-2 md:col-span-2 lg:col-span-1">
+                            <h3 className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                <LayoutDashboard size={12} className="text-brand-primary" /> Descripción
                             </h3>
-                            <div style={{ fontSize: '1rem', color: '#cbd5e1', lineHeight: '1.6' }}>
-                                {project.description || <span style={{ color: '#475569', fontStyle: 'italic' }}>Sin descripción</span>}
+                            <div className="text-sm text-text-muted leading-relaxed">
+                                {project.description || <span className="text-text-dim/40 italic">Sin descripción</span>}
                             </div>
                         </div>
                     </div>
 
                     {/* ACTIONS */}
-                    <div style={{ display: 'flex', gap: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '2rem' }}>
+                    <div className="flex flex-col sm:flex-row gap-4 pt-8 border-t border-glass-border">
                         {/* Audit Button (Future) */}
-                        <button
-                            className="action-button disabled"
-                            style={{ width: 'auto', padding: '0.75rem 1.5rem', gap: '0.5rem', opacity: 0.5, cursor: 'not-allowed' }}
-                            title="Próximamente: Entrar como Auditor"
+                        <Button
+                            variant="secondary"
+                            className="bg-white/5 hover:bg-white/10 border-white/10 text-text-dim cursor-not-allowed opacity-50 shrink-0"
+                            disabled
                         >
-                            <LayoutDashboard size={18} />
-                            Auditar
-                        </button>
+                            <LayoutDashboard size={18} className="mr-2" />
+                            Auditar Proyecto
+                        </Button>
+
+                        <div className="flex-1" />
 
                         {/* DELETE Button */}
-                        <button
+                        <Button
                             onClick={handleDelete}
                             disabled={isDeleting}
-                            className="action-button delete"
-                            style={{
-                                width: 'auto',
-                                padding: '0.75rem 1.5rem',
-                                gap: '0.5rem',
-                                marginLeft: 'auto',
-                                background: 'rgba(239, 68, 68, 0.2)',
-                                border: '1px solid rgba(239, 68, 68, 0.3)',
-                                color: '#fca5a5'
-                            }}
+                            variant="destructive"
+                            className="bg-red-500/10 hover:bg-red-500 border-red-500/20 text-red-500 hover:text-white font-bold transition-all shadow-lg hover:shadow-red-500/20"
                         >
-                            <Trash2 size={18} />
-                            {isDeleting ? 'Eliminando...' : 'Eliminar Proyecto'}
-                        </button>
+                            <Trash2 size={18} className="mr-2" />
+                            {isDeleting ? 'Eliminando...' : 'Eliminar Proyecto Definitivamente'}
+                        </Button>
                     </div>
                 </div>
             </div>

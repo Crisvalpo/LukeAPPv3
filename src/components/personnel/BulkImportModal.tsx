@@ -1,10 +1,10 @@
-'use client'
-
 import { useState, useRef } from 'react'
-import { Upload, X, AlertCircle, CheckCircle, FileSpreadsheet, Download, Users } from 'lucide-react'
+import { Upload, X, AlertCircle, CheckCircle, FileSpreadsheet, Download, Users, ArrowRight, Loader2 } from 'lucide-react'
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
-import '@/styles/views/personnel.css' // Ensure CSS is imported (or rely on parent import)
+import { Heading, Text } from '@/components/ui/Typography'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 interface ImportCSVModalProps {
     projectId: string
@@ -65,16 +65,10 @@ export default function BulkImportModal({ projectId, onClose, onSuccess }: Impor
         reader.readAsBinaryString(file)
     }
 
-    const downloadTemplate = async () => {
-        const { downloadPersonnelTemplate } = await import('@/utils/excel-templates')
-        downloadPersonnelTemplate()
-    }
-
     const handleImport = async () => {
         setStep('importing')
         try {
             const workers = parsedData.map((row: any) => {
-                // Normalize keys
                 const normalizedRow: any = {}
                 Object.keys(row).forEach(key => {
                     normalizedRow[key.toUpperCase().trim()] = row[key]
@@ -88,7 +82,7 @@ export default function BulkImportModal({ projectId, onClose, onSuccess }: Impor
                     telefono: normalizedRow['TELEFONO'] || normalizedRow['CELULAR'],
                     cargo: normalizedRow['CARGO'] || normalizedRow['ROL'],
                     jornada: normalizedRow['JORNADA'] || normalizedRow['TURNO_JORNADA'],
-                    turno: normalizedRow['TURNO'] // DIA or NOCHE
+                    turno: normalizedRow['TURNO']
                 }
             }).filter(w => w.rut && w.nombre)
 
@@ -104,10 +98,6 @@ export default function BulkImportModal({ projectId, onClose, onSuccess }: Impor
             const data = await res.json()
             setImportResult(data)
             setStep('result')
-
-            if (data.success) {
-                // Optional: trigger onSuccess immediately or wait for close
-            }
         } catch (error) {
             console.error('Error importing:', error)
             setImportResult({ error: 'Error de conexión al importar' })
@@ -116,145 +106,183 @@ export default function BulkImportModal({ projectId, onClose, onSuccess }: Impor
     }
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+            <div
+                className="relative w-full max-w-2xl bg-bg-surface-1 border border-white/10 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300"
+                onClick={(e) => e.stopPropagation()}
+            >
                 {/* Header */}
-                <div className="modal-header">
-                    <h3 className="modal-title">
-                        <Users size={20} style={{ color: 'var(--blue-500)' }} />
-                        Carga Masiva de Personal
-                    </h3>
-                    <button onClick={onClose} className="btn-icon">
+                <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-8 bg-indigo-500 rounded-full" />
+                        <Heading level={2} className="text-xl font-bold text-white">Carga Masiva de Personal</Heading>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full text-text-dim hover:text-white transition-colors">
                         <X size={20} />
                     </button>
                 </div>
 
-                {/* Content */}
-                <div className="modal-body">
-
+                {/* Body */}
+                <div className="p-8">
                     {step === 'upload' && (
-                        <div className="space-y-6 text-center">
-                            <div className="max-w-md mx-auto mb-6">
-                                <p className="text-secondary text-sm">
-                                    Sube un archivo Excel o CSV con la lista de trabajadores para el proyecto actual.
-                                </p>
-                            </div>
+                        <div className="space-y-8">
+                            <Text className="text-text-muted text-center max-w-md mx-auto">
+                                Sube un archivo Excel o CSV con la lista de trabajadores para el proyecto actual.
+                            </Text>
 
                             <div
-                                className="upload-area group"
+                                className="group relative cursor-pointer"
                                 onClick={() => fileInputRef.current?.click()}
                             >
-                                <Upload size={48} className="mx-auto mb-4 text-slate-500 group-hover:text-blue-400 transition-colors" />
-                                <p className="text-primary font-medium" style={{ color: 'white' }}>Click para seleccionar archivo</p>
-                                <p className="text-xs text-secondary mt-2" style={{ color: '#94a3b8' }}>Soporta archivos .xlsx, .xls o .csv</p>
+                                <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
+                                <div className="relative border-2 border-dashed border-white/10 group-hover:border-blue-500/50 rounded-2xl p-12 text-center transition-all duration-300 flex flex-col items-center gap-4">
+                                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-text-dim group-hover:text-blue-400 group-hover:scale-110 transition-all duration-300">
+                                        <Upload size={32} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-white font-bold text-lg">Haga clic para seleccionar archivo</p>
+                                        <p className="text-text-dim text-sm">Soporta archivos .xlsx, .xls o .csv</p>
+                                    </div>
+                                </div>
                             </div>
+
                             <input
                                 type="file"
                                 ref={fileInputRef}
                                 className="hidden"
                                 accept=".csv,.xlsx,.xls"
                                 onChange={handleFileChange}
-                                style={{ display: 'none' }}
                             />
 
-                            <div className="instructions-box">
-                                <h4 className="instructions-title">
-                                    <AlertCircle size={16} />
-                                    Requisitos de Columnas
-                                </h4>
-                                <p className="instructions-text">
-                                    El archivo debe contener las siguientes columnas (el orden no importa):
-                                    <br /><br />
-                                    <strong>Obligatorias:</strong> <code>RUT</code>, <code>NOMBRE</code><br />
-                                    <strong>Opcionales:</strong> <code>ID_INTERNO</code>, <code>TURNO</code> (DIA/NOCHE), <code>CARGO</code>, <code>EMAIL</code>, <code>TELEFONO</code>, <code>JORNADA</code>
-                                </p>
+                            <div className="bg-bg-surface-2/50 border border-white/5 rounded-2xl p-6 space-y-4">
+                                <div className="flex items-center gap-2 text-blue-400">
+                                    <AlertCircle size={18} />
+                                    <span className="text-xs font-bold uppercase tracking-widest">Requisitos de Columnas</span>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                    <div className="space-y-2">
+                                        <p className="text-white font-medium">Obligatorias:</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            <Badge variant="outline" className="bg-blue-500/5 border-blue-500/20 text-blue-300">RUT</Badge>
+                                            <Badge variant="outline" className="bg-blue-500/5 border-blue-500/20 text-blue-300">NOMBRE</Badge>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <p className="text-text-dim font-medium">Opcionales:</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            <Badge variant="secondary" className="bg-white/5 border-white/5 text-text-muted">ID_INTERNO</Badge>
+                                            <Badge variant="secondary" className="bg-white/5 border-white/5 text-text-muted">TURNO</Badge>
+                                            <Badge variant="secondary" className="bg-white/5 border-white/5 text-text-muted">CARGO</Badge>
+                                            <Badge variant="secondary" className="bg-white/5 border-white/5 text-text-muted">EMAIL</Badge>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
 
                     {step === 'preview' && (
-                        <div>
-                            <div className="mb-4 flex items-center justify-between">
-                                <h4 className="font-semibold text-primary">Vista Previa ({parsedData.length} filas)</h4>
-                                <button
-                                    onClick={() => setStep('upload')}
-                                    className="btn-link"
-                                >
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between">
+                                <Heading level={3} className="text-lg font-bold text-white flex items-center gap-2">
+                                    Vista Previa
+                                    <Badge variant="secondary" className="bg-blue-500/10 text-blue-400 border-none">{parsedData.length} registros</Badge>
+                                </Heading>
+                                <Button variant="ghost" size="sm" onClick={() => setStep('upload')} className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/5">
                                     Cambiar archivo
-                                </button>
+                                </Button>
                             </div>
-                            <div className="personnel-table-container max-h-60 overflow-y-auto">
-                                <table className="personnel-table">
-                                    <thead>
-                                        <tr>
-                                            {parsedData.length > 0 && Object.keys(parsedData[0]).slice(0, 5).map((header) => (
-                                                <th key={header}>{header}</th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {parsedData.slice(0, 10).map((row, idx) => (
-                                            <tr key={idx} className="personnel-row">
-                                                {Object.values(row).slice(0, 5).map((val: any, i) => (
-                                                    <td key={i} className="truncate max-w-[150px]">{val}</td>
+
+                            <div className="relative border border-white/10 rounded-xl overflow-hidden bg-bg-app">
+                                <div className="max-h-64 overflow-y-auto overflow-x-auto no-scrollbar">
+                                    <table className="w-full text-left text-sm border-collapse">
+                                        <thead className="sticky top-0 bg-bg-surface-2 z-10 border-b border-white/10">
+                                            <tr>
+                                                {parsedData.length > 0 && Object.keys(parsedData[0]).slice(0, 5).map((header) => (
+                                                    <th key={header} className="px-4 py-3 font-bold text-text-dim uppercase text-[10px] tracking-widest">{header}</th>
                                                 ))}
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody className="divide-y divide-white/5">
+                                            {parsedData.slice(0, 10).map((row, idx) => (
+                                                <tr key={idx} className="hover:bg-white/5 transition-colors">
+                                                    {Object.values(row).slice(0, 5).map((val: any, i) => (
+                                                        <td key={i} className="px-4 py-3 text-text-main truncate max-w-[150px]">{val}</td>
+                                                    ))}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {parsedData.length > 10 && (
+                                    <div className="p-2 text-center bg-bg-surface-2/30 border-t border-white/5">
+                                        <Text size="xs" className="text-text-dim italic">Mostrando las primeras 10 filas</Text>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
 
                     {step === 'importing' && (
-                        <div className="text-center py-12">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                            <p className="text-secondary text-lg">Procesando datos...</p>
+                        <div className="flex flex-col items-center justify-center py-20 space-y-6">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full" />
+                                <Loader2 className="w-16 h-16 text-blue-500 animate-spin relative z-10" />
+                            </div>
+                            <div className="text-center space-y-2">
+                                <Heading level={3} className="text-xl font-bold text-white">Procesando Importación</Heading>
+                                <Text className="text-text-muted">Estamos validando y registrando la información...</Text>
+                            </div>
                         </div>
                     )}
 
                     {step === 'result' && importResult && (
-                        <div className="text-center py-4">
+                        <div className="space-y-8 py-4">
                             {importResult.success ? (
-                                <div className="mb-6 fade-in">
-                                    <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <CheckCircle className="w-8 h-8 text-green-500" />
+                                <div className="text-center space-y-6">
+                                    <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.15)] animate-scale-in">
+                                        <CheckCircle className="w-10 h-10 text-emerald-500" />
                                     </div>
-                                    <h4 className="text-xl font-bold text-white mb-2">¡Importación Exitosa!</h4>
-                                    <div className="flex justify-center gap-4 text-sm mt-4">
-                                        <div className="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700">
-                                            <span className="block text-2xl font-bold text-green-400">{importResult.details.imported}</span>
-                                            <span className="text-slate-400">Importados</span>
+                                    <div className="space-y-2">
+                                        <Heading level={2} className="text-2xl font-bold text-white uppercase tracking-tight">¡Importación Exitosa!</Heading>
+                                        <Text className="text-text-muted">El personal ha sido registrado correctamente en el proyecto.</Text>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
+                                        <div className="bg-white/5 border border-emerald-500/20 p-4 rounded-2xl space-y-1">
+                                            <span className="block text-3xl font-bold text-emerald-400 leading-none">{importResult.details.imported}</span>
+                                            <span className="text-[10px] font-bold text-emerald-500/70 uppercase tracking-widest">Registrados</span>
                                         </div>
-                                        <div className="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700">
-                                            <span className="block text-2xl font-bold text-amber-400">{importResult.details.skipped}</span>
-                                            <span className="text-slate-400">Omitidos</span>
+                                        <div className="bg-white/5 border border-white/5 p-4 rounded-2xl space-y-1">
+                                            <span className="block text-3xl font-bold text-text-dim leading-none">{importResult.details.skipped}</span>
+                                            <span className="text-[10px] font-bold text-text-dim/70 uppercase tracking-widest">Omitidos</span>
                                         </div>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="mb-6">
-                                    <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <AlertCircle className="w-8 h-8 text-red-500" />
+                                <div className="text-center space-y-6">
+                                    <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto border border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.15)]">
+                                        <AlertCircle className="w-10 h-10 text-red-500" />
                                     </div>
-                                    <h4 className="text-xl font-bold text-white mb-2">Error en Importación</h4>
-                                    <p className="text-error bg-red-500/10 px-4 py-2 rounded-lg inline-block border border-red-500/20">
-                                        {importResult.error}
-                                    </p>
+                                    <div className="space-y-2">
+                                        <Heading level={2} className="text-xl font-bold text-white">Error en Importación</Heading>
+                                        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 inline-block">
+                                            <Text className="text-red-400 font-medium">{importResult.error}</Text>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 
                             {importResult.details?.errors && importResult.details.errors.length > 0 && (
-                                <div className="mt-6 text-left bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
-                                    <div className="px-4 py-2 bg-slate-950 border-b border-slate-700">
-                                        <h5 className="font-bold text-slate-300 text-xs uppercase tracking-wider">Detalle de Errores ({importResult.details.errors.length})</h5>
+                                <div className="bg-bg-app border border-white/5 rounded-2xl overflow-hidden mt-6 shadow-xl">
+                                    <div className="px-5 py-3 bg-bg-surface-2/50 border-b border-white/5">
+                                        <Heading level={4} className="text-[10px] font-bold text-text-dim uppercase tracking-widest">Detalle de Anomalías ({importResult.details.errors.length})</Heading>
                                     </div>
-                                    <div className="max-h-48 overflow-y-auto p-2">
+                                    <div className="max-h-56 overflow-y-auto p-2 scrollbar-hide">
                                         {importResult.details.errors.map((err: any, idx: number) => (
-                                            <div key={idx} className="flex gap-2 text-xs py-1.5 border-b border-slate-800/50 last:border-0 px-2 hover:bg-slate-700/30 rounded">
-                                                <span className="font-mono text-amber-400 w-24 shrink-0">{err.rut}</span>
-                                                <span className="text-secondary">{err.error}</span>
+                                            <div key={idx} className="flex gap-4 items-center p-3 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors rounded-lg">
+                                                <Badge variant="outline" className="font-mono text-[10px] bg-red-500/5 text-red-400 border-red-500/10 shrink-0">{err.rut || 'S/N'}</Badge>
+                                                <span className="text-xs text-text-muted">{err.error}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -264,29 +292,38 @@ export default function BulkImportModal({ projectId, onClose, onSuccess }: Impor
                     )}
                 </div>
 
-
                 {/* Footer */}
-                <div className="modal-footer">
+                <div className="px-8 py-6 bg-bg-surface-2/30 border-t border-white/5 flex justify-end items-center gap-4">
                     {step === 'result' ? (
-                        <button
+                        <Button
                             onClick={() => {
                                 onClose()
                                 if (importResult.success) onSuccess()
                             }}
-                            className="btn-primary"
+                            className="bg-white text-black hover:bg-slate-200 border-none font-bold min-w-[120px]"
                         >
                             Finalizar
-                        </button>
+                        </Button>
                     ) : (
                         <>
+                            {step === 'upload' && (
+                                <Button variant="ghost" onClick={onClose} className="text-text-dim hover:text-white">
+                                    Cancelar
+                                </Button>
+                            )}
                             {step === 'preview' && (
-                                <button
-                                    onClick={handleImport}
-                                    className="btn-primary"
-                                >
-                                    <Upload size={16} />
-                                    Importar {parsedData.length} Personas
-                                </button>
+                                <>
+                                    <Button variant="ghost" onClick={() => setStep('upload')} className="text-text-dim hover:text-white">
+                                        Atrás
+                                    </Button>
+                                    <Button
+                                        onClick={handleImport}
+                                        className="bg-indigo-600 hover:bg-indigo-500 text-white border-none shadow-[0_4px_15px_rgba(99,102,241,0.3)] font-bold min-w-[200px]"
+                                    >
+                                        <Upload size={18} className="mr-2" />
+                                        Confirmar Importación
+                                    </Button>
+                                </>
                             )}
                         </>
                     )}

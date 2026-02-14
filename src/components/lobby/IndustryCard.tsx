@@ -15,7 +15,7 @@ export default function IndustryCard({ image, title, description, delay = 0 }: I
 
     return (
         <div
-            className="industry-card relative overflow-hidden rounded-xl h-80 cursor-pointer"
+            className="group relative overflow-hidden rounded-2xl h-[340px] w-full cursor-pointer transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.2)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.3)] hover:-translate-y-1.5"
             style={{
                 animation: `stagger-in 0.6s ease-out ${delay}ms backwards`,
             }}
@@ -40,17 +40,14 @@ export default function IndustryCard({ image, title, description, delay = 0 }: I
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
 
             {/* Content */}
-            <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                <h3 className="text-2xl font-bold mb-2">{title}</h3>
-                <p className="text-sm text-gray-200 opacity-90">{description}</p>
+            <div className="absolute inset-0 flex flex-col justify-end p-8 pl-12 text-white">
+                <h3 className="text-4xl font-extrabold mb-2 drop-shadow-2xl tracking-tight">{title}</h3>
+                <p className="text-lg text-slate-200 font-medium drop-shadow-lg opacity-90">{description}</p>
             </div>
 
             {/* Hover Border Effect */}
             <div
-                className="absolute inset-0 border-2 border-transparent rounded-xl transition-colors duration-300"
-                style={{
-                    borderColor: isHovered ? 'var(--color-primary)' : 'transparent',
-                }}
+                className={`absolute inset-0 border-2 rounded-2xl transition-colors duration-300 ${isHovered ? 'border-brand-primary' : 'border-transparent'}`}
             />
         </div>
     );

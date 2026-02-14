@@ -4,6 +4,7 @@ import React from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, useGLTF, Center, Stage } from '@react-three/drei'
 import { X, Loader2 } from 'lucide-react'
+import { Heading } from '@/components/ui/Typography'
 
 function PreviewModel({ url }: { url: string }) {
     const { scene } = useGLTF(url)
@@ -31,91 +32,38 @@ export default function StructurePreviewModal({
     onClose: () => void
 }) {
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            backdropFilter: 'blur(4px)',
-            zIndex: 50,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '2rem'
-        }} onClick={onClose}>
-            <div style={{
-                position: 'relative',
-                width: '100%',
-                maxWidth: '1000px',
-                height: '80vh',
-                backgroundColor: '#1e293b',
-                borderRadius: '0.75rem',
-                border: '1px solid #334155',
-                display: 'flex',
-                flexDirection: 'column',
-                overflow: 'hidden',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
-            }} onClick={e => e.stopPropagation()}>
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-8 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={onClose}
+        >
+            <div
+                className="relative w-full max-w-[1000px] h-[80vh] bg-slate-900 rounded-xl border border-white/10 flex flex-col overflow-hidden shadow-2xl"
+                onClick={e => e.stopPropagation()}
+            >
 
                 {/* Header */}
-                <div style={{
-                    padding: '1rem 1.5rem',
-                    borderBottom: '1px solid #334155',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    backgroundColor: '#0f172a'
-                }}>
-                    <h3 style={{ color: '#f1f5f9', margin: 0, fontSize: '1.1rem', fontWeight: 500 }}>
+                <div className="p-4 border-b border-white/10 flex items-center justify-between bg-slate-900">
+                    <Heading level={3} className="m-0 text-lg font-medium text-slate-100">
                         Vista Previa: {name}
-                    </h3>
+                    </Heading>
                     <button
                         onClick={onClose}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            color: '#94a3b8',
-                            cursor: 'pointer',
-                            padding: '4px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: '4px',
-                            transition: 'color 0.2s, background-color 0.2s'
-                        }}
-                        onMouseEnter={e => {
-                            e.currentTarget.style.color = '#f1f5f9'
-                            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'
-                        }}
-                        onMouseLeave={e => {
-                            e.currentTarget.style.color = '#94a3b8'
-                            e.currentTarget.style.backgroundColor = 'transparent'
-                        }}
+                        className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
                     >
                         <X size={20} />
                     </button>
                 </div>
 
                 {/* Canvas Area */}
-                <div style={{ flex: 1, position: 'relative', backgroundColor: '#0f172a' }}>
+                <div className="flex-1 relative bg-slate-950">
                     <React.Suspense fallback={
-                        <div style={{
-                            position: 'absolute',
-                            inset: 0,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#94a3b8',
-                            gap: '0.5rem'
-                        }}>
+                        <div className="absolute inset-0 flex items-center justify-center text-slate-400 gap-2">
                             <Loader2 className="animate-spin" size={24} />
                             <span>Cargando modelo...</span>
                         </div>
                     }>
                         <Canvas shadows dpr={[1, 2]} camera={{ position: [50, 50, 50], fov: 45 }}>
-                            <color attach="background" args={['#0f172a']} />
+                            <color attach="background" args={['#020617']} />
                             <Stage environment="city" intensity={0.6}>
                                 <PreviewModel url={url} />
                             </Stage>
@@ -124,19 +72,7 @@ export default function StructurePreviewModal({
                     </React.Suspense>
 
                     {/* Instructions Overlay */}
-                    <div style={{
-                        position: 'absolute',
-                        bottom: '1rem',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        backgroundColor: 'rgba(15, 23, 42, 0.8)',
-                        padding: '0.5rem 1rem',
-                        borderRadius: '2rem',
-                        fontSize: '0.75rem',
-                        color: '#94a3b8',
-                        pointerEvents: 'none',
-                        border: '1px solid #334155'
-                    }}>
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/80 px-4 py-2 rounded-full text-xs text-slate-400 pointer-events-none border border-white/10 backdrop-blur-md">
                         Click izquierdo: Rotar • Click derecho: Mover • Rueda: Zoom
                     </div>
                 </div>

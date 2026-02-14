@@ -28,39 +28,63 @@ export default function ConfigCard({
     // Determine if card is clickable
     const isClickable = !isLocked || onboardingStatus?.isComplete;
 
-    const cardClasses = `
-        config-card 
-        ${isActive ? 'onboarding-active' : ''} 
-        ${isLocked ? 'onboarding-locked' : ''} 
-        ${isCompleted ? 'onboarding-completed' : ''}
+    const cardBaseClasses = "relative h-full flex flex-col p-8 bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-2xl transition-all group overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10";
+
+    // Conditionals using standard Tailwind
+    const stateClasses = `
+        ${isLocked ? 'opacity-60 grayscale-[0.5] cursor-not-allowed' : 'hover:bg-slate-800/50 hover:border-indigo-500/30 hover:-translate-y-1'}
+        ${isCompleted ? 'border-emerald-500/20 bg-emerald-500/5' : ''}
+        ${isActive ? 'border-indigo-500/40 bg-indigo-500/5 shadow-[0_0_20px_rgba(99,102,241,0.1)]' : ''}
     `.trim();
 
     const content = (
-        <div className={cardClasses}>
-            <div className="config-card-icon">
-                <Icon size={32} />
+        <div className={`${cardBaseClasses} ${stateClasses}`}>
+            {/* Glow effect on hover */}
+            {!isLocked && (
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:opacity-100 opacity-0 transition-opacity"></div>
+            )}
+
+            <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110 shadow-lg ${isCompleted
+                    ? 'bg-emerald-500/10 text-emerald-400'
+                    : isActive
+                        ? 'bg-indigo-500/10 text-indigo-400 shadow-indigo-500/20'
+                        : 'bg-slate-800/50 text-slate-400 group-hover:text-indigo-400'
+                }`}>
+                <Icon size={30} strokeWidth={1.5} />
             </div>
-            <h3 className="config-card-title">{title}</h3>
-            <p className="config-card-description">{description}</p>
+
+            <h3 className={`text-xl font-bold mb-2 transition-colors ${isLocked ? 'text-slate-500' : 'text-white'
+                }`}>
+                {title}
+            </h3>
+
+            <p className="text-sm text-slate-400 leading-relaxed flex-grow mb-6">
+                {description}
+            </p>
 
             {/* Status indicators */}
-            {isLocked && !onboardingStatus?.isComplete && (
-                <div className="config-card-status">
-                    <Lock size={16} />
-                    <span>Bloqueado</span>
-                </div>
-            )}
-            {isCompleted && (
-                <div className="config-card-status config-card-status-complete">
-                    <CheckCircle size={16} />
-                    <span>Completado</span>
-                </div>
-            )}
-            {isActive && (
-                <div className="config-card-status config-card-status-active">
-                    <span>▶️ Siguiente</span>
-                </div>
-            )}
+            <div className="mt-auto pt-4 border-t border-white/5">
+                {isLocked && !onboardingStatus?.isComplete ? (
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-600">
+                        <Lock size={14} />
+                        <span>Bloqueado</span>
+                    </div>
+                ) : isCompleted ? (
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-500">
+                        <CheckCircle size={14} />
+                        <span>Completado</span>
+                    </div>
+                ) : isActive ? (
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-indigo-400">
+                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+                        <span>Siguiente Paso</span>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span>Configurar</span>
+                    </div>
+                )}
+            </div>
         </div>
     );
 

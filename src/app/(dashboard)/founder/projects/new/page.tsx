@@ -7,11 +7,12 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { createProject } from '@/services/projects'
 import { FolderKanban } from 'lucide-react'
+import { Heading, Text } from '@/components/ui/Typography'
+import { Button } from '@/components/ui/button'
 import Confetti from '@/components/onboarding/Confetti'
 import Toast from '@/components/onboarding/Toast'
 import { CELEBRATION_MESSAGES } from '@/config/onboarding-messages'
-import '@/styles/dashboard.css'
-import '@/styles/companies.css'
+// Styles migrated to Tailwind v4
 
 export default function NewProjectPage() {
     const router = useRouter()
@@ -155,29 +156,35 @@ export default function NewProjectPage() {
     }
 
     return (
-        <div className="dashboard-page">
+        <div className="max-w-4xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in px-4 md:px-6">
             {/* Header */}
-            <div className="dashboard-header">
-                <div className="dashboard-header-content">
-                    <div className="dashboard-accent-line" />
-                    <h1 className="dashboard-title">Nuevo Proyecto</h1>
+            <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-8 bg-indigo-500 rounded-full" />
+                    <Heading level={1} className="tracking-tight">Nuevo Proyecto</Heading>
                 </div>
-                <p className="dashboard-subtitle">Crea un nuevo proyecto para tu empresa</p>
+                <Text size="lg" className="text-text-muted max-w-2xl font-medium ml-4.5">
+                    Configura los detalles del nuevo proyecto de ingeniería para tu empresa.
+                </Text>
             </div>
 
-            {/* Form */}
-            <div className="company-form-container">
-                <form onSubmit={handleSubmit} className="company-form">
+            {/* Form Container */}
+            <div className="bg-bg-surface-1/50 backdrop-blur-xl border border-glass-border rounded-3xl p-8 md:p-10 shadow-2xl relative overflow-hidden group">
+                {/* Decorative glow */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-brand-primary/5 rounded-full blur-[80px] -mr-32 -mt-32" />
+
+                <form onSubmit={handleSubmit} className="relative z-10 space-y-8">
                     {error && (
-                        <div style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '0.5rem', color: '#f87171' }}>
+                        <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-sm font-medium animate-shake">
                             {error}
                         </div>
                     )}
 
-                    <div className="company-form-grid" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
-                        <div className="form-field">
-                            <label htmlFor="name" className="form-label">
-                                Nombre del Proyecto *
+                    <div className="space-y-6">
+                        {/* Project Name */}
+                        <div className="space-y-2">
+                            <label htmlFor="name" className="text-xs font-bold text-text-muted uppercase tracking-widest ml-1">
+                                Nombre del Proyecto <span className="text-brand-primary">*</span>
                             </label>
                             <input
                                 id="name"
@@ -185,19 +192,20 @@ export default function NewProjectPage() {
                                 required
                                 value={formData.name}
                                 onChange={(e) => handleNameChange(e.target.value)}
-                                className="form-input"
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-text-dim focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary/50 transition-all font-medium"
                                 placeholder="Ej: Mina Los Pelambres Fase 2"
                                 autoFocus
                             />
-                            <span className="form-hint">Nombre descriptivo del proyecto</span>
+                            <Text size="xs" className="text-text-dim ml-1">Nombre descriptivo oficial del proyecto</Text>
                         </div>
 
-                        <div className="form-field">
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <label htmlFor="code" className="form-label" style={{ marginBottom: 0 }}>
-                                    Código Sugerido
+                        {/* Project Code */}
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center px-1">
+                                <label htmlFor="code" className="text-xs font-bold text-text-muted uppercase tracking-widest">
+                                    Código del Proyecto
                                 </label>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)', background: 'rgba(59, 130, 246, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                                <span className="text-[10px] font-bold text-brand-primary bg-brand-primary/10 px-2 py-0.5 rounded-full border border-brand-primary/20">
                                     AUTOGENERADO
                                 </span>
                             </div>
@@ -207,45 +215,39 @@ export default function NewProjectPage() {
                                 required
                                 value={formData.code}
                                 onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                                className="form-input"
-                                style={{
-                                    fontFamily: 'monospace',
-                                    letterSpacing: '0.05em',
-                                    fontWeight: '700',
-                                    background: 'var(--color-bg-surface-2)',
-                                    borderColor: 'var(--color-primary-glow)'
-                                }}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary/50 transition-all font-mono font-bold tracking-wider"
                                 placeholder="MLP-F2"
                             />
-                            <span className="form-hint">Identificador único corto (usado en reportes y tags)</span>
+                            <Text size="xs" className="text-text-dim ml-1">Identificador único corto usado en reportes y tags</Text>
                         </div>
 
-                        <div className="form-field">
-                            <label htmlFor="description" className="form-label">
+                        {/* Description */}
+                        <div className="space-y-2">
+                            <label htmlFor="description" className="text-xs font-bold text-text-muted uppercase tracking-widest ml-1">
                                 Descripción (Opcional)
                             </label>
                             <textarea
                                 id="description"
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                className="form-input"
-                                placeholder="Describe brevemente el proyecto..."
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-text-dim focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary/50 transition-all min-h-[120px] resize-none overflow-hidden hover:overflow-y-auto"
+                                placeholder="Describe brevemente el alcance del proyecto..."
                                 rows={4}
-                                style={{ resize: 'vertical' }}
                             />
-                            <span className="form-hint">Información adicional sobre el proyecto</span>
                         </div>
 
                         {/* Contract Details Section */}
-                        <div style={{ marginTop: '0.5rem', marginBottom: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
-                            <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#94a3b8', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span style={{ width: '4px', height: '16px', background: 'var(--color-primary)', borderRadius: '2px' }}></span>
-                                Información Contractual
-                            </h3>
+                        <div className="pt-8 border-t border-white/5 space-y-6">
+                            <div className="flex items-center gap-3">
+                                <div className="w-1 h-5 bg-brand-primary/50 rounded-full" />
+                                <Heading level={3} className="text-sm font-bold text-text-main uppercase tracking-widest">
+                                    Información Contractual
+                                </Heading>
+                            </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                                <div className="form-field">
-                                    <label htmlFor="client_name" className="form-label">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label htmlFor="client_name" className="text-xs font-bold text-text-muted uppercase tracking-widest ml-1">
                                         Cliente Principal
                                     </label>
                                     <input
@@ -253,13 +255,13 @@ export default function NewProjectPage() {
                                         type="text"
                                         value={formData.client_name || ''}
                                         onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
-                                        className="form-input"
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-text-dim focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary/50 transition-all"
                                         placeholder="Ej: Minera Escondida"
                                     />
                                 </div>
 
-                                <div className="form-field">
-                                    <label htmlFor="contract_number" className="form-label">
+                                <div className="space-y-2">
+                                    <label htmlFor="contract_number" className="text-xs font-bold text-text-muted uppercase tracking-widest ml-1">
                                         N° Contrato
                                     </label>
                                     <input
@@ -267,34 +269,37 @@ export default function NewProjectPage() {
                                         type="text"
                                         value={formData.contract_number || ''}
                                         onChange={(e) => setFormData({ ...formData, contract_number: e.target.value })}
-                                        className="form-input"
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-text-dim focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary/50 transition-all font-mono"
                                         placeholder="Ej: CT-2025-001"
-                                        style={{ fontFamily: 'monospace' }}
                                     />
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                        <button
+                    {/* Actions */}
+                    <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                        <Button
                             type="submit"
                             disabled={isSubmitting}
-                            className="form-button"
+                            size="lg"
+                            className="bg-brand-primary hover:bg-brand-primary/90 text-white font-bold rounded-xl px-8 py-6 shadow-xl shadow-brand-primary/20 min-w-[200px]"
                         >
-                            {isSubmitting ? 'Creando...' : '🚀 Crear Proyecto'}
-                        </button>
-                        <button
+                            {isSubmitting ? 'Creando...' : 'Crear Proyecto'}
+                        </Button>
+                        <Button
                             type="button"
+                            variant="ghost"
+                            size="lg"
                             onClick={() => router.push('/founder/projects')}
-                            className="form-button"
-                            style={{ background: 'rgba(255, 255, 255, 0.05)' }}
+                            className="text-text-muted hover:text-white hover:bg-white/5 rounded-xl px-8 font-medium"
                         >
                             Cancelar
-                        </button>
+                        </Button>
                     </div>
                 </form>
             </div>
+
             {/* Celebration Components */}
             <Confetti show={showConfetti} />
             {toastMessage && (

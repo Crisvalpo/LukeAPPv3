@@ -13,9 +13,8 @@ import CompanyLogoUpload from '@/components/company/CompanyLogoUpload'
 import Confetti from '@/components/onboarding/Confetti'
 import Toast from '@/components/onboarding/Toast'
 import { CELEBRATION_MESSAGES } from '@/config/onboarding-messages'
-import '@/styles/dashboard.css'
-import '@/styles/companies.css'
-import '@/styles/company-profile.css'
+// Styles migrated to Tailwind v4
+// Styles migrated to Tailwind v4
 
 interface CompanyStats {
     projects: number
@@ -159,173 +158,176 @@ export default function FounderCompanyPage() {
 
     return (
         <div className="dashboard-page">
-            {/* ... Header ... */}
+            {/* Header */}
+            <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in px-4 md:px-0">
+                <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-8 bg-indigo-500 rounded-full" />
+                        <Heading level={1} className="tracking-tight text-white">Perfil de Empresa</Heading>
+                    </div>
+                    <Text size="base" className="text-slate-400 ml-4.5">Gestiona la identidad y configuración global de tu organización</Text>
+                </div>
+            </div>
 
-            <div className="company-profile-container">
+            <div className="flex flex-col gap-10 max-w-7xl mx-auto pt-8">
                 {/* Main Profile Card */}
-                <div className="profile-header-card">
-                    {/* ... error banner ... */}
-
+                <div className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[2rem] p-10 shadow-2xl">
                     {/* Profile Header Flex Container */}
-                    <div className="profile-header-flex">
+                    <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-12">
                         {/* Company Info (Left) */}
-                        <div className="company-content">
+                        <div className="flex-1 w-full">
                             {isEditing ? (
-                                <div className="company-edit-form">
-                                    <div className="form-group">
-                                        <label className="input-label">Nombre de la Empresa</label>
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-400">Nombre de la Empresa</label>
                                         <input
                                             type="text"
                                             value={editedName}
                                             onChange={(e) => setEditedName(e.target.value)}
-                                            className="edit-input"
+                                            className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 focus:border-indigo-500 outline-none transition-colors"
                                             placeholder="Nombre de la empresa"
                                             autoFocus
                                         />
                                     </div>
-                                    <div className="form-group">
-                                        <label className="input-label">RUT / Tax ID <span className="required-star">*</span></label>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-400">RUT / Tax ID <span className="text-red-500">*</span></label>
                                         <input
                                             type="text"
                                             value={editedRut}
                                             onChange={(e) => setEditedRut(e.target.value)}
-                                            className="edit-input"
+                                            className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 focus:border-indigo-500 outline-none transition-colors"
                                             placeholder="Ej: 76.123.456-K"
                                         />
                                     </div>
-                                    <div className="edit-actions">
-                                        <button onClick={handleSave} disabled={isSaving || !editedName.trim()} className="icon-btn save" title="Guardar">
+                                    <div className="flex gap-3">
+                                        <button onClick={handleSave} disabled={isSaving || !editedName.trim()} className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl p-3 transition-colors shrink-0" title="Guardar">
                                             <Check size={20} />
                                         </button>
-                                        <button onClick={handleCancel} disabled={isSaving} className="icon-btn cancel" title="Cancelar">
+                                        <button onClick={handleCancel} disabled={isSaving} className="bg-slate-800 hover:bg-slate-700 text-white rounded-xl p-3 transition-colors shrink-0" title="Cancelar">
                                             <X size={20} />
                                         </button>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="company-display-info">
-                                    <div className="company-name-row">
-                                        <Heading as="h2" className="company-name">{company.name}</Heading>
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-6 flex-wrap">
+                                        <Heading level={2}>{company.name}</Heading>
 
                                         {/* RUT Display with Badge if missing */}
                                         {(company as any).rut ? (
-                                            <Text size="base" variant="muted" style={{ fontFamily: 'monospace', marginLeft: '1rem' }}>
-                                                RUT: {(company as any).rut}
-                                            </Text>
+                                            <div className="flex items-center gap-4 bg-slate-800/50 px-4 py-2 rounded-xl border border-white/5">
+                                                <Text variant="muted" className="font-mono text-lg uppercase">
+                                                    RUT: {(company as any).rut}
+                                                </Text>
+                                                <button
+                                                    onClick={() => setIsEditing(true)}
+                                                    className="text-slate-500 hover:text-white transition-colors"
+                                                    title="Editar información"
+                                                >
+                                                    <Icons.Edit size={18} />
+                                                </button>
+                                            </div>
                                         ) : (
-                                            <span
-                                                className="missing-badge pulsate"
+                                            <button
                                                 onClick={() => setIsEditing(true)}
-                                                style={{ cursor: 'pointer', marginLeft: '1rem' }}
-                                                title="Haz clic para agregar"
+                                                className="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl text-sm font-semibold animate-pulse"
                                             >
                                                 ⚠️ Falta RUT
-                                            </span>
+                                            </button>
                                         )}
+                                    </div>
 
-                                        <button
-                                            onClick={() => setIsEditing(true)}
-                                            className="icon-btn edit"
-                                            title="Editar información"
-                                            style={{ marginLeft: '0.5rem' }}
-                                        >
-                                            <Icons.Edit size={18} />
-                                        </button>
+                                    <div className="flex gap-6 items-center flex-wrap pt-2">
+                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/30 rounded-lg text-sm text-slate-400">
+                                            <span>📅 Creada el {new Date(company.created_at).toLocaleDateString('es-ES', {
+                                                year: 'numeric',
+                                                month: 'long',
+                                                day: 'numeric'
+                                            })}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-500/10 rounded-lg text-sm text-indigo-400 border border-indigo-500/20">
+                                            <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+                                            <span>Activa</span>
+                                        </div>
                                     </div>
                                 </div>
                             )}
-
-                            <div className="company-meta-row">
-                                <span className="company-date">
-                                    📅 Creada el {new Date(company.created_at).toLocaleDateString('es-ES', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric'
-                                    })}
-                                </span>
-                                <span className="company-badge">
-                                    ✨ Activa
-                                </span>
-                            </div>
                         </div>
 
                         {/* Logo Section (Right) */}
-                        <div className="company-logo-section">
-                            <div className="logo-wrapper">
-                                <CompanyLogoUpload
-                                    companyId={company.id}
-                                    companyName={company.name}
-                                    currentLogoUrl={(company as any).logo_url || null}
-                                    onUpdate={(newLogoUrl) => {
-                                        setCompany({ ...company, logo_url: newLogoUrl } as any);
-                                        checkCompletion(company.id);
-                                    }}
-                                    showMissingBadge={!(company as any).logo_url}
-                                />
-                            </div>
+                        <div className="self-center md:self-start">
+                            <CompanyLogoUpload
+                                companyId={company.id}
+                                companyName={company.name}
+                                currentLogoUrl={(company as any).logo_url || null}
+                                onUpdate={(newLogoUrl) => {
+                                    setCompany({ ...company, logo_url: newLogoUrl } as any);
+                                    checkCompletion(company.id);
+                                }}
+                                showMissingBadge={!(company as any).logo_url}
+                            />
                         </div>
                     </div>
 
                     {/* Stats Grid - Enhanced */}
-                    <div className="profile-stats-grid">
-                        <div className="stat-card">
-                            <div className="stat-card-header">
-                                <div className="stat-icon">
-                                    <FolderKanban size={20} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-top border-white/10 pt-10">
+                        <div className="bg-slate-800/40 border border-white/5 p-8 rounded-2xl group hover:border-indigo-500/30 transition-all">
+                            <div className="flex items-center gap-6">
+                                <div className="w-14 h-14 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.1)] transition-transform group-hover:scale-110">
+                                    <FolderKanban size={28} />
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="uppercase tracking-widest text-xs font-bold text-slate-500">Proyectos Activos</div>
+                                    <div className="text-4xl font-bold text-white">{stats.projects}</div>
                                 </div>
                             </div>
-                            <div className="stat-label">Proyectos Activos</div>
-                            <div className="stat-value">{stats.projects}</div>
                         </div>
 
-                        <div className="stat-card">
-                            <div className="stat-card-header">
-                                <div className="stat-icon">
-                                    <Users size={20} />
+                        <div className="bg-slate-800/40 border border-white/5 p-8 rounded-2xl group hover:border-indigo-500/30 transition-all">
+                            <div className="flex items-center gap-6">
+                                <div className="w-14 h-14 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.1)] transition-transform group-hover:scale-110">
+                                    <Users size={28} />
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="uppercase tracking-widest text-xs font-bold text-slate-500">Miembros del Equipo</div>
+                                    <div className="text-4xl font-bold text-white">{stats.members}</div>
                                 </div>
                             </div>
-                            <div className="stat-label">Miembros del Equipo</div>
-                            <div className="stat-value">{stats.members}</div>
                         </div>
                     </div>
                 </div>
 
                 {/* Quick Actions Section */}
-                <div>
-                    <Heading level={3} size="xl" style={{ marginBottom: '1.5rem', color: 'white', fontWeight: 'bold' }}>
-                        Accesos Directos
-                    </Heading>
-                    <div className="quick-actions-grid">
-                        <button onClick={() => router.push('/founder/projects')} className="action-card">
-                            <div className="action-icon-circle purple-glow">
-                                <FolderKanban size={32} />
+                <div className="space-y-6">
+                    <Heading level={2} className="text-2xl font-bold text-white">Accesos Directos</Heading>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <button onClick={() => router.push('/founder/projects')} className="flex items-center gap-5 p-6 bg-slate-800/30 hover:bg-slate-800/50 border border-white/5 rounded-2xl transition-all group text-left">
+                            <div className="w-14 h-14 bg-purple-500/15 rounded-xl flex items-center justify-center text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.1)] group-hover:scale-110 transition-transform shrink-0">
+                                <FolderKanban size={30} />
                             </div>
-                            <div className="action-content">
-                                <h4>Gestionar Proyectos</h4>
-                                <p>Crea, edita y supervisa tus proyectos</p>
-                                {stats.projects === 0 && (
-                                    <span className="action-badge">Sin proyectos</span>
-                                )}
+                            <div className="space-y-0.5">
+                                <h4 className="font-semibold text-white">Gestionar Proyectos</h4>
+                                <p className="text-sm text-slate-400">Crea, edita y supervisa tus proyectos</p>
                             </div>
                         </button>
 
-                        <button onClick={() => router.push('/founder/settings/invitations')} className="action-card">
-                            <div className="action-icon-circle emerald-glow">
-                                <Users size={32} />
+                        <button onClick={() => router.push('/founder/settings/invitations')} className="flex items-center gap-5 p-6 bg-slate-800/30 hover:bg-slate-800/50 border border-white/5 rounded-2xl transition-all group text-left">
+                            <div className="w-14 h-14 bg-emerald-500/15 rounded-xl flex items-center justify-center text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.1)] group-hover:scale-110 transition-transform shrink-0">
+                                <Users size={30} />
                             </div>
-                            <div className="action-content">
-                                <h4>Invitar Equipo</h4>
-                                <p>Agrega administradores y colaboradores</p>
+                            <div className="space-y-0.5">
+                                <h4 className="font-semibold text-white">Invitar Equipo</h4>
+                                <p className="text-sm text-slate-400">Agrega administradores y colaboradores</p>
                             </div>
                         </button>
 
-                        <button onClick={() => router.push('/founder/settings/roles')} className="action-card">
-                            <div className="action-icon-circle amber-glow">
-                                <Building2 size={32} />
+                        <button onClick={() => router.push('/founder/settings/roles')} className="flex items-center gap-5 p-6 bg-slate-800/30 hover:bg-slate-800/50 border border-white/5 rounded-2xl transition-all group text-left">
+                            <div className="w-14 h-14 bg-amber-500/15 rounded-xl flex items-center justify-center text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.1)] group-hover:scale-110 transition-transform shrink-0">
+                                <Building2 size={30} />
                             </div>
-                            <div className="action-content">
-                                <h4>Roles y Permisos</h4>
-                                <p>Configura roles funcionales de tu equipo</p>
+                            <div className="space-y-0.5">
+                                <h4 className="font-semibold text-white">Roles y Permisos</h4>
+                                <p className="text-sm text-slate-400">Configura roles funcionales de tu equipo</p>
                             </div>
                         </button>
                     </div>

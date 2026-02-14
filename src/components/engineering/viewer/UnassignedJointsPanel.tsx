@@ -52,73 +52,38 @@ export default function UnassignedJointsPanel({ revisionId, onClose, refreshTrig
     }
 
     return (
-        <div style={{
-            width: '280px',
-            backgroundColor: '#1e1e2e',
-            borderRight: '1px solid #334155',
-            display: 'flex',
-            flexDirection: 'column',
-            zIndex: 40
-        }}>
+        <div className="w-[280px] bg-slate-800 border-r border-slate-700 flex flex-col z-40">
             {/* Header */}
-            <div style={{
-                padding: '12px',
-                borderBottom: '1px solid #334155',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                backgroundColor: '#0f172a'
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '1.2rem' }}>🔩</span>
-                    <span style={{ fontWeight: 'bold', color: '#e2e8f0', fontSize: '0.9rem' }}>
+            <div className="p-3 border-b border-slate-700 flex justify-between items-center bg-slate-900">
+                <div className="flex items-center gap-2">
+                    <span className="text-xl">🔩</span>
+                    <span className="font-bold text-slate-200 text-sm">
                         Juntas ({joints.length})
                     </span>
                 </div>
                 <button
                     onClick={onClose}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#94a3b8',
-                        cursor: 'pointer',
-                        padding: '4px'
-                    }}
+                    className="bg-transparent border-none text-slate-400 cursor-pointer p-1 hover:text-white transition-colors"
                 >
                     <X size={16} />
                 </button>
             </div>
 
             {/* Config/Filter */}
-            <div style={{ padding: '8px', borderBottom: '1px solid #334155' }}>
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    backgroundColor: '#0f172a',
-                    border: '1px solid #334155',
-                    borderRadius: '4px',
-                    padding: '4px 8px'
-                }}>
-                    <Search size={14} color="#64748b" />
+            <div className="p-2 border-b border-slate-700 bg-slate-800">
+                <div className="flex items-center bg-slate-900 border border-slate-700 rounded px-2 py-1">
+                    <Search size={14} className="text-slate-500" />
                     <input
                         type="text"
                         placeholder="Buscar..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{
-                            background: 'transparent',
-                            border: 'none',
-                            color: 'white',
-                            fontSize: '0.8rem',
-                            outline: 'none',
-                            width: '100%',
-                            marginLeft: '6px'
-                        }}
+                        className="bg-transparent border-none text-white text-xs outline-none w-full ml-1.5 placeholder:text-slate-600"
                     />
                 </div>
             </div>
 
-            <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
+            <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
                 {loading ? (
                     <div className="text-center text-slate-500 text-sm py-4">Cargando...</div>
                 ) : filteredJoints.length === 0 ? (
@@ -131,7 +96,7 @@ export default function UnassignedJointsPanel({ revisionId, onClose, refreshTrig
                             key={joint.id}
                             draggable
                             onDragStart={(e) => handleDragStart(e, joint)}
-                            style={{ cursor: 'grab' }}
+                            className="cursor-grab active:cursor-grabbing mb-2"
                         >
                             <JointCompactCard joint={joint} />
                         </div>
@@ -139,13 +104,7 @@ export default function UnassignedJointsPanel({ revisionId, onClose, refreshTrig
                 )}
             </div>
 
-            <div style={{
-                padding: '8px',
-                backgroundColor: '#334155',
-                fontSize: '0.75rem',
-                color: '#e2e8f0',
-                textAlign: 'center'
-            }}>
+            <div className="p-2 bg-slate-700 text-xs text-slate-200 text-center font-medium">
                 Arrastra una junta hacia un Spool para asignarla
             </div>
         </div>

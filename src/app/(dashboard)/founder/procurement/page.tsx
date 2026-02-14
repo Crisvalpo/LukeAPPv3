@@ -8,10 +8,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import '@/styles/dashboard.css'
-import '@/styles/engineering.css' // Reusing unified tab styles
+// Styles migrated to Tailwind v4
 
 // Components
+import { Heading, Text } from '@/components/ui/Typography'
 import MaterialRequestList from '@/components/procurement/MaterialRequestList'
 import CreateRequestModal from '@/components/procurement/CreateRequestModal'
 import ConsolidatedMTO from '@/components/procurement/ConsolidatedMTO'
@@ -102,16 +102,25 @@ export default function ProcurementPage() {
         return projects.find(p => p.id === selectedProject)?.company_id || ''
     }
 
-    if (isLoading) return <div className="dashboard-page"><p style={{ color: 'white', padding: '2rem', textAlign: 'center' }}>Cargando...</p></div>
+    if (isLoading) {
+        return (
+            <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
+                <p className="text-white text-center">Cargando...</p>
+            </div>
+        )
+    }
 
     return (
-        <div className="dashboard-page">
-            <div className="dashboard-header">
-                <div>
-                    <h1>Gestión de Materiales</h1>
-                    <p className="dashboard-subtitle">
+        <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
+            <div className="flex flex-col md:flex-row justify-between items-start gap-6">
+                <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-8 bg-indigo-500 rounded-full" />
+                        <Heading level={1} className="tracking-tight text-white">Gestión de Materiales</Heading>
+                    </div>
+                    <Text size="base" className="text-text-muted font-medium ml-4.5">
                         Control de Abastecimiento: Solicitudes, Recepción e Inventario
-                    </p>
+                    </Text>
                 </div>
 
                 {/* Project Selector - Reused styling from engineering */}
@@ -140,7 +149,7 @@ export default function ProcurementPage() {
                     </div>
                 )}
 
-                <div className="header-actions">
+                <div className="flex items-center gap-4">
                     {activeTab === 'requests' && selectedProject && (
                         <button
                             className="action-button action-primary"

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { Wrench } from 'lucide-react'
 
 interface Joint {
     id: string
@@ -47,31 +48,47 @@ export default function RevisionJointsList({ revisionId }: Props) {
     if (joints.length === 0) return <div className="p-4 text-center text-gray-500">No hay juntas registradas.</div>
 
     return (
-        <div className="table-wrapper glass-panel m-4">
-            <table className="w-full text-sm text-left">
-                <thead className="text-xs text-gray-400 uppercase bg-white/5">
-                    <tr>
-                        <th className="px-4 py-3">Isométrico</th>
-                        <th className="px-4 py-3">Número Junta</th>
-                        <th className="px-4 py-3">NPS</th>
-                        <th className="px-4 py-3">Rating</th>
-                        <th className="px-4 py-3">Material</th>
-                        <th className="px-4 py-3">Clase</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {joints.map(joint => (
-                        <tr key={joint.id} className="border-b border-white/5 hover:bg-white/5">
-                            <td className="px-4 py-2 font-medium text-gray-400">{joint.iso_number}</td>
-                            <td className="px-4 py-2 text-purple-300 font-mono">{joint.flanged_joint_number}</td>
-                            <td className="px-4 py-2">{joint.nps || '-'}</td>
-                            <td className="px-4 py-2">{joint.rating || '-'}</td>
-                            <td className="px-4 py-2 text-sm text-gray-400">{joint.material || '-'}</td>
-                            <td className="px-4 py-2 text-sm">{joint.piping_class || '-'}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+        <div className="p-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="flex justify-between items-center mb-4 px-2">
+                <h5 className="flex items-center gap-2 text-sm font-bold text-text-muted uppercase tracking-wider">
+                    <span className="p-1.5 rounded-md bg-blue-500/20 text-blue-400">
+                        <Wrench size={16} />
+                    </span>
+                    Lista de Juntas
+                </h5>
+                <span className="text-xs font-medium text-text-dim bg-white/5 px-2.5 py-1 rounded-full border border-white/5">
+                    Total: {joints.length} juntas
+                </span>
+            </div>
+
+            <div className="bg-bg-surface-1 border border-glass-border rounded-xl overflow-hidden shadow-lg">
+                <div className="overflow-x-auto custom-scrollbar">
+                    <table className="w-full text-sm text-left whitespace-nowrap">
+                        <thead className="bg-white/5 text-xs text-text-muted uppercase tracking-wider font-semibold border-b border-glass-border">
+                            <tr>
+                                <th className="px-5 py-3">Isométrico</th>
+                                <th className="px-5 py-3">Número Junta</th>
+                                <th className="px-5 py-3">NPS</th>
+                                <th className="px-5 py-3">Rating</th>
+                                <th className="px-5 py-3">Material</th>
+                                <th className="px-5 py-3">Clase</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-glass-border/30">
+                            {joints.map(joint => (
+                                <tr key={joint.id} className="hover:bg-white/5 transition-colors">
+                                    <td className="px-5 py-3 font-medium text-text-muted">{joint.iso_number}</td>
+                                    <td className="px-5 py-3 font-mono text-blue-300">{joint.flanged_joint_number}</td>
+                                    <td className="px-5 py-3 text-white font-medium">{joint.nps || '-'}</td>
+                                    <td className="px-5 py-3 text-text-muted">{joint.rating || '-'}</td>
+                                    <td className="px-5 py-3 text-sm text-text-dim">{joint.material || '-'}</td>
+                                    <td className="px-5 py-3 text-sm text-text-dim">{joint.piping_class || '-'}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     )
 }

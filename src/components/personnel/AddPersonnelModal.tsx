@@ -6,6 +6,8 @@ import { parseChileanIdQR, formatRut, validateRut } from '@/lib/rut-utils'
 import { createPerson } from '@/services/workforce'
 import { InputField } from '@/components/ui/InputField'
 import { SelectNative } from '@/components/ui/SelectNative'
+import { Button } from '@/components/ui/button'
+import { Heading, Text } from '@/components/ui/Typography'
 
 interface AddPersonnelModalProps {
     projectId: string
@@ -81,28 +83,35 @@ export default function AddPersonnelModal({ projectId, onClose, onSuccess }: Add
         }
     }
 
-    // DEBUG: Force scanner open if needed to test z-index independently
-    // useEffect(() => { setShowScanner(true) }, [])
-
     return (
         <>
             {/* Modal Overlay */}
-            <div className="modal-overlay" onClick={onClose}>
-                <div className="modal-content max-w-lg" onClick={e => e.stopPropagation()}>
-                    <div className="modal-header">
-                        <h3 className="modal-title">
-                            <UserPlus size={20} className="text-blue-500" />
+            <div
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
+                onClick={onClose}
+            >
+                <div
+                    className="bg-bg-surface-1 border border-glass-border rounded-2xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+                    onClick={e => e.stopPropagation()}
+                >
+                    {/* Header */}
+                    <div className="flex items-center justify-between p-6 border-b border-glass-border">
+                        <Heading level={3} className="flex items-center gap-3 text-white">
+                            <UserPlus size={20} className="text-brand-primary" />
                             Agregar Trabajador
-                        </h3>
-                        <div className="flex items-center gap-2">
-                            <button onClick={onClose} className="btn-icon">
-                                <X size={20} />
-                            </button>
-                        </div>
+                        </Heading>
+                        <Button
+                            onClick={onClose}
+                            variant="ghost"
+                            size="icon"
+                            className="w-8 h-8 rounded-full hover:bg-white/5"
+                        >
+                            <X size={20} />
+                        </Button>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="modal-body" style={{ gap: '1.5rem', display: 'flex', flexDirection: 'column' }}>
-
+                    {/* Form */}
+                    <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-6">
                         {/* RUT Field - USB Scanner Compatible */}
                         <InputField
                             label="RUT / ESCÁNER USB"
@@ -113,7 +122,7 @@ export default function AddPersonnelModal({ projectId, onClose, onSuccess }: Add
                             variant="glass"
                             autoFocus
                             helperText={
-                                <span className="flex items-center gap-1 mt-1">
+                                <span className="flex items-center gap-1 mt-1 text-xs text-text-muted">
                                     <ScanLine size={12} />
                                     Compatible con Pistola USB
                                 </span>
@@ -147,7 +156,7 @@ export default function AddPersonnelModal({ projectId, onClose, onSuccess }: Add
                             variant="glass"
                         />
 
-                        <div className="grid grid-cols-2 gap-4" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div className="grid grid-cols-2 gap-4">
                             <InputField
                                 label="ID INTERNO"
                                 value={formData.internalId}
@@ -163,8 +172,8 @@ export default function AddPersonnelModal({ projectId, onClose, onSuccess }: Add
                                 variant="glass"
                                 icon={formData.shiftType === 'DIA' ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-indigo-400" />}
                             >
-                                <option value="DIA" className="bg-[#0f172a]">Día</option>
-                                <option value="NOCHE" className="bg-[#0f172a]">Noche</option>
+                                <option value="DIA" className="bg-slate-900">Día</option>
+                                <option value="NOCHE" className="bg-slate-900">Noche</option>
                             </SelectNative>
                         </div>
 
@@ -178,27 +187,28 @@ export default function AddPersonnelModal({ projectId, onClose, onSuccess }: Add
                         />
 
                         {error && (
-                            <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded text-sm flex items-center gap-2 justify-center">
+                            <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg text-sm flex items-center gap-2 justify-center animate-in slide-in-from-top-2">
                                 <X size={16} />
                                 {error}
                             </div>
                         )}
 
-                        <div className="modal-footer" style={{ marginTop: 'auto', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', background: 'transparent', paddingRight: 0, paddingLeft: 0 }}>
-                            <button
+                        {/* Footer */}
+                        <div className="flex items-center justify-end gap-3 pt-4 border-t border-glass-border">
+                            <Button
                                 type="button"
                                 onClick={onClose}
-                                className="btn-secondary mr-3"
+                                variant="outline"
                             >
                                 Cancelar
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 type="submit"
                                 disabled={loading}
-                                className="btn-primary"
+                                className="bg-brand-primary hover:bg-brand-primary/90 text-white"
                             >
                                 {loading ? 'Guardando...' : 'Guardar Trabajador'}
-                            </button>
+                            </Button>
                         </div>
                     </form>
                 </div>

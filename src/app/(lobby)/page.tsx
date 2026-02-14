@@ -100,57 +100,62 @@ export default function LandingPage() {
     };
 
     return (
-        <main className="landing-root">
+        <main className="relative min-h-screen w-full bg-[#0a0a0f] text-white overflow-x-hidden">
             {/* Sacred Background */}
-            <div className="landing-background">
+            <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
                 <AnimatedParticles />
-                <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[var(--color-primary)] opacity-20 blur-[120px] rounded-full mix-blend-screen animate-pulse" />
+                <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[var(--color-primary)] opacity-20 blur-[120px] rounded-full mix-blend-screen" />
                 <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[var(--color-info)] opacity-10 blur-[120px] rounded-full mix-blend-screen" />
             </div>
 
-            <div className="landing-content">
+            <div className="relative z-10 w-full max-w-7xl mx-auto px-6 py-12 md:py-20 lg:py-24 flex flex-col items-center">
                 {/* Dynamic Hero Card - Content Changes, Card Stays */}
-                <div className="landing-hero glass-panel" style={{ minHeight: viewState === 'hero' ? 'auto' : '520px' }}>
-                    <div className="hero-content-transition">
-                        {/* Logo - moves to top when auth active */}
-                        <div
-                            className="hero-logo"
-                            style={{
-                                marginBottom: viewState === 'hero' ? '2rem' : '1rem',
-                                transition: 'all 0.4s ease'
-                            }}
-                        >
-                            <Image
-                                src="/logo.png"
-                                alt="LukeAPP Logo"
-                                width={viewState === 'hero' ? 80 : 60}
-                                height={viewState === 'hero' ? 80 : 60}
-                                className="drop-shadow-2xl"
+                <div className="w-full max-w-7xl flex flex-col items-center justify-center rounded-[32px] bg-slate-900/40 border border-white/5 backdrop-blur-2xl shadow-2xl overflow-hidden p-8 md:p-12 lg:p-16"
+                    style={{ minHeight: viewState === 'hero' ? '420px' : '600px' }}>
+                    <div className="hero-content-transition flex flex-col items-center w-full">
+                        {/* Logo - only at top in hero view */}
+                        {viewState === 'hero' && (
+                            <div
+                                className="hero-logo"
                                 style={{
-                                    filter: 'invert(1) brightness(2)',
-                                    transition: 'all 0.4s ease'
+                                    marginBottom: '2rem',
+                                    transition: 'all 0.4s ease',
+                                    display: 'flex',
+                                    justifyContent: 'center'
                                 }}
-                            />
-                        </div>
+                            >
+                                <Image
+                                    src="/logo.png"
+                                    alt="LukeAPP Logo"
+                                    width={80}
+                                    height={80}
+                                    className="drop-shadow-2xl"
+                                    style={{
+                                        filter: 'invert(1) brightness(2)',
+                                        transition: 'all 0.4s ease'
+                                    }}
+                                />
+                            </div>
+                        )}
 
                         {viewState === 'hero' && (
                             <>
-                                <div className="space-y-6">
+                                <div className="space-y-4 max-w-4xl mx-auto">
                                     <div className="text-center">
-                                        <div className="text-lg md:text-xl text-[var(--color-text-muted)] mb-2">Bienvenido a</div>
-                                        <h1 className="hero-title">
-                                            <span className="text-gradient">LukeAPP</span> <span style={{ fontStyle: 'italic', fontWeight: 300, color: 'white' }}>Piping</span>
+                                        <div className="text-slate-400 text-sm mb-2">Bienvenido a</div>
+                                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white">
+                                            LukeAPP <span className="italic font-light opacity-80">Piping</span>
                                         </h1>
                                     </div>
-                                    <p className="text-[var(--color-text-muted)] text-xl md:text-2xl">
+                                    <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed text-center">
                                         Tu plataforma de gestión moderna y segura. Comienza tu viaje hoy.
                                     </p>
                                 </div>
 
-                                <div className="hero-actions">
+                                <div className="mt-10 flex justify-center w-full">
                                     <button
                                         onClick={() => switchView('login')}
-                                        className="hero-btn hero-btn-primary"
+                                        className="px-16 py-4 bg-brand-primary text-white font-bold rounded-2xl shadow-xl shadow-brand-primary/20 hover:shadow-brand-primary/40 hover:-translate-y-1 transition-all duration-300 text-lg"
                                     >
                                         Acceder
                                     </button>
@@ -163,6 +168,15 @@ export default function LandingPage() {
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '5rem', alignItems: 'center' }}>
                                     {/* Left Column: Brand & Welcome (Desktop Only via CSS) */}
                                     <div className="desktop-only" style={{ flexDirection: 'column' }}>
+                                        <div className="mb-6">
+                                            <Image
+                                                src="/logo.png"
+                                                alt="LukeAPP Logo"
+                                                width={120}
+                                                height={120}
+                                                style={{ filter: 'invert(1) brightness(2)' }}
+                                            />
+                                        </div>
                                         <h2 className="text-5xl font-bold text-white mb-4 tracking-tight">Bienvenido de nuevo</h2>
                                         <p className="text-[var(--color-text-muted)] text-lg leading-relaxed max-w-md">
                                             Ingresa a tu cuenta Enterprise para acceder al panel de control industrial.
@@ -174,6 +188,15 @@ export default function LandingPage() {
                                         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
                                             {/* Mobile-Only Header (To keep context when split view is hidden) */}
                                             <div className="text-center mb-6 mobile-only">
+                                                <div className="flex justify-center mb-4">
+                                                    <Image
+                                                        src="/logo.png"
+                                                        alt="LukeAPP Logo"
+                                                        width={100}
+                                                        height={100}
+                                                        style={{ filter: 'invert(1) brightness(2)' }}
+                                                    />
+                                                </div>
                                                 <h2 className="text-3xl font-bold text-white mb-2">Bienvenido</h2>
                                                 <p className="text-[var(--color-text-muted)] text-sm">Ingresa a tu cuenta</p>
                                             </div>
@@ -266,14 +289,23 @@ export default function LandingPage() {
 
                         {viewState === 'register' && (
                             <div className="w-full max-w-[500px] mx-auto animate-in fade-in zoom-in-95 duration-300" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                                <div className="text-center" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                <div className="text-center flex flex-col gap-4">
+                                    <div className="flex justify-center mb-2">
+                                        <Image
+                                            src="/logo.png"
+                                            alt="LukeAPP Logo"
+                                            width={100}
+                                            height={100}
+                                            style={{ filter: 'invert(1) brightness(2)' }}
+                                        />
+                                    </div>
                                     <div className="flex justify-center">
                                         <span className="inline-block px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-widest">
                                             Próximamente
                                         </span>
                                     </div>
-                                    <h2 className="text-2xl font-bold text-white">Bolsa de Trabajo</h2>
-                                    <p className="text-[var(--color-text-muted)] text-sm leading-relaxed px-4">
+                                    <h2 className="text-3xl font-bold text-white tracking-tight">Bolsa de Trabajo</h2>
+                                    <p className="text-slate-400 text-base leading-relaxed px-4">
                                         El registro público estará habilitado para profesionales en búsqueda de oportunidades laborales.
                                     </p>
                                 </div>
@@ -309,24 +341,28 @@ export default function LandingPage() {
                     </div>
                 </div>
 
-                {/* Enterprise CTA - Premium Card (First to invite action) */}
-                <div className="enterprise-conversion-card">
-                    <div className="enterprise-content">
-                        <div className="enterprise-icon">⚙️</div>
-                        <div className="enterprise-text">
-                            <h3 className="text-2xl font-bold text-white mb-2">
-                                ¿Buscas implementar LukeAPP en tu empresa?
-                            </h3>
-                            <p className="text-[var(--color-text-muted)] text-base">
-                                Conoce nuestros planes y elige el que mejor se adapte a tu operación
-                            </p>
+                {/* Enterprise CTA - Premium Card */}
+                <div className="mt-24 w-full max-w-7xl p-[1px] rounded-[32px] bg-gradient-to-r from-brand-primary/20 via-white/10 to-brand-accent/20 shadow-2xl overflow-hidden mx-auto border border-white/5">
+                    <div className="bg-[#121216]/90 backdrop-blur-3xl rounded-[31px] p-10 md:p-14 lg:p-16 flex flex-col md:flex-row items-center gap-10 md:justify-between">
+                        <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left flex-1">
+                            <div className="w-16 h-16 rounded-2xl bg-brand-primary/10 flex items-center justify-center text-3xl shadow-inner border border-brand-primary/20">
+                                ⚙️
+                            </div>
+                            <div className="space-y-2">
+                                <h3 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
+                                    ¿Buscas implementar LukeAPP en tu empresa?
+                                </h3>
+                                <p className="text-slate-400 text-lg md:text-xl font-light">
+                                    Conoce nuestros planes y elige el que mejor se adapte a tu operación
+                                </p>
+                            </div>
                         </div>
                         <button
                             onClick={() => {
                                 const pricingSection = document.getElementById('pricing-section');
                                 pricingSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                             }}
-                            className="enterprise-cta-btn"
+                            className="whitespace-nowrap px-10 py-3.5 bg-slate-900 text-white font-bold rounded-xl border border-white/10 hover:border-white/30 hover:bg-slate-800 transition-all duration-300 uppercase tracking-widest text-sm shadow-2xl"
                         >
                             Ver Planes
                         </button>
@@ -334,14 +370,14 @@ export default function LandingPage() {
                 </div>
 
                 {/* Industries */}
-                <div>
-                    <h2 className="landing-section-title">
+                <div className="mt-24 w-full max-w-7xl mx-auto">
+                    <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-4">
                         Experiencia Comprobada
                     </h2>
-                    <p className="landing-section-subtitle">
+                    <p className="text-slate-400 text-center text-lg max-w-2xl mx-auto mb-16">
                         Amplia experiencia en trabajos mineros y refinería, brindando soluciones robustas para entornos exigentes.
                     </p>
-                    <div className="landing-grid-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <IndustryCard
                             image="/images/industries/mining.jpg"
                             title="Minería"
@@ -358,7 +394,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Value Cards */}
-                <div className="value-cards-grid">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mt-24 w-full max-w-7xl mx-auto">
                     <ValueCard
                         icon="🔒"
                         title="Seguro"
@@ -391,77 +427,84 @@ export default function LandingPage() {
                 </div>
 
                 {/* Pricing Section - At the End */}
-                <div id="pricing-section">
-                    <h2 className="landing-section-title">
+                <div id="pricing-section" className="mt-32 w-full flex flex-col items-center">
+                    <h2 className="text-3xl md:text-5xl font-extrabold text-white text-center mb-6">
                         Planes y Precios
                     </h2>
-                    <p className="landing-section-subtitle">
+                    <p className="text-slate-400 text-center text-lg max-w-2xl mx-auto mb-16">
                         Elige el plan que mejor se adapte a las necesidades de tu empresa
                     </p>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginTop: '3rem' }}>
-                        {plans.map((plan, index) => {
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch w-full max-w-7xl mx-auto">
+                        {plans.map((plan) => {
                             const isPro = plan.id === 'pro';
                             const isEnterprise = plan.id === 'enterprise';
-                            const titleColor = isEnterprise ? '#a78bfa' : '#60a5fa';
 
                             return (
                                 <div
                                     key={plan.id}
-                                    className="glass-panel"
-                                    style={{
-                                        padding: '2rem',
-                                        textAlign: 'center',
-                                        border: isPro ? '2px solid rgba(96, 165, 250, 0.3)' : undefined,
-                                        position: 'relative'
-                                    }}
+                                    className={`relative group p-10 rounded-[40px] backdrop-blur-3xl transition-all duration-500 hover:-translate-y-2 flex flex-col items-center text-center ${isPro
+                                        ? 'bg-slate-900/60 border-2 border-brand-primary/40 shadow-2xl shadow-brand-primary/10'
+                                        : 'bg-slate-900/40 border border-white/5 hover:border-white/10 hover:bg-slate-900/50'
+                                        }`}
                                 >
                                     {isPro && (
-                                        <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(90deg, #60a5fa, #818cf8)', padding: '0.25rem 1rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '600', color: 'white' }}>
-                                            RECOMENDADO
+                                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-1.5 bg-gradient-to-r from-brand-primary to-brand-accent text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-lg border border-white/10">
+                                            Recomendado
                                         </div>
                                     )}
-                                    <h3 style={{ color: titleColor, fontSize: '1.5rem', marginBottom: '0.5rem' }}>{plan.name}</h3>
-                                    <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+
+                                    <h3 className={`text-xl font-bold mb-2 tracking-tight ${isPro ? 'text-brand-primary' : isEnterprise ? 'text-purple-400' : 'text-slate-400'}`}>
+                                        {plan.name}
+                                    </h3>
+
+                                    <p className="text-sm text-slate-500 mb-8 font-medium">
                                         {plan.id === 'starter' && 'Para pequeños contratistas'}
                                         {plan.id === 'pro' && 'Para PyMEs establecidas'}
                                         {plan.id === 'enterprise' && 'Para grandes operaciones'}
                                     </p>
-                                    <div style={{ marginBottom: '1.5rem' }}>
-                                        <span style={{ color: 'white', fontSize: '2.5rem', fontWeight: '700' }}>
+
+                                    <div className="mb-10">
+                                        <span className="text-4xl font-black text-white tracking-tight">
                                             ${Number(plan.price_monthly).toLocaleString('es-CL')}
                                         </span>
-                                        <span style={{ color: '#94a3b8', fontSize: '1rem' }}>/mes</span>
+                                        <span className="text-slate-500 text-base ml-1">/mes</span>
                                     </div>
-                                    <ul style={{ textAlign: 'left', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '2rem', listStyle: 'none', padding: 0 }}>
-                                        {/* Always show numeric limits first */}
-                                        <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            <span style={{ color: '#4ade80' }}>✓</span> Hasta {plan.max_users === 999999 ? 'ilimitados' : plan.max_users} usuarios
+
+                                    <ul className="space-y-4 mb-12 text-left w-full text-sm font-medium">
+                                        <li className="flex items-center gap-3 text-slate-300">
+                                            <span className="text-emerald-500 bg-emerald-500/10 w-5 h-5 rounded-full flex items-center justify-center text-[10px]">✓</span>
+                                            <span>Hasta {plan.max_users === 999999 ? 'ilimitados' : plan.max_users} usuarios</span>
                                         </li>
-                                        <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            <span style={{ color: '#4ade80' }}>✓</span> {plan.max_projects === 999999 ? 'Proyectos ilimitados' : `${plan.max_projects} proyecto${plan.max_projects !== 1 ? 's' : ''}`}
+                                        <li className="flex items-center gap-3 text-slate-300">
+                                            <span className="text-emerald-500 bg-emerald-500/10 w-5 h-5 rounded-full flex items-center justify-center text-[10px]">✓</span>
+                                            <span>{plan.max_projects === 999999 ? 'Proyectos ilimitados' : `${plan.max_projects} proyecto${plan.max_projects !== 1 ? 's' : ''}`}</span>
                                         </li>
                                         {plan.max_spools && (
-                                            <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <span style={{ color: '#4ade80' }}>✓</span> {plan.max_spools === 999999 ? 'Spools ilimitados' : `Hasta ${plan.max_spools.toLocaleString('es-CL')} spools`}
+                                            <li className="flex items-center gap-3 text-slate-300">
+                                                <span className="text-emerald-500 bg-emerald-500/10 w-5 h-5 rounded-full flex items-center justify-center text-[10px]">✓</span>
+                                                <span>{plan.max_spools === 999999 ? 'Spools ilimitados' : `Hasta ${plan.max_spools.toLocaleString('es-CL')} spools`}</span>
                                             </li>
                                         )}
                                         {plan.max_storage_gb && (
-                                            <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <span style={{ color: '#4ade80' }}>✓</span> {plan.max_storage_gb === 999999 ? 'Almacenamiento ilimitado' : `${plan.max_storage_gb} GB`}
+                                            <li className="flex items-center gap-3 text-slate-300">
+                                                <span className="text-emerald-500 bg-emerald-500/10 w-5 h-5 rounded-full flex items-center justify-center text-[10px]">✓</span>
+                                                <span>{plan.max_storage_gb === 999999 ? 'Almacenamiento ilimitado' : `${plan.max_storage_gb} GB`}</span>
                                             </li>
                                         )}
-
-                                        {/* Then show additional qualitative features */}
-                                        {plan.features && Array.isArray(plan.features) && plan.features.map((feature: string, i: number) => (
-                                            <li key={`feature-${i}`} style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <span style={{ color: '#4ade80' }}>✓</span> {feature}
+                                        {plan.features?.map((feature: string, i: number) => (
+                                            <li key={`feat-${i}`} className="flex items-center gap-3 text-slate-300">
+                                                <span className="text-emerald-500 bg-emerald-500/10 w-5 h-5 rounded-full flex items-center justify-center text-[10px]">✓</span>
+                                                <span>{feature}</span>
                                             </li>
                                         ))}
                                     </ul>
+
                                     <a
                                         href={`mailto:contacto@lukeapp.cl?subject=Contratar Plan ${plan.name}`}
-                                        className={isPro ? 'hero-btn hero-btn-primary' : 'hero-btn hero-btn-secondary'}
-                                        style={{ width: '100%', textDecoration: 'none', textAlign: 'center' }}
+                                        className={`mt-auto w-full py-5 rounded-2xl font-black transition-all duration-300 text-center active:scale-95 ${isPro
+                                            ? 'bg-brand-primary text-white shadow-xl shadow-brand-primary/20 hover:shadow-brand-primary/40'
+                                            : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'
+                                            }`}
                                     >
                                         Contactar
                                     </a>
@@ -471,9 +514,9 @@ export default function LandingPage() {
                     </div>
                 </div>
 
-                <div className="landing-footer">
-                    <p className="landing-footer-text">
-                        🚀 Construido con <span className="text-[var(--color-primary)]">Next.js</span> y <span className="text-[var(--color-success)]">Supabase</span>
+                <div className="mt-20 pt-12 border-t border-white/5 text-center w-full">
+                    <p className="text-slate-500 text-sm font-medium flex items-center justify-center gap-2">
+                        🚀 Construido con <span className="text-blue-400 font-bold">Next.js</span> y <span className="text-emerald-500 font-bold">Supabase</span>
                     </p>
                 </div>
             </div >

@@ -7,8 +7,6 @@ import { Icons } from '@/components/ui/Icons';
 import { Heading, Text } from '@/components/ui/Typography';
 import { InputField } from '@/components/ui/InputField';
 import { Button } from '@/components/ui/button';
-import '@/styles/dashboard.css';
-import '@/styles/staff-plans.css';
 
 type Plan = Database['public']['Tables']['subscription_plans']['Row'];
 
@@ -95,25 +93,25 @@ export default function PlansManager() {
     }
 
     return (
-        <div className="dashboard-page">
+        <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in text-text-main">
             {/* Header */}
-            <div className="dashboard-header">
-                <div className="dashboard-header-content">
-                    <div className="dashboard-accent-line" />
-                    <Heading level={1} className="dashboard-title">Gestión de Planes Globales</Heading>
+            <div className="space-y-2 relative group">
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-8 bg-indigo-500 rounded-full" />
+                    <Heading level={1} className="tracking-tight text-white">Gestión de Planes Globales</Heading>
                 </div>
-                <Text size="base" className="dashboard-subtitle">
+                <Text size="base" className="text-text-muted text-sm font-medium ml-4.5 max-w-2xl">
                     Ajusta los límites y precios de los planes base. Los cambios afectan a todas las empresas suscritas.
                 </Text>
             </div>
 
             {error && (
-                <div className="error-banner">
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 animate-in fade-in slide-in-from-top-4">
                     {error}
                 </div>
             )}
 
-            <div className="plans-grid">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {plans.map((plan) => {
                     const isEditing = editingId === plan.id;
                     const currentData = isEditing && tempPlan ? tempPlan : plan;
@@ -121,13 +119,13 @@ export default function PlansManager() {
                     return (
                         <div
                             key={plan.id}
-                            className={`plan-card ${isEditing ? 'editing' : ''}`}
+                            className={`bg-bg-surface-1 border border-glass-border rounded-xl p-6 shadow-xl transition-all duration-300 ${isEditing ? 'ring-2 ring-brand-primary/50' : 'hover:border-brand-primary/30'}`}
                         >
                             {/* Header */}
-                            <div className="plan-card-header">
-                                <div className="plan-name">
-                                    <Heading level={3}>{currentData.name}</Heading>
-                                    <span className="plan-id-badge">
+                            <div className="flex items-start justify-between mb-6">
+                                <div className="space-y-1">
+                                    <Heading level={3} className="text-xl font-bold text-text-main">{currentData.name}</Heading>
+                                    <span className="inline-block px-2 py-0.5 bg-bg-surface-2 border border-glass-border rounded text-[10px] font-mono text-text-dim uppercase tracking-wider">
                                         {currentData.id}
                                     </span>
                                 </div>
@@ -136,6 +134,7 @@ export default function PlansManager() {
                                         onClick={() => handleEdit(plan)}
                                         variant="secondary"
                                         size="sm"
+                                        className="bg-brand-primary/10 hover:bg-brand-primary/20 text-brand-primary border-none"
                                     >
                                         Editar
                                     </Button>
@@ -143,26 +142,29 @@ export default function PlansManager() {
                             </div>
 
                             {/* Form/Display */}
-                            <div className="plan-form-group">
+                            <div className="space-y-6">
                                 {/* Price */}
                                 {isEditing ? (
-                                    <InputField
-                                        label="Precio Mensual (CLP)"
-                                        type="number"
-                                        value={currentData.price_monthly}
-                                        onChange={(e) => handleInputChange('price_monthly', parseInt(e.target.value) || 0)}
-                                    />
+                                    <div className="space-y-2">
+                                        <InputField
+                                            label="Precio Mensual (CLP)"
+                                            type="number"
+                                            value={currentData.price_monthly}
+                                            onChange={(e) => handleInputChange('price_monthly', parseInt(e.target.value) || 0)}
+                                            className="bg-bg-surface-2 border-glass-border focus:border-brand-primary"
+                                        />
+                                    </div>
                                 ) : (
-                                    <div>
-                                        <label className="form-label">Precio Mensual (CLP)</label>
-                                        <div className="plan-price-display">
+                                    <div className="bg-bg-surface-2/50 border border-glass-border rounded-lg p-4">
+                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block mb-1">Precio Mensual (CLP)</label>
+                                        <div className="text-2xl font-bold text-brand-primary flex items-baseline gap-1">
                                             ${Number(currentData.price_monthly).toLocaleString('es-CL')}
-                                            <span className="plan-price-period"> / mes</span>
+                                            <span className="text-sm font-medium text-text-dim"> / mes</span>
                                         </div>
                                     </div>
                                 )}
 
-                                <div className="plan-metrics-grid">
+                                <div className="grid grid-cols-2 gap-3">
                                     {/* Max Users */}
                                     {isEditing ? (
                                         <InputField
@@ -172,9 +174,9 @@ export default function PlansManager() {
                                             onChange={(e) => handleInputChange('max_users', parseInt(e.target.value) || 0)}
                                         />
                                     ) : (
-                                        <div>
-                                            <label className="form-label">Usuarios</label>
-                                            <div className="metric-value">
+                                        <div className="bg-bg-surface-2 border border-glass-border rounded-lg p-3">
+                                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block mb-0.5">Usuarios</label>
+                                            <div className="text-base font-semibold text-text-main">
                                                 {currentData.max_users === 999999 ? 'Ilimitado' : currentData.max_users}
                                             </div>
                                         </div>
@@ -189,9 +191,9 @@ export default function PlansManager() {
                                             onChange={(e) => handleInputChange('max_projects', parseInt(e.target.value) || 0)}
                                         />
                                     ) : (
-                                        <div>
-                                            <label className="form-label">Proyectos</label>
-                                            <div className="metric-value">
+                                        <div className="bg-bg-surface-2 border border-glass-border rounded-lg p-3">
+                                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block mb-0.5">Proyectos</label>
+                                            <div className="text-base font-semibold text-text-main">
                                                 {currentData.max_projects === 999999 ? 'Ilimitado' : currentData.max_projects}
                                             </div>
                                         </div>
@@ -206,82 +208,83 @@ export default function PlansManager() {
                                             onChange={(e) => handleInputChange('max_spools', parseInt(e.target.value) || 0)}
                                         />
                                     ) : (
-                                        <div>
-                                            <label className="form-label">Spools</label>
-                                            <div className="metric-value">
+                                        <div className="bg-bg-surface-2 border border-glass-border rounded-lg p-3">
+                                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block mb-0.5">Spools</label>
+                                            <div className="text-base font-semibold text-text-main">
                                                 {(!currentData.max_spools || currentData.max_spools === 999999) ? 'Ilimitado' : currentData.max_spools}
                                             </div>
                                         </div>
                                     )}
-                                </div>
-                                {/* Storage */}
-                                {isEditing ? (
-                                    <InputField
-                                        label="Almacenamiento (GB)"
-                                        type="number"
-                                        step="0.01"
-                                        value={currentData.max_storage_gb || 0}
-                                        onChange={(e) => handleInputChange('max_storage_gb', parseFloat(e.target.value) || 0)}
-                                    />
-                                ) : (
-                                    <div>
-                                        <label className="form-label">Almacenamiento</label>
-                                        <div className="metric-value">
-                                            {currentData.max_storage_gb === 999999 ? 'Ilimitado' : `${currentData.max_storage_gb} GB`}
+
+                                    {/* Storage */}
+                                    {isEditing ? (
+                                        <InputField
+                                            label="Almacenamiento (GB)"
+                                            type="number"
+                                            step="0.01"
+                                            value={currentData.max_storage_gb || 0}
+                                            onChange={(e) => handleInputChange('max_storage_gb', parseFloat(e.target.value) || 0)}
+                                        />
+                                    ) : (
+                                        <div className="bg-bg-surface-2 border border-glass-border rounded-lg p-3">
+                                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block mb-0.5">Almacenamiento</label>
+                                            <div className="text-base font-semibold text-text-main">
+                                                {currentData.max_storage_gb === 999999 ? 'Ilimitado' : `${currentData.max_storage_gb} GB`}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
 
                                 {/* Features */}
                                 {isEditing ? (
-                                    <div>
-                                        <label className="form-label">Características Adicionales</label>
-                                        <Text size="xs" variant="dim" className="form-hint" style={{ marginBottom: 'var(--spacing-2)' }}>
-                                            Una característica por línea (ej: "Soporte prioritario")
-                                        </Text>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Características Adicionales</label>
+                                        <p className="text-[10px] text-text-dim/60 italic mb-2">Una por línea (ej: "Soporte prioritario")</p>
                                         <textarea
                                             value={Array.isArray(currentData.features) ? currentData.features.join('\n') : ''}
                                             onChange={(e) => {
                                                 const lines = e.target.value.split('\n').filter(line => line.trim() !== '');
                                                 handleInputChange('features', lines);
                                             }}
-                                            className="form-input"
-                                            rows={5}
-                                            placeholder="Soporte prioritario&#10;Reportes avanzados&#10;API personalizada"
+                                            className="w-full bg-bg-surface-2 border border-glass-border rounded-lg p-3 text-sm text-text-main focus:ring-1 focus:ring-brand-primary outline-none min-h-[120px]"
+                                            placeholder="Soporte prioritario&#10;Reportes avanzados"
                                         />
                                     </div>
                                 ) : (
-                                    <div>
-                                        <label className="form-label">Características Adicionales</label>
-                                        <ul className="features-list">
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Características</label>
+                                        <div className="space-y-2">
                                             {Array.isArray(currentData.features) && currentData.features.length > 0 ? (
                                                 currentData.features.map((feature: any, idx: number) => (
-                                                    <li key={idx} className="feature-item">{feature}</li>
+                                                    <div key={idx} className="flex items-center gap-2 text-sm text-text-muted">
+                                                        <div className="w-1 h-1 bg-brand-primary rounded-full shrink-0" />
+                                                        {feature}
+                                                    </div>
                                                 ))
                                             ) : (
-                                                <li className="feature-empty">Sin características adicionales</li>
+                                                <div className="text-xs text-text-dim italic">Sin características adicionales</div>
                                             )}
-                                        </ul>
+                                        </div>
                                     </div>
                                 )}
                             </div>
 
                             {/* Actions */}
                             {isEditing && (
-                                <div className="plan-actions">
+                                <div className="mt-8 pt-6 border-t border-glass-border flex items-center gap-3">
                                     <Button
                                         onClick={handleSave}
                                         disabled={saveLoading}
-                                        variant="default" // Primary gradient
+                                        className="flex-1 bg-brand-primary hover:bg-brand-primary/80 text-white font-bold"
                                     >
-                                        {saveLoading ? <Icons.Refresh className="spin" size={16} /> : <Icons.Save size={16} />}
-                                        Guardar
+                                        {saveLoading ? <Icons.Refresh className="animate-spin" size={16} /> : <Icons.Save size={16} />}
+                                        Guardar Cambios
                                     </Button>
                                     <Button
                                         onClick={handleCancel}
                                         disabled={saveLoading}
                                         variant="secondary"
-                                        size="icon"
+                                        className="px-3"
                                     >
                                         <Icons.Close size={20} />
                                     </Button>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import '@/styles/onboarding.css';
+// Styles migrated to Tailwind v4
 
 interface ToastProps {
     message: string;

@@ -72,49 +72,18 @@ export default function SpoolExpandedContent({
 
     if (isSplitView) {
         return (
-            <div style={{
-                backgroundColor: 'rgba(15, 23, 42, 0.5)', // slate-900/50
-                padding: '8px',
-                borderRadius: '6px',
-                border: '1px solid #334155', // slate-700
-                marginTop: '8px'
-            }}>
-                <div style={{
-                    fontSize: '0.75rem', // xs
-                    fontWeight: 'bold',
-                    color: '#fbbf24', // amber-400
-                    marginBottom: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                }}>
+            <div className="bg-slate-900/50 p-2 rounded-md border border-slate-700 mt-2">
+                <div className="text-xs font-bold text-amber-400 mb-2 flex items-center gap-2">
                     <Icons.Split size={12} />
                     Spool Dividido - Asignación Pendiente
                 </div>
 
                 {/* 1. Unassigned Components (Source) */}
-                <div style={{ marginBottom: '16px' }}>
-                    <span style={{
-                        fontSize: '10px',
-                        textTransform: 'uppercase',
-                        color: '#94a3b8', // slate-400
-                        fontWeight: 600,
-                        letterSpacing: '0.05em'
-                    }}>
+                <div className="mb-4">
+                    <span className="text-[10px] uppercase text-slate-400 font-semibold tracking-wide">
                         Pool de Componentes ({welds.length + joints.length})
                     </span>
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(2, 1fr)',
-                        gap: '8px',
-                        marginTop: '4px',
-                        maxHeight: '150px',
-                        overflowY: 'auto',
-                        padding: '4px',
-                        backgroundColor: '#020617', // slate-950
-                        borderRadius: '4px',
-                        border: '1px solid #1e293b' // slate-800
-                    }}>
+                    <div className="grid grid-cols-2 gap-2 mt-1 max-h-[150px] overflow-y-auto p-1 bg-slate-950 rounded border border-slate-800 custom-scrollbar">
                         {/* Welds */}
                         {welds.map(w => (
                             <div
@@ -125,22 +94,13 @@ export default function SpoolExpandedContent({
                                     e.dataTransfer.setData('id', w.id)
                                     e.dataTransfer.effectAllowed = 'move'
                                 }}
-                                style={{
-                                    cursor: 'grab',
-                                    padding: '6px',
-                                    borderRadius: '4px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    border: '1px solid #334155', // slate-700
-                                    backgroundColor: '#0f172a' // slate-900
-                                }}
+                                className="cursor-grab p-1.5 rounded flex items-center justify-between border border-slate-700 bg-slate-900 hover:bg-slate-800 transition-colors"
                             >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    <Flame size={10} color="#fb923c" /> {/* orange-400 */}
-                                    <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', color: 'white' }}>{w.weld_number}</span>
+                                <div className="flex items-center gap-1.5">
+                                    <Flame size={10} className="text-orange-400" />
+                                    <span className="text-xs font-mono text-white">{w.weld_number}</span>
                                 </div>
-                                <span style={{ fontSize: '9px', color: '#64748b' }}>{w.type_weld}</span>
+                                <span className="text-[9px] text-slate-500">{w.type_weld}</span>
                             </div>
                         ))}
                         {/* Joints */}
@@ -153,26 +113,17 @@ export default function SpoolExpandedContent({
                                     e.dataTransfer.setData('id', j.id)
                                     e.dataTransfer.effectAllowed = 'move'
                                 }}
-                                style={{
-                                    cursor: 'grab',
-                                    padding: '6px',
-                                    borderRadius: '4px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    border: '1px solid #334155', // slate-700
-                                    backgroundColor: '#0f172a' // slate-900
-                                }}
+                                className="cursor-grab p-1.5 rounded flex items-center justify-between border border-slate-700 bg-slate-900 hover:bg-slate-800 transition-colors"
                             >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    <Wrench size={10} color="#38bdf8" /> {/* sky-400 */}
-                                    <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', color: 'white' }}>{j.flanged_joint_number}</span>
+                                <div className="flex items-center gap-1.5">
+                                    <Wrench size={10} className="text-sky-400" />
+                                    <span className="text-xs font-mono text-white">{j.flanged_joint_number}</span>
                                 </div>
-                                <span style={{ fontSize: '9px', color: '#64748b' }}>{j.type_code}</span>
+                                <span className="text-[9px] text-slate-500">{j.type_code}</span>
                             </div>
                         ))}
                         {welds.length === 0 && joints.length === 0 && (
-                            <div style={{ gridColumn: 'span 2', textAlign: 'center', fontSize: '10px', color: '#475569', padding: '8px' }}>
+                            <div className="col-span-2 text-center text-[10px] text-slate-500 p-2">
                                 No hay componentes pendientes
                             </div>
                         )}
@@ -181,16 +132,10 @@ export default function SpoolExpandedContent({
 
                 {/* 2. Child Spools (Targets) */}
                 <div>
-                    <span style={{
-                        fontSize: '10px',
-                        textTransform: 'uppercase',
-                        color: '#94a3b8', // slate-400
-                        fontWeight: 600,
-                        letterSpacing: '0.05em'
-                    }}>
+                    <span className="text-[10px] uppercase text-slate-400 font-semibold tracking-wide">
                         Sub-Spools (Destinos)
                     </span>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+                    <div className="flex flex-col gap-2 mt-1">
                         {childSpools.map((child: any) => (
                             <div
                                 key={child.id}
@@ -218,43 +163,23 @@ export default function SpoolExpandedContent({
 
                                     // Notify Parent for Optimistic Update
                                     if (onAssign) onAssign(type as 'WELD' | 'JOINT', id, child.id)
-
-
-                                    // Trigger simple refresh if passed, or rely on parent
-                                    // ideally we'd have onRefresh() prop
                                 }}
-                                style={{
-                                    padding: '8px',
-                                    borderRadius: '4px',
-                                    border: '1px solid #334155', // slate-700
-                                    backgroundColor: 'rgba(30, 41, 59, 0.5)', // slate-800/50
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    transition: 'all 0.2s'
-                                }}
+                                className="p-2 rounded border border-slate-700 bg-slate-800/50 flex items-center justify-between transition-all"
                             >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'white' }}>{child.name}</span>
-                                    <span style={{
-                                        fontSize: '10px',
-                                        fontFamily: 'monospace',
-                                        color: '#94a3b8',
-                                        backgroundColor: '#0f172a',
-                                        padding: '2px 4px',
-                                        borderRadius: '2px'
-                                    }}>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold text-white">{child.name}</span>
+                                    <span className="text-[10px] font-mono text-slate-400 bg-slate-900 px-1 py-0.5 rounded-sm">
                                         {child.tag || 'SIN-TAG'}
                                     </span>
                                 </div>
-                                <div style={{ fontSize: '10px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#475569' }}></div>
+                                <div className="text-[10px] text-slate-500 flex items-center gap-1">
+                                    <div className="w-2 h-2 rounded-full bg-slate-600"></div>
                                     Arrastra aquí
                                 </div>
                             </div>
                         ))}
                         {childSpools.length === 0 && (
-                            <div style={{ fontSize: '0.75rem', color: '#f87171', fontStyle: 'italic' }}>
+                            <div className="text-xs text-red-400 italic">
                                 Error: No se encontraron sub-spools creados.
                             </div>
                         )}
@@ -275,38 +200,14 @@ export default function SpoolExpandedContent({
                     if (!isDisabled) setActiveTab(id)
                 }}
                 disabled={isDisabled}
-                style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderBottom: isActive ? '2px solid #3b82f6' : '1px solid #334155',
-                    color: isActive ? '#3b82f6' : '#64748b',
-                    padding: '6px 4px',
-                    cursor: isDisabled ? 'not-allowed' : 'pointer',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    transition: 'all 0.2s',
-                    position: 'relative',
-                    opacity: isDisabled ? 0.3 : (isActive ? 1 : 0.8)
-                }}
+                className={`flex-1 flex items-center justify-center gap-1.5 bg-transparent border-b-2 py-1.5 px-1 cursor-pointer text-xs font-semibold transition-all relative ${isActive ? 'border-blue-500 text-blue-500' : 'border-slate-700 text-slate-500 hover:text-slate-300'
+                    } ${isDisabled ? 'opacity-30 cursor-not-allowed border-none' : ''}`}
             >
                 <Icon size={14} />
                 <span>{label}</span>
                 {count > 0 && (
-                    <span style={{
-                        backgroundColor: isActive ? '#3b82f6' : '#334155',
-                        color: 'white',
-                        padding: '0 5px',
-                        borderRadius: '4px',
-                        fontSize: '0.65rem',
-                        marginLeft: '4px',
-                        minWidth: '16px',
-                        textAlign: 'center'
-                    }}>
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] min-w-[16px] text-center ml-1 ${isActive ? 'bg-blue-500 text-white' : 'bg-slate-700 text-slate-300'
+                        }`}>
                         {count}
                     </span>
                 )}
@@ -315,18 +216,9 @@ export default function SpoolExpandedContent({
     }
 
     return (
-        <div style={{
-            marginTop: '8px',
-            borderTop: '1px solid #334155',
-            marginLeft: '-10px',
-            marginRight: '-10px',
-            width: 'calc(100% + 20px)'
-        }}>
+        <div className="mt-2 border-t border-slate-700 -mx-2.5 w-[calc(100%+20px)]">
             {/* Tabs Header */}
-            <div style={{
-                display: 'flex',
-                marginBottom: '0' // Connect directly to content
-            }}>
+            <div className="flex mb-0">
                 <TabButton
                     id="WELDS"
                     label="Uniones"
@@ -342,19 +234,13 @@ export default function SpoolExpandedContent({
             </div>
 
             {/* Content Area */}
-            <div style={{ padding: '8px 4px 4px 4px' }}>
+            <div className="p-2 pt-2">
 
                 {/* WELDS TAB */}
                 {activeTab === 'WELDS' && (
                     <>
                         {welds.length === 0 ? (
-                            <div style={{
-                                color: '#64748b',
-                                fontSize: '0.8rem',
-                                textAlign: 'center',
-                                padding: '16px',
-                                fontStyle: 'italic'
-                            }}>
+                            <div className="text-slate-500 text-xs text-center p-4 italic">
                                 No hay soldaduras registradas
                             </div>
                         ) : (
@@ -384,13 +270,7 @@ export default function SpoolExpandedContent({
                 {activeTab === 'JOINTS' && (
                     <>
                         {joints.length === 0 ? (
-                            <div style={{
-                                color: '#64748b',
-                                fontSize: '0.8rem',
-                                textAlign: 'center',
-                                padding: '16px',
-                                fontStyle: 'italic'
-                            }}>
+                            <div className="text-slate-500 text-xs text-center p-4 italic">
                                 No hay uniones apernadas registradas
                             </div>
                         ) : (

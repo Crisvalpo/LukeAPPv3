@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import AnimatedParticles from '@/components/animations/AnimatedParticles';
-import '@/styles/lobby.css';
+// Styles migrated to Tailwind v4
 
 type EmptyLobbyStateProps = {
     userName?: string;

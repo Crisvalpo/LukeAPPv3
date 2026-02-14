@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Calendar, Save, AlertCircle } from 'lucide-react'
+import { X, Calendar, Save, AlertCircle, Loader2 } from 'lucide-react'
+import { Heading, Text } from '@/components/ui/Typography'
+import { Button } from '@/components/ui/button'
 
 interface ProjectWeekConfigModalProps {
     isOpen: boolean
@@ -160,156 +162,65 @@ export default function ProjectWeekConfigModal({ isOpen, onClose, projectId, onS
     if (!isOpen) return null
 
     return (
-        <div style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 50,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1rem',
-            background: 'rgba(0, 0, 0, 0.6)',
-            backdropFilter: 'blur(8px)'
-        }}>
-            <div style={{
-                background: '#0f172a',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '12px',
-                width: '100%',
-                maxWidth: '42rem',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
-            }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+            <div className="bg-bg-surface-1 border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden glass-panel">
                 {/* Header */}
-                <div style={{
-                    padding: '1.5rem',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    borderTopLeftRadius: '12px',
-                    borderTopRightRadius: '12px'
-                }}>
-                    <div>
-                        <h2 style={{
-                            fontSize: '1.5rem',
-                            fontWeight: 700,
-                            color: 'white',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            margin: 0
-                        }}>
-                            <Calendar size={24} color="#a78bfa" />
-                            Configuración de Semanas del Proyecto
-                        </h2>
-                        <p style={{
-                            fontSize: '0.875rem',
-                            color: 'rgba(255, 255, 255, 0.6)',
-                            marginTop: '0.25rem',
-                            marginBottom: 0
-                        }}>
-                            Define cuándo comenzó el proyecto y el ciclo semanal
-                        </p>
+                <div className="p-6 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-brand-primary/10 rounded-xl text-brand-primary">
+                            <Calendar size={24} />
+                        </div>
+                        <div>
+                            <Heading level={2} size="xl">Configuración de Semanas</Heading>
+                            <Text variant="muted" size="sm">Define el inicio del proyecto y el ciclo semanal</Text>
+                        </div>
                     </div>
-                    <button
+                    <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={onClose}
-                        style={{
-                            color: 'rgba(255, 255, 255, 0.5)',
-                            background: 'transparent',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: '0.5rem',
-                            transition: 'color 0.2s'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.color = 'white'}
-                        onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.5)'}
+                        className="rounded-full hover:bg-white/10 text-white/50 hover:text-white"
                     >
                         <X size={24} />
-                    </button>
+                    </Button>
                 </div>
 
                 {/* Content */}
-                <div style={{ padding: '1.5rem' }}>
+                <div className="p-6 space-y-6">
                     {loading ? (
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            paddingTop: '3rem',
-                            paddingBottom: '3rem'
-                        }}>
-                            <div style={{
-                                width: '2rem',
-                                height: '2rem',
-                                border: '2px solid rgba(139, 92, 246, 0.3)',
-                                borderTop: '2px solid #8b5cf6',
-                                borderRadius: '50%',
-                                animation: 'spin 1s linear infinite'
-                            }} />
+                        <div className="flex flex-col items-center justify-center py-12 gap-4">
+                            <Loader2 className="w-8 h-8 text-brand-primary animate-spin" />
+                            <Text variant="muted">Cargando configuración...</Text>
                         </div>
                     ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        <div className="space-y-6">
                             {/* Error Message */}
                             {error && (
-                                <div style={{
-                                    background: 'rgba(127, 29, 29, 0.2)',
-                                    border: '1px solid rgba(239, 68, 68, 0.5)',
-                                    borderRadius: '8px',
-                                    padding: '1rem',
-                                    display: 'flex',
-                                    alignItems: 'flex-start',
-                                    gap: '0.75rem'
-                                }}>
-                                    <AlertCircle size={20} color="#f87171" style={{ marginTop: '2px' }} />
-                                    <p style={{ color: '#fecaca', fontSize: '0.875rem', margin: 0 }}>{error}</p>
+                                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-start gap-3">
+                                    <AlertCircle size={20} className="text-red-400 mt-0.5 shrink-0" />
+                                    <Text className="text-red-200/80 text-sm">{error}</Text>
                                 </div>
                             )}
 
                             {/* Mode Toggle */}
-                            <div style={{
-                                display: 'flex',
-                                gap: '0.5rem',
-                                padding: '0.25rem',
-                                background: 'rgba(255, 255, 255, 0.05)',
-                                borderRadius: '8px',
-                                border: '1px solid rgba(255, 255, 255, 0.1)'
-                            }}>
+                            <div className="flex p-1 bg-white/[0.03] border border-white/10 rounded-xl">
                                 <button
                                     type="button"
                                     onClick={() => setConfigMode('date')}
-                                    style={{
-                                        flex: 1,
-                                        padding: '0.5rem 1rem',
-                                        borderRadius: '6px',
-                                        fontSize: '0.875rem',
-                                        fontWeight: 500,
-                                        transition: 'all 0.2s',
-                                        background: configMode === 'date' ? '#8b5cf6' : 'transparent',
-                                        color: configMode === 'date' ? 'white' : 'rgba(255, 255, 255, 0.6)',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        boxShadow: configMode === 'date' ? '0 4px 6px -1px rgba(0, 0, 0, 0.3)' : 'none'
-                                    }}
+                                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-all duration-200 ${configMode === 'date'
+                                            ? 'bg-brand-primary text-white shadow-lg shadow-brand-primary/20'
+                                            : 'text-white/40 hover:text-white/60 hover:bg-white/5'
+                                        }`}
                                 >
                                     📅 Fecha de Inicio
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setConfigMode('week')}
-                                    style={{
-                                        flex: 1,
-                                        padding: '0.5rem 1rem',
-                                        borderRadius: '6px',
-                                        fontSize: '0.875rem',
-                                        fontWeight: 500,
-                                        transition: 'all 0.2s',
-                                        background: configMode === 'week' ? '#8b5cf6' : 'transparent',
-                                        color: configMode === 'week' ? 'white' : 'rgba(255, 255, 255, 0.6)',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        boxShadow: configMode === 'week' ? '0 4px 6px -1px rgba(0, 0, 0, 0.3)' : 'none'
-                                    }}
+                                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-all duration-200 ${configMode === 'week'
+                                            ? 'bg-brand-primary text-white shadow-lg shadow-brand-primary/20'
+                                            : 'text-white/40 hover:text-white/60 hover:bg-white/5'
+                                        }`}
                                 >
                                     🔢 Semana Actual
                                 </button>
@@ -317,174 +228,91 @@ export default function ProjectWeekConfigModal({ isOpen, onClose, projectId, onS
 
                             {/* Mode: Start Date */}
                             {configMode === 'date' && (
-                                <div>
-                                    <label style={{
-                                        display: 'block',
-                                        color: 'white',
-                                        fontWeight: 500,
-                                        marginBottom: '0.5rem'
-                                    }}>
-                                        📅 Fecha de Inicio del Proyecto
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-semibold text-white/80 ml-1">
+                                        Fecha de Inicio del Proyecto
                                     </label>
                                     <input
                                         type="date"
                                         value={startDate}
                                         onChange={(e) => setStartDate(e.target.value)}
-                                        style={{
-                                            width: '100%',
-                                            background: 'rgba(0, 0, 0, 0.4)',
-                                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                                            borderRadius: '8px',
-                                            padding: '0.75rem 1rem',
-                                            color: 'white',
-                                            fontSize: '1rem'
-                                        }}
-                                        onFocus={(e) => e.target.style.borderColor = '#8b5cf6'}
-                                        onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
+                                        className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-primary/50 focus:ring-1 focus:ring-brand-primary/50 transition-all"
                                     />
-                                    <p style={{
-                                        color: 'rgba(255, 255, 255, 0.5)',
-                                        fontSize: '0.75rem',
-                                        marginTop: '0.5rem',
-                                        marginBottom: 0
-                                    }}>
+                                    <Text variant="muted" size="xs" className="ml-1">
                                         Fecha en que oficialmente comenzó el proyecto
-                                    </p>
+                                    </Text>
                                 </div>
                             )}
 
                             {/* Mode: Current Week */}
                             {configMode === 'week' && (
-                                <div>
-                                    <label style={{
-                                        display: 'block',
-                                        color: 'white',
-                                        fontWeight: 500,
-                                        marginBottom: '0.5rem'
-                                    }}>
-                                        🔢 ¿En qué semana están actualmente?
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        placeholder="Ej: 90"
-                                        value={currentWeekInput}
-                                        onChange={(e) => setCurrentWeekInput(e.target.value)}
-                                        style={{
-                                            width: '100%',
-                                            background: 'rgba(0, 0, 0, 0.4)',
-                                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                                            borderRadius: '8px',
-                                            padding: '0.75rem 1rem',
-                                            color: 'white',
-                                            fontSize: '1rem'
-                                        }}
-                                        onFocus={(e) => e.target.style.borderColor = '#8b5cf6'}
-                                        onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
-                                    />
-                                    <p style={{
-                                        color: 'rgba(255, 255, 255, 0.5)',
-                                        fontSize: '0.75rem',
-                                        marginTop: '0.5rem',
-                                        marginBottom: 0
-                                    }}>
-                                        El sistema calculará automáticamente la fecha de inicio
-                                    </p>
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-semibold text-white/80 ml-1">
+                                            ¿En qué semana están actualmente?
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            placeholder="Ej: 90"
+                                            value={currentWeekInput}
+                                            onChange={(e) => setCurrentWeekInput(e.target.value)}
+                                            className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-primary/50 focus:ring-1 focus:ring-brand-primary/50 transition-all"
+                                        />
+                                        <Text variant="muted" size="xs" className="ml-1">
+                                            El sistema calculará automáticamente la fecha de inicio
+                                        </Text>
+                                    </div>
                                     {startDate && (
-                                        <div style={{
-                                            marginTop: '0.75rem',
-                                            padding: '0.75rem',
-                                            background: 'rgba(109, 40, 217, 0.2)',
-                                            border: '1px solid rgba(139, 92, 246, 0.3)',
-                                            borderRadius: '8px'
-                                        }}>
-                                            <p style={{ color: '#e9d5ff', fontSize: '0.875rem', margin: 0 }}>
-                                                📅 Fecha de inicio calculada: <span style={{ fontWeight: 600 }}>{new Date(startDate).toLocaleDateString('es-CL')}</span>
-                                            </p>
+                                        <div className="bg-brand-primary/10 border border-brand-primary/20 rounded-xl p-4">
+                                            <Text className="text-brand-primary/90 text-sm font-medium">
+                                                📅 Fecha de inicio calculada: <span className="text-white font-bold ml-1">{new Date(startDate).toLocaleDateString('es-CL')}</span>
+                                            </Text>
                                         </div>
                                     )}
                                 </div>
                             )}
 
                             {/* Week End Day */}
-                            <div>
-                                <label style={{
-                                    display: 'block',
-                                    color: 'white',
-                                    fontWeight: 500,
-                                    marginBottom: '0.5rem'
-                                }}>
-                                    🗓️ Día de Cierre Semanal
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-white/80 ml-1">
+                                    Día de Cierre Semanal
                                 </label>
                                 <select
                                     value={weekEndDay}
                                     onChange={(e) => setWeekEndDay(parseInt(e.target.value))}
-                                    style={{
-                                        width: '100%',
-                                        background: 'rgba(0, 0, 0, 0.4)',
-                                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                                        borderRadius: '8px',
-                                        padding: '0.75rem 1rem',
-                                        color: 'white',
-                                        fontSize: '1rem',
-                                        cursor: 'pointer'
-                                    }}
-                                    onFocus={(e) => e.target.style.borderColor = '#8b5cf6'}
-                                    onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
+                                    className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-primary/50 focus:ring-1 focus:ring-brand-primary/50 transition-all cursor-pointer appearance-none"
                                 >
                                     {DAYS_OF_WEEK.map(day => (
-                                        <option key={day.value} value={day.value} style={{ background: '#0f172a' }}>
+                                        <option key={day.value} value={day.value} className="bg-bg-surface-1 text-white">
                                             {day.label}
                                         </option>
                                     ))}
                                 </select>
-                                <p style={{
-                                    color: 'rgba(255, 255, 255, 0.5)',
-                                    fontSize: '0.75rem',
-                                    marginTop: '0.5rem',
-                                    marginBottom: 0
-                                }}>
+                                <Text variant="muted" size="xs" className="ml-1">
                                     Día que considera como cierre de semana (para reportes semanales)
-                                </p>
+                                </Text>
                             </div>
 
                             {/* Calculated Information */}
                             {startDate && (
-                                <div style={{
-                                    background: 'rgba(109, 40, 217, 0.2)',
-                                    border: '1px solid rgba(139, 92, 246, 0.3)',
-                                    borderRadius: '8px',
-                                    padding: '1rem'
-                                }}>
-                                    <h3 style={{
-                                        color: 'white',
-                                        fontWeight: 600,
-                                        marginBottom: '0.75rem',
-                                        marginTop: 0,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem',
-                                        fontSize: '1rem'
-                                    }}>
-                                        <Calendar size={16} color="#a78bfa" />
-                                        Información Calculada
-                                    </h3>
-                                    <div style={{
-                                        display: 'grid',
-                                        gridTemplateColumns: '1fr 1fr',
-                                        gap: '1rem'
-                                    }}>
-                                        <div>
-                                            <p style={{ color: '#e9d5ff', fontSize: '0.875rem', marginBottom: '0.25rem', marginTop: 0 }}>Semana Actual</p>
-                                            <p style={{ color: 'white', fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>
+                                <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-5 space-y-4">
+                                    <div className="flex items-center gap-2 text-brand-primary">
+                                        <Calendar size={18} />
+                                        <Text className="font-bold text-sm tracking-wide uppercase">Información Calculada</Text>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-white/[0.03] border border-white/5 p-4 rounded-xl">
+                                            <Text variant="muted" size="xs" className="mb-1">Semana Actual</Text>
+                                            <Text className="text-2xl font-bold text-white">
                                                 {calculatedWeek !== null ? `Semana ${calculatedWeek}` : '-'}
-                                            </p>
+                                            </Text>
                                         </div>
-                                        <div>
-                                            <p style={{ color: '#e9d5ff', fontSize: '0.875rem', marginBottom: '0.25rem', marginTop: 0 }}>Días Transcurridos</p>
-                                            <p style={{ color: 'white', fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>
+                                        <div className="bg-white/[0.03] border border-white/5 p-4 rounded-xl">
+                                            <Text variant="muted" size="xs" className="mb-1">Días Transcurridos</Text>
+                                            <Text className="text-2xl font-bold text-white">
                                                 {calculatedDay !== null ? `Día ${calculatedDay}` : '-'}
-                                            </p>
+                                            </Text>
                                         </div>
                                     </div>
                                 </div>
@@ -494,86 +322,34 @@ export default function ProjectWeekConfigModal({ isOpen, onClose, projectId, onS
                 </div>
 
                 {/* Footer */}
-                <div style={{
-                    padding: '1.5rem',
-                    borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    gap: '0.75rem',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    borderBottomLeftRadius: '12px',
-                    borderBottomRightRadius: '12px'
-                }}>
-                    <button
+                <div className="p-6 border-t border-white/10 bg-white/[0.02] flex justify-end gap-3">
+                    <Button
+                        variant="ghost"
                         onClick={onClose}
                         disabled={saving}
-                        style={{
-                            padding: '0.5rem 1.5rem',
-                            color: 'rgba(255, 255, 255, 0.7)',
-                            background: 'transparent',
-                            border: 'none',
-                            cursor: saving ? 'not-allowed' : 'pointer',
-                            fontSize: '0.875rem',
-                            transition: 'color 0.2s',
-                            opacity: saving ? 0.5 : 1
-                        }}
-                        onMouseEnter={(e) => !saving && (e.currentTarget.style.color = 'white')}
-                        onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)')}
+                        className="text-white/60 hover:text-white"
                     >
                         Cancelar
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         onClick={handleSave}
                         disabled={saving || !startDate}
-                        style={{
-                            padding: '0.5rem 1.5rem',
-                            background: (saving || !startDate) ? '#6d28d9' : '#8b5cf6',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontWeight: 500,
-                            cursor: (saving || !startDate) ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            opacity: (saving || !startDate) ? 0.5 : 1,
-                            fontSize: '0.875rem',
-                            boxShadow: '0 4px 14px 0 rgba(139, 92, 246, 0.2)',
-                            transition: 'all 0.2s'
-                        }}
-                        onMouseEnter={(e) => {
-                            if (!saving && startDate) {
-                                e.currentTarget.style.background = '#7c3aed'
-                            }
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.background = (saving || !startDate) ? '#6d28d9' : '#8b5cf6'
-                        }}
+                        className="bg-brand-primary hover:bg-brand-primary/90 text-white font-bold px-8 shadow-lg shadow-brand-primary/20"
                     >
                         {saving ? (
-                            <span style={{
-                                width: '1rem',
-                                height: '1rem',
-                                border: '2px solid rgba(255, 255, 255, 0.3)',
-                                borderTop: '2px solid white',
-                                borderRadius: '50%',
-                                animation: 'spin 1s linear infinite',
-                                display: 'inline-block'
-                            }} />
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                Guardando...
+                            </>
                         ) : (
-                            <Save size={18} />
+                            <>
+                                <Save size={18} className="mr-2" />
+                                Guardar Configuración
+                            </>
                         )}
-                        Guardar Configuración
-                    </button>
+                    </Button>
                 </div>
             </div>
-
-            <style jsx>{`
-                @keyframes spin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-            `}</style>
         </div>
     )
 }

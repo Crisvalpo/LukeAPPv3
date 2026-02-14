@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getOnboardingStatus, type OnboardingStatus } from '@/actions/onboarding'
 import { Users, Building2, FolderKanban, UserPlus } from 'lucide-react'
-import '@/styles/dashboard.css'
-import '@/styles/founder.css'
+// Styles migrated to Tailwind v4
+// Styles migrated to Tailwind v4
 import { Heading, Text } from '@/components/ui/Typography'
 import ConfigCard from '@/components/founder/ConfigCard'
 
@@ -77,20 +77,18 @@ export default function FounderDashboard() {
     }
 
     return (
-        <div className="dashboard-page">
+        <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
             {/* Header */}
-            <div className="dashboard-header">
-                <div className="dashboard-header-content-wrapper">
-                    <div className="dashboard-header-content">
-                        <div className="dashboard-accent-line" />
-                        <Heading level={1} className="dashboard-title">Panel de Control</Heading>
-                    </div>
-                    <Text size="base" className="dashboard-subtitle">Administra los recursos y configuraciones de tu organización</Text>
+            <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-8 bg-indigo-500 rounded-full" />
+                    <Heading level={1}>Panel de Control</Heading>
                 </div>
+                <Text size="base" className="text-slate-400 ml-4.5">Administra los recursos y configuraciones de tu organización</Text>
             </div>
 
-            {/* Content Cards */}
-            <div className="quick-actions-grid" style={{ marginTop: '2rem' }}>
+            {/* Content Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <ConfigCard
                     title="Información de Empresa"
                     description="Edita nombre, logo y datos de la organización"

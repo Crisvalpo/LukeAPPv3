@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { getProjectWeldTypesAction, updateWeldTypeAction } from '@/actions/weld-types'
 import { ArrowLeft } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import type { WeldTypeConfig } from '@/types'
 
 interface WeldTypesManagerProps {
@@ -83,254 +84,105 @@ export default function WeldTypesManager({ projectId, onBack }: WeldTypesManager
 
     if (loading) {
         return (
-            <div className="loading-container">
-                <div className="loading-spinner">Cargando tipos de unión...</div>
+            <div className="flex flex-col items-center justify-center p-20 text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mb-4"></div>
+                <p className="text-text-dim">Cargando tipos de unión...</p>
             </div>
         )
     }
 
     return (
-        <div className="weld-types-container">
-            <div className="section-header">
-                <div className="header-left">
+        <div className="w-full space-y-6 animate-in fade-in duration-500">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex items-center gap-4">
                     {onBack && (
-                        <button onClick={onBack} className="back-button" title="Volver a Configuración">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={onBack}
+                            title="Volver a Configuración"
+                            className="rounded-full w-10 h-10 bg-white/5 hover:bg-white/10 text-white"
+                        >
                             <ArrowLeft size={20} />
-                        </button>
+                        </Button>
                     )}
                     <div>
-                        <h2>Tipos de Unión</h2>
-                        <p className="section-subtitle">Configura qué uniones requieren soldador y sus colores.</p>
+                        <h2 className="text-2xl font-bold text-white tracking-tight">Tipos de Unión</h2>
+                        <p className="text-text-dim text-sm">Configura qué uniones requieren soldador y sus colores.</p>
                     </div>
                 </div>
             </div>
 
-            <div className="info-banner">
-                <span className="info-icon">ℹ️</span>
-                <div>
-                    <strong>Regla General:</strong> Todos los tipos requieren soldador por defecto
+            <div className="bg-brand-primary/10 border border-brand-primary/20 rounded-xl p-4 flex items-start gap-4">
+                <div className="text-2xl">ℹ️</div>
+                <div className="text-sm text-brand-primary/90">
+                    <strong>Regla General:</strong> Todos los tipos requieren soldador por defecto.
                     <br />
-                    <strong>Excepciones:</strong> Desmarca "Requiere Soldador" para tipos no soldados (roscados, bridados, etc.)
+                    <strong>Excepciones:</strong> Desmarca "Requiere Soldador" para tipos no soldados (roscados, bridados, etc.).
                 </div>
             </div>
 
-            <div className="weld-types-grid">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {weldTypes.map(type => (
-                    <div key={type.type_code} className="weld-type-card glass-panel">
-                        <div className="type-header">
-                            <div className="type-icon">{type.icon}</div>
-                            <div className="type-info">
-                                <div className="type-badge" style={{ backgroundColor: type.color }}>
+                    <div key={type.type_code} className="bg-bg-surface-1/40 backdrop-blur-xl border border-glass-border/50 rounded-2xl p-5 hover:border-brand-primary/30 transition-all hover:shadow-lg hover:shadow-brand-primary/5 group relative">
+                        <div className="flex items-start gap-4 mb-4">
+                            <div className="text-4xl filter drop-shadow-lg">{type.icon}</div>
+                            <div className="flex-1 min-w-0">
+                                <div
+                                    className="inline-block px-2.5 py-1 rounded-md text-sm font-bold text-white shadow-sm mb-1"
+                                    style={{ backgroundColor: type.color }}
+                                >
                                     {type.type_code}
                                 </div>
+                                <h3 className="text-white font-medium truncate" title={type.type_name_es}>{type.type_name_es}</h3>
+                                {type.type_name_en && (
+                                    <p className="text-text-dim text-xs truncate" title={type.type_name_en}>{type.type_name_en}</p>
+                                )}
                             </div>
                         </div>
 
-                        <div className="type-actions">
-                            <label className="toggle-container">
+                        <div className="pt-4 border-t border-glass-border/30 flex flex-col gap-3">
+                            <label className="flex items-center gap-3 cursor-pointer group/toggle">
+                                <div className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out ${type.requires_welder ? 'bg-brand-primary' : 'bg-white/10'}`}>
+                                    <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform duration-200 ease-in-out ${type.requires_welder ? 'translate-x-4' : 'translate-x-0'}`} />
+                                </div>
                                 <input
                                     type="checkbox"
+                                    className="hidden"
                                     checked={type.requires_welder}
                                     onChange={() => handleToggleRequiresWelder(type)}
                                 />
-                                <span className="toggle-label">
-                                    {type.requires_welder ? '✅ Requiere Soldador' : '❌ No Requiere Soldador'}
+                                <span className="text-sm font-medium text-text-dim group-hover/toggle:text-white transition-colors">
+                                    {type.requires_welder ? 'Requiere Soldador' : 'No Requiere Soldador'}
                                 </span>
                             </label>
 
-                            <button onClick={() => handleEdit(type)} className="edit-button">
-                                ✏️ Editar
+                            <button
+                                onClick={() => handleEdit(type)}
+                                className="w-full py-2 px-4 rounded-lg bg-white/5 border border-white/10 text-sm font-medium text-white hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2"
+                            >
+                                ✏️ Editar Configuración
                             </button>
                         </div>
                     </div>
                 ))}
             </div>
 
-            {
-                showModal && editingType && (
-                    <WeldTypeEditModal
-                        weldType={editingType}
-                        onSave={handleSave}
-                        onCancel={() => {
-                            setShowModal(false)
-                            setEditingType(null)
-                        }}
-                        saving={saving}
-                    />
-                )
-            }
-
-            <style jsx>{`
-                .weld-types-container {
-                    padding: 0;
-                }
-
-                .section-header {
-                    margin-bottom: 2rem;
-                }
-
-                .header-left {
-                    display: flex;
-                    align-items: center;
-                    gap: 1rem;
-                }
-
-                .back-button {
-                    background: rgba(255,255,255,0.05);
-                    border: 1px solid rgba(255,255,255,0.1);
-                    color: white;
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    padding: 0;
-                }
-
-                .back-button:hover {
-                    background: rgba(255,255,255,0.1);
-                    transform: translateX(-2px);
-                    border-color: rgba(255,255,255,0.2);
-                }
-
-                .section-header h2 {
-                    font-size: 1.5rem;
-                    font-weight: 700;
-                    margin: 0;
-                    color: white;
-                    line-height: 1.2;
-                }
-
-                .section-subtitle {
-                    color: #94a3b8;
-                    margin: 0;
-                    font-size: 0.9rem;
-                }
-
-                .info-banner {
-                    background: rgba(59, 130, 246, 0.1);
-                    border: 1px solid rgba(59, 130, 246, 0.3);
-                    border-radius: 12px;
-                    padding: 1rem;
-                    margin-bottom: 1.5rem;
-                    display: flex;
-                    gap: 1rem;
-                    align-items: flex-start;
-                }
-
-                .info-icon {
-                    font-size: 1.25rem;
-                }
-
-                .info-banner strong {
-                    color: var(--primary-color);
-                }
-
-                .weld-types-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-                    gap: 1.25rem;
-                }
-
-                .weld-type-card {
-                    padding: 1.25rem;
-                    border-radius: 12px;
-                    transition: transform 0.2s;
-                }
-
-                .weld-type-card:hover {
-                    transform: translateY(-2px);
-                }
-
-                .type-header {
-                    display: flex;
-                    gap: 1rem;
-                    margin-bottom: 1.25rem;
-                }
-
-                .type-icon {
-                    font-size: 2rem;
-                    flex-shrink: 0;
-                }
-
-                .type-info {
-                    flex: 1;
-                }
-
-                .type-badge {
-                    display: inline-block;
-                    padding: 4px 10px;
-                    border-radius: 6px;
-                    font-weight: 600;
-                    font-size: 0.85rem;
-                    color: white;
-                    margin-bottom: 0.5rem;
-                }
-
-                .type-info h3 {
-                    margin: 0;
-                    font-size: 1.1rem;
-                    color: var(--text-color);
-                }
-
-                .type-name-en {
-                    color: var(--text-muted);
-                    font-size: 0.85rem;
-                    margin: 0.25rem 0 0 0;
-                }
-
-                .type-actions {
-                    border-top: 1px solid rgba(255,255,255,0.1);
-                    padding-top: 1rem;
-                }
-
-                .toggle-container {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.65rem;
-                    cursor: pointer;
-                    margin-bottom: 0.75rem;
-                }
-
-                .toggle-container input {
-                    width: 18px;
-                    height: 18px;
-                    cursor: pointer;
-                }
-
-                .toggle-label {
-                    font-size: 0.9rem;
-                    color: var(--text-color);
-                }
-
-                .edit-button {
-                    width: 100%;
-                    padding: 0.65rem;
-                    background: rgba(255,255,255,0.05);
-                    border: 1px solid rgba(255,255,255,0.2);
-                    color: var(--text-color);
-                    border-radius: 8px;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    font-size: 0.9rem;
-                }
-
-                .edit-button:hover {
-                    background: rgba(255,255,255,0.1);
-                }
-
-                .loading-container {
-                    padding: 4rem;
-                    text-align: center;
-                    color: var(--text-muted);
-                }
-            `}</style>
-        </div >
+            {showModal && editingType && (
+                <WeldTypeEditModal
+                    weldType={editingType}
+                    onSave={handleSave}
+                    onCancel={() => {
+                        setShowModal(false)
+                        setEditingType(null)
+                    }}
+                    saving={saving}
+                />
+            )}
+        </div>
     )
 }
+
 
 interface ModalProps {
     weldType: WeldTypeConfig
@@ -339,8 +191,8 @@ interface ModalProps {
     saving: boolean
 }
 
+
 function WeldTypeEditModal({ weldType, onSave, onCancel, saving }: ModalProps) {
-    const [mounted, setMounted] = useState(false)
     const [formData, setFormData] = useState({
         type_name_es: weldType.type_name_es,
         type_name_en: weldType.type_name_en || '',
@@ -349,304 +201,117 @@ function WeldTypeEditModal({ weldType, onSave, onCancel, saving }: ModalProps) {
         color: weldType.color
     })
 
-    const commonIcons = ['🔥', '🔩', '🔗', '⚙️', '🔧', '❓']
-    const commonColors = ['#ef4444', '#f97316', '#8b5cf6', '#3b82f6', '#10b981', '#6b7280']
+    const commonIcons = ['🔥', '🔩', '🔗', '⚙️', '🔧', '❓', '⚡', '📐', '🛡️']
+    const commonColors = ['#ef4444', '#f97316', '#eab308', '#8b5cf6', '#3b82f6', '#10b981', '#6b7280', '#ec4899', '#06b6d4']
 
     useEffect(() => {
-        setMounted(true)
         document.body.style.overflow = 'hidden'
         return () => {
             document.body.style.overflow = 'unset'
         }
     }, [])
 
-    if (!mounted) return null
-
     return createPortal(
-        <div
-            className="modal-overlay"
-            onClick={onCancel}
-            style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                width: '100vw',
-                height: '100vh',
-                backgroundColor: 'rgba(0, 0, 0, 0.75)',
-                backdropFilter: 'blur(8px)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 99999,
-                margin: 0,
-                padding: 0
-            }}
-        >
-            <div className="modal-content glass-panel" onClick={(e) => e.stopPropagation()}>
-                <h2>Editar Tipo de Unión</h2>
-                <p className="modal-subtitle">Código: <strong>{weldType.type_code}</strong></p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onCancel} />
 
-                <div className="form-group">
-                    <label>Nombre (Español)</label>
-                    <input
-                        type="text"
-                        value={formData.type_name_es}
-                        onChange={(e) => setFormData({ ...formData, type_name_es: e.target.value })}
-                        autoFocus
-                    />
-                </div>
+            <div className="relative w-full max-w-md bg-bg-surface-1 border border-glass-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                <div className="p-6 overflow-y-auto custom-scrollbar">
+                    <h2 className="text-xl font-bold text-white mb-1">Editar Tipo de Unión</h2>
+                    <p className="text-text-dim text-sm pb-4 border-b border-glass-border/30 mb-6">
+                        Código: <strong className="text-white px-2 py-0.5 bg-white/10 rounded">{weldType.type_code}</strong>
+                    </p>
 
-                <div className="form-group">
-                    <label>Nombre (Inglés)</label>
-                    <input
-                        type="text"
-                        value={formData.type_name_en}
-                        onChange={(e) => setFormData({ ...formData, type_name_en: e.target.value })}
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>Icono</label>
-                    <div className="icon-grid">
-                        {commonIcons.map((icon) => (
-                            <button
-                                key={icon}
-                                type="button"
-                                className={`icon-option ${formData.icon === icon ? 'selected' : ''}`}
-                                onClick={() => setFormData({ ...formData, icon })}
-                            >
-                                {icon}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="form-group">
-                    <label>Color</label>
-                    <div className="color-grid">
-                        {commonColors.map((color) => (
-                            <button
-                                key={color}
-                                type="button"
-                                className={`color-option ${formData.color === color ? 'selected' : ''}`}
-                                style={{ backgroundColor: color }}
-                                onClick={() => setFormData({ ...formData, color })}
+                    <div className="space-y-5">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-text-dim">Nombre (Español)</label>
+                            <input
+                                type="text"
+                                value={formData.type_name_es}
+                                onChange={(e) => setFormData({ ...formData, type_name_es: e.target.value })}
+                                autoFocus
+                                className="w-full px-4 py-2 bg-black/30 border border-glass-border/50 rounded-lg text-white focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary/50 outline-none transition-all"
                             />
-                        ))}
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-text-dim">Nombre (Inglés)</label>
+                            <input
+                                type="text"
+                                value={formData.type_name_en}
+                                onChange={(e) => setFormData({ ...formData, type_name_en: e.target.value })}
+                                className="w-full px-4 py-2 bg-black/30 border border-glass-border/50 rounded-lg text-white focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary/50 outline-none transition-all"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-text-dim">Icono</label>
+                            <div className="flex flex-wrap gap-3">
+                                {commonIcons.map((icon) => (
+                                    <button
+                                        key={icon}
+                                        type="button"
+                                        className={`w-12 h-12 flex items-center justify-center text-2xl rounded-xl border transition-all ${formData.icon === icon
+                                            ? 'bg-brand-primary/20 border-brand-primary shadow-lg shadow-brand-primary/10 scale-110'
+                                            : 'bg-white/5 border-glass-border/30 hover:bg-white/10 hover:border-white/20'}`}
+                                        onClick={() => setFormData({ ...formData, icon })}
+                                    >
+                                        {icon}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-text-dim">Color</label>
+                            <div className="flex flex-wrap gap-3">
+                                {commonColors.map((color) => (
+                                    <button
+                                        key={color}
+                                        type="button"
+                                        className={`w-10 h-10 rounded-xl border-2 transition-all ${formData.color === color
+                                            ? 'border-white scale-110 shadow-lg'
+                                            : 'border-transparent hover:scale-105'}`}
+                                        style={{ backgroundColor: color }}
+                                        onClick={() => setFormData({ ...formData, color })}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-glass-border/30">
+                            <label className="flex items-center gap-3 cursor-pointer group/toggle p-2 rounded-lg hover:bg-white/5 transition-colors">
+                                <div className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out ${formData.requires_welder ? 'bg-brand-primary' : 'bg-white/10'}`}>
+                                    <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform duration-200 ease-in-out ${formData.requires_welder ? 'translate-x-4' : 'translate-x-0'}`} />
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    className="hidden"
+                                    checked={formData.requires_welder}
+                                    onChange={(e) => setFormData({ ...formData, requires_welder: e.target.checked })}
+                                />
+                                <span className="text-sm font-medium text-white">Requiere Soldador</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
-                <div className="form-group">
-                    <label className="checkbox-row">
-                        <input
-                            type="checkbox"
-                            checked={formData.requires_welder}
-                            onChange={(e) => setFormData({ ...formData, requires_welder: e.target.checked })}
-                        />
-                        <span>Requiere Soldador</span>
-                    </label>
-                </div>
-
-                <div className="modal-actions">
-                    <button onClick={onCancel} className="cancel-btn" disabled={saving}>
+                <div className="p-6 border-t border-glass-border/30 bg-black/20 flex gap-3">
+                    <button
+                        onClick={onCancel}
+                        className="flex-1 py-2.5 px-4 rounded-xl border border-glass-border/50 text-text-dim font-semibold hover:bg-white/5 hover:text-white transition-colors disabled:opacity-50"
+                        disabled={saving}
+                    >
                         Cancelar
                     </button>
-                    <button onClick={() => onSave(formData)} className="save-btn" disabled={saving}>
-                        {saving ? 'Guardando...' : 'Guardar'}
+                    <button
+                        onClick={() => onSave(formData)}
+                        className="flex-1 py-2.5 px-4 rounded-xl bg-brand-primary text-white font-bold hover:bg-brand-primary/90 transition-colors shadow-lg shadow-brand-primary/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                        disabled={saving}
+                    >
+                        {saving ? 'Guardando...' : 'Guardar Cambios'}
                     </button>
                 </div>
-
-                <style jsx>{`
-                    /* .modal-overlay styles moved to inline to ensure positioning */
-
-                    .modal-content {
-                        width: 90%;
-                        max-width: 480px;
-                        padding: 2rem;
-                        background: #1f2937; /* Fallback */
-                        background: rgba(31, 41, 55, 0.95);
-                        border: 1px solid rgba(255, 255, 255, 0.1);
-                        border-radius: 16px;
-                        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
-                        max-height: 90vh;
-                        overflow-y: auto;
-                        position: relative;
-                        animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-                    }
-
-                    @keyframes modalPop {
-                        0% { opacity: 0; transform: scale(0.95) translateY(10px); }
-                        100% { opacity: 1; transform: scale(1) translateY(0); }
-                    }
-
-                    .modal-content h2 {
-                        margin: 0 0 0.5rem 0;
-                        color: white; /* Stronger contrast */
-                        font-size: 1.5rem;
-                    }
-
-                    .modal-subtitle {
-                        color: #9ca3af;
-                        margin: 0 0 1.5rem 0;
-                        font-size: 0.95rem;
-                        padding-bottom: 1rem;
-                        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                    }
-
-                    /* ... existing form styles ... */
-                    .form-group {
-                        margin-bottom: 1.25rem;
-                    }
-
-                    .form-group label {
-                        display: block;
-                        margin-bottom: 0.5rem;
-                        color: #d1d5db;
-                        font-weight: 500;
-                        font-size: 0.9rem;
-                    }
-
-                    .form-group input[type="text"] {
-                        width: 100%;
-                        padding: 0.75rem;
-                        background: rgba(0, 0, 0, 0.3);
-                        border: 1px solid rgba(255, 255, 255, 0.1);
-                        border-radius: 8px;
-                        color: white;
-                        font-size: 0.95rem;
-                        transition: border-color 0.2s;
-                    }
-                    
-                    .form-group input[type="text"]:focus {
-                        border-color: var(--primary-color);
-                        outline: none;
-                    }
-
-                    .icon-grid, .color-grid {
-                        display: flex;
-                        gap: 0.75rem;
-                        flex-wrap: wrap;
-                    }
-
-                    .icon-option {
-                        width: 48px;
-                        height: 48px;
-                        font-size: 1.5rem;
-                        background: rgba(255,255,255,0.05);
-                        border: 2px solid rgba(255,255,255,0.1);
-                        border-radius: 10px;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    }
-
-                    .icon-option:hover {
-                        background: rgba(255,255,255,0.1);
-                        transform: translateY(-2px);
-                    }
-
-                    .icon-option.selected {
-                        border-color: var(--primary-color);
-                        background: rgba(59, 130, 246, 0.2);
-                        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
-                    }
-
-                    .color-option {
-                        width: 48px;
-                        height: 48px;
-                        border: 2px solid rgba(255,255,255,0.1);
-                        border-radius: 10px;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                    }
-
-                    .color-option:hover {
-                        transform: scale(1.1);
-                    }
-
-                    .color-option.selected {
-                        border-color: white;
-                        transform: scale(1.1);
-                        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
-                    }
-
-                    .checkbox-row {
-                        display: flex;
-                        align-items: center;
-                        gap: 0.75rem;
-                        cursor: pointer;
-                        background: rgba(255, 255, 255, 0.05);
-                        padding: 0.75rem;
-                        border-radius: 8px;
-                        border: 1px solid rgba(255, 255, 255, 0.1);
-                        transition: background 0.2s;
-                    }
-                    
-                    .checkbox-row:hover {
-                        background: rgba(255, 255, 255, 0.08);
-                    }
-
-                    .checkbox-row input {
-                        width: 20px;
-                        height: 20px;
-                        margin: 0;
-                    }
-                    
-                    .checkbox-row span {
-                       color: white;
-                       font-weight: 500;
-                    }
-
-                    .modal-actions {
-                        display: flex;
-                        gap: 1rem;
-                        margin-top: 2rem;
-                    }
-
-                    .cancel-btn, .save-btn {
-                        flex: 1;
-                        padding: 0.85rem;
-                        border-radius: 10px;
-                        font-size: 1rem;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                    }
-
-                    .cancel-btn {
-                        background: transparent;
-                        border: 1px solid rgba(255,255,255,0.2);
-                        color: #e5e7eb;
-                    }
-
-                    .cancel-btn:hover:not(:disabled) {
-                        background: rgba(255,255,255,0.05);
-                        border-color: white;
-                        color: white;
-                    }
-
-                    .save-btn {
-                        background: var(--primary-color);
-                        border: none;
-                        color: white;
-                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-                    }
-
-                    .save-btn:hover:not(:disabled) {
-                        filter: brightness(1.1);
-                        transform: translateY(-1px);
-                    }
-
-                    .cancel-btn:disabled, .save-btn:disabled {
-                        opacity: 0.5;
-                        cursor: not-allowed;
-                        transform: none;
-                    }
-                `}</style>
             </div>
         </div>,
         document.body

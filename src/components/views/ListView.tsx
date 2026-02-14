@@ -2,8 +2,7 @@
 
 import React from 'react'
 import { Plus, Eye, Pencil, Trash2, HelpCircle, FileX } from 'lucide-react'
-import '@/styles/views/list-view.css'
-import '@/styles/tables.css'
+// Styles migrated to Tailwind v4
 import { ViewSchema } from '@/schemas/company' // We can move interface to a shared type file later
 
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -48,21 +47,24 @@ export function ListView<T extends Record<string, any>>({
     }
 
     return (
-        <div className="view-container">
+        <div className="w-full space-y-6">
             {/* Header - Optional */}
             {!hideHeader && (
-                <div className="view-header">
-                    <div className="view-header-content">
-                        <div className="view-title-wrapper">
-                            <Icon size={32} className="view-icon" />
-                            <h1 className="view-title">{schema.label.plural}</h1>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20 text-blue-400">
+                            <Icon size={24} />
                         </div>
+                        <h1 className="text-2xl font-bold text-white tracking-tight">{schema.label.plural}</h1>
                     </div>
 
                     {onCreate && (
-                        <button onClick={onCreate} className="btn btn-primary">
+                        <button
+                            onClick={onCreate}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold transition-all shadow-lg shadow-blue-900/20 active:scale-95 shrink-0"
+                        >
                             <Plus size={18} />
-                            Nueva {schema.label.singular}
+                            <span>Nueva {schema.label.singular}</span>
                         </button>
                     )}
                 </div>
@@ -70,32 +72,41 @@ export function ListView<T extends Record<string, any>>({
 
             {/* List */}
             {data.length === 0 ? (
-                <div className="view-empty">
-                    <FileX size={48} className="view-empty-icon" />
-                    <p>No hay {schema.label.plural.toLowerCase()} registradas</p>
+                <div className="flex flex-col items-center justify-center py-20 px-4 bg-white/[0.02] border border-dashed border-white/10 rounded-2xl text-slate-500">
+                    <div className="p-4 bg-white/[0.03] rounded-full mb-4">
+                        <FileX size={48} className="opacity-50" />
+                    </div>
+                    <p className="text-lg font-medium text-slate-400">No hay {schema.label.plural.toLowerCase()} registradas</p>
                     {onCreate && (
-                        <button onClick={onCreate} className="btn btn-primary mt-4">
+                        <button
+                            onClick={onCreate}
+                            className="mt-6 flex items-center gap-2 px-6 py-2 border border-blue-500/30 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
+                        >
                             <Plus size={18} />
                             Crear primera {schema.label.singular}
                         </button>
                     )}
                 </div>
             ) : (
-                <div className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}> {/* Modern Glass Wrapper */}
-                    <div className="data-table-wrapper">
-                        <table className="data-table">
+                <div className="bg-[#1e293b]/20 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-sm">
+                    <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-white/10">
+                        <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr>
+                                <tr className="bg-white/[0.03] border-b border-white/5">
                                     {columns.map((colKey) => (
-                                        <th key={String(colKey)}>
+                                        <th
+                                            key={String(colKey)}
+                                            className="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-slate-500"
+                                        >
                                             {schema.fields[colKey as string]?.label || String(colKey)}
                                         </th>
                                     ))}
-                                    {/* Action Header always present for consistency if needed, or check actions length */}
-                                    <th style={{ textAlign: 'right' }}>Acciones</th>
+                                    <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-slate-500 text-right">
+                                        Acciones
+                                    </th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-white/[0.03]">
                                 {data.map((item, idx) => (
                                     <tr
                                         key={item.id || idx}
@@ -104,23 +115,26 @@ export function ListView<T extends Record<string, any>>({
                                                 onAction && onAction('view', item)
                                             }
                                         }}
-                                        style={{
-                                            cursor: (!schema.views.list.actions || schema.views.list.actions.length === 0) ? 'pointer' : 'default'
-                                        }}
+                                        className={`
+                                            group transition-all duration-150 hover:bg-white/[0.02]
+                                            ${(!schema.views.list.actions || schema.views.list.actions.length === 0) ? 'cursor-pointer' : ''}
+                                        `}
                                     >
                                         {columns.map((colKey) => (
-                                            <td key={String(colKey)}>
+                                            <td key={String(colKey)} className="px-6 py-4 text-sm text-slate-300">
                                                 {renderCell(item, colKey as string, schema.fields[colKey as string])}
                                             </td>
                                         ))}
 
-                                        <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                                            {/* Schema Actions + Custom Actions */}
-                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 {schema.views.list.actions?.map(action => (
                                                     <button
                                                         key={action}
-                                                        className="action-link"
+                                                        className={`
+                                                            p-2 rounded-md transition-all
+                                                            ${action === 'delete' ? 'text-red-400 hover:bg-red-500/10' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}
+                                                        `}
                                                         onClick={(e) => {
                                                             e.stopPropagation()
                                                             onAction && onAction(action, item)
@@ -129,7 +143,7 @@ export function ListView<T extends Record<string, any>>({
                                                     >
                                                         {action === 'view' ? <Eye size={18} /> :
                                                             action === 'edit' ? <Pencil size={18} /> :
-                                                                action === 'delete' ? <Trash2 size={18} className="text-destructive" /> : <HelpCircle size={18} />}
+                                                                action === 'delete' ? <Trash2 size={18} /> : <HelpCircle size={18} />}
                                                     </button>
                                                 ))}
                                                 {customActions?.map(action => {
@@ -137,7 +151,7 @@ export function ListView<T extends Record<string, any>>({
                                                     return (
                                                         <button
                                                             key={action.id}
-                                                            className="action-link"
+                                                            className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-md transition-all"
                                                             onClick={(e) => {
                                                                 e.stopPropagation()
                                                                 onAction && onAction(action.id, item)
@@ -173,20 +187,24 @@ function renderCell(item: any, key: string, fieldDef: any) {
         return <StatusBadge status="active" label={value} showDot={false} />
     }
 
-    if (!value) return <span style={{ opacity: 0.5 }}>-</span>
+    if (value === undefined || value === null || value === '') {
+        return <span className="text-slate-600 italic">No asignado</span>
+    }
 
     switch (fieldDef?.type) {
         case 'date':
-            return new Date(value).toLocaleDateString('es-ES', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            })
+            return (
+                <span className="font-medium text-slate-400">
+                    {new Date(value).toLocaleDateString('es-ES', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    })}
+                </span>
+            )
         case 'status':
-            // Use the standard StatusBadge component
-            // Map common statuses if needed, or pass directly
             return <StatusBadge status={value} />
         default:
-            return value
+            return <span className="font-semibold text-slate-200">{value}</span>
     }
 }

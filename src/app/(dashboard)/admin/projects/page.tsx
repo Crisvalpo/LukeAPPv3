@@ -6,7 +6,8 @@ import { createClient } from '@/lib/supabase/client'
 import { getProjectsByCompany, type Project } from '@/services/projects'
 import { ListView } from '@/components/views/ListView'
 import { ProjectSchema } from '@/schemas/project'
-import '@/styles/dashboard.css'
+import { Heading, Text } from '@/components/ui/Typography'
+// Styles migrated to Tailwind v4
 
 interface ProjectWithStats extends Project {
     members_count: number
@@ -81,18 +82,25 @@ export default function AdminProjectsListPage() {
     }
 
     if (isLoading) {
-        return <div className="dashboard-page"><p style={{ color: 'white', textAlign: 'center' }}>Cargando...</p></div>
+        return (
+            <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
+                <p className="text-white text-center">Cargando...</p>
+            </div>
+        )
     }
 
     return (
-        <div className="dashboard-page">
-            <div className="dashboard-header">
-                <div className="dashboard-header-content">
-                    <div className="dashboard-accent-line" />
-                    <h1 className="dashboard-title">Proyectos Asignados</h1>
-                </div>
-                <div className="dashboard-header-right">
-                    <p className="dashboard-subtitle">Gestiona los proyectos de tu empresa</p>
+        <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start gap-6">
+                <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-8 bg-indigo-500 rounded-full" />
+                        <Heading level={1} className="tracking-tight text-white">Proyectos Asignados</Heading>
+                    </div>
+                    <Text size="base" className="text-text-muted font-medium ml-4.5">
+                        Gestiona los proyectos de tu empresa
+                    </Text>
                 </div>
             </div>
 

@@ -15,6 +15,10 @@ import {
     getFabricabilitySummary,
     updateAllRevisionStatuses
 } from '@/services/fabricability'
+import { CheckCircle2, AlertCircle, XCircle, RefreshCw, Loader2, ChevronRight, Archive, ArrowUpDown } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Heading } from '@/components/ui/Typography'
 
 interface FabricabilityDashboardProps {
     projectId: string
@@ -151,25 +155,25 @@ export default function FabricabilityDashboard({ projectId }: FabricabilityDashb
         }
     })
 
-    const getStatusColor = (status: string) => {
-        const colors: Record<string, string> = {
-            'COMPLETO': '#10b981',
-            'EN_DESARROLLO': '#fbbf24',
-            'VACIO': '#ef4444',
-            'BLOQUEADO': '#6b7280',
-            'DISPONIBLE': '#10b981',
-            'NO_REQUERIDO': '#3b82f6',
-            'PENDIENTE_COMPRA': '#f59e0b',
-            'EN_TRANSITO': '#8b5cf6'
+    const getStatusClasses = (status: string) => {
+        const classes: Record<string, string> = {
+            'COMPLETO': 'bg-emerald-500/10 text-emerald-400',
+            'EN_DESARROLLO': 'bg-amber-500/10 text-amber-400',
+            'VACIO': 'bg-rose-500/10 text-rose-400',
+            'BLOQUEADO': 'bg-gray-500/10 text-gray-400',
+            'DISPONIBLE': 'bg-emerald-500/10 text-emerald-400',
+            'NO_REQUERIDO': 'bg-blue-500/10 text-blue-400',
+            'PENDIENTE_COMPRA': 'bg-amber-500/10 text-amber-400',
+            'EN_TRANSITO': 'bg-violet-500/10 text-violet-400'
         }
-        return colors[status] || '#9ca3af'
+        return classes[status] || 'bg-gray-500/10 text-gray-400'
     }
 
     if (isLoading && !isRefreshing) {
         return (
-            <div className="engineering-content" style={{ padding: '4rem', textAlign: 'center' }}>
-                <div className="spinner"></div>
-                <p style={{ marginTop: '1rem', color: 'var(--color-text-muted)' }}>
+            <div className="flex flex-col items-center justify-center p-20 text-center">
+                <Loader2 size={40} className="text-brand-primary animate-spin mb-4" />
+                <p className="text-text-dim">
                     Analizando fabricabilidad...
                 </p>
             </div>
@@ -177,347 +181,240 @@ export default function FabricabilityDashboard({ projectId }: FabricabilityDashb
     }
 
     return (
-        <div className="engineering-content">
-            {/* Header */}
-            {/* Header */}
-            <div className="section-header">
-                <div className="icon">✅</div>
-                <div style={{ flex: 1 }}>
-                    <h3>3. Fabricabilidad y Control</h3>
-                    <p>
-                        Visualización de qué revisiones están listas para fabricación
-                    </p>
-                </div>
-                <button
-                    className="action-button"
-                    onClick={handleRefresh}
-                    disabled={isRefreshing}
-                >
-                    {isRefreshing ? '⏳ Analizando...' : '🔄 Refrescar'}
-                </button>
-            </div>
-
-            {/* Summary Stats */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: 'var(--spacing-4)',
-                marginBottom: 'var(--spacing-6)'
-            }}>
-                <div style={{
-                    background: 'var(--color-bg-surface-1)',
-                    border: '1px solid var(--glass-border)',
-                    borderRadius: 'var(--radius-lg)',
-                    padding: 'var(--spacing-4)',
-                    textAlign: 'center'
-                }}>
-                    <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--color-text-main)' }}>
-                        {summary.total}
+        <div className="w-full space-y-6">
+            <div className="bg-bg-surface-1/40 backdrop-blur-xl border border-glass-border rounded-2xl p-6 shadow-lg space-y-6">
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-status-success/20 flex items-center justify-center text-status-success border border-status-success/20 shadow-lg shadow-status-success/5">
+                            <CheckCircle2 size={24} />
+                        </div>
+                        <div>
+                            <Heading title="Fabricabilidad y Control" size="lg" className="mb-1" />
+                            <p className="text-text-dim text-sm">
+                                Visualización de qué revisiones están listas para fabricación
+                            </p>
+                        </div>
                     </div>
-                    <div style={{ color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>
-                        Total Revisiones
-                    </div>
+                    <Button
+                        onClick={handleRefresh}
+                        disabled={isRefreshing}
+                        className="bg-brand-primary text-white hover:bg-brand-primary/90 gap-2 min-w-[140px]"
+                    >
+                        {isRefreshing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                        {isRefreshing ? 'Analizando...' : 'Refrescar'}
+                    </Button>
                 </div>
 
-                <div style={{
-                    background: 'var(--color-bg-surface-1)',
-                    border: '2px solid var(--color-success)',
-                    borderRadius: 'var(--radius-lg)',
-                    padding: 'var(--spacing-4)',
-                    textAlign: 'center'
-                }}>
-                    <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--color-success)' }}>
-                        🟢 {summary.fabricable}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div className="bg-black/20 border border-glass-border/30 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                        <span className="text-2xl font-bold text-white mb-1">{summary.total}</span>
+                        <span className="text-text-dim text-xs uppercase tracking-wider font-semibold">Total Revisiones</span>
                     </div>
-                    <div style={{ color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>
-                        Fabricables
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--color-text-dim)', marginTop: '4px' }}>
-                        {summary.total > 0 ? Math.round((summary.fabricable / summary.total) * 100) : 0}% del total
-                    </div>
-                </div>
 
-                <div style={{
-                    background: 'var(--color-bg-surface-1)',
-                    border: '1px solid var(--color-warning)',
-                    borderRadius: 'var(--radius-lg)',
-                    padding: 'var(--spacing-4)',
-                    textAlign: 'center'
-                }}>
-                    <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--color-warning)' }}>
-                        🟡 {summary.blocked_by_data}
+                    <div className="bg-status-success/10 border border-status-success/20 rounded-xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden">
+                        <div className="relative z-10 flex flex-col items-center">
+                            <span className="text-2xl font-bold text-status-success mb-1 flex items-center gap-2">
+                                <CheckCircle2 size={20} /> {summary.fabricable}
+                            </span>
+                            <span className="text-text-dim text-xs uppercase tracking-wider font-semibold">Fabricables</span>
+                            <span className="text-[10px] text-text-dim mt-1 bg-black/20 px-2 py-0.5 rounded-full">
+                                {summary.total > 0 ? Math.round((summary.fabricable / summary.total) * 100) : 0}% del total
+                            </span>
+                        </div>
                     </div>
-                    <div style={{ color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>
-                        Bloqueados por Datos
+
+                    <div className="bg-status-warning/10 border border-status-warning/20 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                        <span className="text-2xl font-bold text-status-warning mb-1 flex items-center gap-2">
+                            <AlertCircle size={20} /> {summary.blocked_by_data}
+                        </span>
+                        <span className="text-text-dim text-xs uppercase tracking-wider font-semibold">Bloq. Datos</span>
+                    </div>
+
+                    <div className="bg-status-error/10 border border-status-error/20 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                        <span className="text-2xl font-bold text-status-error mb-1 flex items-center gap-2">
+                            <XCircle size={20} /> {summary.blocked_by_material}
+                        </span>
+                        <span className="text-text-dim text-xs uppercase tracking-wider font-semibold">Bloq. Material</span>
+                    </div>
+
+                    <div className="bg-black/20 border border-glass-border/30 rounded-xl p-4 flex flex-col items-center justify-center text-center opacity-70">
+                        <span className="text-2xl font-bold text-text-dim mb-1 flex items-center gap-2">
+                            <Archive size={20} /> {summary.obsolete}
+                        </span>
+                        <span className="text-text-dim text-xs uppercase tracking-wider font-semibold">Obsoletas</span>
                     </div>
                 </div>
 
-                <div style={{
-                    background: 'var(--color-bg-surface-1)',
-                    border: '1px solid var(--color-error)',
-                    borderRadius: 'var(--radius-lg)',
-                    padding: 'var(--spacing-4)',
-                    textAlign: 'center'
-                }}>
-                    <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--color-error)' }}>
-                        🔴 {summary.blocked_by_material}
-                    </div>
-                    <div style={{ color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>
-                        Bloqueados por Material
-                    </div>
+                <div className="flex flex-wrap gap-2 border-b border-glass-border/30 pb-1">
+                    {[
+                        { key: 'ALL', label: '📊 Todas', count: revisions.length },
+                        { key: 'FABRICABLE', label: '🟢 Fabricables', count: summary.fabricable },
+                        { key: 'BLOCKED_DATA', label: '🟡 Bloq. Datos', count: summary.blocked_by_data },
+                        { key: 'BLOCKED_MATERIAL', label: '🔴 Bloq. Material', count: summary.blocked_by_material },
+                        { key: 'OBSOLETE', label: '⚫ Obsoletas', count: summary.obsolete }
+                    ].map(tab => (
+                        <button
+                            key={tab.key}
+                            onClick={() => setFilter(tab.key as any)}
+                            className={`px-4 py-2 rounded-t-lg text-sm font-medium transition-all relative ${filter === tab.key
+                                ? 'text-white bg-white/5 border-b-2 border-brand-primary'
+                                : 'text-text-dim hover:text-white hover:bg-white/5 border-b-2 border-transparent'
+                                }`}
+                        >
+                            {tab.label} <span className="opacity-50 text-xs ml-1">({tab.count})</span>
+                        </button>
+                    ))}
                 </div>
 
-                <div style={{
-                    background: 'var(--color-bg-surface-1)',
-                    border: '1px solid var(--glass-border)',
-                    borderRadius: 'var(--radius-lg)',
-                    padding: 'var(--spacing-4)',
-                    textAlign: 'center'
-                }}>
-                    <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--color-text-dim)' }}>
-                        ⚫ {summary.obsolete}
+                {filteredRevisions.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 bg-black/20 border border-glass-border/30 rounded-xl border-dashed">
+                        <div className="w-16 h-16 rounded-full bg-bg-surface-2 flex items-center justify-center mb-4 text-3xl shadow-inner grayscale opacity-50">
+                            📋
+                        </div>
+                        <h4 className="text-white font-medium mb-1">No hay revisiones en esta categoría</h4>
+                        <p className="text-text-dim text-sm">Cambia el filtro para ver otras revisiones</p>
                     </div>
-                    <div style={{ color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>
-                        Obsoletas
-                    </div>
-                </div>
-            </div>
-
-            {/* Filters */}
-            <div className="tabs-nav" style={{ marginBottom: 'var(--spacing-4)' }}>
-                <button
-                    className={`tab-button ${filter === 'ALL' ? 'active' : ''}`}
-                    onClick={() => setFilter('ALL')}
-                >
-                    📊 Todas ({revisions.length})
-                </button>
-                <button
-                    className={`tab-button ${filter === 'FABRICABLE' ? 'active' : ''}`}
-                    onClick={() => setFilter('FABRICABLE')}
-                >
-                    🟢 Fabricables ({summary.fabricable})
-                </button>
-                <button
-                    className={`tab-button ${filter === 'BLOCKED_DATA' ? 'active' : ''}`}
-                    onClick={() => setFilter('BLOCKED_DATA')}
-                >
-                    🟡 Bloq. Datos ({summary.blocked_by_data})
-                </button>
-                <button
-                    className={`tab-button ${filter === 'BLOCKED_MATERIAL' ? 'active' : ''}`}
-                    onClick={() => setFilter('BLOCKED_MATERIAL')}
-                >
-                    🔴 Bloq. Material ({summary.blocked_by_material})
-                </button>
-                <button
-                    className={`tab-button ${filter === 'OBSOLETE' ? 'active' : ''}`}
-                    onClick={() => setFilter('OBSOLETE')}
-                >
-                    ⚫ Obsoletas ({summary.obsolete})
-                </button>
-            </div>
-
-            {/* Revisions Table */}
-            {filteredRevisions.length === 0 ? (
-                <div className="empty-state">
-                    <div className="empty-icon">📋</div>
-                    <h4>No hay revisiones en esta categoría</h4>
-                    <p>Cambia el filtro para ver otras revisiones</p>
-                </div>
-            ) : (
-                <div className="data-table-container">
-                    <table className="data-table">
-                        <thead>
-                            <tr>
-                                <th style={{ textAlign: 'left' }}>Isométrico</th>
-                                <th style={{ textAlign: 'center' }}>Rev</th>
-                                <th style={{ textAlign: 'center' }}>Estado Revisión</th>
-                                <th style={{ textAlign: 'center' }}>Datos</th>
-                                <th style={{ textAlign: 'center' }}>Material</th>
-                                <th style={{ textAlign: 'center' }}>Spools Listos</th>
-                                <th style={{ textAlign: 'center' }}>Fabricable</th>
-                                <th style={{ textAlign: 'left' }}>Motivo Bloqueo</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredRevisions.map(rev => (
-                                <>
-                                    <tr
-                                        key={rev.id}
-                                        onClick={() => toggleRow(rev.id)}
-                                        style={{ cursor: 'pointer', transition: 'background 0.2s' }}
-                                        className={expandedRows.has(rev.id) ? 'expanded-row' : ''}
-                                    >
-                                        <td style={{ fontWeight: '600', color: 'var(--color-text-main)' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span style={{
-                                                    transform: expandedRows.has(rev.id) ? 'rotate(90deg)' : 'rotate(0deg)',
-                                                    transition: 'transform 0.2s'
-                                                }}>▶</span>
-                                                {rev.iso_number}
-                                            </div>
-                                        </td>
-                                        <td style={{ textAlign: 'center', fontFamily: 'var(--font-family-mono)' }}>
-                                            {rev.rev_code}
-                                        </td>
-                                        <td style={{ textAlign: 'center' }}>
-                                            <span style={{
-                                                padding: '4px 8px',
-                                                borderRadius: 'var(--radius-sm)',
-                                                fontSize: '0.75rem',
-                                                fontWeight: '500',
-                                                background: rev.revision_status === 'VIGENTE' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(107, 114, 128, 0.15)',
-                                                color: rev.revision_status === 'VIGENTE' ? '#3b82f6' : '#6b7280'
-                                            }}>
-                                                {rev.revision_status}
-                                            </span>
-                                            {/* Derived Process Badge */}
-                                            {rev.data_status === 'COMPLETO' && (
-                                                <span style={{
-                                                    marginLeft: '8px',
-                                                    padding: '2px 6px',
-                                                    borderRadius: '4px',
-                                                    fontSize: '0.7rem',
-                                                    fontWeight: '700',
-                                                    background: 'rgba(16, 185, 129, 0.15)',
-                                                    color: '#10b981',
-                                                    border: '1px solid rgba(16, 185, 129, 0.2)'
-                                                }}>
-                                                    SPOOLEADO
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td style={{ textAlign: 'center' }}>
-                                            <span style={{
-                                                padding: '4px 8px',
-                                                borderRadius: 'var(--radius-sm)',
-                                                fontSize: '0.75rem',
-                                                fontWeight: '500',
-                                                background: `${getStatusColor(rev.data_status)}15`,
-                                                color: getStatusColor(rev.data_status)
-                                            }}>
-                                                {rev.data_status}
-                                            </span>
-                                        </td>
-                                        <td style={{ textAlign: 'center' }}>
-                                            <span style={{
-                                                padding: '4px 8px',
-                                                borderRadius: 'var(--radius-sm)',
-                                                fontSize: '0.75rem',
-                                                fontWeight: '500',
-                                                background: `${getStatusColor(rev.material_status)}15`,
-                                                color: getStatusColor(rev.material_status)
-                                            }}>
-                                                {rev.material_status}
-                                            </span>
-                                        </td>
-                                        <td style={{ textAlign: 'center' }}>
-                                            <div style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                gap: '6px'
-                                            }}>
-                                                <span style={{
-                                                    fontSize: '1rem',
-                                                    fontWeight: '700',
-                                                    color: rev.fabricable_spools_count === rev.total_spools ? '#10b981' : '#e2e8f0'
-                                                }}>
-                                                    {rev.fabricable_spools_count}
-                                                </span>
-                                                <span style={{ color: '#64748b' }}>/</span>
-                                                <span style={{ color: '#94a3b8' }}>{rev.total_spools}</span>
-                                            </div>
-                                            {rev.total_spools > 0 && (
-                                                <div style={{
-                                                    width: '60px',
-                                                    height: '4px',
-                                                    background: '#334155',
-                                                    borderRadius: '2px',
-                                                    margin: '4px auto 0'
-                                                }}>
-                                                    <div style={{
-                                                        width: `${(rev.fabricable_spools_count / rev.total_spools) * 100}%`,
-                                                        height: '100%',
-                                                        background: rev.fabricable_spools_count === rev.total_spools ? '#10b981' : '#3b82f6',
-                                                        borderRadius: '2px'
-                                                    }} />
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td style={{ textAlign: 'center', fontSize: '1.5rem' }}>
-                                            {rev.is_fabricable ? '🟢' : '🔴'}
-                                        </td>
-                                        <td style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
-                                            {rev.blocking_reason || '-'}
-                                        </td>
-                                    </tr>
-                                    {/* Expanded Detail Row */}
-                                    {expandedRows.has(rev.id) && (
-                                        <tr key={`${rev.id}-detail`} style={{ background: 'rgba(0,0,0,0.2)' }}>
-                                            <td colSpan={8} style={{ padding: '0' }}>
-                                                <div style={{ padding: '20px', display: 'flex', gap: '40px', fontSize: '0.9rem' }}>
-                                                    {/* Fabricable List */}
-                                                    <div style={{ flex: 1 }}>
-                                                        <h5 style={{ color: '#10b981', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                            🟢 Listos para Fabricar ({rev.fabricable_spools?.length || 0})
-                                                        </h5>
-                                                        {(rev.fabricable_spools?.length || 0) > 0 ? (
-                                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                                                {rev.fabricable_spools.map(s => (
-                                                                    <span key={s.spool_id} style={{
-                                                                        padding: '4px 10px',
-                                                                        background: 'rgba(16, 185, 129, 0.1)',
-                                                                        border: '1px solid rgba(16, 185, 129, 0.2)',
-                                                                        borderRadius: '4px',
-                                                                        color: '#10b981',
-                                                                        fontFamily: 'monospace'
-                                                                    }}>
-                                                                        {s.spool_number}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                        ) : (
-                                                            <p style={{ color: '#64748b', fontStyle: 'italic' }}>Ningún spool listo.</p>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Blocked List */}
-                                                    <div style={{ flex: 1 }}>
-                                                        <h5 style={{ color: '#ef4444', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                            🔴 Bloqueados por Material ({rev.blocked_spools?.length || 0})
-                                                        </h5>
-                                                        {(rev.blocked_spools?.length || 0) > 0 ? (
-                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                                                {rev.blocked_spools.map(s => (
-                                                                    <div key={s.spool_id} style={{
-                                                                        padding: '8px',
-                                                                        background: 'rgba(239, 68, 68, 0.05)',
-                                                                        border: '1px solid rgba(239, 68, 68, 0.1)',
-                                                                        borderRadius: '4px',
-                                                                        color: '#ef4444'
-                                                                    }}>
-                                                                        <div style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{s.spool_number}</div>
-                                                                        <div style={{ fontSize: '0.8rem', marginTop: '4px', color: '#fda4af' }}>
-                                                                            Falta: {s.missing_items.join(', ')}
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        ) : (
-                                                            <p style={{ color: '#64748b', fontStyle: 'italic' }}>No hay spools bloqueados.</p>
-                                                        )}
-                                                    </div>
+                ) : (
+                    <div className="overflow-x-auto rounded-xl border border-glass-border/30 bg-black/20">
+                        <table className="w-full text-left border-collapse">
+                            <thead className="bg-white/5 text-text-dim text-xs uppercase tracking-wider font-semibold">
+                                <tr>
+                                    <th className="px-4 py-3">Isométrico</th>
+                                    <th className="px-4 py-3 text-center">Rev</th>
+                                    <th className="px-4 py-3 text-center">Estado</th>
+                                    <th className="px-4 py-3 text-center">Datos</th>
+                                    <th className="px-4 py-3 text-center">Material</th>
+                                    <th className="px-4 py-3 text-center">Spools Listos</th>
+                                    <th className="px-4 py-3 text-center">Fabricable</th>
+                                    <th className="px-4 py-3">Motivo Bloqueo</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-glass-border/20 text-sm">
+                                {filteredRevisions.map(rev => (
+                                    <>
+                                        <tr
+                                            key={rev.id}
+                                            onClick={() => toggleRow(rev.id)}
+                                            className={`cursor-pointer transition-colors hover:bg-white/5 ${expandedRows.has(rev.id) ? 'bg-white/5' : ''
+                                                }`}
+                                        >
+                                            <td className="px-4 py-3 font-semibold text-white">
+                                                <div className="flex items-center gap-2">
+                                                    <ChevronRight
+                                                        size={14}
+                                                        className={`transition-transform duration-200 ${expandedRows.has(rev.id) ? 'rotate-90 text-brand-primary' : 'text-text-dim'}`}
+                                                    />
+                                                    {rev.iso_number}
                                                 </div>
                                             </td>
+                                            <td className="px-4 py-3 text-center font-mono text-text-dim">{rev.rev_code}</td>
+                                            <td className="px-4 py-3 text-center">
+                                                <Badge
+                                                    variant={rev.revision_status === 'VIGENTE' ? 'success' : 'secondary'}
+                                                    className="bg-opacity-10 dark:bg-opacity-20 border-opacity-20"
+                                                >
+                                                    {rev.revision_status}
+                                                </Badge>
+                                                {rev.data_status === 'COMPLETO' && (
+                                                    <Badge variant="outline" className="ml-2 text-[10px] px-1.5 py-0.5 border-emerald-500/30 text-emerald-400 bg-emerald-500/5">
+                                                        SPOOL
+                                                    </Badge>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusClasses(rev.data_status)}`}>
+                                                    {rev.data_status}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusClasses(rev.material_status)}`}>
+                                                    {rev.material_status}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <div className="flex items-center gap-1 text-xs font-semibold">
+                                                        <span className={rev.fabricable_spools_count === rev.total_spools ? 'text-emerald-400' : 'text-white'}>
+                                                            {rev.fabricable_spools_count}
+                                                        </span>
+                                                        <span className="text-text-dim">/</span>
+                                                        <span className="text-text-dim">{rev.total_spools}</span>
+                                                    </div>
+                                                    {rev.total_spools > 0 && (
+                                                        <div className="w-16 h-1 bg-white/10 rounded-full overflow-hidden">
+                                                            <div
+                                                                className={`h-full rounded-full ${rev.fabricable_spools_count === rev.total_spools ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                                                                style={{ width: `${(rev.fabricable_spools_count / rev.total_spools) * 100}%` }}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                {rev.is_fabricable ? (
+                                                    <CheckCircle2 size={18} className="text-emerald-400 mx-auto" />
+                                                ) : (
+                                                    <XCircle size={18} className="text-rose-400 mx-auto" />
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3 text-xs text-text-dim max-w-[200px] truncate">
+                                                {rev.blocking_reason || '-'}
+                                            </td>
                                         </tr>
-                                    )}
-                                </>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+                                        {/* Expanded Detail Row */}
+                                        {expandedRows.has(rev.id) && (
+                                            <tr className="bg-black/40">
+                                                <td colSpan={8} className="p-0">
+                                                    <div className="p-6 flex flex-col md:flex-row gap-8 text-sm animate-in fade-in slide-in-from-top-2 duration-200 border-b border-glass-border/20">
+                                                        {/* Fabricable List */}
+                                                        <div className="flex-1 space-y-3">
+                                                            <h5 className="text-emerald-400 font-semibold flex items-center gap-2 pb-2 border-b border-emerald-500/20">
+                                                                <CheckCircle2 size={16} /> Listos para Fabricar ({rev.fabricable_spools?.length || 0})
+                                                            </h5>
+                                                            {(rev.fabricable_spools?.length || 0) > 0 ? (
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {rev.fabricable_spools.map(s => (
+                                                                        <span key={s.spool_id} className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded text-emerald-400 font-mono text-xs">
+                                                                            {s.spool_number}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            ) : (
+                                                                <p className="text-text-dim italic text-xs">Ningún spool listo.</p>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Blocked List */}
+                                                        <div className="flex-1 space-y-3">
+                                                            <h5 className="text-rose-400 font-semibold flex items-center gap-2 pb-2 border-b border-rose-500/20">
+                                                                <XCircle size={16} /> Bloqueados por Material ({rev.blocked_spools?.length || 0})
+                                                            </h5>
+                                                            {(rev.blocked_spools?.length || 0) > 0 ? (
+                                                                <div className="flex flex-col gap-2">
+                                                                    {rev.blocked_spools.map(s => (
+                                                                        <div key={s.spool_id} className="p-2 bg-rose-500/5 border border-rose-500/10 rounded flex flex-col gap-1">
+                                                                            <span className="font-mono font-bold text-rose-400 text-xs">{s.spool_number}</span>
+                                                                            <span className="text-rose-300/70 text-[10px]">
+                                                                                Falta: {s.missing_items.join(', ')}
+                                                                            </span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            ) : (
+                                                                <p className="text-text-dim italic text-xs">No hay spools bloqueados.</p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
         </div>
     )
 }

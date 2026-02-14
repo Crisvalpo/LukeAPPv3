@@ -9,6 +9,8 @@
 import { useState, useEffect } from 'react'
 import * as XLSX from 'xlsx'
 import { uploadMTO, getMTOCount, deleteMTO, parseMTOFromArray } from '@/services/mto'
+import { Upload, FileSpreadsheet, CheckCircle2, Trash2, RefreshCcw, AlertCircle, Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { downloadMTOTemplate } from '@/lib/utils/template-generator'
 
 interface Props {
@@ -130,83 +132,108 @@ export default function MTOUploader({ revisionId, projectId, companyId }: Props)
     }
 
     return (
-        <>
+        <div className="w-full">
             {!success ? (
-                <div className="upload-box">
+                <div className="bg-black/20 border-2 border-dashed border-glass-border/30 rounded-xl p-8 hover:bg-black/30 transition-all group relative">
                     {!file ? (
-                        <div className="file-input-wrapper">
+                        <div className="flex flex-col items-center justify-center text-center">
+                            <div className="w-16 h-16 rounded-full bg-bg-surface-2 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-inner">
+                                <FileSpreadsheet size={32} className="text-brand-primary opacity-80" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-white mb-2">Cargar Excel MTO</h3>
+                            <p className="text-text-dim text-sm max-w-sm mb-6">
+                                Arrastra y suelta tu archivo Excel aquí, o haz clic para seleccionar.
+                            </p>
                             <input
                                 type="file"
                                 accept=".xlsx, .xls"
                                 onChange={handleFileSelect}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                             />
-                            <div className="fake-btn">📂 Seleccionar Excel</div>
+                            <div className="px-6 py-2.5 bg-brand-primary/10 border border-brand-primary/20 text-brand-primary rounded-lg font-medium group-hover:bg-brand-primary/20 transition-colors pointer-events-none">
+                                Seleccionar Archivo
+                            </div>
                         </div>
                     ) : (
-                        <div className="file-ready">
-                            <div className="file-info">
-                                <span className="icon">📄</span>
-                                <span className="name">{file.name}</span>
-                                <span className="count">({previewCount} filas)</span>
+                        <div className="flex flex-col items-center animate-in fade-in zoom-in-95 duration-200">
+                            <div className="w-16 h-16 rounded-xl bg-status-success/10 border border-status-success/20 flex items-center justify-center mb-4">
+                                <FileSpreadsheet size={32} className="text-status-success" />
                             </div>
+                            <h3 className="text-lg font-semibold text-white mb-1 truncate max-w-md">{file.name}</h3>
+                            <p className="text-status-success text-sm font-medium mb-6">
+                                {previewCount} filas detectadas
+                            </p>
 
-                            <div className="actions">
-                                <button
-                                    className="btn-cancel"
+                            <div className="flex gap-3">
+                                <Button
+                                    variant="outline"
                                     onClick={() => setFile(null)}
                                     disabled={uploading}
+                                    className="border-glass-border/50 hover:bg-white/5 text-text-dim hover:text-white"
                                 >
                                     Cancelar
-                                </button>
-                                <button
-                                    className="btn-upload"
+                                </Button>
+                                <Button
                                     onClick={handleUpload}
                                     disabled={uploading}
+                                    className="bg-brand-primary text-white hover:bg-brand-primary/90 gap-2 min-w-[140px]"
                                 >
-                                    {uploading ? 'Procesando...' : '⬆️ Cargar MTO'}
-                                </button>
+                                    {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                                    {uploading ? 'Procesando...' : 'Cargar MTO'}
+                                </Button>
                             </div>
                         </div>
                     )}
                 </div>
             ) : (
-                <div className="result-box">
-                    <div className="result-header success">
-                        ✅ MTO cargado exitosamente
+                <div className="bg-status-success/5 border border-status-success/20 rounded-xl p-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="flex flex-col items-center text-center mb-6">
+                        <div className="w-12 h-12 rounded-full bg-status-success/20 flex items-center justify-center mb-3 text-status-success border border-status-success/20 shadow-lg shadow-status-success/5">
+                            <CheckCircle2 size={24} />
+                        </div>
+                        <h3 className="text-lg font-bold text-white mb-1">¡Carga Exitosa!</h3>
+                        <p className="text-text-dim text-sm">
+                            Se han procesado correctamente los datos del MTO.
+                        </p>
                     </div>
 
                     {mtoCount > 0 && (
-                        <div className="stats-grid">
-                            <div className="stat created">
-                                <span>Registros MTO</span>
-                                <strong>{mtoCount.toLocaleString()}</strong>
+                        <div className="grid grid-cols-1 gap-4 mb-6 max-w-xs mx-auto">
+                            <div className="bg-black/20 border border-glass-border/30 rounded-lg p-4 flex items-center justify-between">
+                                <span className="text-text-dim text-sm">Registros MTO</span>
+                                <span className="text-xl font-bold text-white">{mtoCount.toLocaleString()}</span>
                             </div>
                         </div>
                     )}
 
-                    <div className="actions">
-                        <button
-                            className="btn-delete"
+                    <div className="flex justify-center gap-3">
+                        <Button
+                            variant="destructive"
                             onClick={handleDelete}
                             disabled={uploading}
+                            className="bg-status-error/10 hover:bg-status-error/20 text-status-error border border-status-error/20"
                         >
-                            🗑️ Eliminar MTO
-                        </button>
-                        <button
-                            className="btn-reset"
+                            <Trash2 size={16} className="mr-2" /> Eliminar MTO
+                        </Button>
+                        <Button
+                            variant="outline"
                             onClick={() => { setFile(null); setSuccess(false); }}
+                            className="border-glass-border/50 hover:bg-white/5 text-text-dim hover:text-white"
                         >
-                            Cargar otro archivo
-                        </button>
+                            <RefreshCcw size={16} className="mr-2" /> Cargar otro archivo
+                        </Button>
                     </div>
                 </div>
             )}
 
             {error && (
-                <div className="error-message">
-                    ❌ {error}
+                <div className="mt-4 p-4 bg-status-error/10 border border-status-error/20 rounded-xl flex items-start gap-3 text-sm animate-in fade-in slide-in-from-top-2">
+                    <AlertCircle className="text-status-error shrink-0 mt-0.5" size={18} />
+                    <div className="text-status-error/90 font-medium">
+                        {error}
+                    </div>
                 </div>
             )}
-        </>
+        </div>
     )
 }

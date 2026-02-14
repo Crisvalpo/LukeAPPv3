@@ -134,37 +134,33 @@ export default function CompanyLogoUpload({
     return (
         <>
             <div
-                className="company-logo-container"
+                className="relative w-48 h-48 rounded-full bg-white flex items-center justify-center overflow-hidden cursor-pointer group shadow-[0_0_40px_rgba(59,130,246,0.5)] border-4 border-white shrink-0"
                 onClick={() => !isUploading && fileInputRef.current?.click()}
             >
                 {currentLogoUrl ? (
                     <img
                         src={currentLogoUrl}
                         alt="Company Logo"
-                        className="company-logo-image"
+                        className="w-full h-full object-contain p-4"
                     />
                 ) : (
-                    <div className="company-logo-initials">
+                    <div className="text-4xl font-bold text-slate-800">
                         {companyName.substring(0, 2).toUpperCase()}
                     </div>
                 )}
 
-                <div className="logo-upload-overlay">
-                    <div className="logo-upload-text">
-                        📸<br />Cambiar logo
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="text-white text-center text-sm font-semibold">
+                        <Upload className="mx-auto mb-1 h-5 w-5" />
+                        Cambiar logo
                     </div>
                 </div>
             </div>
 
             {showMissingBadge && (
                 <div
-                    className="missing-badge-overlay pulsate"
+                    className="mt-3 px-3 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded-full text-xs font-semibold animate-pulse cursor-pointer w-max"
                     onClick={() => !isUploading && fileInputRef.current?.click()}
-                    style={{
-                        cursor: 'pointer',
-                        marginTop: '0.5rem',
-                        width: 'max-content'
-                    }}
                     title="Haz clic para subir un logo"
                 >
                     ⚠️ Falta Logo

@@ -1,21 +1,24 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Copy, Mail, MessageCircle, Trash2, UserPlus, Shield } from 'lucide-react'
+import { Copy, Mail, MessageCircle, Trash2, UserPlus, Shield, CheckCircle2, QrCode } from 'lucide-react'
 import { Project, CompanyRole } from '@/types'
 import { Invitation } from '@/services/invitations'
 import { getCompanyRoles } from '@/services/roles'
 import Confetti from '@/components/onboarding/Confetti'
 import Toast from '@/components/onboarding/Toast'
 import { CELEBRATION_MESSAGES } from '@/config/onboarding-messages'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Icons } from '@/components/ui/Icons'
 
 interface InvitationManagerProps {
-    companyId: string  // Required to fetch functional roles
+    companyId: string
     projects?: Project[]
     invitations: Invitation[]
     companyName?: string
     requireProject?: boolean
-    fixedProjectId?: string // NEW: Lock to specific project
+    fixedProjectId?: string
     roleOptions?: { value: string; label: string; description: string }[]
     onInvite: (data: {
         email: string
@@ -33,7 +36,7 @@ export default function InvitationManager({
     invitations,
     companyName,
     requireProject = true,
-    fixedProjectId, // NEW
+    fixedProjectId,
     roleOptions = [
         { value: 'admin', label: 'Administrador de Proyecto', description: 'Gestión total de spools, personal y reportes.' }
     ],
@@ -45,37 +48,30 @@ export default function InvitationManager({
     const [success, setSuccess] = useState(false)
     const [error, setError] = useState('')
 
-    // Functional Roles State
     const [functionalRoles, setFunctionalRoles] = useState<CompanyRole[]>([])
     const [loadingRoles, setLoadingRoles] = useState(true)
-
-    // Celebration state
     const [showConfetti, setShowConfetti] = useState(false)
     const [toastMessage, setToastMessage] = useState<string | null>(null)
 
-    // Form State
     const [formData, setFormData] = useState({
         email: '',
-        project_id: fixedProjectId || '', // Initialize with fixed ID if present
+        project_id: fixedProjectId || '',
         role_id: roleOptions[0].value,
         functional_role_id: '',
         job_title: ''
     })
 
-    // Update form if fixedProjectId changes
     useEffect(() => {
         if (fixedProjectId) {
             setFormData(prev => ({ ...prev, project_id: fixedProjectId }))
         }
     }, [fixedProjectId])
 
-    // Fetch functional roles on mount
     useEffect(() => {
         async function loadFunctionalRoles() {
             setLoadingRoles(true)
             const result = await getCompanyRoles(companyId)
             if (result.success && result.data) {
-                // Filter roles to only show those with base_role matching allowed system roles
                 const allowedBaseRoles = roleOptions.map(r => r.value)
                 const filteredRoles = result.data.filter(role =>
                     allowedBaseRoles.includes(role.base_role)
@@ -103,7 +99,7 @@ export default function InvitationManager({
                 email: formData.email,
                 role_id: formData.role_id,
                 project_id: formData.project_id || undefined,
-                functional_role_id: formData.functional_role_id || undefined,  // NEW
+                functional_role_id: formData.functional_role_id || undefined,
                 job_title: formData.job_title
             })
 
@@ -112,22 +108,15 @@ export default function InvitationManager({
                 setInvitationLink(result.data.link)
                 setFormData(prev => ({ ...prev, email: '', job_title: '' }))
 
-                setFormData(prev => ({ ...prev, email: '', job_title: '' }))
-
-                // Trigger celebration ONLY for the first invitation (Task Complete)
                 if (invitations.length === 0) {
                     setShowConfetti(true)
                     setToastMessage(CELEBRATION_MESSAGES.invitations)
                     setTimeout(() => setShowConfetti(false), 5000)
                 } else {
-                    // Quiet success for subsequent
                     setToastMessage('Invitación enviada correctamente')
                 }
 
                 window.dispatchEvent(new Event('onboarding-updated'))
-
-                // Hide confetti after animation
-                setTimeout(() => setShowConfetti(false), 5000)
             } else {
                 setError(result.message || 'Error al crear invitación')
             }
@@ -140,7 +129,7 @@ export default function InvitationManager({
 
     async function copyToClipboard() {
         await navigator.clipboard.writeText(invitationLink)
-        alert('Link copiado al portapapeles')
+        setToastMessage('Link copiado al portapapeles')
     }
 
     const waMessage = (() => {
@@ -156,349 +145,339 @@ export default function InvitationManager({
     const waLink = `https://wa.me/?text=${encodeURIComponent(waMessage)}`
 
     return (
-        <div className="invitations-split-view" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))',
-            gap: '2rem',
-            alignItems: 'start'
-        }}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start animate-fade-in p-1">
             {/* LEFT COLUMN: FORM */}
-            <div className="company-form-container">
-                <div style={{ marginBottom: '1.5rem' }}>
-                    <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'white', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <UserPlus size={20} style={{ color: '#c084fc' }} />
-                        Nueva Invitación
-                    </h2>
-                    <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
-                        {requireProject
-                            ? 'Genera un acceso seguro para un nuevo administrador.'
-                            : 'Genera un acceso para un nuevo miembro de la empresa.'}
-                    </p>
-                </div>
+            <div className="bg-slate-900/40 border border-white/5 rounded-3xl p-8 backdrop-blur-xl shadow-2xl relative overflow-hidden group/form">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl opacity-0 group-hover/form:opacity-100 transition-opacity duration-700" />
 
-                {success && invitationLink ? (
-                    <div className="invitation-success">
-                        <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#34d399', marginBottom: '0.5rem' }}>
-                            ✅ Invitación Creada
-                        </h3>
-                        <p style={{ fontSize: '0.875rem', color: '#6ee7b7', marginBottom: '0.5rem' }}>
-                            Comparte este enlace con el usuario:
-                        </p>
+                <div className="relative z-10">
+                    <div className="flex items-center gap-4 mb-8">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20 transform group-hover/form:rotate-3 transition-transform">
+                            <UserPlus size={24} className="text-white" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-white leading-tight tracking-tight">Nueva Invitación</h2>
+                            <p className="text-slate-400 text-sm font-medium">
+                                {requireProject
+                                    ? 'Genera un acceso seguro para un nuevo administrador.'
+                                    : 'Genera un acceso para un miembro de la organización.'}
+                            </p>
+                        </div>
+                    </div>
 
-                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                            <input
-                                type="text"
-                                readOnly
-                                value={invitationLink}
-                                className="form-input"
-                                style={{ fontFamily: 'monospace', color: '#34d399', borderColor: '#34d399' }}
-                            />
-                            <button onClick={copyToClipboard} className="action-button" style={{ color: 'white', background: '#10b981' }}>
-                                <Copy size={18} />
+                    {success && invitationLink ? (
+                        <div className="space-y-6 animate-in zoom-in-95 duration-500">
+                            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-8 text-center relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 to-transparent" />
+                                <div className="relative z-10">
+                                    <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/30">
+                                        <CheckCircle2 size={32} className="text-emerald-400" />
+                                    </div>
+                                    <h3 className="text-emerald-400 font-black text-xl mb-1 tracking-tight">¡INVITACIÓN LISTA!</h3>
+                                    <p className="text-emerald-400/70 text-sm font-medium">El enlace de acceso ya puede ser compartido.</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="flex gap-2 p-2 bg-slate-950/60 rounded-2xl border border-white/5 focus-within:border-emerald-500/30 transition-all shadow-inner">
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={invitationLink}
+                                        className="flex-1 bg-transparent border-none text-emerald-400 font-mono text-sm px-4 focus:ring-0"
+                                    />
+                                    <button
+                                        onClick={copyToClipboard}
+                                        className="p-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center gap-2 px-5 font-bold text-xs"
+                                    >
+                                        <Copy size={18} />
+                                        COPIAR
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <a
+                                        href={waLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center gap-2 py-4 bg-[#25D366] hover:bg-[#20bd5c] text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-green-500/10 active:scale-95"
+                                    >
+                                        <MessageCircle size={18} /> WhatsApp
+                                    </a>
+                                    <a
+                                        href={`mailto:?subject=${encodeURIComponent('Invitación a LukeAPP')}&body=${encodeURIComponent(`Hola,\n\nTe han invitado a unirte.\n\nPuedes registrarte aquí:\n${invitationLink}`)}`}
+                                        className="flex items-center justify-center gap-2 py-4 bg-slate-700 hover:bg-slate-600 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all active:scale-95"
+                                    >
+                                        <Mail size={18} /> Email
+                                    </a>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => { setSuccess(false); setInvitationLink('') }}
+                                className="w-full py-4 text-slate-500 hover:text-white font-bold text-sm transition-colors border-t border-white/5 pt-6 flex items-center justify-center gap-2 group/back"
+                            >
+                                <Icons.Refresh size={16} className="group-hover/back:rotate-90 transition-transform" />
+                                Crear otra invitación
                             </button>
                         </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                            <a
-                                href={waLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="form-button"
-                                style={{ background: '#25D366', fontSize: '0.875rem', padding: '0.5rem' }}
-                            >
-                                <MessageCircle size={16} /> WhatsApp
-                            </a>
-                            <a
-                                href={`mailto:?subject=${encodeURIComponent('Invitación a LukeAPP')}&body=${encodeURIComponent(`Hola,\n\nTe han invitado a unirte.\n\nPuedes registrarte aquí:\n${invitationLink}`)}`}
-                                className="form-button"
-                                style={{ background: '#4b5563', fontSize: '0.875rem', padding: '0.5rem' }}
-                            >
-                                <Mail size={16} /> Email
-                            </a>
-                        </div>
-
-                        <button
-                            onClick={() => { setSuccess(false); setInvitationLink('') }}
-                            className="action-button"
-                            style={{ width: '100%', marginTop: '1rem', justifyContent: 'center' }}
-                        >
-                            Crear otra invitación
-                        </button>
-                    </div>
-                ) : (
-                    <form onSubmit={handleSubmit} className="company-form">
-                        {error && (
-                            <div className="error-alert" style={{ marginBottom: '1rem' }}>{error}</div>
-                        )}
-
-                        {/* 1. Email (First Step) */}
-                        <div className="form-field">
-                            <label className="form-label">Email del Usuario</label>
-                            <input
-                                type="email"
-                                required
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                className="form-input"
-                                placeholder="usuario@empresa.com"
-                            />
-                        </div>
-
-                        {/* 2. Functional Role Selector (Main Decision) */}
-                        <div className="form-field">
-                            <label className="form-label">
-                                Rol Funcional
-                                <span style={{ color: '#94a3b8', fontWeight: '400', marginLeft: '0.5rem' }}>- Define qué hará el usuario</span>
-                            </label>
-                            {loadingRoles ? (
-                                <div className="form-input disabled" style={{ background: 'rgba(255,255,255,0.05)', color: '#94a3b8' }}>
-                                    Cargando roles...
-                                </div>
-                            ) : functionalRoles.length > 0 ? (
-                                <select
-                                    value={formData.functional_role_id}
-                                    onChange={(e) => {
-                                        const selectedRoleId = e.target.value
-                                        const selectedRole = functionalRoles.find(r => r.id === selectedRoleId)
-
-                                        if (selectedRole) {
-                                            // Auto-fill System Role and Job Title based on Functional Role
-                                            setFormData({
-                                                ...formData,
-                                                functional_role_id: selectedRoleId,
-                                                role_id: selectedRole.base_role, // AUTO-SELECT SYSTEM ROLE
-                                                job_title: selectedRole.name     // AUTO-FILL JOB TITLE
-                                            })
-                                        } else {
-                                            // Reset if "No Functional Role" selected
-                                            setFormData({
-                                                ...formData,
-                                                functional_role_id: '',
-                                                job_title: ''
-                                            })
-                                        }
-                                    }}
-                                    className="form-select"
-                                >
-                                    <option value="">Seleccionar un rol de la lista...</option>
-                                    {functionalRoles.map(role => (
-                                        <option key={role.id} value={role.id}>
-                                            {role.name}
-                                        </option>
-                                    ))}
-                                    <option value="" style={{ color: '#fbbf24' }}>-- Otro / Personalizado --</option>
-                                </select>
-                            ) : (
-                                <div style={{
-                                    padding: '0.75rem',
-                                    background: 'rgba(234, 179, 8, 0.1)',
-                                    border: '1px solid rgba(234, 179, 8, 0.3)',
-                                    borderRadius: '0.5rem',
-                                    color: '#fbbf24',
-                                    fontSize: '0.875rem'
-                                }}>
-                                    No hay roles funcionales definidos.
+                    ) : (
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            {error && (
+                                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm font-bold flex items-center gap-3 animate-in shake duration-500">
+                                    <Icons.Warning size={20} />
+                                    {error}
                                 </div>
                             )}
 
-                            {/* Show selected functional role preview color */}
-                            {formData.functional_role_id && (() => {
-                                const selected = functionalRoles.find(r => r.id === formData.functional_role_id)
-                                if (!selected) return null
-
-                                return (
-                                    <div style={{
-                                        marginTop: '0.5rem',
-                                        fontSize: '0.8rem',
-                                        color: selected.color,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem'
-                                    }}>
-                                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: selected.color }} />
-                                        {selected.description}
-                                    </div>
-                                )
-                            })()}
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                            {/* 3. System Role (Auto-filled but visible) */}
-                            <div className="form-field">
-                                <label className="form-label">Permisos de Sistema</label>
-                                {functionalRoles.length > 0 && formData.functional_role_id ? (
-                                    // READ ONLY MODE (Locked by Functional Role)
-                                    <div className="form-input disabled" style={{
-                                        background: 'rgba(255,255,255,0.05)',
-                                        color: '#94a3b8',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between'
-                                    }}>
-                                        {roleOptions.find(r => r.value === formData.role_id)?.label}
-                                        <Shield size={14} />
-                                    </div>
-                                ) : (
-                                    // MANUAL MODE (If no functional role selected)
-                                    <select
-                                        value={formData.role_id}
-                                        onChange={(e) => setFormData({ ...formData, role_id: e.target.value })}
-                                        className="form-select"
-                                    >
-                                        {roleOptions.map(role => (
-                                            <option key={role.value} value={role.value}>{role.label}</option>
-                                        ))}
-                                    </select>
-                                )}
-                            </div>
-
-                            {/* 4. Job Title (Editable) */}
-                            <div className="form-field">
-                                <label className="form-label">Cargo / Título</label>
-                                <input
-                                    type="text"
-                                    value={formData.job_title}
-                                    onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
-                                    className="form-input"
-                                    placeholder="Ej: Jefe de Area"
+                            <div className="space-y-2.5">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-2">Email del Usuario</label>
+                                <Input
+                                    type="email"
+                                    required
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    className="bg-slate-950/50 border-white/5 h-14 rounded-2xl focus:bg-slate-950 transition-all font-medium text-white placeholder:text-slate-700"
+                                    placeholder="usuario@empresa.com"
                                 />
                             </div>
-                        </div>
 
-                        {/* 5. Project (Last Step - Context) */}
-                        {requireProject && (
-                            <div className="form-field">
-                                <label className="form-label">Proyecto Asignado</label>
-                                {fixedProjectId ? (
-                                    <div className="form-input disabled" style={{
-                                        background: 'rgba(255,255,255,0.05)',
-                                        color: '#94a3b8',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between'
-                                    }}>
-                                        {projects.find(p => p.id === fixedProjectId)?.name || 'Proyecto Actual'}
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: '#64748b' }}>
-                                            <Shield size={14} />
-                                            Bloqueado por Contexto
+                            <div className="space-y-2.5">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-2 flex justify-between">
+                                    <span>Rol Funcional</span>
+                                    {formData.functional_role_id && <span className="text-blue-400 flex items-center gap-1"><Icons.Check size={12} /> Sincronizado</span>}
+                                </label>
+                                <div className="relative">
+                                    {loadingRoles ? (
+                                        <div className="h-14 bg-slate-950/50 rounded-2xl border border-white/5 flex items-center px-4 animate-pulse italic text-slate-600 text-sm">
+                                            Consultando catálogo de roles...
                                         </div>
+                                    ) : (
+                                        <select
+                                            value={formData.functional_role_id}
+                                            onChange={(e) => {
+                                                const selectedRoleId = e.target.value
+                                                const selectedRole = functionalRoles.find(r => r.id === selectedRoleId)
+                                                if (selectedRole) {
+                                                    setFormData({
+                                                        ...formData,
+                                                        functional_role_id: selectedRoleId,
+                                                        role_id: selectedRole.base_role,
+                                                        job_title: selectedRole.name
+                                                    })
+                                                } else {
+                                                    setFormData({ ...formData, functional_role_id: '', job_title: '' })
+                                                }
+                                            }}
+                                            className="w-full h-14 bg-slate-950/50 border border-white/5 rounded-2xl px-5 text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 transition-all appearance-none text-sm font-bold cursor-pointer"
+                                        >
+                                            <option value="" className="bg-slate-950 font-sans">Seleccionar rol predifinido</option>
+                                            {functionalRoles.map(role => (
+                                                <option key={role.id} value={role.id} className="bg-slate-950 font-sans py-2">
+                                                    {role.name}
+                                                </option>
+                                            ))}
+                                            <option value="" className="bg-slate-950 text-amber-500 font-black">-- Rol Personalizado --</option>
+                                        </select>
+                                    )}
+                                </div>
+                                {formData.functional_role_id ? (() => {
+                                    const selected = functionalRoles.find(r => r.id === formData.functional_role_id)
+                                    if (!selected) return null
+                                    return (
+                                        <div className="mt-3 text-[11px] leading-relaxed font-medium flex items-start gap-2.5 p-3 rounded-2xl bg-white/[0.02] border border-white/5 animate-in fade-in slide-in-from-top-1">
+                                            <div className="w-2 h-2 rounded-full mt-1 shrink-0 shadow-sm" style={{ background: selected.color }} />
+                                            <span style={{ color: selected.color }} className="opacity-90">{selected.description}</span>
+                                        </div>
+                                    )
+                                })() : (
+                                    <div className="mt-3 p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl flex items-center gap-3">
+                                        <Icons.Warning size={18} className="text-amber-500 shrink-0" />
+                                        <p className="text-[11px] text-amber-500/70 font-medium">No hay roles funcionales definidos. El usuario se creará con permisos básicos.</p>
                                     </div>
-                                ) : (
-                                    <select
-                                        required={requireProject}
-                                        value={formData.project_id}
-                                        onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
-                                        className="form-select"
-                                    >
-                                        <option value="">Seleccionar proyecto...</option>
-                                        {projects.map((p) => (
-                                            <option key={p.id} value={p.id}>{p.name} ({p.code})</option>
-                                        ))}
-                                    </select>
                                 )}
                             </div>
-                        )}
 
-                        <button type="submit" disabled={isSubmitting} className="form-button" style={{ width: '100%', marginTop: '1rem' }}>
-                            {isSubmitting ? 'Generando...' : 'Generar Link de Invitación'}
-                        </button>
-                    </form>
-                )}
-            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                <div className="space-y-2.5">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-2">Permisos</label>
+                                    {functionalRoles.length > 0 && formData.functional_role_id ? (
+                                        <div className="h-14 bg-slate-950/30 border border-white/5 rounded-2xl px-5 flex items-center justify-between text-slate-500 text-sm font-bold shadow-inner">
+                                            {roleOptions.find(r => r.value === formData.role_id)?.label}
+                                            <Shield size={16} className="text-indigo-500 opacity-50" />
+                                        </div>
+                                    ) : (
+                                        <select
+                                            value={formData.role_id}
+                                            onChange={(e) => setFormData({ ...formData, role_id: e.target.value })}
+                                            className="w-full h-14 bg-slate-950/50 border border-white/5 rounded-2xl px-5 text-white text-sm font-bold appearance-none cursor-pointer focus:border-blue-500/40 transition-all font-sans"
+                                        >
+                                            {roleOptions.map(role => (
+                                                <option key={role.value} value={role.value} className="bg-slate-950">{role.label}</option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
 
-            {/* RIGHT COLUMN: LIST */}
-            <div className="company-header-card" style={{ padding: '0', overflow: 'hidden', minHeight: '400px', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.2)' }}>
-                    <h2 style={{ fontSize: '1.125rem', fontWeight: '600', color: 'white' }}>
-                        Invitaciones Pendientes
-                    </h2>
-                    <p style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
-                        Usuarios que aún no han aceptado el acceso.
-                    </p>
-                </div>
+                                <div className="space-y-2.5">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-2">Cargo</label>
+                                    <Input
+                                        type="text"
+                                        value={formData.job_title}
+                                        onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
+                                        className="bg-slate-950/50 border-white/5 h-14 rounded-2xl font-medium focus:bg-slate-950"
+                                        placeholder="Ej: Jefe de Spooling"
+                                    />
+                                </div>
+                            </div>
 
-                <div style={{ flex: 1, overflowY: 'auto', maxHeight: '500px' }}>
-                    {invitations.length === 0 ? (
-                        <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
-                            <Mail size={32} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
-                            <p>No hay invitaciones pendientes</p>
-                        </div>
-                    ) : (
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <thead style={{ background: 'rgba(255,255,255,0.02)', fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8' }}>
-                                <tr>
-                                    <th style={{ padding: '1rem', textAlign: 'left' }}>Email</th>
-                                    <th style={{ padding: '1rem', textAlign: 'left' }}>Rol</th>
-                                    <th style={{ padding: '1rem', textAlign: 'right' }}>Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {invitations.map((inv) => (
-                                    <tr key={inv.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <td style={{ padding: '1rem', color: 'white', fontWeight: '500' }}>
-                                            {inv.email}
-                                            <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '400' }}>
-                                                {new Date(inv.created_at).toLocaleDateString()}
+                            {requireProject && (
+                                <div className="space-y-2.5">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-2">Proyecto Asignado</label>
+                                    {fixedProjectId ? (
+                                        <div className="h-14 bg-slate-950/30 border border-white/5 rounded-2xl px-5 flex items-center justify-between text-slate-500 text-sm font-bold italic shadow-inner">
+                                            {projects.find(p => p.id === fixedProjectId)?.name || 'Proyecto Actual'}
+                                            <div className="flex items-center gap-2 opacity-40">
+                                                <span className="text-[9px] uppercase tracking-tighter">Bloqueado</span>
+                                                <Shield size={14} className="text-amber-500" />
                                             </div>
-                                        </td>
-                                        <td style={{ padding: '1rem' }}>
-                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                <span style={{
-                                                    padding: '0.25rem 0.5rem',
-                                                    borderRadius: '999px',
-                                                    background: 'rgba(168, 85, 247, 0.1)',
-                                                    color: '#c084fc',
-                                                    fontSize: '0.75rem',
-                                                    border: '1px solid rgba(168, 85, 247, 0.2)',
-                                                    textTransform: 'uppercase',
-                                                    width: 'fit-content'
-                                                }}>
-                                                    {roleOptions.find(r => r.value === inv.role_id)?.label || inv.role_id}
-                                                </span>
-                                                {/* Show Project Code if not in project context (optional, but good context) */}
-                                                {!requireProject && (inv as any).project && (
-                                                    <span style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '4px' }}>
-                                                        {(inv as any).project.code}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            {/* Show Job Title if available */}
-                                            {/* We need to update Invitation interface to include job_title to show it here properly, but for now just showing basic role tag */}
-                                        </td>
-                                        <td style={{ padding: '1rem', textAlign: 'right' }}>
-                                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                                                <button
-                                                    onClick={async () => {
-                                                        const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
-                                                        const link = `${baseUrl}/invitations/accept/${inv.token}`
-                                                        await navigator.clipboard.writeText(link)
-                                                        alert('Link copiado al portapapeles')
-                                                    }}
-                                                    className="action-button"
-                                                    title="Copiar link de invitación"
-                                                    style={{ fontSize: '0.875rem', padding: '0.5rem' }}
-                                                >
-                                                    <Copy size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => onRevoke(inv.id)}
-                                                    className="action-button btn-danger"
-                                                    title="Revocar invitación"
-                                                    style={{ fontSize: '0.875rem', padding: '0.5rem' }}
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                        </div>
+                                    ) : (
+                                        <select
+                                            required={requireProject}
+                                            value={formData.project_id}
+                                            onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
+                                            className="w-full h-14 bg-slate-950/50 border border-white/5 rounded-2xl px-5 text-white text-sm font-bold appearance-none cursor-pointer font-sans"
+                                        >
+                                            <option value="" className="bg-slate-950">Seleccionar proyecto destinatario</option>
+                                            {projects.map((p) => (
+                                                <option key={p.id} value={p.id} className="bg-slate-950">{p.name} ({p.code})</option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
+                            )}
+
+                            <Button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="w-full h-16 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 font-extrabold text-white rounded-2xl shadow-2xl shadow-blue-500/20 active:scale-[0.98] transition-all transform flex items-center justify-center gap-3 mt-4"
+                            >
+                                {isSubmitting ? (
+                                    <Icons.Refresh size={24} className="animate-spin" />
+                                ) : (
+                                    <QrCode size={24} />
+                                )}
+                                <span className="tracking-[0.1em] uppercase text-sm">
+                                    {isSubmitting ? 'GENERANDO LINK...' : 'GENERAR LINK DE INVITACIÓN'}
+                                </span>
+                            </Button>
+                        </form>
                     )}
                 </div>
             </div>
 
-            {/* Celebration Components */}
+            {/* RIGHT COLUMN: LIST */}
+            <div className="bg-slate-900/40 border border-white/5 rounded-3xl backdrop-blur-xl shadow-2xl flex flex-col min-h-[600px] overflow-hidden group/list relative">
+                <div className="absolute bottom-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl opacity-0 group-hover/list:opacity-100 transition-opacity duration-1000" />
+
+                <div className="p-8 border-b border-white/5 bg-white/[0.01]">
+                    <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
+                                <Mail size={20} className="text-blue-400" />
+                            </div>
+                            <h2 className="text-lg font-black text-white tracking-tight uppercase">Audit de Invitaciones</h2>
+                        </div>
+                        {invitations.length > 0 && (
+                            <span className="px-3 py-1 bg-blue-500/10 text-blue-400 text-[10px] font-black rounded-lg border border-blue-500/20">
+                                {invitations.length} PENDIENTES
+                            </span>
+                        )}
+                    </div>
+                    <p className="text-slate-500 text-xs font-medium italic">Monitor de enlaces emitidos y estado de aceptación.</p>
+                </div>
+
+                <div className="flex-1 overflow-y-auto max-h-[650px] scrollbar-hide">
+                    {invitations.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full py-20 px-10 text-center">
+                            <div className="w-20 h-20 bg-slate-800/30 rounded-3xl flex items-center justify-center mb-6 border border-white/5 opacity-40 transform rotate-6">
+                                <Mail size={40} className="text-slate-500" />
+                            </div>
+                            <h3 className="text-slate-400 font-bold mb-2 tracking-tight">SILENCIO TOTAL</h3>
+                            <p className="text-slate-600 text-xs leading-relaxed max-w-[200px] mx-auto uppercase tracking-tighter">
+                                No hay invitaciones activas en este momento.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full border-separate border-spacing-0">
+                                <thead className="sticky top-0 bg-slate-900/90 backdrop-blur-md text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] text-left">
+                                    <tr>
+                                        <th className="px-8 py-5 border-b border-white/5">Candidato / Emisión</th>
+                                        <th className="px-8 py-5 border-b border-white/5">Contexto / Permiso</th>
+                                        <th className="px-8 py-5 border-b border-white/5 text-right">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/[0.02]">
+                                    {invitations.map((inv) => (
+                                        <tr key={inv.id} className="group/row hover:bg-blue-500/5 transition-all duration-300">
+                                            <td className="px-8 py-6">
+                                                <div className="text-sm font-black text-white group-hover/row:text-blue-400 transition-colors tracking-tight">{inv.email}</div>
+                                                <div className="flex items-center gap-1.5 mt-1">
+                                                    <span className="text-[10px] text-slate-500 font-bold opacity-60">EMITIDO:</span>
+                                                    <span className="text-[10px] text-slate-400 font-mono">{new Date(inv.created_at).toLocaleDateString()}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-6">
+                                                <div className="flex flex-col gap-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[9px] font-black uppercase tracking-widest leading-none">
+                                                            {roleOptions.find(r => r.value === inv.role_id)?.label || inv.role_id}
+                                                        </span>
+                                                    </div>
+                                                    {!requireProject && (inv as any).project && (
+                                                        <div className="flex items-center gap-2 px-2 py-1 bg-white/[0.03] border border-white/5 rounded-lg w-fit">
+                                                            <Icons.Project size={10} className="text-slate-500" />
+                                                            <span className="text-[10px] text-slate-400 font-black tracking-widest uppercase">
+                                                                {(inv as any).project.code}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-6 text-right">
+                                                <div className="flex gap-2 justify-end opacity-40 group-hover/row:opacity-100 transition-opacity translate-x-2 group-hover/row:translate-x-0">
+                                                    <button
+                                                        onClick={async () => {
+                                                            const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+                                                            const link = `${baseUrl}/invitations/accept/${inv.token}`
+                                                            await navigator.clipboard.writeText(link)
+                                                            setToastMessage('Link de registro capturado')
+                                                        }}
+                                                        className="p-3 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/10 hover:bg-blue-500 hover:text-white transition-all shadow-lg active:scale-95"
+                                                        title="Copiar link"
+                                                    >
+                                                        <Copy size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => onRevoke(inv.id)}
+                                                        className="p-3 rounded-xl bg-red-500/10 text-red-500 border border-red-500/10 hover:bg-red-500 hover:text-white transition-all shadow-lg active:scale-95"
+                                                        title="Revocar"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            </div>
+
             <Confetti show={showConfetti} />
             {toastMessage && (
                 <Toast
@@ -507,6 +486,6 @@ export default function InvitationManager({
                     onClose={() => setToastMessage(null)}
                 />
             )}
-        </div >
+        </div>
     )
 }

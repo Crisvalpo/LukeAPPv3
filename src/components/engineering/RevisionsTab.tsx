@@ -9,13 +9,14 @@
  * - Implements "Load More" pagination
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { searchIsometricsAction } from '@/actions/isometrics'
 import type { IsometricMasterView } from '@/services/isometrics'
+import * as Icons from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import IsometricRevisionCard from './IsometricRevisionCard'
-import '@/styles/revisions.css'
 
-// Simple Debounce hook implementation if not available
+// Simple Debounce hook implementation
 function useDebounceValue<T>(value: T, delay: number): T {
     const [debouncedValue, setDebouncedValue] = useState<T>(value)
     useEffect(() => {
@@ -85,46 +86,50 @@ export default function RevisionsTab({ projectId }: RevisionsTabProps) {
     }
 
     return (
-        <div className="revisions-tab-container">
+        <div className="space-y-6 animate-in fade-in duration-700">
             {/* Search & Filter Bar */}
-            <div className="toolbar-container glass-panel">
-                <div className="search-box">
-                    <span className="search-icon">🔍</span>
+            <div className="bg-bg-surface-1/40 backdrop-blur-xl border border-glass-border rounded-2xl p-4 flex flex-col md:flex-row gap-4 items-center shadow-lg">
+                <div className="relative flex-1 group w-full">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-dim group-focus-within:text-brand-primary transition-colors">
+                        <Icons.Search size={18} />
+                    </div>
                     <input
                         type="text"
                         placeholder="Buscar por Isométrico (ej: 3800...)"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="search-input"
+                        className="w-full pl-11 pr-4 py-2.5 bg-black/20 border border-glass-border/50 rounded-xl text-white placeholder:text-text-dim/50 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary/50 transition-all font-medium"
                     />
                 </div>
 
-                <div className="filter-group">
+                <div className="w-full md:w-auto">
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="filter-select"
+                        className="w-full md:w-64 bg-black/20 border border-glass-border/50 rounded-xl px-4 py-2.5 text-white font-semibold focus:outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all cursor-pointer hover:bg-black/30 appearance-none"
                     >
-                        <option value="ALL">Todos los Estados</option>
-                        <option value="VIGENTE">Vigente</option>
-                        <option value="SPOOLEADO">Spooleado</option>
-                        <option value="PENDING">Pendiente</option>
-                        <option value="OBSOLETO">Obsoleto</option>
+                        <option value="ALL">🔍 Todos los Estados</option>
+                        <option value="VIGENTE">✅ Vigente</option>
+                        <option value="SPOOLEADO">📦 Spooleado</option>
+                        <option value="PENDING">⏳ Pendiente</option>
+                        <option value="OBSOLETO">⚠️ Obsoleto</option>
                     </select>
                 </div>
             </div>
 
             {/* Empty State / Loading */}
             {isometrics.length === 0 && !isLoading ? (
-                <div className="empty-state-container">
-                    <div className="empty-state-icon">📋</div>
-                    <h2 className="empty-state-title">No hay resultados</h2>
-                    <p className="empty-state-description">
-                        No se encontraron isométricos con los filtros actuales.
+                <div className="flex flex-col items-center justify-center py-20 bg-bg-surface-1/20 border border-glass-border/30 rounded-3xl border-dashed">
+                    <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center text-4xl mb-6 shadow-inner border border-white/5">
+                        📋
+                    </div>
+                    <h2 className="text-xl font-bold text-white mb-2">No se encontraron resultados</h2>
+                    <p className="text-text-dim text-center max-w-sm">
+                        No hay isométricos que coincidan con los filtros actuales. Intenta ajustar tu búsqueda.
                     </p>
                 </div>
             ) : (
-                <div className="revisions-list grouped-list">
+                <div className="space-y-4">
                     {/* Render List */}
                     {isometrics.map(iso => (
                         <IsometricRevisionCard
@@ -141,83 +146,22 @@ export default function RevisionsTab({ projectId }: RevisionsTabProps) {
 
             {/* Load More Trigger */}
             {hasMore && (
-                <div className="load-more-container">
-                    <button
+                <div className="flex justify-center py-10">
+                    <Button
                         onClick={handleLoadMore}
-                        className="btn-load-more"
+                        variant="secondary"
+                        size="lg"
+                        className="rounded-full px-10 gap-2 border border-glass-border/50 hover:bg-white/10"
                         disabled={isLoading}
                     >
-                        {isLoading ? 'Cargando...' : 'Cargar más isométricos'}
-                    </button>
+                        {isLoading ? (
+                            <>
+                                <Icons.Loader2 size={18} className="animate-spin" /> Cargando...
+                            </>
+                        ) : 'Cargar más isométricos'}
+                    </Button>
                 </div>
             )}
-
-            <style jsx>{`
-                .toolbar-container {
-                    display: flex;
-                    gap: 1rem;
-                    padding: 1rem;
-                    margin-bottom: 0.5rem; /* Reduced margin to stick closer to filter */
-                    align-items: center;
-                    background: rgba(0,0,0,0.2);
-                    border-radius: 12px;
-                    border: 1px solid var(--glass-border);
-                }
-
-                .search-box {
-                    flex: 1;
-                    position: relative;
-                    display: flex;
-                    align-items: center;
-                }
-
-                .search-icon {
-                    position: absolute;
-                    left: 12px;
-                    color: var(--color-text-dim);
-                }
-
-                .search-input {
-                    width: 100%;
-                    padding: 0.75rem 1rem 0.75rem 2.5rem;
-                    background: rgba(255,255,255,0.05);
-                    border: 1px solid var(--glass-border);
-                    border-radius: 8px;
-                    color: white;
-                    font-size: 0.95rem;
-                }
-
-                .search-input:focus {
-                    outline: none;
-                    border-color: var(--color-primary);
-                    background: rgba(255,255,255,0.1);
-                }
-                
-                .load-more-container {
-                    text-align: center;
-                    padding: 2rem;
-                }
-
-                .btn-load-more {
-                    padding: 0.75rem 2rem;
-                    background: rgba(255,255,255,0.1);
-                    border: 1px solid var(--glass-border);
-                    border-radius: 99px;
-                    color: white;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-
-                .btn-load-more:hover:not(:disabled) {
-                    background: rgba(255,255,255,0.2);
-                    transform: translateY(-2px);
-                }
-                
-                .btn-load-more:disabled {
-                    opacity: 0.5;
-                    cursor: not-allowed;
-                }
-            `}</style>
         </div>
     )
 }

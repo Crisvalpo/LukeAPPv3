@@ -64,27 +64,18 @@ export function SplitSpoolModal({ isOpen, onClose, spool, onSuccess }: SplitSpoo
     }
 
     return createPortal(
-        <div style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 110000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            backdropFilter: 'blur(4px)'
-        }}>
-            <Card variant="glass" style={{ width: '400px', borderColor: 'rgba(255,255,255,0.1)', boxShadow: 'var(--glass-shadow)' }}>
+        <div className="fixed inset-0 z-[110000] flex items-center justify-center bg-black/60 backdrop-blur-[4px]">
+            <Card variant="glass" className="w-[400px] border-white/10 shadow-[var(--glass-shadow)]">
                 <CardHeader>
-                    <CardTitle style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'white' }}>
-                        <Split size={20} style={{ color: 'var(--color-primary)' }} />
+                    <CardTitle className="flex items-center gap-2 text-white">
+                        <Split size={20} className="text-brand-primary" />
                         Dividir Spool {activeSpool.name}
                     </CardTitle>
                 </CardHeader>
-                <CardContent style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>
+                <CardContent className="flex flex-col gap-4">
+                    <div className="text-sm text-slate-300">
                         <p>Esta acción:</p>
-                        <ul style={{ listStyleType: 'disc', paddingLeft: '20px', marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px', color: '#94a3b8' }}>
+                        <ul className="list-disc pl-5 mt-2 flex flex-col gap-1 text-slate-400">
                             <li>Marcará el spool original como <strong>DIVIDIDO</strong>.</li>
                             <li>Creará 2 sub-spools listos para asignar componentes.</li>
                             <li>Generará nuevos Tags de Gestión.</li>
@@ -92,37 +83,20 @@ export function SplitSpoolModal({ isOpen, onClose, spool, onSuccess }: SplitSpoo
                         </ul>
                     </div>
 
-                    <div style={{
-                        backgroundColor: 'rgba(234, 179, 8, 0.1)',
-                        border: '1px solid rgba(234, 179, 8, 0.2)',
-                        padding: '12px',
-                        borderRadius: '6px',
-                        color: '#facc15',
-                        fontSize: '0.75rem',
-                        display: 'flex',
-                        gap: '8px',
-                        alignItems: 'start'
-                    }}>
-                        <span style={{ fontSize: '1rem' }}>⚠️</span>
+                    <div className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-md text-yellow-400 text-xs flex gap-2 items-start">
+                        <span className="text-base">⚠️</span>
                         <span>
                             <strong>Nota Importante:</strong> Si quedan uniones pendientes (Origen 'S' Taller) en el spool padre, este no podrá marcarse como "FABRICADO" hasta que dichas uniones se gestionen (Ej: editando su estado o eliminándolas).
                         </span>
                     </div>
 
                     {error && (
-                        <div style={{
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                            border: '1px solid rgba(239, 68, 68, 0.2)',
-                            padding: '12px',
-                            borderRadius: '6px',
-                            color: '#f87171',
-                            fontSize: '0.75rem'
-                        }}>
+                        <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-md text-red-400 text-xs">
                             {error}
                         </div>
                     )}
 
-                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '16px' }}>
+                    <div className="flex gap-3 justify-end mt-4">
                         <Button
                             variant="ghost"
                             onClick={handleClose}
@@ -134,7 +108,7 @@ export function SplitSpoolModal({ isOpen, onClose, spool, onSuccess }: SplitSpoo
                             variant="default"
                             onClick={handleSplit}
                             disabled={isLoading}
-                            style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+                            className="bg-brand-primary text-white hover:bg-brand-primary/90"
                         >
                             {isLoading ? 'Procesando...' : 'Confirmar División'}
                         </Button>

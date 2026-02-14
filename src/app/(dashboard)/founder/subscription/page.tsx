@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCompanySubscriptionInfo, getSubscriptionPlans, type CompanySubscriptionInfo, type SubscriptionPlan } from '@/services/subscriptions'
-import { Users, FolderKanban, AlertCircle, Mail, Database, FileCode } from 'lucide-react'
-import '@/styles/dashboard.css'
-import '@/styles/views/founder-subscription.css'
+import { Users, FolderKanban, AlertCircle, Mail, Database, FileCode, Clock } from 'lucide-react'
+// Styles migrated to Tailwind v4
+// Styles migrated to Tailwind v4
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Heading, Text } from '@/components/ui/Typography'
 import { Button } from '@/components/ui/button'
@@ -74,24 +74,26 @@ export default function FounderSubscriptionPage() {
     const currentPlan = plans.find((p) => p.id === subscriptionInfo.tier)
 
     return (
-        <div className="dashboard-page">
+        <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in px-4 md:px-6">
             {/* Standard Header */}
-            <div className="dashboard-header">
-                <div className="dashboard-header-content">
-                    <div className="dashboard-accent-line" />
-                    <Heading level={1} className="dashboard-title">Suscripción</Heading>
+            <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-8 bg-indigo-500 rounded-full" />
+                    <Heading level={1} className="tracking-tight">Suscripción</Heading>
                 </div>
-                <Text size="base" className="dashboard-subtitle">Administra tu plan y monitoriza el uso de recursos</Text>
+                <Text size="lg" className="text-text-muted max-w-2xl font-medium ml-4.5">
+                    Administra tu plan y monitoriza el uso de recursos empresariales.
+                </Text>
             </div>
 
             {/* Status Alert */}
             {subscriptionInfo.status !== 'active' && (
-                <Alert variant={subscriptionInfo.status === 'past_due' ? 'warning' : 'destructive'}>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>
+                <Alert variant={subscriptionInfo.status === 'past_due' ? 'warning' : 'destructive'} className="rounded-2xl border-white/5">
+                    <AlertCircle className="h-5 w-5" />
+                    <AlertTitle className="text-lg font-semibold ml-2">
                         {subscriptionInfo.status === 'past_due' ? 'Pago Vencido' : 'Servicio Suspendido'}
                     </AlertTitle>
-                    <AlertDescription>
+                    <AlertDescription className="ml-2 py-1">
                         {subscriptionInfo.status === 'past_due'
                             ? 'Tu suscripción ha vencido. Por favor, realiza el pago para evitar la suspensión del servicio.'
                             : 'Tu cuenta está suspendida por falta de pago. Contacta a soporte para reactivarla.'}
@@ -100,142 +102,168 @@ export default function FounderSubscriptionPage() {
             )}
 
             {/* Master Plan Card */}
-            <div className="premium-plan-card">
-                <div className="plan-content-wrapper">
-                    <div className="plan-main-info">
-                        <span className="plan-label">Plan Actual</span>
-                        <div className="plan-name-large">{subscriptionInfo.tier}</div>
-                        <StatusBadge status={subscriptionInfo.status} />
+            <div className="bg-bg-surface-1/40 backdrop-blur-xl border border-glass-border rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden group">
+                {/* Decorative background glow */}
+                <div className="absolute top-0 right-0 w-96 h-96 bg-brand-primary/10 rounded-full blur-[100px] -mr-48 -mt-48 transition-all duration-700 group-hover:bg-brand-primary/20" />
+                <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-[80px] -ml-32 -mb-32" />
+
+                <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-12">
+                    <div className="flex flex-col gap-4 w-full md:w-auto">
+                        <div className="flex items-center gap-2">
+                            <Text size="xs" className="font-bold uppercase tracking-widest text-brand-primary">Plan Contratado</Text>
+                            <div className="h-px w-8 bg-brand-primary/30" />
+                        </div>
+                        <div className="space-y-1">
+                            <Heading level={2} className="text-6xl md:text-7xl font-black text-white capitalize tracking-tighter bg-gradient-to-br from-white to-white/60 bg-clip-text text-transparent">
+                                {subscriptionInfo.tier}
+                            </Heading>
+                            <div className="flex items-center gap-3 pt-2">
+                                <StatusBadge status={subscriptionInfo.status} />
+                                <span className="text-xs font-medium text-text-dim flex items-center gap-1">
+                                    <Clock size={12} className="text-brand-primary" />
+                                    Renovación automática
+                                </span>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="plan-details-grid">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-12 w-full md:w-auto md:border-l border-white/5 md:pl-12">
                         {subscriptionInfo.end_date && (
-                            <div className="plan-detail-item">
-                                <span className="plan-label">Vencimiento</span>
-                                <span className="detail-value">
+                            <div className="space-y-2">
+                                <Text size="xs" className="font-bold uppercase tracking-widest text-text-muted">Próximo Pago</Text>
+                                <div className="text-2xl font-bold text-white tracking-tight">
                                     {new Date(subscriptionInfo.end_date).toLocaleDateString('es-ES', {
-                                        year: 'numeric',
+                                        day: 'numeric',
                                         month: 'long',
-                                        day: 'numeric'
+                                        year: 'numeric'
                                     })}
-                                </span>
+                                </div>
                             </div>
                         )}
                         {currentPlan && (
-                            <div className="plan-detail-item">
-                                <span className="plan-label">Precio</span>
-                                <span className="detail-value">
-                                    ${currentPlan.price_monthly.toLocaleString('es-CL')}/mes
-                                </span>
+                            <div className="space-y-2">
+                                <Text size="xs" className="font-bold uppercase tracking-widest text-text-muted">Inversión Mensual</Text>
+                                <div className="text-2xl font-bold text-white tracking-tight flex items-baseline gap-1">
+                                    <span className="text-brand-primary text-sm font-bold">$</span>
+                                    {currentPlan.price_monthly.toLocaleString('es-CL')}
+                                    <span className="text-text-dim text-xs font-medium">/mes</span>
+                                </div>
                             </div>
                         )}
-                        <div className="plan-detail-item">
-                            <span className="plan-label">Ciclo</span>
-                            <span className="detail-value">Mensual</span>
+                        <div className="space-y-2">
+                            <Text size="xs" className="font-bold uppercase tracking-widest text-text-muted">Modalidad</Text>
+                            <div className="text-2xl font-bold text-white tracking-tight">SaaS Cloud</div>
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Usage Stats Grid */}
-            <div>
-                <h3 className="section-title">Uso de Recursos</h3>
-                <div className="usage-grid">
+            <div className="space-y-8">
+                <div className="flex items-center gap-3">
+                    <div className="w-1 h-6 bg-brand-primary/50 rounded-full" />
+                    <Heading level={2} className="text-2xl font-bold text-white tracking-tight">Capacidad y Recursos</Heading>
+                </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {/* Users */}
-                    <div className="premium-stat-card">
-                        <div className="stat-header">
-                            <span className="stat-title">Usuarios</span>
-                            <div className="stat-icon-box">
-                                <Users className="h-4 w-4 icon-blue" strokeWidth={1.5} />
+                    <div className="bg-bg-surface-1 border border-glass-border p-6 rounded-2xl space-y-5 hover:border-brand-primary/30 transition-all duration-300 group shadow-lg">
+                        <div className="flex justify-between items-start">
+                            <div className="w-10 h-10 bg-brand-primary/10 rounded-xl flex items-center justify-center text-brand-primary border border-brand-primary/20 shadow-[0_0_15px_rgba(59,130,246,0.1)] group-hover:scale-105 transition-transform">
+                                <Users size={20} />
+                            </div>
+                            <div className="text-right">
+                                <Text size="xs" className="font-bold text-text-dim uppercase tracking-widest">Usuarios</Text>
+                                <div className="text-2xl font-bold text-white mt-1">
+                                    {subscriptionInfo.current_users}
+                                    <span className="text-sm text-text-dim ml-1">/ {subscriptionInfo.max_users}</span>
+                                </div>
                             </div>
                         </div>
-                        <div>
-                            <div className="stat-value-large">
-                                {subscriptionInfo.current_users}
-                                <span className="stat-limit">/ {subscriptionInfo.max_users}</span>
-                            </div>
+                        <div className="space-y-2">
+                            <Progress
+                                value={(subscriptionInfo.current_users / subscriptionInfo.max_users) * 100}
+                                variant={getProgressVariant(subscriptionInfo.current_users, subscriptionInfo.max_users)}
+                                className="h-1.5 bg-white/5"
+                            />
                             {subscriptionInfo.plan_max_users && subscriptionInfo.max_users > subscriptionInfo.plan_max_users && (
-                                <Text className="stat-card__extra">
-                                    +{subscriptionInfo.max_users - subscriptionInfo.plan_max_users} extra
+                                <Text className="text-[10px] text-brand-primary font-bold uppercase tracking-tighter">
+                                    Incluye {subscriptionInfo.max_users - subscriptionInfo.plan_max_users} licencias extra
                                 </Text>
                             )}
-                        </div>
-                        <div className="progress-container">
-                            <div
-                                className={`progress-fill ${getProgressVariant(subscriptionInfo.current_users, subscriptionInfo.max_users)}`}
-                                style={{ width: `${(subscriptionInfo.current_users / subscriptionInfo.max_users) * 100}%` }}
-                            />
                         </div>
                     </div>
 
                     {/* Projects */}
-                    <div className="premium-stat-card">
-                        <div className="stat-header">
-                            <span className="stat-title">Proyectos</span>
-                            <div className="stat-icon-box">
-                                <FolderKanban className="h-4 w-4 icon-purple" strokeWidth={1.5} />
+                    <div className="bg-bg-surface-1 border border-glass-border p-6 rounded-2xl space-y-5 hover:border-indigo-500/30 transition-all duration-300 group shadow-lg">
+                        <div className="flex justify-between items-start">
+                            <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-500/20 shadow-[0_0_15px_rgba(99,102,241,0.1)] group-hover:scale-105 transition-transform">
+                                <FolderKanban size={20} />
+                            </div>
+                            <div className="text-right">
+                                <Text size="xs" className="font-bold text-text-dim uppercase tracking-widest">Proyectos</Text>
+                                <div className="text-2xl font-bold text-white mt-1">
+                                    {subscriptionInfo.current_projects}
+                                    <span className="text-sm text-text-dim ml-1">/ {subscriptionInfo.max_projects}</span>
+                                </div>
                             </div>
                         </div>
-                        <div>
-                            <div className="stat-value-large">
-                                {subscriptionInfo.current_projects}
-                                <span className="stat-limit">/ {subscriptionInfo.max_projects}</span>
-                            </div>
+                        <div className="space-y-2">
+                            <Progress
+                                value={(subscriptionInfo.current_projects / subscriptionInfo.max_projects) * 100}
+                                variant={getProgressVariant(subscriptionInfo.current_projects, subscriptionInfo.max_projects)}
+                                className="h-1.5 bg-white/5"
+                            />
                             {subscriptionInfo.plan_max_projects && subscriptionInfo.max_projects > subscriptionInfo.plan_max_projects && (
-                                <Text className="stat-card__extra">
-                                    +{subscriptionInfo.max_projects - subscriptionInfo.plan_max_projects} extra
+                                <Text className="text-[10px] text-indigo-400 font-bold uppercase tracking-tighter">
+                                    Custom Limit: {subscriptionInfo.max_projects} Proy.
                                 </Text>
                             )}
-                        </div>
-                        <div className="progress-container">
-                            <div
-                                className={`progress-fill ${getProgressVariant(subscriptionInfo.current_projects, subscriptionInfo.max_projects)}`}
-                                style={{ width: `${(subscriptionInfo.current_projects / subscriptionInfo.max_projects) * 100}%` }}
-                            />
                         </div>
                     </div>
 
                     {/* Spools */}
-                    <div className="premium-stat-card">
-                        <div className="stat-header">
-                            <span className="stat-title">Spools</span>
-                            <div className="stat-icon-box">
-                                <FileCode className="h-4 w-4 icon-emerald" strokeWidth={1.5} />
+                    <div className="bg-bg-surface-1 border border-glass-border p-6 rounded-2xl space-y-5 hover:border-emerald-500/30 transition-all duration-300 group shadow-lg">
+                        <div className="flex justify-between items-start">
+                            <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)] group-hover:scale-105 transition-transform">
+                                <FileCode size={20} />
+                            </div>
+                            <div className="text-right">
+                                <Text size="xs" className="font-bold text-text-dim uppercase tracking-widest">Spools</Text>
+                                <div className="text-2xl font-bold text-white mt-1">
+                                    {subscriptionInfo.current_spools}
+                                    <span className="text-sm text-text-dim ml-1">/ {subscriptionInfo.max_spools}</span>
+                                </div>
                             </div>
                         </div>
-                        <div>
-                            <div className="stat-value-large">
-                                {subscriptionInfo.current_spools}
-                                <span className="stat-limit">/ {subscriptionInfo.max_spools}</span>
-                            </div>
-                        </div>
-                        <div className="progress-container">
-                            <div
-                                className={`progress-fill ${getProgressVariant(subscriptionInfo.current_spools, subscriptionInfo.max_spools)}`}
-                                style={{ width: `${(subscriptionInfo.current_spools / subscriptionInfo.max_spools) * 100}%` }}
+                        <div className="space-y-2">
+                            <Progress
+                                value={(subscriptionInfo.current_spools / subscriptionInfo.max_spools) * 100}
+                                variant={getProgressVariant(subscriptionInfo.current_spools, subscriptionInfo.max_spools)}
+                                className="h-1.5 bg-white/5"
                             />
                         </div>
                     </div>
 
                     {/* Storage */}
-                    <div className="premium-stat-card">
-                        <div className="stat-header">
-                            <span className="stat-title">Almacenamiento</span>
-                            <div className="stat-icon-box">
-                                <Database className="h-4 w-4 icon-amber" strokeWidth={1.5} />
+                    <div className="bg-bg-surface-1 border border-glass-border p-6 rounded-2xl space-y-5 hover:border-amber-500/30 transition-all duration-300 group shadow-lg">
+                        <div className="flex justify-between items-start">
+                            <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-400 border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.1)] group-hover:scale-105 transition-transform">
+                                <Database size={20} />
+                            </div>
+                            <div className="text-right">
+                                <Text size="xs" className="font-bold text-text-dim uppercase tracking-widest">Hosting</Text>
+                                <div className="text-2xl font-bold text-white mt-1">
+                                    {subscriptionInfo.current_storage_gb.toFixed(1)}
+                                    <span className="text-sm text-text-dim ml-1">/ {subscriptionInfo.max_storage_gb} GB</span>
+                                </div>
                             </div>
                         </div>
-                        <div>
-                            <div className="stat-value-large">
-                                {subscriptionInfo.current_storage_gb.toFixed(1)}
-                                <span className="stat-limit">/ {subscriptionInfo.max_storage_gb} GB</span>
-                            </div>
-                        </div>
-                        <div className="progress-container">
-                            <div
-                                className={`progress-fill ${getProgressVariant(subscriptionInfo.current_storage_gb, subscriptionInfo.max_storage_gb)}`}
-                                style={{ width: `${(subscriptionInfo.current_storage_gb / subscriptionInfo.max_storage_gb) * 100}%` }}
+                        <div className="space-y-2">
+                            <Progress
+                                value={(subscriptionInfo.current_storage_gb / subscriptionInfo.max_storage_gb) * 100}
+                                variant={getProgressVariant(subscriptionInfo.current_storage_gb, subscriptionInfo.max_storage_gb)}
+                                className="h-1.5 bg-white/5"
                             />
                         </div>
                     </div>
@@ -243,17 +271,35 @@ export default function FounderSubscriptionPage() {
             </div>
 
             {/* Premium Payment Section */}
-            <div className="payment-section">
-                <Text variant="muted" size="sm">¿Necesitas reactivar o mejorar tu plan?</Text>
-                <div className="payment-text">
-                    Transferir a Banco Estado &bull; Cta Cte 123456789 &bull; pagos@lukeapp.cl
+            <div className="p-8 md:p-12 bg-bg-surface-1/40 backdrop-blur-xl border border-glass-border rounded-3xl flex flex-col items-center gap-8 text-center shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-24 bg-brand-primary/10 blur-[60px]" />
+
+                <div className="space-y-3 relative z-10">
+                    <Text size="lg" className="font-bold text-white tracking-tight">¿Necesitas reactivar o mejorar tu plan?</Text>
+                    <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 text-sm text-text-dim bg-white/5 px-6 py-3 rounded-full border border-white/5">
+                        <div className="flex items-center gap-2">
+                            <span className="text-brand-primary text-[10px] font-bold uppercase tracking-widest">Banco</span>
+                            <span className="text-text-main font-semibold">Banco Estado</span>
+                        </div>
+                        <div className="hidden md:block w-px h-4 bg-white/10" />
+                        <div className="flex items-center gap-2">
+                            <span className="text-brand-primary text-[10px] font-bold uppercase tracking-widest">Cta Cte</span>
+                            <span className="text-text-main font-semibold">123456789</span>
+                        </div>
+                        <div className="hidden md:block w-px h-4 bg-white/10" />
+                        <div className="flex items-center gap-2">
+                            <span className="text-brand-primary text-[10px] font-bold uppercase tracking-widest">Email</span>
+                            <span className="text-text-main font-semibold">pagos@lukeapp.cl</span>
+                        </div>
+                    </div>
                 </div>
+
                 <Button
-                    variant="outline"
-                    className="mt-2"
+                    size="lg"
+                    className="relative z-10 group overflow-hidden bg-brand-primary hover:bg-brand-primary/90 text-white font-bold rounded-xl px-10 py-7 shadow-xl shadow-brand-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
                     onClick={() => window.location.href = "mailto:pagos@lukeapp.cl?subject=Comprobante de Pago"}
                 >
-                    <Mail className="mr-2 h-4 w-4" />
+                    <Mail className="mr-3 h-5 w-5 transition-transform group-hover:-rotate-12" />
                     Enviar Comprobante de Pago
                 </Button>
             </div>

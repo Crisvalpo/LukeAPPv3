@@ -2,8 +2,7 @@
 
 import { FolderKanban, Plus, Eye, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import '@/styles/dashboard.css'
-import '@/styles/companies.css'
+// Styles migrated to Tailwind v4
 // Reutilizamos estilos existentes para consistencia inmediata
 
 interface Project {

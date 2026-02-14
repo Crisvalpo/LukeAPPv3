@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Download } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface LogoCanvasProps {
     primaryLogoUrl?: string | null
@@ -132,63 +133,26 @@ export default function LogoCanvas({
     }
 
     return (
-        <div className="logo-canvas-container">
-            <div className="canvas-wrapper">
+        <div className="flex flex-col gap-4 items-center">
+            <div className="bg-white p-4 rounded-xl shadow-sm">
                 <canvas
                     ref={canvasRef}
                     width={width}
                     height={height}
-                    className="preview-canvas"
+                    className="block rounded"
                 />
             </div>
 
             {(primaryLogoUrl || secondaryLogoUrl) && (
-                <button onClick={handleDownload} className="download-btn">
+                <Button
+                    onClick={handleDownload}
+                    variant="outline"
+                    className="flex items-center gap-2 border-white/10 hover:bg-white/5 text-text-muted hover:text-white"
+                >
                     <Download size={16} />
                     <span>Descargar Preview</span>
-                </button>
+                </Button>
             )}
-
-            <style jsx>{`
-        .logo-canvas-container {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-          align-items: center;
-        }
-
-        .canvas-wrapper {
-          background: white;
-          padding: 1rem;
-          border-radius: 12px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        .preview-canvas {
-          display: block;
-          border-radius: 4px;
-        }
-
-        .download-btn {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.5rem 1rem;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 8px;
-          color: #cbd5e1;
-          cursor: pointer;
-          font-size: 0.875rem;
-          transition: all 0.2s;
-        }
-
-        .download-btn:hover {
-          background: rgba(255, 255, 255, 0.1);
-          border-color: rgba(255, 255, 255, 0.2);
-          color: white;
-        }
-      `}</style>
         </div>
     )
 }
