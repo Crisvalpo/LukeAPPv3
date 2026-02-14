@@ -114,72 +114,42 @@ export default async function LobbyPage() {
     const roleColor = membership.company_roles?.color || 'var(--color-primary)';
 
     return (
-        <main className="landing-root">
-            <div className="landing-background">
+        <main className="relative min-h-screen w-full bg-[hsl(220,20%,10%)] text-[hsl(0,0%,98%)] flex flex-col items-center justify-start pt-8 pb-16 px-6 overflow-x-hidden z-0">
+            <div className="fixed inset-0 z-[-10] pointer-events-none overflow-hidden">
                 <AnimatedParticles />
-                <div style={{
-                    position: 'absolute',
-                    top: '20%',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: '60%',
-                    height: '60%',
-                    background: 'var(--color-primary)',
-                    opacity: 0.05,
-                    filter: 'blur(120px)',
-                    borderRadius: '50%',
-                    animation: 'pulse 2s ease-in-out infinite'
-                }} />
+                <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[60%] h-[60%] bg-[hsl(215,90%,55%)]/5 blur-[120px] rounded-full animate-pulse" />
             </div>
 
-            <div className="landing-content" style={{ gap: '3rem', paddingTop: '2rem' }}>
+            <div className="w-full max-w-6xl flex flex-col gap-12 pt-8">
                 {/* Header */}
-                <header style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    width: '100%',
-                    maxWidth: '1152px',
-                    margin: '0 auto'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <header className="flex justify-between items-center w-full mx-auto">
+                    <div className="flex items-center gap-3">
                         <Image
                             src="/logo.png"
                             alt="LukeAPP"
                             width={40}
                             height={40}
-                            style={{ filter: 'invert(1) brightness(2)' }}
+                            className="invert brightness-200"
                         />
                         <div>
-                            <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'white' }}>
+                            <h1 className="text-xl font-bold text-white">
                                 {membership.projects?.name || 'LukeAPP'}
                             </h1>
-                            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-dim)' }}>
+                            <p className="text-xs text-[hsl(220,10%,45%)]">
                                 {membership.companies?.name}
                             </p>
                         </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                            <p style={{ fontSize: '0.875rem', fontWeight: '500', color: 'white' }}>
+                    <div className="flex items-center gap-4">
+                        <div className="flex flex-col items-end">
+                            <p className="text-sm font-medium text-white">
                                 {user.user_metadata?.full_name || user.email}
                             </p>
-                            <p style={{ fontSize: '0.75rem', color: roleColor }}>
+                            <p className="text-xs" style={{ color: roleColor }}>
                                 {displayRole}
                             </p>
                         </div>
-                        <div style={{
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '50%',
-                            background: 'var(--color-primary)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '0.875rem',
-                            fontWeight: 'bold',
-                            color: 'white'
-                        }}>
+                        <div className="w-10 h-10 rounded-full bg-[hsl(215,90%,55%)] flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-blue-500/20">
                             {user.email?.charAt(0).toUpperCase()}
                         </div>
                         <LogoutButton />
@@ -187,41 +157,31 @@ export default async function LobbyPage() {
                 </header>
 
                 {/* Main Content */}
-                <div style={{ width: '100%', maxWidth: '1152px', margin: '0 auto' }}>
-                    <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                        <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem' }}>
+                <div className="w-full mx-auto">
+                    <div className="text-center mb-8">
+                        <h2 className="text-3xl font-bold text-white mb-2">
                             Hall del Proyecto
                         </h2>
-                        <p style={{ color: 'var(--color-text-muted)' }}>
-                            Bienvenido al proyecto {membership.projects?.code}
+                        <p className="text-[hsl(220,10%,70%)]">
+                            Bienvenido al proyecto <span className="text-white font-medium">{membership.projects?.code}</span>
                         </p>
                     </div>
 
                     {/* Placeholder Grid */}
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                        gap: '1.5rem'
-                    }}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {['Perfil', 'Estado del Proyecto', 'Galería', 'Comunicaciones', 'Tareas', 'Intereses'].map((feature, idx) => (
                             <div
                                 key={feature}
-                                className="auth-card"
-                                style={{
-                                    minHeight: '200px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    opacity: 0.5,
-                                    animation: `fade-in-up 0.6s ease-out ${idx * 100}ms both`
-                                }}
+                                className="group flex flex-col items-center justify-center min-h-[200px] p-8 rounded-[20px] bg-[rgba(20,20,25,0.75)] backdrop-blur-2xl border border-white/5 shadow-xl hover:shadow-2xl hover:-translate-y-1 hover:bg-[rgba(25,25,35,0.85)] hover:border-white/10 transition-all duration-300 relative overflow-hidden"
+                                style={{ animationDelay: `${idx * 100}ms` }}
                             >
-                                <div style={{ fontSize: '2.25rem', marginBottom: '0.75rem' }}>📦</div>
-                                <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem' }}>
+                                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+                                <div className="text-4xl mb-3 opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300">📦</div>
+                                <h3 className="text-lg font-bold text-white mb-2 relative z-10">
                                     {feature}
                                 </h3>
-                                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-dim)', textAlign: 'center' }}>
+                                <p className="text-xs text-[hsl(220,10%,45%)] text-center relative z-10 uppercase tracking-wider font-semibold">
                                     Próximamente
                                 </p>
                             </div>
@@ -229,11 +189,10 @@ export default async function LobbyPage() {
                     </div>
 
                     {/* CTA */}
-                    <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+                    <div className="mt-12 text-center">
                         <button
-                            className="hero-btn hero-btn-primary"
+                            className="px-8 py-3 bg-[hsl(215,90%,55%)] text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 opacity-50 cursor-not-allowed"
                             disabled
-                            style={{ opacity: 0.5, cursor: 'not-allowed' }}
                         >
                             Ir al Dashboard (Próximamente)
                         </button>
