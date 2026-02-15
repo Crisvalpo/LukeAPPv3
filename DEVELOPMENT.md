@@ -92,12 +92,12 @@ src/
 ├── constants/           # Application constants
 │   └── index.ts         # Enums, routes, validation
 │
-└── styles/              # CSS files (100% Vanilla CSS)
-    ├── globals.css      # Global styles & CSS variables
-    ├── dashboard.css    # Dashboard common styles
-    ├── companies.css    # Companies specific
-    ├── invitations.css  # Invitations specific
-    └── ...
+└── styles/              # CSS files (Legacy Vanilla CSS + Tailwind)
+    ├── globals.css      # Global styles & CSS variables (legacy)
+    ├── dashboard.css    # Dashboard common styles (legacy)
+    ├── companies.css    # Companies specific (legacy)
+    ├── invitations.css  # Invitations specific (legacy)
+    └── ...              # Migrating gradually to Tailwind
 
 supabase/
 └── migrations/          # Database migrations (SQL)
@@ -188,44 +188,42 @@ return <h1>My Projects</h1>
 
 ### Styling Rules
 
-**100% Vanilla CSS** - NO Tailwind, NO CSS-in-JS
+**Tailwind CSS (Migración Gradual)** - Preferir Tailwind para nuevos componentes
 
 ```typescript
-// ❌ BAD
+// ✅ GOOD (Nuevo código - Tailwind)
 <div className="flex items-center gap-4">
 
-// ✅ GOOD
-// ✅ GOOD
+// ⚠️ LEGACY (Código existente - Vanilla CSS)
 <div className="company-header-content">
+// Migrar gradualmente a Tailwind cuando se modifique
 ```
 
 ### 🎨 Design System & UI Standards (STRICT)
 
 **Consistency is King.** The application must look and feel like a single cohesive product. DO NOT introduce new styles unless absolutely necessary.
 
-#### 1. Core Styles (`dashboard.css`)
-All dashboard pages MUST use the standard classes defined in `src/styles/dashboard.css`.
-- **Layout**: Use `.dashboard-page`, `.dashboard-header`.
-- **Forms**: ALWAYS use `.company-form`, `.form-field`, `.form-label`, `.form-input`.
-- **Buttons**: ALWAYS use `.form-button` (primary) or `.action-button` (secondary/icon).
-- **Typography**: Never manually set font-sizes in inline styles unless absolutely necessary for a unique KPI. Use global headings.
+#### 1. Styling Approach (Tailwind Migration)
+- **New Components**: Use Tailwind CSS utilities.
+- **Legacy Components**: May still use classes from `src/styles/dashboard.css`, `companies.css`, etc.
+- **Migration Strategy**: When modifying legacy components, gradually refactor to Tailwind.
 
-#### 2. Component Consistency
+#### 2. Legacy Core Styles (`dashboard.css`) - ⚠️ Being Phased Out
+Some dashboard pages still use classes from `src/styles/dashboard.css`:
+- **Layout**: `.dashboard-page`, `.dashboard-header` (migrate to Tailwind flex/grid)
+- **Forms**: `.company-form`, `.form-field`, `.form-label`, `.form-input` (migrate to Tailwind form utilities)
+- **Buttons**: `.form-button`, `.action-button` (migrate to Tailwind button classes)
+
+#### 3. Component Consistency
 - **Buttons**: Main actions are always on the right or bottom. Primary = Purple/Blue gradient. Secondary = Ghost/Glass.
-- **Inputs**: All text inputs must have the same height, padding (`0.75rem`), and background (`rgba(15, 23, 42, 0.3)`).
-- **Cards**: Use glassmorphism styling consistently.
+- **Inputs**: All text inputs must have consistent height, padding, and background (use Tailwind utilities).
+- **Cards**: Use glassmorphism styling consistently (Tailwind backdrop-blur + bg-opacity).
 
-#### 3. New Features Guidelines
-When building new features (e.g. Project Details):
-- ❌ **DO NOT** create unique CSS files that redefine base typography or form inputs.
-- ✅ **REUSE** existing `dashboard.css` classes.
-- If a new style is needed, add it to `dashboard.css` as a utility so it can be reused.
-
-
-All styles in dedicated CSS files:
-- `src/styles/dashboard.css` - Common dashboard styles
-- `src/styles/companies.css` - Companies-specific
-- Feature-specific CSS files as needed
+#### 4. New Features Guidelines
+When building new features:
+- ✅ **USE** Tailwind CSS utilities for all new code.
+- ⚠️ **LEGACY** components may reference `dashboard.css` - refactor when touched.
+- ❌ **DO NOT** create new Vanilla CSS files.
 
 ### Naming Conventions
 
@@ -597,7 +595,7 @@ Files:
 - ✅ Staff Dashboard (Super Admin)
 - ✅ Founder Dashboard (Company Owner)
 - ✅ Invitation system (Secure Token Flow)
-- ✅ UI Polishing (100% Vanilla CSS)
+- ✅ UI Polishing (Tailwind CSS + Legacy Vanilla CSS)
 - ✅ Dynamic Roles System (Database + Services + UI)
 
 **Phase 1.5 - Roles Integration (COMPLETED ✅):**

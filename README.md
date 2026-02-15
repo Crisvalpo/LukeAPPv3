@@ -102,7 +102,7 @@ Ordenado por etapas lógicas de construcción del producto.
 
 ### ✅ Fase 1: Foundation & Identity (Core)
 *Base sólida, multi-tenant y manejo de usuarios.*
-- [x] **Infraestructura**: Next.js 15, Supabase Auth/RLS, Vanilla CSS.
+- [x] **Infraestructura**: Next.js 15, Supabase Auth/RLS, Tailwind CSS.
 - [x] **Multi-tenant**: CRUD de Empresas y Proyectos.
 - [x] **Invitaciones**: Link-based invites (Staff → Founder → Admin).
 - [x] **Dashboarding**: Vistas específicas para Staff, Founder y Admin.
@@ -142,7 +142,7 @@ Ordenado por etapas lógicas de construcción del producto.
 ### Frontend
 - **Framework**: Next.js 16 (App Router)
 - **Lenguaje**: TypeScript
-- **Estilos**: Vanilla CSS (CSS Variables) - **NO Tailwind**.
+- **Estilos**: Tailwind CSS (migración gradual desde Vanilla CSS).
 - **PWA**: `@ducanh2912/next-pwa`
 
 ### Infraestructura
@@ -277,13 +277,13 @@ Before every commit:
 ### Tech & Styling Guidelines
 
 > [!IMPORTANT]  
-> **Este proyecto utiliza 100% Vanilla CSS.**
-> **Tailwind CSS NO está instalado y NO debe usarse.**
+> **Este proyecto está migrando gradualmente a Tailwind CSS.**
+> Algunas áreas legacy aún utilizan Vanilla CSS. La migración se realiza de forma incremental.
 
-1.  **Estilos Globales**: `src/app/globals.css`.
-2.  **Design Tokens**: `src/styles/design-system.css` (Variables CSS).
-3.  **Animaciones**: Preferir CSS Transitions nativas para rendimiento.
-4.  **Glassmorphism**: Usar variables `--glass-bg`, `--glass-border` para consistencia.
+1.  **Estilos Principales**: Tailwind CSS con configuración personalizada.
+2.  **Legacy CSS**: Algunos componentes aún usan `src/app/globals.css` y `src/styles/design-system.css`.
+3.  **Animaciones**: Preferir Tailwind utilities y CSS Transitions.
+4.  **Glassmorphism**: Usar clases Tailwind personalizadas o variables CSS legacy donde aplique.
 
 ---
 **Privado - Todos los derechos reservados © 2026**
