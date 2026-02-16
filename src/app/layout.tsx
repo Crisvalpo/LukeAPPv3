@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "LukeAPP - Industrial Operations",
-  description: "Multi-tenant industrial piping management platform",
+  description: "Plataforma multi-especialidad para la gestión de proyectos industriales",
 };
 
 export default function RootLayout({

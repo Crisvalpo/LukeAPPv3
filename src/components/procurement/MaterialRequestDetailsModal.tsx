@@ -3,6 +3,7 @@ import { X, Check, XCircle, Trash2, Send, PackageCheck, FileDown, Printer } from
 import { createClient } from '@/lib/supabase/client'
 import { MaterialRequest, MaterialRequestItem, RequestStatusEnum } from '@/types'
 import CreateReceiptModal from './CreateReceiptModal'
+import CreateIssueModal from './CreateIssueModal'
 import { downloadMIRPDF, printMIRPDF } from '@/services/mir-pdf-generator'
 
 interface MaterialRequestDetailsModalProps {
@@ -50,6 +51,7 @@ export default function MaterialRequestDetailsModal({ request, onClose, onUpdate
     const [isLoading, setIsLoading] = useState(true)
     const [isUpdating, setIsUpdating] = useState(false)
     const [showReceiptModal, setShowReceiptModal] = useState(false)
+    const [showIssueModal, setShowIssueModal] = useState(false)
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
 
     useEffect(() => {
@@ -402,9 +404,15 @@ export default function MaterialRequestDetailsModal({ request, onClose, onUpdate
                                     {request.status === RequestStatusEnum.APPROVED ? <Check size={18} /> : <PackageCheck size={18} />}
                                     {request.status === RequestStatusEnum.APPROVED ? 'Aprobado' : 'Parcial'}
                                 </div>
-                                <button className="action-button action-primary" onClick={() => setShowReceiptModal(true)} disabled={isUpdating}>
-                                    <PackageCheck size={18} /> Recepcionar
-                                </button>
+                                {request.request_type === 'CLIENT_MIR' ? (
+                                    <button className="action-button action-primary" onClick={() => setShowIssueModal(true)} disabled={isUpdating}>
+                                        <PackageCheck size={18} /> Despachar
+                                    </button>
+                                ) : (
+                                    <button className="action-button action-primary" onClick={() => setShowReceiptModal(true)} disabled={isUpdating}>
+                                        <PackageCheck size={18} /> Recepcionar
+                                    </button>
+                                )}
                             </>
                         )}
                     </div>
@@ -415,6 +423,14 @@ export default function MaterialRequestDetailsModal({ request, onClose, onUpdate
                 <CreateReceiptModal
                     request={request}
                     onClose={() => setShowReceiptModal(false)}
+                    onSuccess={() => { onUpdate(); loadItems() }}
+                />
+            )}
+
+            {showIssueModal && (
+                <CreateIssueModal
+                    request={request}
+                    onClose={() => setShowIssueModal(false)}
                     onSuccess={() => { onUpdate(); loadItems() }}
                 />
             )}

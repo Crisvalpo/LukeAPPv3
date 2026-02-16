@@ -18,8 +18,8 @@ import PipeInventoryMaster from '@/components/procurement/PipeInventoryMaster'
 import ProjectMaterialsManager from '@/components/procurement/ProjectMaterialsManager'
 import SpoolIdentificationDashboard from '@/components/procurement/SpoolIdentificationDashboard'
 import MaterialInventoryDashboard from '@/components/procurement/MaterialInventoryDashboard'
-// import MaterialReceiptsManager from '@/components/procurement/MaterialReceiptsManager'
-// import MaterialTrackingView from '@/components/procurement/MaterialTrackingView'
+import MaterialReceiptsManager from '@/components/procurement/MaterialReceiptsManager'
+import MaterialTrackingView from '@/components/procurement/MaterialTrackingView'
 
 interface ProcurementManagerProps {
     projectId: string
@@ -27,7 +27,7 @@ interface ProcurementManagerProps {
     userRole?: 'founder' | 'admin'
 }
 
-type TabType = 'catalog' | 'requests' | 'mto' | 'spools' | 'inventory' | 'receiving' | 'pipe-manager'
+type TabType = 'catalog' | 'requests' | 'tracking' | 'receiving' | 'inventory' | 'mto' | 'pipe-manager'
 
 export default function ProcurementManager({ projectId, companyId, userRole = 'founder' }: ProcurementManagerProps) {
     const [activeTab, setActiveTab] = useState<TabType>('catalog')
@@ -38,12 +38,12 @@ export default function ProcurementManager({ projectId, companyId, userRole = 'f
             <div className="flex gap-2 p-1.5 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md overflow-x-auto scrollbar-hide">
                 {[
                     { id: 'catalog', label: 'Catálogo Maestro', icon: <Book className="w-4 h-4" /> },
-                    { id: 'requests', label: 'Solicitudes', icon: <ClipboardList className="w-4 h-4" /> },
+                    { id: 'requests', label: 'Solicitudes (MIR/PO)', icon: <ClipboardList className="w-4 h-4" /> },
+                    { id: 'tracking', label: 'Seguimiento (Expedition)', icon: <Truck className="w-4 h-4" /> },
+                    { id: 'receiving', label: 'Recepción (Warehouse)', icon: <Inbox className="w-4 h-4" /> },
+                    { id: 'inventory', label: 'Inventario General', icon: <Package className="w-4 h-4" /> },
                     { id: 'mto', label: 'Ingeniería (MTO)', icon: <BarChart3 className="w-4 h-4" /> },
-                    { id: 'spools', label: 'Spools', icon: <Layers className="w-4 h-4" /> },
-                    { id: 'inventory', label: 'Inventario', icon: <Package className="w-4 h-4" /> },
-                    { id: 'receiving', label: 'Recepción', icon: <Inbox className="w-4 h-4" /> },
-                    { id: 'pipe-manager', label: 'Cañerías', icon: <Ruler className="w-4 h-4" /> },
+                    { id: 'pipe-manager', label: 'Control Piping', icon: <Ruler className="w-4 h-4" /> },
                 ].map((tab) => (
                     <button
                         key={tab.id}
@@ -74,20 +74,21 @@ export default function ProcurementManager({ projectId, companyId, userRole = 'f
                     <ConsolidatedMTO projectId={projectId} companyId={companyId} />
                 )}
 
-                {activeTab === 'spools' && (
+                {/* Spools moved to Engineering MTO or Pipe Manager */}
+                {/* {activeTab === 'spools' && (
                     <SpoolIdentificationDashboard projectId={projectId} />
-                )}
+                )} */}
 
                 {activeTab === 'inventory' && (
                     <MaterialInventoryDashboard projectId={projectId} />
                 )}
 
+                {activeTab === 'tracking' && (
+                    <MaterialTrackingView projectId={projectId} companyId={companyId} />
+                )}
+
                 {activeTab === 'receiving' && (
-                    <div className="bg-white/5 border border-dashed border-white/10 rounded-3xl p-20 text-center">
-                        <Inbox className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-                        <h3 className="text-xl font-bold text-white mb-2">Módulo de Recepción</h3>
-                        <p className="text-slate-500">Próximamente: Ingreso de guías de despacho y control físico de materiales.</p>
-                    </div>
+                    <MaterialReceiptsManager projectId={projectId} companyId={companyId} />
                 )}
 
                 {activeTab === 'pipe-manager' && (

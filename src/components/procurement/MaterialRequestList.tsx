@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, Filter, ClipboardList, Package, ExternalLink, Calendar, Clock, Truck } from 'lucide-react'
 import { getMaterialRequests } from '@/services/material-requests'
+import { getProjectSpecialties } from '@/services/specialties'
 import MaterialRequestDetailsModal from './MaterialRequestDetailsModal'
 import { Heading, Text } from '@/components/ui/Typography'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -16,6 +17,7 @@ interface MaterialRequestListProps {
 export default function MaterialRequestList({ projectId }: MaterialRequestListProps) {
     const router = useRouter()
     const [requests, setRequests] = useState<MaterialRequest[]>([])
+    const [specialtiesMap, setSpecialtiesMap] = useState<Record<string, string>>({})
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState('')
     const [selectedRequest, setSelectedRequest] = useState<MaterialRequest | null>(null)
@@ -28,8 +30,20 @@ export default function MaterialRequestList({ projectId }: MaterialRequestListPr
     useEffect(() => {
         if (projectId) {
             loadRequests()
+            loadSpecialties()
         }
     }, [projectId])
+
+    async function loadSpecialties() {
+        try {
+            const data = await getProjectSpecialties(projectId)
+            const map: Record<string, string> = {}
+            data.forEach(s => map[s.id] = s.name)
+            setSpecialtiesMap(map)
+        } catch (e) {
+            console.error('Error loading specialties', e)
+        }
+    }
 
     async function loadRequests() {
         setIsLoading(true)
@@ -138,6 +152,7 @@ export default function MaterialRequestList({ projectId }: MaterialRequestListPr
                             <tr className="bg-white/5 text-white/40 uppercase text-[10px] tracking-[0.2em] font-bold">
                                 <th className="px-6 py-4">Status</th>
                                 <th className="px-6 py-4">N° Solicitud</th>
+                                <th className="px-6 py-4">Especialidad</th>
                                 <th className="px-6 py-4">Tipo</th>
                                 <th className="px-6 py-4">Fechas</th>
                                 <th className="px-6 py-4 text-right">Acciones</th>
@@ -146,7 +161,7 @@ export default function MaterialRequestList({ projectId }: MaterialRequestListPr
                         <tbody className="divide-y divide-white/5">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-20 text-center">
+                                    <td colSpan={6} className="px-6 py-20 text-center">
                                         <div className="flex flex-col items-center gap-3">
                                             <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
                                             <Text className="text-white/30">Cargando solicitudes...</Text>
@@ -155,7 +170,7 @@ export default function MaterialRequestList({ projectId }: MaterialRequestListPr
                                 </tr>
                             ) : filteredRequests.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-20 text-center">
+                                    <td colSpan={6} className="px-6 py-20 text-center">
                                         <div className="flex flex-col items-center gap-4">
                                             <div className="p-4 bg-white/5 rounded-full text-white/20">
                                                 <ClipboardList size={48} />
@@ -185,6 +200,11 @@ export default function MaterialRequestList({ projectId }: MaterialRequestListPr
                                                 <Text size="xs" className="text-white/20">
                                                     ID: {req.id.split('-')[0]}
                                                 </Text>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm text-white/70 font-medium">
+                                                {specialtiesMap[req.specialty_id || ''] || 'General'}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">

@@ -2,15 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import { Copy, Mail, MessageCircle, Trash2, UserPlus, Shield, CheckCircle2, QrCode } from 'lucide-react'
-import { Project, CompanyRole } from '@/types'
+import { Project, CompanyRole, Specialty } from '@/types'
 import { Invitation } from '@/services/invitations'
 import { getCompanyRoles } from '@/services/roles'
+import { getProjectSpecialties, getAllSpecialties } from '@/services/specialties'
 import Confetti from '@/components/onboarding/Confetti'
 import Toast from '@/components/onboarding/Toast'
 import { CELEBRATION_MESSAGES } from '@/config/onboarding-messages'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Icons } from '@/components/ui/Icons'
+import { Text } from '@/components/ui/Typography'
 
 interface InvitationManagerProps {
     companyId: string
@@ -26,6 +28,7 @@ interface InvitationManagerProps {
         role_id: string
         functional_role_id?: string
         job_title: string
+        primary_specialty_id?: string
     }) => Promise<{ success: boolean; message?: string; data?: { link: string } }>
     onRevoke: (id: string) => Promise<void>
 }
@@ -52,13 +55,16 @@ export default function InvitationManager({
     const [loadingRoles, setLoadingRoles] = useState(true)
     const [showConfetti, setShowConfetti] = useState(false)
     const [toastMessage, setToastMessage] = useState<string | null>(null)
+    const [availableSpecialties, setAvailableSpecialties] = useState<Specialty[]>([])
+    const [loadingSpecialties, setLoadingSpecialties] = useState(false)
 
     const [formData, setFormData] = useState({
         email: '',
         project_id: fixedProjectId || '',
         role_id: roleOptions[0].value,
         functional_role_id: '',
-        job_title: ''
+        job_title: '',
+        primary_specialty_id: ''
     })
 
     useEffect(() => {
@@ -83,6 +89,21 @@ export default function InvitationManager({
         loadFunctionalRoles()
     }, [companyId, roleOptions])
 
+    useEffect(() => {
+        async function loadSpecialties() {
+            setLoadingSpecialties(true)
+            if (formData.project_id) {
+                const specs = await getProjectSpecialties(formData.project_id)
+                setAvailableSpecialties(specs)
+            } else {
+                const specs = await getAllSpecialties()
+                setAvailableSpecialties(specs)
+            }
+            setLoadingSpecialties(false)
+        }
+        loadSpecialties()
+    }, [formData.project_id])
+
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
         if (requireProject && !formData.project_id) {
@@ -100,7 +121,8 @@ export default function InvitationManager({
                 role_id: formData.role_id,
                 project_id: formData.project_id || undefined,
                 functional_role_id: formData.functional_role_id || undefined,
-                job_title: formData.job_title
+                job_title: formData.job_title,
+                primary_specialty_id: formData.primary_specialty_id || undefined
             })
 
             if (result.success && result.data) {
@@ -357,6 +379,31 @@ export default function InvitationManager({
                                     )}
                                 </div>
                             )}
+
+                            {/* Primary Specialty Selection */}
+                            <div className="space-y-2.5">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-2">Contexto de Especialidad</label>
+                                <div className="relative">
+                                    <select
+                                        value={formData.primary_specialty_id}
+                                        onChange={(e) => setFormData({ ...formData, primary_specialty_id: e.target.value })}
+                                        className="w-full h-14 bg-slate-950/50 border border-white/5 rounded-2xl px-5 text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 transition-all appearance-none text-sm font-bold cursor-pointer font-sans"
+                                    >
+                                        <option value="" className="bg-slate-950">Sin especialidad fija (Acceso Global)</option>
+                                        {availableSpecialties.map(spec => (
+                                            <option key={spec.id} value={spec.id} className="bg-slate-950">
+                                                {spec.name} ({spec.code})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none opacity-40">
+                                        <Shield size={16} className="text-blue-400" />
+                                    </div>
+                                </div>
+                                <Text size="xs" className="text-slate-600 ml-2 italic">
+                                    Define la especialidad principal para el onboarding del usuario.
+                                </Text>
+                            </div>
 
                             <Button
                                 type="submit"

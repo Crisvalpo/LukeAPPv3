@@ -144,7 +144,7 @@ export default function LandingPage() {
                                     <div className="text-center">
                                         <div className="text-slate-400 text-sm mb-2">Bienvenido a</div>
                                         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white">
-                                            LukeAPP <span className="italic font-light opacity-80">Piping</span>
+                                            LukeAPP
                                         </h1>
                                     </div>
                                     <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed text-center">

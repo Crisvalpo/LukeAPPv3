@@ -75,18 +75,21 @@ export default function FounderInvitationsPage() {
         email: string
         project_id?: string
         role_id: string
-        functional_role_id?: string  // NEW
+        functional_role_id?: string
         job_title?: string
+        primary_specialty_id?: string // NEW
     }) {
         if (!companyId) return { success: false, message: 'Error de sesión' }
+        console.log('Sending invitation with specialty:', data.primary_specialty_id)
 
         const result = await createInvitation({
             email: data.email,
             project_id: data.project_id,
             role_id: data.role_id as any,
-            functional_role_id: data.functional_role_id,  // NEW: Pass to service
+            functional_role_id: data.functional_role_id,
             company_id: companyId,
-            job_title: data.job_title
+            job_title: data.job_title,
+            primary_specialty_id: data.primary_specialty_id // NEW: Pass to service
         })
 
         if (result.success) {

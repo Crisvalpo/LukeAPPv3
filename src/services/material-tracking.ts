@@ -14,6 +14,12 @@ export interface MaterialTrackingItem {
     quantity_received: number
     spool_id: string | null
     isometric_id: string | null
+    // Polymorphic info
+    target_entity_id?: string
+    target_entity_type?: string
+    // Work Front info
+    work_front_code?: string
+    work_front_name?: string
     // Catalog info
     item_code?: string
     description?: string
@@ -70,10 +76,10 @@ export interface MaterialTrackingData {
  */
 export async function fetchMaterialTracking(
     projectId: string,
-    options: { search?: string, limit?: number, offset?: number } = {}
+    options: { search?: string, limit?: number, offset?: number, specialtyId?: string } = {}
 ): Promise<MaterialTrackingData> {
     const supabase = createClient()
-    const { search, limit = 20, offset = 0 } = options
+    const { search, limit = 20, offset = 0, specialtyId } = options
 
     let query = supabase
         .from('material_request_items')
@@ -85,6 +91,8 @@ export async function fetchMaterialTracking(
             quantity_received,
             spool_id,
             isometric_id,
+            target_entity_id,
+            target_entity_type,
             isometric:isometrics!isometric_id(
                 id,
                 iso_number
@@ -114,7 +122,8 @@ export async function fetchMaterialTracking(
                 request_type,
                 status,
                 created_at,
-                project_id
+                project_id,
+                specialty_id
             )
         `)
         .eq('request.project_id', projectId)
@@ -122,10 +131,13 @@ export async function fetchMaterialTracking(
         .order('id', { ascending: false }) // Fallback sort
         .range(offset, offset + limit - 1)
 
+    if (specialtyId && specialtyId !== 'all') {
+        query = query.eq('request.specialty_id', specialtyId)
+    }
+
     if (search) {
-        // Filter by ISO number or Spool Number using the inner joined tables
-        // Note: Supabase OR with nested relations is tricky. 
-        // For now let's prioritize ISO search as requested.
+        // Simple search for now
+        // TODO: Enhance search for Work Fronts
         query = query.ilike('spool.revision.isometric.iso_number', `%${search}%`)
     }
 
@@ -139,10 +151,42 @@ export async function fetchMaterialTracking(
         return { isometrics: [], allRequests: [] }
     }
 
+    // Manual Fetch for Work Fronts (Polymorphic Relation)
+    const workFrontIds = Array.from(new Set(
+        items
+            .filter((i: any) => i.target_entity_type === 'WORK_FRONT' && i.target_entity_id)
+            .map((i: any) => i.target_entity_id)
+    ))
+
+    const workFrontMap = new Map<string, any>()
+
+    if (workFrontIds.length > 0) {
+        const { data: workFronts } = await supabase
+            .from('work_fronts')
+            .select('id, code, name')
+            .in('id', workFrontIds)
+
+        workFronts?.forEach(wf => workFrontMap.set(wf.id, wf))
+    }
+
+    // Enrich items with Work Front data
+    const enrichedItems = items.map((item: any) => {
+        if (item.target_entity_type === 'WORK_FRONT' && item.target_entity_id) {
+            const wf = workFrontMap.get(item.target_entity_id)
+            if (wf) {
+                return { ...item, work_front: wf }
+            }
+        }
+        return item
+    })
+
     // Group data
-    return groupMaterialTrackingData(items)
+    return groupMaterialTrackingData(enrichedItems)
 }
 
+/**
+ * Group raw items into hierarchical structure
+ */
 /**
  * Group raw items into hierarchical structure
  */
@@ -156,13 +200,19 @@ function groupMaterialTrackingData(rawItems: any[]): MaterialTrackingData {
         quantity_received: item.quantity_received || 0,
         spool_id: item.spool_id,
         isometric_id: item.isometric_id,
+        // Polymorphic
+        target_entity_id: item.target_entity_id,
+        target_entity_type: item.target_entity_type,
+        work_front_code: item.work_front_code,
+        work_front_name: item.work_front_name,
+        // Standard
         item_code: item.catalog?.ident_code || item.material_spec,
         description: item.catalog?.short_desc || item.material_spec,
         inputs: null,
-        spool_number: item.spool?.spool_number || 'Sin Spool',
+        spool_number: item.spool?.spool_number || 'General',
         spool_tag: item.spool?.management_tag || '',
-        revision_number: item.spool?.revision?.rev_code || '?',
-        iso_number: item.spool?.revision?.isometric?.iso_number || item.isometric?.iso_number || 'Sin Isométrico',
+        revision_number: item.spool?.revision?.rev_code || '-',
+        iso_number: item.spool?.revision?.isometric?.iso_number || item.isometric?.iso_number || item.work_front_code || 'Sin Asignación',
         request_number: item.request?.request_number || '',
         request_type: item.request?.request_type as 'CLIENT_MIR' | 'CONTRACTOR_PO',
         request_status: item.request?.status,
@@ -170,33 +220,41 @@ function groupMaterialTrackingData(rawItems: any[]): MaterialTrackingData {
         request_ids: [item.request_id]  // Will be merged later
     }))
 
-    // 1. Group by iso → spool → items
-    const isoMap = new Map<string, Map<string, MaterialTrackingItem[]>>()
+    // 1. Group by GroupKey (Iso or WF) → SubGroupKey (Spool or General) → items
+    const groupMap = new Map<string, Map<string, MaterialTrackingItem[]>>()
 
     transformedItems.forEach(item => {
-        const isoKey = item.iso_number || 'Sin Isométrico'
-        const spoolKey = item.spool_id || 'no-spool'
-
-        if (!isoMap.has(isoKey)) {
-            isoMap.set(isoKey, new Map())
+        // Determine Group Key (Iso or Work Front)
+        let groupKey = 'Sin Asignación'
+        if (item.target_entity_type === 'WORK_FRONT' && item.work_front_code) {
+            groupKey = item.work_front_code // e.g. "WF-01"
+        } else if (item.iso_number) {
+            groupKey = item.iso_number
         }
 
-        const spoolMap = isoMap.get(isoKey)!
-        if (!spoolMap.has(spoolKey)) {
-            spoolMap.set(spoolKey, [])
+        // Determine SubGroup Key (Spool)
+        const subGroupKey = item.spool_id || 'general'
+
+        if (!groupMap.has(groupKey)) {
+            groupMap.set(groupKey, new Map())
         }
 
-        spoolMap.get(spoolKey)!.push(item)
+        const subMap = groupMap.get(groupKey)!
+        if (!subMap.has(subGroupKey)) {
+            subMap.set(subGroupKey, [])
+        }
+
+        subMap.get(subGroupKey)!.push(item)
     })
 
-    // 2. Build isometric groups
+    // 2. Build groups (mapped to Isometrics interface for now)
     const isometrics: IsometricGroup[] = []
 
-    isoMap.forEach((spoolMap, isoNumber) => {
+    groupMap.forEach((subMap, groupName) => {
         const spools: SpoolGroup[] = []
 
-        spoolMap.forEach((items, spoolKey) => {
-            // Get unique requests for this spool
+        subMap.forEach((items, subGroupKey) => {
+            // Get unique requests for this subgroup
             const requestIds = new Set<string>()
             items.forEach(item => requestIds.add(item.request_id))
 
@@ -209,15 +267,15 @@ function groupMaterialTrackingData(rawItems: any[]): MaterialTrackingData {
                     status: firstItem.request_status || 'DRAFT',
                     created_at: firstItem.request_date || '',
                     item_count: items.filter(i => i.request_id === reqId).length,
-                    affected_spools: 1  // Will be calculated later
+                    affected_spools: 1
                 }
             }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
             spools.push({
-                spool_id: spoolKey,
-                spool_number: items[0].spool_number || 'Sin Spool',
+                spool_id: subGroupKey,
+                spool_number: items[0].spool_number || 'General',
                 spool_tag: items[0].spool_tag || '',
-                revision_number: items[0].revision_number || '?',
+                revision_number: items[0].revision_number || '-',
                 items,
                 requests
             })
@@ -227,9 +285,15 @@ function groupMaterialTrackingData(rawItems: any[]): MaterialTrackingData {
             spools.flatMap(s => s.requests.map(r => r.id))
         ).size
 
+        // Find a representative ID for the group
+        const representativeItem = spools[0]?.items[0]
+        const groupId = representativeItem?.target_entity_type === 'WORK_FRONT'
+            ? representativeItem.target_entity_id
+            : representativeItem?.isometric_id || 'unknown'
+
         isometrics.push({
-            iso_id: spools[0]?.items[0]?.isometric_id || 'no-iso',
-            iso_number: isoNumber,
+            iso_id: groupId || 'unknown',
+            iso_number: groupName,
             spools,
             total_items: spools.reduce((sum, s) => sum + s.items.length, 0),
             total_requests: totalRequests
@@ -256,15 +320,16 @@ function groupMaterialTrackingData(rawItems: any[]): MaterialTrackingData {
         req.item_count++
     })
 
-    // Calculate affected spools per request
+    // Calculate affected subgroups per request
     requestMap.forEach(req => {
-        const spoolsInRequest = new Set<string>()
+        const subGroupsInRequest = new Set<string>()
         transformedItems
             .filter(item => item.request_id === req.id)
             .forEach(item => {
-                if (item.spool_id) spoolsInRequest.add(item.spool_id)
+                const subKey = item.spool_id || 'general'
+                subGroupsInRequest.add(subKey)
             })
-        req.affected_spools = spoolsInRequest.size
+        req.affected_spools = subGroupsInRequest.size
     })
 
     const allRequests = Array.from(requestMap.values())

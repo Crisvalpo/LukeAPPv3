@@ -6,7 +6,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { createProject } from '@/services/projects'
-import { FolderKanban } from 'lucide-react'
+import { getAllSpecialties } from '@/services/specialties'
+import { Specialty } from '@/types'
+import { FolderKanban, Check, Layers } from 'lucide-react'
 import { Heading, Text } from '@/components/ui/Typography'
 import { Button } from '@/components/ui/button'
 import Confetti from '@/components/onboarding/Confetti'
@@ -19,6 +21,8 @@ export default function NewProjectPage() {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState('')
     const [companyId, setCompanyId] = useState<string | null>(null)
+    const [allSpecialties, setAllSpecialties] = useState<Specialty[]>([])
+    const [selectedSpecialtyIds, setSelectedSpecialtyIds] = useState<string[]>([])
 
     // Celebration state
     const [showConfetti, setShowConfetti] = useState(false)
@@ -34,7 +38,19 @@ export default function NewProjectPage() {
 
     useEffect(() => {
         loadFounderCompany()
+        loadSpecialties()
     }, [])
+
+    async function loadSpecialties() {
+        const specs = await getAllSpecialties()
+        setAllSpecialties(specs)
+
+        // Auto-select Piping by default for legacy continuity
+        const piping = specs.find(s => s.code === 'PIP')
+        if (piping) {
+            setSelectedSpecialtyIds([piping.id])
+        }
+    }
 
     async function loadFounderCompany() {
         const supabase = createClient()
@@ -108,7 +124,8 @@ export default function NewProjectPage() {
 
         const result = await createProject({
             ...formData,
-            company_id: companyId
+            company_id: companyId,
+            specialty_ids: selectedSpecialtyIds
         })
 
         if (result.success) {
@@ -197,6 +214,58 @@ export default function NewProjectPage() {
                                 autoFocus
                             />
                             <Text size="xs" className="text-text-dim ml-1">Nombre descriptivo oficial del proyecto</Text>
+                        </div>
+
+                        {/* Specialties Selection */}
+                        <div className="space-y-4 pt-4">
+                            <div className="flex items-center gap-2">
+                                <Layers className="w-4 h-4 text-brand-primary" />
+                                <label className="text-xs font-bold text-text-muted uppercase tracking-widest">
+                                    Especialidades Activas <span className="text-brand-primary">*</span>
+                                </label>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {allSpecialties.map(spec => {
+                                    const isSelected = selectedSpecialtyIds.includes(spec.id)
+                                    return (
+                                        <div
+                                            key={spec.id}
+                                            onClick={() => {
+                                                if (isSelected) {
+                                                    setSelectedSpecialtyIds(prev => prev.filter(id => id !== spec.id))
+                                                } else {
+                                                    setSelectedSpecialtyIds(prev => [...prev, spec.id])
+                                                }
+                                            }}
+                                            className={`
+                                                cursor-pointer flex items-center justify-between p-4 rounded-xl border transition-all duration-200
+                                                ${isSelected
+                                                    ? 'bg-brand-primary/10 border-brand-primary shadow-[0_0_15px_rgba(59,130,246,0.1)]'
+                                                    : 'bg-white/5 border-white/10 hover:border-white/20'}
+                                            `}
+                                        >
+                                            <div className="flex flex-col">
+                                                <span className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-slate-300'}`}>
+                                                    {spec.name}
+                                                </span>
+                                                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-tighter">
+                                                    {spec.code}
+                                                </span>
+                                            </div>
+                                            <div className={`
+                                                w-5 h-5 rounded-full border flex items-center justify-center transition-all
+                                                ${isSelected ? 'bg-brand-primary border-brand-primary text-white' : 'border-white/20 text-transparent'}
+                                            `}>
+                                                <Check size={12} strokeWidth={4} />
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                            <Text size="xs" className="text-text-dim ml-1">
+                                Selecciona las disciplinas que se gestionarán en este proyecto. Podrás añadir más después.
+                            </Text>
                         </div>
 
                         {/* Project Code */}

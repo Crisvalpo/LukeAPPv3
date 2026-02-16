@@ -136,7 +136,67 @@ export interface Member {
     role_id: UserRoleType
     job_title?: string | null  // Custom role label (e.g., "Jefe de Calidad")
     functional_role_id?: string | null  // FK to company_roles
+    primary_specialty_id?: string | null // FK to specialties (Industrial Context)
     created_at: string
+}
+
+// ===== AWP / GEOGRAPHY =====
+
+/**
+ * Area - Represents a Construction Work Area (CWA)
+ */
+export interface Area {
+    id: string
+    project_id: string
+    company_id: string
+    name: string
+    code: string
+    description: string | null
+    created_at: string
+    updated_at: string
+}
+
+/**
+ * WorkFront - Represents an Installation Work Package (IWP)
+ */
+export interface WorkFront {
+    id: string
+    area_id: string
+    project_id: string
+    company_id: string
+    name: string
+    code: string
+    description: string | null
+    status: 'PLANNING' | 'READY' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD'
+    priority: number
+    created_at: string
+    updated_at: string
+}
+
+// ===== SPECIALTIES =====
+
+/**
+ * Specialty - Represents an industrial discipline (Piping, Electrical, etc.)
+ */
+export interface Specialty {
+    id: string
+    name: string
+    code: string
+    description: string | null
+    created_at: string
+    updated_at: string
+}
+
+/**
+ * ProjectSpecialty - Join table between projects and specialties
+ */
+export interface ProjectSpecialty {
+    project_id: string
+    specialty_id: string
+    is_active: boolean
+    created_at: string
+    // Optional joined data
+    specialty?: Specialty
 }
 
 // ===== COMPANY ROLES (Dynamic Roles System) =====
@@ -495,10 +555,13 @@ export type ProductionLevel = 'ENGINEERING_ONLY' | 'FABRICATED_ONLY' | 'IN_PROGR
 export interface CreateMaterialRequestParams {
     project_id: string
     request_type: MaterialRequestTypeEnum
+    specialty_id?: string
     notes?: string
     items: {
         material_spec: string
         quantity_requested: number
+        target_entity_id?: string
+        target_entity_type?: string
         spool_id?: string
         isometric_id?: string
     }[]
@@ -570,11 +633,12 @@ export interface MaterialRequest {
     id: string
     project_id: string
     company_id: string
-    request_number?: string // Added
+    specialty_id?: string
+    request_number?: string
     request_type: MaterialRequestTypeEnum
     status: RequestStatusEnum
-    requested_date?: string // Added
-    eta_date?: string // Added
+    requested_date?: string
+    eta_date?: string
     notes: string | null
     created_by: string
     approved_by: string | null
@@ -592,6 +656,8 @@ export interface MaterialRequestItem {
     material_spec: string
     quantity_requested: number
     quantity_received: number
+    target_entity_id?: string
+    target_entity_type?: string
     spool_id: string | null
     isometric_id: string | null
     notes: string | null
@@ -618,6 +684,8 @@ export interface MaterialReceiptItem {
     receipt_id: string
     request_item_id: string
     quantity: number
+    target_entity_id?: string
+    target_entity_type?: string
     batch_id: string | null
     notes: string | null
     created_at: string

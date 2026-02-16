@@ -12,6 +12,7 @@ export interface Invitation {
     created_at: string
     expires_at: string
     accepted_at?: string
+    primary_specialty_id?: string | null
     company?: { name: string; slug: string }
     project?: { name: string; code: string }
 }
@@ -23,6 +24,7 @@ export interface CreateInvitationParams {
     role_id: 'super_admin' | 'founder' | 'admin' | 'supervisor' | 'worker'
     job_title?: string
     functional_role_id?: string  // Reference to company_roles
+    primary_specialty_id?: string | null
 }
 
 /**
@@ -223,6 +225,7 @@ export async function createInvitation(params: CreateInvitationParams) {
                 role_id: params.role_id,
                 job_title: params.job_title || null,
                 functional_role_id: params.functional_role_id || null,
+                primary_specialty_id: params.primary_specialty_id || null,
                 invited_by: user.id,
                 status: 'pending'
             })

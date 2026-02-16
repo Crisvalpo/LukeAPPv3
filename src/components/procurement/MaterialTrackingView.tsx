@@ -14,7 +14,9 @@ import {
     type SpoolGroup,
     type RequestSummary
 } from '@/services/material-tracking'
-import { Search } from 'lucide-react'
+import { Search, Filter } from 'lucide-react'
+import { getProjectSpecialties } from '@/services/specialties'
+import { Specialty } from '@/types'
 
 // Debounce hook
 function useDebounceValue<T>(value: T, delay: number): T {
@@ -40,16 +42,25 @@ export default function MaterialTrackingView({ projectId, companyId }: Props) {
     const [searchQuery, setSearchQuery] = useState('')
     const [page, setPage] = useState(0)
     const [hasMore, setHasMore] = useState(true)
+
+    // Specialties
+    const [specialties, setSpecialties] = useState<Specialty[]>([])
+    const [selectedSpecialty, setSelectedSpecialty] = useState<string>('all')
+
     const PAGE_SIZE = 50
 
     const debouncedSearch = useDebounceValue(searchQuery, 600)
+
+    useEffect(() => {
+        loadSpecialties()
+    }, [projectId])
 
     useEffect(() => {
         setPage(0)
         setData({ isometrics: [], allRequests: [] })
         setHasMore(true)
         loadData(0, true)
-    }, [projectId, debouncedSearch])
+    }, [projectId, debouncedSearch, selectedSpecialty])
 
     async function loadData(offsetPage: number, isReset: boolean) {
         setLoading(true)
@@ -57,7 +68,8 @@ export default function MaterialTrackingView({ projectId, companyId }: Props) {
             const trackingData = await fetchMaterialTracking(projectId, {
                 search: debouncedSearch,
                 limit: PAGE_SIZE,
-                offset: offsetPage * PAGE_SIZE
+                offset: offsetPage * PAGE_SIZE,
+                specialtyId: selectedSpecialty
             })
 
             if (isReset) {
@@ -81,6 +93,15 @@ export default function MaterialTrackingView({ projectId, companyId }: Props) {
             console.error('Error loading tracking data:', error)
         } finally {
             setLoading(false)
+        }
+    }
+
+    async function loadSpecialties() {
+        try {
+            const data = await getProjectSpecialties(projectId)
+            setSpecialties(data)
+        } catch (error) {
+            console.error('Error loading specialties:', error)
         }
     }
 
@@ -169,14 +190,32 @@ export default function MaterialTrackingView({ projectId, companyId }: Props) {
                     <h2>Tracking de Materiales</h2>
                     <p>Vista por Isométrico → Spool → Solicitudes</p>
 
-                    <div className="search-bar">
-                        <Search className="search-icon" size={20} />
-                        <input
-                            type="text"
-                            placeholder="Buscar isométrico..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
+                    <div className="flex gap-4 items-center mt-4">
+                        <div className="specialty-filter">
+                            <Filter className="w-4 h-4 text-slate-400" />
+                            <select
+                                value={selectedSpecialty}
+                                onChange={(e) => setSelectedSpecialty(e.target.value)}
+                                className="bg-transparent text-sm text-white outline-none cursor-pointer"
+                            >
+                                <option value="all" className="text-black">Todas las especialidades</option>
+                                {specialties.map(s => (
+                                    <option key={s.id} value={s.id} className="text-black">
+                                        {s.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="search-bar flex-1">
+                            <Search className="search-icon" size={20} />
+                            <input
+                                type="text"
+                                placeholder="Buscar isométrico o Work Front..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -276,9 +315,19 @@ export default function MaterialTrackingView({ projectId, companyId }: Props) {
                     padding: 0.75rem 1rem;
                     border-radius: 8px;
                     border: 1px solid rgba(255,255,255,0.1);
-                    width: 100%;
-                    max-width: 400px;
-                    margin-top: 1rem;
+                    /* width: 100%; removed to allow flex wrap */
+                    /* max-width: 400px; removed */
+                }
+
+                .specialty-filter {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    background: rgba(0,0,0,0.2);
+                    padding: 0.75rem 1rem;
+                    border-radius: 8px;
+                    border: 1px solid rgba(255,255,255,0.1);
+                    min-width: 200px;
                 }
 
                 .search-icon {

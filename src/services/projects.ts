@@ -25,6 +25,7 @@ export interface CreateProjectParams {
     contract_number?: string
     client_name?: string
     company_id: string
+    specialty_ids?: string[] // NEW: List of specialties to activate
 }
 
 export interface UpdateProjectParams {
@@ -152,6 +153,23 @@ export async function createProject(params: CreateProjectParams) {
             .single()
 
         if (error) throw error
+
+        // Activate specialties
+        if (data && params.specialty_ids && params.specialty_ids.length > 0) {
+            const specialtyRecords = params.specialty_ids.map(specialtyId => ({
+                project_id: data.id,
+                specialty_id: specialtyId,
+                is_active: true
+            }))
+
+            const { error: specError } = await supabase
+                .from('project_specialties')
+                .insert(specialtyRecords)
+
+            if (specError) {
+                console.error('Error activating project specialties:', specError)
+            }
+        }
 
         // Create storage folder structure in 'project-files' bucket
         // This ensures folders exist for future uploads
