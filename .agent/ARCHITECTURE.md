@@ -1,78 +1,78 @@
-# Technical Architecture: LukeAPP v3
+# Arquitectura Técnica: LukeAPP v3
 
-Documentation of the core technical patterns, security layers, and architectural constraints.
-
----
-
-## 🔐 1. Dual-Layer Identity Model
-LukeAPP separates security from user experience to allow for company-specific flexibility without compromising database safety.
-
-### Layer A: System Role (Security)
-- **Implementation**: `members.role_id` column.
-- **Values**: `super_admin`, `founder`, `admin`, `supervisor`, `worker`.
-- **Purpose**: Controls **Row Level Security (RLS)** in Supabase.
-- **Visibility**: Never exposed to the UI directly.
-- **Rule**: This is the single source of truth for "What data can this user read/write?".
-
-### Layer B: Functional Role (UX / Job Title)
-- **Implementation**: `members.functional_role_id` linked to `company_roles`.
-- **Values**: "Expeditor", "Jefe de OT", "Capataz", "Pañolero", etc.
-- **Purpose**: Controls menu visibility, allowed UI actions, and dashboard routing.
-- **Visibility**: Displayed with colors and icons in the Lobby and Professional Profile.
+Documentación de los patrones técnicos core, capas de seguridad y restricciones arquitectónicas.
 
 ---
 
-## 🎨 2. Styling & Design (Tailwind CSS v4)
-The platform is standardizing on **Tailwind CSS v4** for all new development and gradual refactoring.
+## 🔐 1. Modelo de Identidad de Doble Capa
+LukeAPP separa la seguridad de la experiencia de usuario para permitir flexibilidad específica por empresa sin comprometer la seguridad de la base de datos.
 
-### Core Standards
-- **Standard**: Tailwind CSS v4 is the primary tool for layout (flex, grid), spacing, and transitions.
-- **Token Source**: `src/styles/design-system.css` contains the authoritative CSS variables for colors, radii, and shadows.
-- **Rule**: Do not hardcode hex/colors. Use `bg-brand-primary` or `var(--color-*)`.
-- **Design Pattern**: **Derived UI**. Follow the 5 canonical view types (`ListView`, `CardView`, `FormView`, `DashboardView`, `ContextView`).
+### Capa A: Rol de Sistema (Seguridad)
+- **Implementación**: Columna `members.role_id`.
+- **Valores**: `super_admin`, `founder`, `admin`, `supervisor`, `worker`.
+- **Propósito**: Controla el **Row Level Security (RLS)** en Supabase.
+- **Visibilidad**: Nunca se expone directamente a la UI.
+- **Regla**: Esta es la única fuente de verdad para "¿Qué datos puede leer/escribir este usuario?".
 
-### Style Guide Laboratory
-Visit `/staff/styleguide` (in local development) to see the live implementation of:
-- **Icons**: Centralized mapping in `src/components/ui/Icons.ts` (Lucide-based).
-- **Typography**: Enforced via `src/components/ui/Typography.tsx`.
-- **Components**: Standard implementations of `Badge`, `Button`, `Card`, `InputField`, etc.
+### Capa B: Rol Funcional (UX / Cargo)
+- **Implementación**: Columna `members.functional_role_id` vinculada a `company_roles`.
+- **Valores**: "Expedidor", "Jefe de OT", "Capataz", "Pañolero", etc.
+- **Propósito**: Controla la visibilidad del menú, acciones permitidas en la UI y el enrutamiento del dashboard.
+- **Visibilidad**: Se muestra con colores e iconos en el Lobby y Perfil Profesional.
 
 ---
 
-## 🌐 3. Connectivity & Satellite Architecture
-LukeAPP operates across two different execution environments.
+## 🎨 2. Estilo y Diseño (Tailwind CSS v4)
+La plataforma se está estandarizando en **Tailwind CSS v4** para todo el nuevo desarrollo y refactorización gradual.
+
+### Estándares Core
+- **Estándar**: Tailwind CSS v4 es la herramienta principal para el layout (flex, grid), espaciado y transiciones.
+- **Fuente de Tokens**: `src/styles/design-system.css` contiene las variables CSS autoritativas para colores, radios y sombras.
+- **Regla**: No hardcodear hex/colores. Usar `bg-brand-primary` o `var(--color-*)`.
+- **Patrón de Diseño**: **UI Derivada**. Seguir los 5 tipos de vistas canónicas (`ListView`, `CardView`, `FormView`, `DashboardView`, `ContextView`).
+
+### Laboratorio de Guía de Estilos
+Visita `/staff/styleguide` (en desarrollo local) para ver la implementación en vivo de:
+- **Iconos**: Mapeo centralizado en `src/components/ui/Icons.ts` (basado en Lucide).
+- **Tipografía**: Forzada mediante `src/components/ui/Typography.tsx`.
+- **Componentes**: Implementaciones estándar de `Badge`, `Button`, `Card`, `InputField`, etc.
+
+---
+
+## 🌐 3. Conectividad y Arquitectura Satélite
+LukeAPP opera a través de dos entornos de ejecución diferentes.
 
 ### Web Core (lukeapp.me)
-- **Tech Stack**: Next.js (App Router) + Tailwind + Design System variables.
-- **Environment**: Online required. Runs on Ubuntu Server.
-- **Users**: Admin, Engineering, Management, Founders.
+- **Stack Tecnológico**: Next.js (App Router) + Tailwind + variables del Design System.
+- **Entorno**: Requiere conexión online. Se ejecuta en Ubuntu Server.
+- **Usuarios**: Admin, Ingeniería, Gestión, Founders.
 
-### Field Satellites (field.lukeapp.me, etc.)
-- **Tech Stack**: Next.js PWA + Tailwind (Mobile First).
-- **Environment**: **Offline-First**. Uses Service Workers and IndexedDB (via local sync logic).
-- **Users**: Workers, Supervisors, Quality Inspectors.
-- **Communication**: Field apps emit **Events**. Web Core proceses these events to update the central state.
-
----
-
-## 🏛️ 4. Data Access Rules (RLS)
-Security is enforced at the database layer using Postgres RLS policies.
-
-- **Bypass Rule**: `super_admin` has a general bypass for oversight.
-- **Tenant Isolation**: All queries must include `company_id`.
-- **Project Isolation**: Operational roles (`admin`, `supervisor`, `worker`) are strictly scoped to a `project_id`.
-- **Recursion Guard**: Use `SECURITY DEFINER` functions (e.g., `is_super_admin()`) to check roles in policies, preventing infinite loops.
+### Satélites de Terreno (field.lukeapp.me, etc.)
+- **Stack Tecnológico**: Next.js PWA + Tailwind (Mobile First).
+- **Entorno**: **Offline-First**. Utiliza Service Workers e IndexedDB (vía lógica de sincronización local).
+- **Usuarios**: Trabajadores, Supervisores, Inspectores de Calidad.
+- **Comunicación**: Las apps de terreno emiten **Eventos**. El Web Core procesa estos eventos para actualizar el estado central.
 
 ---
 
-## 🏷️ 5. Technical Nomenclature & Language
-- **Database/Code**: Everything must be in **English** (Tables, columns, functions, variables).
-- **Labels/UI**: Everything facing the user must be in **Spanish**.
+## 🏛️ 4. Reglas de Acceso a Datos (RLS)
+La seguridad se impone en la capa de la base de datos mediante políticas RLS de Postgres.
 
-| Category | Example |
+- **Regla de Bypass**: `super_admin` tiene un bypass general para supervisión.
+- **Aislamiento de Inquilino (Tenant)**: Todas las consultas deben incluir `company_id`.
+- **Aislamiento de Proyecto**: Los roles operativos (`admin`, `supervisor`, `worker`) están estrictamente limitados a un `project_id`.
+- **Protección contra Recursión**: Usar funciones `SECURITY DEFINER` (ej: `is_super_admin()`) para verificar roles en las políticas, evitando bucles infinitos.
+
+---
+
+## 🏷️ 5. Nomenclatura Técnica e Idioma
+- **Base de Datos/Código**: Todo debe estar en **Inglés** (Tablas, columnas, funciones, variables).
+- **Etiquetas/UI**: Todo lo que vea el usuario debe estar en **Español**.
+
+| Categoría | Ejemplo |
 |---|---|
-| Postgres Table | `material_catalog` |
-| Variable Name | `isInvitationValid` |
-| UI Label | `Guardar Cambios` |
+| Tabla Postgres | `material_catalog` |
+| Nombre de Variable | `isInvitationValid` |
+| Etiqueta UI | `Guardar Cambios` |
 
 ---

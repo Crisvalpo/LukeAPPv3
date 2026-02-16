@@ -1,92 +1,92 @@
-# Database Schema Reference: LukeAPP v3
+# Referencia del Esquema de Base de Datos: LukeAPP v3
 
-Comprehensive reference of the Supabase / Postgres data structures and security policies.
+Referencia completa de las estructuras de datos de Supabase / Postgres y políticas de seguridad.
 
 ---
 
-## 🔐 1. Identity & Access Management
+## 🔐 1. Gestión de Identidad y Acceso
 
 ### `users`
-Global user profiles. Synchronized with `auth.users`.
-- **Primary Key**: `id` (uuid)
-- **RLS**: Enabled (Users can read/edit their own profile).
-- **Audit Rule**: Ghost accounts (LukeAPP Staff) are hidden from lists.
+Perfiles globales de usuario. Sincronizados con `auth.users`.
+- **Llave Primaria**: `id` (uuid)
+- **RLS**: Habilitado (Los usuarios pueden leer/editar su propio perfil).
+- **Regla de Auditoría**: Las cuentas fantasma (Staff de LukeAPP) se ocultan de las listas.
 
 ### `company_roles`
-Functional role definitions (Layer B).
-- **Core Columns**: `name`, `color`, `base_role` (System Role), `permissions` (JSONB).
-- **Permissions**: Defines module access (e.g., `procurement`) and resource level actions (view/create/delete).
+Definiciones de roles funcionales (Capa B).
+- **Columnas Core**: `name`, `color`, `base_role` (Rol de Sistema), `permissions` (JSONB).
+- **Permisos**: Define acceso a módulos (ej: `procurement`) y acciones por recurso (view/create/delete).
 
 ### `members`
-The relational core linking Users to Companies and Projects.
-- **Constraints**:
-    - `super_admin`/`founder`: Project ID must be NULL.
-    - `admin`/`supervisor`/`worker`: Project ID must be NOT NULL.
-- **RLS Policy**: Access is strictly scoped to the user's `project_id` or `company_id`.
+El núcleo relacional que vincula Usuarios con Empresas y Proyectos.
+- **Restricciones**:
+    - `super_admin`/`founder`: El Project ID debe ser NULL.
+    - `admin`/`supervisor`/`worker`: El Project ID debe ser NOT NULL.
+- **Política RLS**: El acceso está estrictamente limitado al `project_id` o `company_id` del usuario.
 
 ### `invitations`
-Secure, link-based onboarding.
-- **Keys**: `email`, `token`, `role_id`, `primary_specialty_id`.
-- **Logic**: Upon acceptance, the system automatically creates/reactivates a `members` record.
+Onboarding seguro basado en enlaces.
+- **Llaves**: `email`, `token`, `role_id`, `primary_specialty_id`.
+- **Lógica**: Al aceptar, el sistema crea/reactiva automáticamente un registro en `members`.
 
 ---
 
-## 🏛️ 2. AWP & Project Hierarchy
+## 🏛️ 2. AWP y Jerarquía de Proyecto
 
 ### `projects`
-Entity representing a specific construction contract.
-- **Keys**: `company_id`, `name`, `code`.
+Entidad que representa un contrato de construcción específico.
+- **Llaves**: `company_id`, `name`, `code`.
 
-### `specialties`
-The discipline catalog (CIV, MEC, ELE, etc.).
-- **Usage**: Links to `members.primary_specialty_id` for expert roles.
-- **Global Context**: If a member has NO specialty assigned, they are treated as "Global/TODAS" (e.g., Project Manager, Expeditor).
+### `specialties` (Especialidades)
+Catálogo de disciplinas (CIV, MEC, ELE, etc.).
+- **Uso**: Se vincula con `members.primary_specialty_id` para roles expertos.
+- **Contexto Global**: Si un miembro no tiene especialidad asignada, se trata como "Global/TODAS" (ej: Project Manager, Expedidor).
 
 ### `locations` / `areas` (CWA)
-Physical zones within a project.
-- **Purpose**: Geographical filtering for all entities.
+Zonas físicas dentro de un proyecto.
+- **Propósito**: Filtrado geográfico para todas las entidades.
 
 ---
 
-## 📦 3. Materials & Procurement
+## 📦 3. Materiales y Adquisiciones (Procurement)
 
 ### `material_catalog`
-Master technical item registry.
-- **Unique Constraint**: `(project_id, ident_code, COALESCE(spec_code, ''))`.
-- **Logic**: Supports multiple specifications for the same identification code.
-- **Performance**: High-performance bulk loaders implemented in `material-catalog.ts`.
+Registro maestro técnico de items.
+- **Restricción Única**: `(project_id, ident_code, COALESCE(spec_code, ''))`.
+- **Lógica**: Soporta múltiples especificaciones para el mismo código de identificación.
+- **Rendimiento**: Cargadores masivos de alto rendimiento implementados en `material-catalog.ts`.
 
-### `material_requests` & `request_items`
-Field requisitions.
-- **Workflow**: Draft -> Submitted -> Approved -> Fulfilled.
-- **Audit**: Every inventory movement is linked back to a request or item.
+### `material_requests` y `request_items`
+Requisiciones de terreno.
+- **Flujo de Trabajo**: Draft -> Submitted -> Approved -> Fulfilled.
+- **Auditoría**: Cada movimiento de inventario se vincula a un requerimiento o item.
 
 ---
 
-## 🔧 4. Industrial Entities (Multi-discipline)
+## 🔧 4. Entidades Industriales (Multi-disciplina)
 
 ### `spools` (Piping/MEC)
-Prefabricated segments.
-- **Tracking**: Area, System, Line Number, Revision.
+Segmentos prefabricados.
+- **Seguimiento**: Área, Sistema, Número de Línea, Revisión.
 
-### `welds` & `joints`
-Specific production points within a spool or structure.
-- **History**: Audit trails for status changes (e.g., `WELDED` -> `RT_READY`).
-- **QA**: Photo proofs stored in Supabase Storage.
-
----
-
-## 🛡️ 5. RLS Policy Architecture
-
-### Recursion Protection
-To avoid `infinite recursion` when checking permissions in the `members` table:
-1. **Security Definer Function**: Create `is_super_admin()` or `get_user_role()`.
-2. **Policy**: Use the function instead of a direct subquery on the table.
-
-### Policy Patterns
-- **Owner Access**: `auth.uid() = user_id`.
-- **Scope Access**: `EXISTS (SELECT 1 FROM members WHERE project_id = current.project_id AND user_id = auth.uid())`.
-- **Founder Bypass**: Founders see all records where `company_id` matches.
+### `welds` (Soldaduras) y `joints` (Juntas)
+Puntos de producción específicos dentro de un spool o estructura.
+- **Historial**: Pistas de auditoría para cambios de estado (ej: `WELDED` -> `RT_READY`).
+- **Calidad (QA)**: Pruebas fotográficas almacenadas en Supabase Storage.
 
 ---
-**This document supersedes the root DATABASE_SCHEMA_REFERENCE.md.**
+
+## 🛡️ 5. Arquitectura de Políticas RLS
+
+### Protección contra Recursión
+Para evitar `infinite recursion` al verificar permisos en la tabla `members`:
+1. **Función Security Definer**: Crear `is_super_admin()` o `get_user_role()`.
+2. **Política**: Usar la función en lugar de una subconsulta directa a la tabla.
+
+### Patrones de Políticas
+- **Acceso Propietario**: `auth.uid() = user_id`.
+- **Acceso por Ámbito (Scope)**: `EXISTS (SELECT 1 FROM members WHERE project_id = current.project_id AND user_id = auth.uid())`.
+- **Bypass de Founder**: Los founders ven todos los registros donde el `company_id` coincide.
+
+---
+**Este documento reemplaza al DATABASE_SCHEMA_REFERENCE.md de la raíz.**

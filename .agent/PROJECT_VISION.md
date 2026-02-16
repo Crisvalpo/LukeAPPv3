@@ -1,72 +1,72 @@
-# Project Vision: LukeAPP v3
+# Visión del Proyecto: LukeAPP v3
 
-**Multi-discipline Industrial Construction Management Platform (AWP)**
+**Plataforma de Gestión de Construcción Industrial Multi-disciplina (AWP)**
 
-LukeAPP is a high-performance, multi-tenant enterprise system designed for the integral management of large-scale industrial construction projects. While it originated with a focus on Piping, it has evolved into a comprehensive platform supporting all industrial disciplines through the principles of **Advanced Work Packaging (AWP)**.
-
----
-
-## 🏗️ Core Philosophy
-
-### 1. Multi-discipline & Integration
-The system is designed to manage the complexity of industrial plants by integrating different disciplines into a single source of truth:
-- **CIV**: Civil Works (Foundations, structures)
-- **ARC**: Architecture (Buildings, finishing)
-- **MEC / PI**: Mechanical & Piping (Equipment, pipe spools, welding)
-- **ELE**: Electrical (Trays, cabling, termination)
-- **INS / INST**: Instrumentation & Control
-
-### 2. AWP (Advanced Work Packaging) Hierarchy
-LukeAPP organizes project execution around geographical and functional units to reduce field silos:
-- **CWA (Construction Work Area)**: Large geographical divisions of the project.
-- **CWP (Construction Work Package)**: Discipline-specific packages within a CWA.
-- **IWP (Installation Work Package)**: The smallest executable unit in the field (e.g., a specific set of spools or a foundation).
-
-### 3. Context-First Identity
-> **"A person is not a user until they act within a context."**
-
-The platform enforces that every user action is tied to a specific **Tenant (Company)** and **Context (Project + Role)**. Access is granted exclusively via formal invitations, ensuring strict auditability and security.
+LukeAPP es un sistema empresarial de alto rendimiento, multi-tenant, diseñado para la gestión integral de proyectos de construcción industrial a gran escala. Aunque se originó con un enfoque en Piping (cañerías), ha evolucionado hacia una plataforma completa que soporta todas las disciplinas industriales mediante los principios de **Advanced Work Packaging (AWP)**.
 
 ---
 
-## 🗺️ Roadmap & Target Phases
+## 🏗️ Filosofía Core
 
-### ✅ PHASE 1: Foundation & Identity (Core)
-- **Infrastructure**: Next.js 15+, Supabase (Postgres/Auth/RLS), Tailwind CSS v4.
-- **Multi-tenant**: CRUD of Companies and Projects with data isolation.
-- **Identity**: Dual-layer Role system (System vs Functional).
-- **Lobby**: Mandatory project entry hall to confirm context and professional identity.
+### 1. Multi-disciplina e Integración
+El sistema está diseñado para gestionar la complejidad de las plantas industriales integrando diferentes disciplinas en una única fuente de verdad:
+- **CIV**: Obras Civiles (Fundaciones, estructuras)
+- **ARC**: Arquitectura (Edificios, terminaciones)
+- **MEC / PI**: Mecánica y Piping (Equipos, spools de cañería, soldadura)
+- **ELE**: Electricidad (Escalerillas, cableado, conexionado)
+- **INS / INST**: Instrumentación y Control
 
-### ✅ PHASE 2: Engineering & Multi-discipline (AWP)
-- **Project Structure**: Areas (CWA) and Work Fronts (IWP) management.
-- **Specialty Catalog**: Support for multiple disciplines (CIV, PI, ELE, etc.).
-- **Smart Revisions**: Event-based tracking of engineering changes.
-- **Impact Analysis**: Automatic conflict detection across disciplines.
+### 2. Jerarquía AWP (Advanced Work Packaging)
+LukeAPP organiza la ejecución del proyecto en unidades geográficas y funcionales para reducir los silos en terreno:
+- **CWA (Construction Work Area)**: Grandes divisiones geográficas del proyecto.
+- **CWP (Construction Work Package)**: Paquetes específicos por disciplina dentro de una CWA.
+- **IWP (Installation Work Package)**: La unidad mínima ejecutable en terreno (ej: un conjunto específico de spools o una fundación).
 
-### 🔄 PHASE 3: Procurement & Materials (Current Focus)
-- **Universal Material Catalog**: Handling technical specs across all disciplines.
-- **Bulk Uploaders**: Validated high-performance data ingestion.
-- **Inventory & Requests**: Field requisitions and stock movement tracking.
+### 3. Identidad Basada en Contexto
+> **"Una persona no es un usuario hasta que actúa dentro de un contexto."**
 
-### 🔄 PHASE 4: Visualization & Modeling
-- **3D Viewer Core**: Visual status coloring (Integrated BIM).
-- **Mapping**: Linking database entities to 3D model elements.
-- **Progress Visualization**: Visualizing IWP readiness and field completion.
-
-### 🚧 PHASE 5: Field Execution (Offline-First Satellites)
-- **Mobile Satellites**: Dedicated PWA apps for field workers.
-- **Event-Sourced Updates**: Workers emit events (e.g., `SPOOL_WELDED`, `FOUNDATION_POURED`) instead of direct DB mutations.
-- **Offline-First**: Continuous operation in zero-connectivity environments.
+La plataforma impone que cada acción del usuario esté ligada a un **Inquilino (Empresa)** y un **Contexto (Proyecto + Rol)** específicos. El acceso se otorga exclusivamente mediante invitaciones formales, garantizando una estricta auditabilidad y seguridad.
 
 ---
 
-## 🧾 The "Golden Rules" of LukeAPP
+## 🗺️ Hoja de Ruta y Fases Objetivo
 
-1. **Scalability**: Every feature must work for 1 company or 100, for 1 project or 50.
-2. **Online vs Offline**: Web Core is for management (Online); Field Satellites are for execution (Offline-first). Do not share execution logic between them.
-3. **No Sync Assumptions**: The system must tolerate delayed synchronization from field events.
-4. **Visibility is Earned**: No user sees data without a confirmed context (Project + Role).
-5. **Derive, Don't Design**: UI views should be derived from the data domain and roles, maintaining a consistent, predictable UX.
+### ✅ FASE 1: Fundación e Identidad (Core)
+- **Infraestructura**: Next.js 15+, Supabase (Postgres/Auth/RLS), Tailwind CSS v4.
+- **Multi-tenant**: CRUD de Empresas y Proyectos con aislamiento de datos.
+- **Identidad**: Sistema de Roles de doble capa (Sistema vs Funcional).
+- **Lobby**: Hall de entrada obligatorio al proyecto para confirmar contexto e identidad profesional.
+
+### ✅ FASE 2: Ingeniería y Multi-disciplina (AWP)
+- **Estructura de Proyecto**: Gestión de Áreas (CWA) y Frentes de Trabajo (IWP).
+- **Catálogo de Especialidades**: Soporte para múltiples disciplinas (CIV, PI, ELE, etc.).
+- **Revisiones Inteligentes**: Seguimiento basado en eventos de cambios de ingeniería.
+- **Análisis de Impacto**: Detección automática de conflictos entre disciplinas.
+
+### 🔄 FASE 3: Adquisiciones y Materiales (Foco Actual)
+- **Catálogo Universal de Materiales**: Manejo de especificaciones técnicas para todas las disciplinas.
+- **Cargadores Masivos**: Ingesta de datos de alto rendimiento y validada.
+- **Inventario y Requerimientos**: Seguimiento de requisiciones de terreno y movimientos de stock.
+
+### 🔄 FASE 4: Visualización y Modelado
+- **Core del Visor 3D**: Coloreado de estado visual (BIM Integrado).
+- **Mapeo**: Vinculación de entidades de la base de datos con elementos del modelo 3D.
+- **Visualización de Progreso**: Visualización de la preparación de IWPs y completitud en terreno.
+
+### 🚧 FASE 5: Ejecución en Terreno (Satélites Offline-First)
+- **Satélites Móviles**: Aplicaciones PWA dedicadas para trabajadores de terreno.
+- **Actualizaciones Basadas en Eventos**: Los trabajadores emiten eventos (ej: `SPOOL_WELDED`, `FOUNDATION_POURED`) en lugar de mutaciones directas a la DB.
+- **Offline-First**: Operación continua en entornos con conectividad nula.
 
 ---
-**Confidential - All rights reserved © 2026**
+
+## 🧾 Las "Reglas de Oro" de LukeAPP
+
+1. **Escalabilidad**: Cada funcionalidad debe funcionar para 1 empresa o 100, para 1 proyecto o 50.
+2. **Online vs Offline**: Web Core es para gestión (Online); Satélites de Terreno son para ejecución (Offline-first). No compartir lógica de ejecución entre ellos.
+3. **Sin Suposiciones de Sincronización**: El sistema debe tolerar la sincronización retrasada de eventos de terreno.
+4. **La Visibilidad se Gana**: Ningún usuario ve datos sin un contexto confirmado (Proyecto + Rol).
+5. **Derivar, No Diseñar**: Las vistas de la interfaz deben derivarse del dominio de datos y los roles, manteniendo una experiencia de usuario (UX) consistente y predecible.
+
+---
+**Privado - Todos los derechos reservados © 2026**
