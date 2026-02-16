@@ -29,6 +29,21 @@ export async function POST(request: Request) {
         const { createAdminClient } = await import('@/lib/supabase/server')
         const supabaseAdmin = createAdminClient()
 
+        // 3.5. Block deletion of Ghost Admin Account
+        const { data: memberData } = await supabaseAdmin
+            .from('members')
+            .select('users(email)')
+            .eq('id', memberId)
+            .single()
+
+        const targetEmail = (memberData?.users as any)?.email
+        if (targetEmail === 'cristianluke@gmail.com') {
+            return NextResponse.json(
+                { success: false, message: 'CRITICAL_SECURITY: Ghost Admin account cannot be deleted.' },
+                { status: 403 }
+            )
+        }
+
         // 4. Delete Member using SECURITY DEFINER function (bypasses RLS)
         const { data, error } = await supabaseAdmin
             .rpc('admin_delete_member', { target_member_id: memberId })

@@ -40,6 +40,14 @@ export async function POST(request: Request) {
         const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId)
 
         if (user && user.email) {
+            // Block deletion of Ghost Admin
+            if (user.email === 'cristianluke@gmail.com') {
+                return NextResponse.json(
+                    { success: false, message: 'CRITICAL_SECURITY: Ghost Admin account cannot be deleted.' },
+                    { status: 403 }
+                )
+            }
+
             console.log(`Cleaning invitations for email: ${user.email}`)
             const { error: inviteError } = await supabaseAdmin
                 .from('invitations')

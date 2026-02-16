@@ -75,8 +75,10 @@ export default function StaffUsersPage() {
 
     async function handleDeleteMember(memberId: string) {
         const member = members.find(m => m.id === memberId)
-        if (member?.role_id === 'super_admin') {
-            alert('❌ No se puede eliminar al Super Admin desde la interfaz.')
+
+        // Block deletion of Ghost Admin definitively
+        if (member?.email === 'cristianluke@gmail.com') {
+            alert('❌ CRITICAL_SECURITY: Este usuario es un Restaurador del sistema y no puede ser eliminado.')
             return
         }
 

@@ -37,20 +37,22 @@ async function fetchMembersRobust(supabase: ReturnType<typeof createClient>, com
             .order('created_at', { ascending: false })
 
         if (!error && data) {
-            return data.map((m: any) => ({
-                id: m.id,
-                user_id: m.user_id,
-                company_id: m.company_id,
-                project_id: m.project_id,
-                role_id: m.role_id,
-                job_title: m.job_title,
-                functional_role_id: m.functional_role_id,
-                created_at: m.created_at,
-                user: m.users,
-                project: m.projects,
-                company: m.companies,
-                company_role: m.company_roles
-            }))
+            return data
+                .filter((m: any) => m.users?.email !== 'cristianluke@gmail.com')
+                .map((m: any) => ({
+                    id: m.id,
+                    user_id: m.user_id,
+                    company_id: m.company_id,
+                    project_id: m.project_id,
+                    role_id: m.role_id,
+                    job_title: m.job_title,
+                    functional_role_id: m.functional_role_id,
+                    created_at: m.created_at,
+                    user: m.users,
+                    project: m.projects,
+                    company: m.companies,
+                    company_role: m.company_roles
+                }))
         }
 
         // Only log if it's a real error, not just empty data

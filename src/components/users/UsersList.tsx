@@ -87,44 +87,45 @@ export default function UsersList({ users, onDelete, context }: UsersListProps) 
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                        {users.map((member) => (
-                            <tr key={member.id} className="group hover:bg-white/[0.02] transition-colors duration-200">
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/5 flex items-center justify-center text-sm font-bold text-slate-300 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                                            {member.email[0].toUpperCase()}
+                        {users
+                            .filter(m => m.email !== 'cristianluke@gmail.com')
+                            .map((member) => (
+                                <tr key={member.id} className="group hover:bg-white/[0.02] transition-colors duration-200">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/5 flex items-center justify-center text-sm font-bold text-slate-300 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                                                {member.email[0].toUpperCase()}
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors">
+                                                    {member.email}
+                                                </span>
+                                                <span className="text-[10px] text-slate-500 font-mono">ID: {member.id.substring(0, 8)}</span>
+                                            </div>
                                         </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors">
-                                                {member.email}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {getRoleBadge(member.role_id)}
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        {member.project ? (
+                                            <span className="inline-flex items-center px-2 py-1 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400 font-mono text-[11px] font-bold">
+                                                {member.project.code}
                                             </span>
-                                            <span className="text-[10px] text-slate-500 font-mono">ID: {member.id.substring(0, 8)}</span>
+                                        ) : (
+                                            <span className="text-slate-500 text-xs italic opacity-60">
+                                                — Global —
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2 text-slate-400 text-xs">
+                                            <Calendar size={14} className="opacity-50" />
+                                            <span>{new Date(member.created_at).toLocaleDateString('es-ES')}</span>
                                         </div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    {getRoleBadge(member.role_id)}
-                                </td>
-                                <td className="px-6 py-4 text-center">
-                                    {member.project ? (
-                                        <span className="inline-flex items-center px-2 py-1 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400 font-mono text-[11px] font-bold">
-                                            {member.project.code}
-                                        </span>
-                                    ) : (
-                                        <span className="text-slate-500 text-xs italic opacity-60">
-                                            — Global —
-                                        </span>
-                                    )}
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2 text-slate-400 text-xs">
-                                        <Calendar size={14} className="opacity-50" />
-                                        <span>{new Date(member.created_at).toLocaleDateString('es-ES')}</span>
-                                    </div>
-                                </td>
-                                {onDelete && (
-                                    <td className="px-6 py-4 text-right">
-                                        {member.role_id !== 'super_admin' && (
+                                    </td>
+                                    {onDelete && (
+                                        <td className="px-6 py-4 text-right">
                                             <button
                                                 onClick={() => onDelete(member.id)}
                                                 className="p-2 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all duration-300 shadow-lg shadow-red-500/10 group/btn"
@@ -132,11 +133,10 @@ export default function UsersList({ users, onDelete, context }: UsersListProps) 
                                             >
                                                 <Trash2 size={16} className="group-hover/btn:scale-110 transition-transform" />
                                             </button>
-                                        )}
-                                    </td>
-                                )}
-                            </tr>
-                        ))}
+                                        </td>
+                                    )}
+                                </tr>
+                            ))}
                     </tbody>
                 </table>
             </div>
