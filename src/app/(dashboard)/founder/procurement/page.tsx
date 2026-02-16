@@ -16,8 +16,22 @@ import MaterialRequestList from '@/components/procurement/MaterialRequestList'
 import CreateRequestModal from '@/components/procurement/CreateRequestModal'
 import ConsolidatedMTO from '@/components/procurement/ConsolidatedMTO'
 import PipeInventoryMaster from '@/components/procurement/PipeInventoryMaster'
-// import ReceivingDashboard from '@/components/procurement/ReceivingDashboard'
-// import InventoryTable from '@/components/procurement/InventoryTable'
+import ProjectMaterialsManager from '@/components/procurement/ProjectMaterialsManager'
+import SpoolIdentificationDashboard from '@/components/procurement/SpoolIdentificationDashboard'
+import MaterialInventoryDashboard from '@/components/procurement/MaterialInventoryDashboard'
+
+import {
+    ClipboardList,
+    BarChart3,
+    Inbox,
+    Package,
+    Book,
+    Ruler,
+    Layers,
+    Search,
+    ChevronDown,
+    Plus
+} from 'lucide-react'
 
 export default function ProcurementPage() {
     const router = useRouter()
@@ -33,7 +47,7 @@ export default function ProcurementPage() {
     useEffect(() => {
         loadProjects()
         const tab = searchParams?.get('tab')
-        if (tab && ['requests', 'mto', 'receiving', 'inventory', 'pipe-manager'].includes(tab)) {
+        if (tab && ['requests', 'mto', 'receiving', 'inventory', 'pipe-manager', 'catalog'].includes(tab)) {
             setActiveTab(tab)
         }
     }, [searchParams])
@@ -152,49 +166,43 @@ export default function ProcurementPage() {
                 <div className="flex items-center gap-4">
                     {activeTab === 'requests' && selectedProject && (
                         <button
-                            className="action-button action-primary"
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20"
                             onClick={() => setShowCreateModal(true)}
                         >
-                            + Nueva Solicitud
+                            <Plus className="w-4 h-4" />
+                            Nueva Solicitud
                         </button>
                     )}
                 </div>
             </div>
 
-            <div className="tabs-nav">
-                <button
-                    className={`tab-button ${activeTab === 'requests' ? 'active' : ''}`}
-                    onClick={() => handleTabChange('requests')}
-                >
-                    📋 Solicitudes (MIR/PO)
-                </button>
-                <button
-                    className={`tab-button ${activeTab === 'mto' ? 'active' : ''}`}
-                    onClick={() => handleTabChange('mto')}
-                >
-                    📊 MTO (Ingeniería)
-                </button>
-                <button
-                    className={`tab-button ${activeTab === 'receiving' ? 'active' : ''}`}
-                    onClick={() => handleTabChange('receiving')}
-                >
-                    📥 Recepción
-                </button>
-                <button
-                    className={`tab-button ${activeTab === 'inventory' ? 'active' : ''}`}
-                    onClick={() => handleTabChange('inventory')}
-                >
-                    📦 Inventario
-                </button>
-                <button
-                    className={`tab-button ${activeTab === 'pipe-manager' ? 'active' : ''}`}
-                    onClick={() => handleTabChange('pipe-manager')}
-                >
-                    📏 Gestión de Cañería
-                </button>
+            {/* Premium Horizontal Navigation */}
+            <div className="flex gap-2 p-1.5 mb-8 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md overflow-x-auto scrollbar-hide">
+                {[
+                    { id: 'requests', label: 'Solicitudes', icon: <ClipboardList className="w-4 h-4" /> },
+                    { id: 'mto', label: 'Consolidado (MTO)', icon: <BarChart3 className="w-4 h-4" /> },
+                    { id: 'spools', label: 'Spools', icon: <Layers className="w-4 h-4" /> },
+                    { id: 'inventory', label: 'Inventario', icon: <Package className="w-4 h-4" /> },
+                    { id: 'catalog', label: 'Catálogo Maestro', icon: <Book className="w-4 h-4" /> },
+                    { id: 'receiving', label: 'Recepción', icon: <Inbox className="w-4 h-4" /> },
+                    { id: 'pipe-manager', label: 'Cañerías', icon: <Ruler className="w-4 h-4" /> },
+                ].map((tab) => (
+                    <button
+                        key={tab.id}
+                        onClick={() => handleTabChange(tab.id as any)}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap
+                            ${activeTab === tab.id
+                                ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                            }`}
+                    >
+                        {tab.icon}
+                        {tab.label}
+                    </button>
+                ))}
             </div>
 
-            <div className="tab-content" style={{ minHeight: '400px' }}>
+            <div className="min-h-[500px]">
                 {!selectedProject ? (
                     <div className="coming-soon-placeholder">
                         <p>Selecciona un proyecto para ver los materiales.</p>
@@ -210,19 +218,23 @@ export default function ProcurementPage() {
                         )}
 
                         {activeTab === 'receiving' && (
-                            <div className="coming-soon-placeholder">
-                                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📥</div>
-                                <h3>Módulo de Recepción</h3>
-                                <p>Ingreso de materiales y control de guías de despacho</p>
+                            <div className="bg-white/5 border border-dashed border-white/10 rounded-3xl p-20 text-center">
+                                <Inbox className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+                                <Heading level={3} className="text-white">Módulo de Recepción</Heading>
+                                <Text className="text-slate-500">Próximamente: Ingreso de guías de despacho y control físico.</Text>
                             </div>
                         )}
 
+                        {activeTab === 'catalog' && (
+                            <ProjectMaterialsManager projectId={selectedProject} />
+                        )}
+
+                        {activeTab === 'spools' && (
+                            <SpoolIdentificationDashboard projectId={selectedProject} />
+                        )}
+
                         {activeTab === 'inventory' && (
-                            <div className="coming-soon-placeholder">
-                                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📦</div>
-                                <h3>Inventario de Materiales</h3>
-                                <p>Visualización de stock disponible y asignado</p>
-                            </div>
+                            <MaterialInventoryDashboard projectId={selectedProject} />
                         )}
 
                         {activeTab === 'pipe-manager' && (

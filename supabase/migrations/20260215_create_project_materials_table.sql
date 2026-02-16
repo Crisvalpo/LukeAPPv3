@@ -89,7 +89,7 @@ CREATE POLICY "Users can view project materials if they have project access"
   FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM project_members pm
+      SELECT 1 FROM members pm
       WHERE pm.project_id = project_materials.project_id
         AND pm.user_id = auth.uid()
     )
@@ -104,18 +104,18 @@ CREATE POLICY "Project admins can update custom fields"
   FOR UPDATE
   USING (
     EXISTS (
-      SELECT 1 FROM project_members pm
+      SELECT 1 FROM members pm
       WHERE pm.project_id = project_materials.project_id
         AND pm.user_id = auth.uid()
-        AND pm.role IN ('ADMIN', 'OWNER')
+        AND pm.role_id IN ('admin', 'founder', 'super_admin')
     )
   )
   WITH CHECK (
     EXISTS (
-      SELECT 1 FROM project_members pm
+      SELECT 1 FROM members pm
       WHERE pm.project_id = project_materials.project_id
         AND pm.user_id = auth.uid()
-        AND pm.role IN ('ADMIN', 'OWNER')
+        AND pm.role_id IN ('admin', 'founder', 'super_admin')
     )
   );
 
@@ -125,9 +125,9 @@ CREATE POLICY "Project owners can delete materials"
   FOR DELETE
   USING (
     EXISTS (
-      SELECT 1 FROM project_members pm
+      SELECT 1 FROM members pm
       WHERE pm.project_id = project_materials.project_id
         AND pm.user_id = auth.uid()
-        AND pm.role = 'OWNER'
+        AND pm.role_id = 'founder'
     )
   );

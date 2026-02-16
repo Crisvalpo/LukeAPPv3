@@ -1,16 +1,25 @@
 'use client'
 
 import { useState } from 'react'
-import { Book, FileText, BarChart2, Download, Package, Ruler } from 'lucide-react'
+import {
+    ClipboardList,
+    BarChart3,
+    Inbox,
+    Package,
+    Book,
+    Ruler,
+    Layers,
+    Search,
+    Truck
+} from 'lucide-react'
 import MaterialRequestList from '@/components/procurement/MaterialRequestList'
 import ConsolidatedMTO from '@/components/procurement/ConsolidatedMTO'
 import PipeInventoryMaster from '@/components/procurement/PipeInventoryMaster'
-import MaterialCatalogManager from '@/components/procurement/MaterialCatalogManager'
-import MaterialReceiptsManager from '@/components/procurement/MaterialReceiptsManager'
-import MaterialInventoryManager from '@/components/procurement/MaterialInventoryManager'
-import MaterialTrackingView from '@/components/procurement/MaterialTrackingView'
-// Styles migrated to Tailwind v4
-// Styles migrated to Tailwind v4
+import ProjectMaterialsManager from '@/components/procurement/ProjectMaterialsManager'
+import SpoolIdentificationDashboard from '@/components/procurement/SpoolIdentificationDashboard'
+import MaterialInventoryDashboard from '@/components/procurement/MaterialInventoryDashboard'
+// import MaterialReceiptsManager from '@/components/procurement/MaterialReceiptsManager'
+// import MaterialTrackingView from '@/components/procurement/MaterialTrackingView'
 
 interface ProcurementManagerProps {
     projectId: string
@@ -18,73 +27,43 @@ interface ProcurementManagerProps {
     userRole?: 'founder' | 'admin'
 }
 
-type TabType = 'catalog' | 'requests' | 'mto' | 'tracking' | 'receiving' | 'inventory' | 'pipe-manager'
+type TabType = 'catalog' | 'requests' | 'mto' | 'spools' | 'inventory' | 'receiving' | 'pipe-manager'
 
 export default function ProcurementManager({ projectId, companyId, userRole = 'founder' }: ProcurementManagerProps) {
     const [activeTab, setActiveTab] = useState<TabType>('catalog')
 
     return (
-        <div className="engineering-hub-container">
-            {/* Header Actions (Empty placeholder removed for consistent spacing) */}
-            {/* Actions removed as per request to enforce context-aware creation via MTO */}
-
-            {/* Tabs Navigation */}
-            <div className="engineering-tabs">
-                <button
-                    className={`tab-button ${activeTab === 'catalog' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('catalog')}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                >
-                    <Book size={16} /> Catálogo
-                </button>
-                <button
-                    className={`tab-button ${activeTab === 'requests' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('requests')}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                >
-                    <FileText size={16} /> Solicitudes (MIR/PO)
-                </button>
-                <button
-                    className={`tab-button ${activeTab === 'mto' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('mto')}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                >
-                    <BarChart2 size={16} /> MTO (Ingeniería)
-                </button>
-                <button
-                    className={`tab-button ${activeTab === 'tracking' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('tracking')}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                >
-                    <Package size={16} /> Tracking
-                </button>
-                <button
-                    className={`tab-button ${activeTab === 'receiving' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('receiving')}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                >
-                    <Download size={16} /> Recepción
-                </button>
-                <button
-                    className={`tab-button ${activeTab === 'inventory' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('inventory')}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                >
-                    <Package size={16} /> Inventario
-                </button>
-                <button
-                    className={`tab-button ${activeTab === 'pipe-manager' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('pipe-manager')}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                >
-                    <Ruler size={16} /> Gestión de Cañería
-                </button>
+        <div className="space-y-6">
+            {/* Premium Horizontal Navigation */}
+            <div className="flex gap-2 p-1.5 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md overflow-x-auto scrollbar-hide">
+                {[
+                    { id: 'catalog', label: 'Catálogo Maestro', icon: <Book className="w-4 h-4" /> },
+                    { id: 'requests', label: 'Solicitudes', icon: <ClipboardList className="w-4 h-4" /> },
+                    { id: 'mto', label: 'Ingeniería (MTO)', icon: <BarChart3 className="w-4 h-4" /> },
+                    { id: 'spools', label: 'Spools', icon: <Layers className="w-4 h-4" /> },
+                    { id: 'inventory', label: 'Inventario', icon: <Package className="w-4 h-4" /> },
+                    { id: 'receiving', label: 'Recepción', icon: <Inbox className="w-4 h-4" /> },
+                    { id: 'pipe-manager', label: 'Cañerías', icon: <Ruler className="w-4 h-4" /> },
+                ].map((tab) => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as any)}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap
+                            ${activeTab === tab.id
+                                ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                            }`}
+                    >
+                        {tab.icon}
+                        {tab.label}
+                    </button>
+                ))}
             </div>
 
             {/* Tab Content */}
-            <div className="engineering-content" style={{ minHeight: '400px', marginTop: '1.5rem' }}>
+            <div className="min-h-[500px]">
                 {activeTab === 'catalog' && (
-                    <MaterialCatalogManager projectId={projectId} companyId={companyId} />
+                    <ProjectMaterialsManager projectId={projectId} />
                 )}
 
                 {activeTab === 'requests' && (
@@ -95,35 +74,26 @@ export default function ProcurementManager({ projectId, companyId, userRole = 'f
                     <ConsolidatedMTO projectId={projectId} companyId={companyId} />
                 )}
 
-                {activeTab === 'tracking' && (
-                    <MaterialTrackingView projectId={projectId} companyId={companyId} />
-                )}
-
-
-                {activeTab === 'receiving' && (
-                    <MaterialReceiptsManager projectId={projectId} companyId={companyId} />
+                {activeTab === 'spools' && (
+                    <SpoolIdentificationDashboard projectId={projectId} />
                 )}
 
                 {activeTab === 'inventory' && (
-                    <MaterialInventoryManager projectId={projectId} companyId={companyId} />
+                    <MaterialInventoryDashboard projectId={projectId} />
+                )}
+
+                {activeTab === 'receiving' && (
+                    <div className="bg-white/5 border border-dashed border-white/10 rounded-3xl p-20 text-center">
+                        <Inbox className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold text-white mb-2">Módulo de Recepción</h3>
+                        <p className="text-slate-500">Próximamente: Ingreso de guías de despacho y control físico de materiales.</p>
+                    </div>
                 )}
 
                 {activeTab === 'pipe-manager' && (
                     <PipeInventoryMaster projectId={projectId} companyId={companyId} />
                 )}
             </div>
-
-
-            <style jsx>{`
-                .coming-soon-placeholder {
-                    text-align: center;
-                    padding: 4rem 2rem;
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px dashed rgba(255, 255, 255, 0.1);
-                    border-radius: 0.5rem;
-                    color: rgba(255, 255, 255, 0.5);
-                }
-            `}</style>
         </div>
     )
 }

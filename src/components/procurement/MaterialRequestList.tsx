@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { Search, Filter, ClipboardList, Package, ExternalLink, Calendar, Clock, Truck } from 'lucide-react'
 import { getMaterialRequests } from '@/services/material-requests'
 import MaterialRequestDetailsModal from './MaterialRequestDetailsModal'
+import { Heading, Text } from '@/components/ui/Typography'
+import { StatusBadge } from '@/components/ui/StatusBadge'
 import type { MaterialRequest } from '@/types'
 
 interface MaterialRequestListProps {
@@ -49,6 +52,18 @@ export default function MaterialRequestList({ projectId }: MaterialRequestListPr
         return matchesSearch && matchesType && matchesStatus
     })
 
+    const getStatusType = (status: string): any => {
+        const map: Record<string, string> = {
+            'DRAFT': 'pending',
+            'SENT': 'active',
+            'APPROVED': 'active',
+            'REJECTED': 'cancelled',
+            'PARTIAL': 'pending',
+            'COMPLETED': 'active'
+        }
+        return map[status] || 'pending'
+    }
+
     const getStatusLabel = (status: string) => {
         const map: Record<string, string> = {
             'DRAFT': 'Borrador',
@@ -61,281 +76,162 @@ export default function MaterialRequestList({ projectId }: MaterialRequestListPr
         return map[status] || status
     }
 
-    if (isLoading) return (
-        <div className="loading-state">
-            <div className="spinner"></div>
-            <p>Cargando solicitudes...</p>
+    if (error) return (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-6 text-center">
+            <Text className="text-red-400">{error}</Text>
         </div>
     )
 
-    if (error) return <div className="error-message">{error}</div>
-
     return (
-        <div className="requests-container">
-            {/* Header Toolbar */}
-            <div className="toolbar">
-                <div className="search-box">
-                    <span className="search-icon">🔍</span>
-                    <input
-                        type="text"
-                        placeholder="Buscar MIR o PO..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+        <div className="space-y-6 animate-in fade-in duration-500">
+            {/* Toolbar Area */}
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-3xl">
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                    <div className="relative flex-1 md:w-80">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Buscar MIR o PO..."
+                            className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="flex gap-2">
+                        <select
+                            value={typeFilter}
+                            onChange={(e) => setTypeFilter(e.target.value as any)}
+                            className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all"
+                        >
+                            <option value="ALL">Todos los Tipos</option>
+                            <option value="CLIENT_MIR">MIR Cliente</option>
+                            <option value="CONTRACTOR_PO">PO Compra</option>
+                        </select>
+
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all"
+                        >
+                            <option value="ALL">Todos los Estados</option>
+                            <option value="DRAFT">Borrador</option>
+                            <option value="SENT">Enviada</option>
+                            <option value="APPROVED">Aprobada</option>
+                            <option value="COMPLETED">Completada</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div className="filters">
-                    <select
-                        value={typeFilter}
-                        onChange={(e) => setTypeFilter(e.target.value as any)}
-                        className="filter-select"
-                    >
-                        <option value="ALL">Todos los Tipos</option>
-                        <option value="CLIENT_MIR">MIR Cliente</option>
-                        <option value="CONTRACTOR_PO">PO Compra</option>
-                    </select>
-
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="filter-select"
-                    >
-                        <option value="ALL">Todos los Estados</option>
-                        <option value="DRAFT">Borrador</option>
-                        <option value="SENT">Enviada</option>
-                        <option value="APPROVED">Aprobada</option>
-                        <option value="COMPLETED">Completada</option>
-                    </select>
+                <div className="hidden md:block">
+                    <Text size="xs" className="text-white/20 uppercase tracking-widest font-black">
+                        Procurement Pipeline
+                    </Text>
                 </div>
             </div>
 
-            {/* Empty State */}
-            {filteredRequests.length === 0 ? (
-                <div className="empty-state">
-                    <div className="empty-icon">📭</div>
-                    <h3>No se encontraron solicitudes</h3>
-                    <p>Intenta ajustar los filtros de búsqueda.</p>
-                </div>
-            ) : (
-                <div className="table-wrapper">
-                    <table className="data-table">
+            {/* Main Table Container */}
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr>
-                                <th>Solicitud</th>
-                                <th>Tipo</th>
-                                <th>Estado</th>
-                                <th>Creación</th>
-                                <th>ETA</th>
-                                <th style={{ textAlign: 'center' }}>Acciones</th>
+                            <tr className="bg-white/5 text-white/40 uppercase text-[10px] tracking-[0.2em] font-bold">
+                                <th className="px-6 py-4">Status</th>
+                                <th className="px-6 py-4">N° Solicitud</th>
+                                <th className="px-6 py-4">Tipo</th>
+                                <th className="px-6 py-4">Fechas</th>
+                                <th className="px-6 py-4 text-right">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {filteredRequests.map(req => (
-                                <tr key={req.id} onClick={() => setSelectedRequest(req)} className="clickable-row">
-                                    <td className="font-mono">
-                                        <span className="req-number">{req.request_number}</span>
-                                    </td>
-                                    <td>
-                                        <span className={`type-badge ${req.request_type === 'CLIENT_MIR' ? 'mir' : 'po'}`}>
-                                            {req.request_type === 'CLIENT_MIR' ? '📋 MIR' : '🛒 PO'}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span className={`status-pill status-${req.status.toLowerCase()}`}>
-                                            {getStatusLabel(req.status)}
-                                        </span>
-                                    </td>
-                                    <td className="text-dim">
-                                        {new Date(req.created_at).toLocaleDateString()}
-                                    </td>
-                                    <td className="text-dim">
-                                        {req.eta_date ? new Date(req.eta_date).toLocaleDateString() : '—'}
-                                    </td>
-                                    <td className="actions-cell">
-                                        <button
-                                            className="btn-icon"
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                setSelectedRequest(req)
-                                            }}
-                                        >
-                                            👉 Ver Detalle
-                                        </button>
+                        <tbody className="divide-y divide-white/5">
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-20 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                                            <Text className="text-white/30">Cargando solicitudes...</Text>
+                                        </div>
                                     </td>
                                 </tr>
-                            ))}
+                            ) : filteredRequests.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-20 text-center">
+                                        <div className="flex flex-col items-center gap-4">
+                                            <div className="p-4 bg-white/5 rounded-full text-white/20">
+                                                <ClipboardList size={48} />
+                                            </div>
+                                            <Text className="text-white/30">No se encontraron solicitudes.</Text>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                filteredRequests.map((req) => (
+                                    <tr
+                                        key={req.id}
+                                        onClick={() => setSelectedRequest(req)}
+                                        className="hover:bg-white/[0.02] transition-colors group cursor-pointer"
+                                    >
+                                        <td className="px-6 py-4">
+                                            <StatusBadge
+                                                status={getStatusType(req.status)}
+                                                label={getStatusLabel(req.status)}
+                                            />
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col">
+                                                <Text className="text-white font-mono font-bold group-hover:text-indigo-400 transition-colors">
+                                                    {req.request_number}
+                                                </Text>
+                                                <Text size="xs" className="text-white/20">
+                                                    ID: {req.id.split('-')[0]}
+                                                </Text>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold border ${req.request_type === 'CLIENT_MIR'
+                                                ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                                : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                                }`}>
+                                                {req.request_type === 'CLIENT_MIR' ? <Package size={14} /> : <Truck size={14} />}
+                                                {req.request_type === 'CLIENT_MIR' ? 'MIR CLIENTE' : 'PO COMPRA'}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-2 text-white/50 text-xs">
+                                                    <Calendar size={12} />
+                                                    {new Date(req.created_at).toLocaleDateString()}
+                                                </div>
+                                                {req.eta_date && (
+                                                    <div className="flex items-center gap-2 text-indigo-400 text-xs font-medium">
+                                                        <Clock size={12} />
+                                                        ETA: {new Date(req.eta_date).toLocaleDateString()}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button
+                                                className="p-2 bg-white/5 text-white/30 hover:bg-white/10 hover:text-white rounded-xl transition-all inline-flex items-center gap-2 text-xs font-bold"
+                                            >
+                                                Ver Detalle
+                                                <ExternalLink size={14} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
-            )}
 
-            <style jsx>{`
-                .requests-container {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 1.5rem;
-                    height: 100%;
-                }
-
-                .toolbar {
-                    display: flex;
-                    gap: 1rem;
-                    background: rgba(255, 255, 255, 0.05);
-                    padding: 1rem;
-                    border-radius: 12px;
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    flex-wrap: wrap;
-                }
-
-                .search-box {
-                    flex: 1;
-                    min-width: 250px;
-                    position: relative;
-                    display: flex;
-                    align-items: center;
-                    background: rgba(0, 0, 0, 0.2);
-                    border-radius: 8px;
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    padding: 0 0.75rem;
-                }
-
-                .search-icon {
-                    opacity: 0.5;
-                    margin-right: 0.5rem;
-                }
-
-                .search-box input {
-                    width: 100%;
-                    background: none;
-                    border: none;
-                    padding: 0.75rem 0;
-                    color: white;
-                    outline: none;
-                }
-
-                .filters {
-                    display: flex;
-                    gap: 0.75rem;
-                }
-
-                .filter-select {
-                    background: rgba(0, 0, 0, 0.2);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    color: #e2e8f0;
-                    padding: 0.75rem 1rem;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    outline: none;
-                }
-
-                .filter-select:hover {
-                    border-color: rgba(255, 255, 255, 0.2);
-                }
-
-                .table-wrapper {
-                    background: rgba(24, 25, 28, 0.6);
-                    backdrop-filter: blur(12px);
-                    border: 1px solid rgba(255, 255, 255, 0.05);
-                    border-radius: 12px;
-                    overflow: hidden;
-                    flex: 1;
-                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-                }
-
-                .data-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                }
-
-                .data-table th {
-                    text-align: left;
-                    padding: 1rem 1.5rem;
-                    background: rgba(255, 255, 255, 0.03);
-                    color: #9ca3af;
-                    font-size: 0.75rem;
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                    font-weight: 600;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-                }
-
-                .data-table td {
-                    padding: 1rem 1.5rem;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-                    color: #e5e7eb;
-                    vertical-align: middle;
-                    font-size: 0.9rem;
-                }
-
-                .clickable-row {
-                    cursor: pointer;
-                    transition: background 0.2s;
-                }
-
-                .clickable-row:hover {
-                    background: rgba(255, 255, 255, 0.05);
-                }
-
-                .req-number {
-                    font-weight: 600;
-                    color: #fff;
-                    font-size: 1rem;
-                }
-
-                .type-badge {
-                    display: inline-flex;
-                    align-items: center;
-                    padding: 0.25rem 0.75rem;
-                    border-radius: 6px;
-                    font-size: 0.8rem;
-                    font-weight: 500;
-                }
-                .type-badge.mir { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); }
-                .type-badge.po { background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3); }
-
-                .status-pill {
-                    padding: 0.25rem 0.75rem;
-                    border-radius: 99px;
-                    font-size: 0.75rem;
-                    font-weight: 700;
-                    text-transform: uppercase;
-                }
-                .status-draft { background: rgba(63, 63, 70, 0.5); color: #d4d4d8; }
-                .status-sent { background: rgba(30, 58, 138, 0.5); color: #93c5fd; }
-                .status-approved { background: rgba(6, 78, 59, 0.5); color: #6ee7b7; }
-                
-                .text-dim { color: #94a3b8; }
-                
-                .actions-cell { text-align: center; }
-
-                .btn-icon {
-                    background: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    color: #94a3b8;
-                    padding: 0.4rem 0.8rem;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    font-size: 0.85rem;
-                }
-                .btn-icon:hover {
-                    background: rgba(59, 130, 246, 0.2);
-                    color: white;
-                    border-color: rgba(59, 130, 246, 0.5);
-                }
-
-                .loading-state, .empty-state {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 4rem;
-                    background: rgba(255, 255, 255, 0.02);
-                    border-radius: 12px;
-                    color: #94a3b8;
-                }
-                .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
-            `}</style>
+                {/* Footer Signature */}
+                <div className="p-4 bg-white/5 border-t border-white/10 text-center">
+                    <Text size="xs" className="text-white/5 uppercase tracking-[0.3em] font-black">
+                        LukeAPP Material Tracking Engine • V3.0
+                    </Text>
+                </div>
+            </div>
 
             {selectedRequest && (
                 <MaterialRequestDetailsModal
