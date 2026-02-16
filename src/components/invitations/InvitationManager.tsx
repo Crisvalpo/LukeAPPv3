@@ -389,7 +389,7 @@ export default function InvitationManager({
                                         onChange={(e) => setFormData({ ...formData, primary_specialty_id: e.target.value })}
                                         className="w-full h-14 bg-slate-950/50 border border-white/5 rounded-2xl px-5 text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 transition-all appearance-none text-sm font-bold cursor-pointer font-sans"
                                     >
-                                        <option value="" className="bg-slate-950">Sin especialidad fija (Acceso Global)</option>
+                                        <option value="" className="bg-slate-950">Especialidad: TODAS (Acceso Global)</option>
                                         {availableSpecialties.map(spec => (
                                             <option key={spec.id} value={spec.id} className="bg-slate-950">
                                                 {spec.name} ({spec.code})
@@ -462,7 +462,7 @@ export default function InvitationManager({
                                 <thead className="sticky top-0 bg-slate-900/90 backdrop-blur-md text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] text-left">
                                     <tr>
                                         <th className="px-8 py-5 border-b border-white/5">Candidato / Emisión</th>
-                                        <th className="px-8 py-5 border-b border-white/5">Contexto / Permiso</th>
+                                        <th className="px-8 py-5 border-b border-white/5">Contexto / Especialidad</th>
                                         <th className="px-8 py-5 border-b border-white/5 text-right">Acción</th>
                                     </tr>
                                 </thead>
@@ -482,6 +482,14 @@ export default function InvitationManager({
                                                         <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[9px] font-black uppercase tracking-widest leading-none">
                                                             {roleOptions.find(r => r.value === inv.role_id)?.label || inv.role_id}
                                                         </span>
+                                                        {(() => {
+                                                            const spec = availableSpecialties.find(s => s.id === inv.primary_specialty_id)
+                                                            return (
+                                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-lg border text-[9px] font-black uppercase tracking-widest leading-none ${spec ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : 'bg-slate-500/10 border-slate-500/20 text-slate-500'}`}>
+                                                                    {spec ? spec.code : 'TODAS'}
+                                                                </span>
+                                                            )
+                                                        })()}
                                                     </div>
                                                     {!requireProject && (inv as any).project && (
                                                         <div className="flex items-center gap-2 px-2 py-1 bg-white/[0.03] border border-white/5 rounded-lg w-fit">

@@ -31,7 +31,9 @@ async function fetchMembersRobust(supabase: ReturnType<typeof createClient>, com
                 users ( email, full_name, avatar_url ),
                 projects ( name, code ),
                 companies ( name, slug ),
-                company_roles ( id, name, color, base_role, permissions )
+                company_roles ( id, name, color, base_role, permissions ),
+                specialties!members_primary_specialty_id_fkey ( name, code ),
+                primary_specialty_id
             `)
             .eq('company_id', companyId)
             .eq('active', true)
@@ -52,7 +54,9 @@ async function fetchMembersRobust(supabase: ReturnType<typeof createClient>, com
                     user: m.users,
                     project: m.projects,
                     company: m.companies,
-                    company_role: m.company_roles
+                    company_role: m.company_roles,
+                    specialty: m.specialties,
+                    primary_specialty_id: m.primary_specialty_id
                 }))
         }
 
@@ -94,7 +98,9 @@ async function fetchMembersRobust(supabase: ReturnType<typeof createClient>, com
             user: { email: 'Unknown (RLS Error)' },
             project: null,
             company: null,
-            company_role: null
+            company_role: null,
+            specialty: null,
+            primary_specialty_id: m.primary_specialty_id
         }))
     } catch (fallbackError) {
         console.error('❌ Critical: Exception in fallback:', fallbackError)

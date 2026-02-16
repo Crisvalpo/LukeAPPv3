@@ -10,6 +10,8 @@ interface Member {
     email: string
     role_id: string
     project?: { name: string; code: string } | null
+    primary_specialty_id?: string | null
+    specialty?: { name: string; code: string } | null
     created_at: string
 }
 
@@ -108,15 +110,26 @@ export default function UsersList({ users, onDelete, context }: UsersListProps) 
                                         {getRoleBadge(member.role_id)}
                                     </td>
                                     <td className="px-6 py-4 text-center">
-                                        {member.project ? (
-                                            <span className="inline-flex items-center px-2 py-1 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400 font-mono text-[11px] font-bold">
-                                                {member.project.code}
-                                            </span>
-                                        ) : (
-                                            <span className="text-slate-500 text-xs italic opacity-60">
-                                                — Global —
-                                            </span>
-                                        )}
+                                        <div className="flex flex-col items-center gap-1">
+                                            {member.project ? (
+                                                <span className="inline-flex items-center px-2 py-1 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400 font-mono text-[11px] font-bold">
+                                                    {member.project.code}
+                                                </span>
+                                            ) : (
+                                                <span className="text-slate-500 text-xs italic opacity-60">
+                                                    — Global —
+                                                </span>
+                                            )}
+                                            {member.specialty ? (
+                                                <span className="text-[9px] text-blue-400 font-black uppercase tracking-widest opacity-80">
+                                                    {member.specialty.code}
+                                                </span>
+                                            ) : (
+                                                <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest opacity-40">
+                                                    TODAS
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2 text-slate-400 text-xs">
