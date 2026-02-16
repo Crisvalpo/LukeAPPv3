@@ -138,6 +138,31 @@ export async function createCompany(params: CreateCompanyParams) {
 
         if (error) throw error
 
+        // Initialize Storage folder structure for the company
+        if (data) {
+            try {
+                const { getCompanyStoragePath } = await import('@/lib/storage-paths')
+                const companyPath = getCompanyStoragePath({ id: data.id, slug: data.slug })
+                const folders = ['logos', 'documents']
+
+                // Upload a placeholder .keep file to each folder to initialize it
+                const filePromises = folders.map(folder =>
+                    supabase.storage
+                        .from('project-files')
+                        .upload(`${companyPath}/company/${folder}/.keep`, new Blob(['']), {
+                            upsert: true
+                        })
+                )
+
+                // We don't await this to avoid slowing down the response
+                Promise.all(filePromises).catch(err =>
+                    console.warn('Error creating company storage folders:', err)
+                )
+            } catch (storageError) {
+                console.warn('Error initiating company storage folder creation:', storageError)
+            }
+        }
+
         return {
             success: true,
             message: 'Empresa creada exitosamente',

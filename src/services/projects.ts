@@ -186,7 +186,19 @@ export async function createProject(params: CreateProjectParams) {
                     const company = { id: companyData.id, slug: companyData.slug }
                     const project = { id: data.id, code: data.code, name: data.name }
                     const basePath = getProjectStoragePath(company, project)
-                    const folders = ['logos', 'structure-models', 'isometric-models', 'drawings', 'photos']
+
+                    // AWP-aligned subfolders including disciplines
+                    const folders = [
+                        'logos',
+                        'structure-models',
+                        'isometric-models',
+                        'drawings',
+                        'photos',
+                        'civil',
+                        'electrical',
+                        'instrumentation',
+                        'mechanical'
+                    ]
 
                     // Upload a placeholder .keep file to each folder to initialize it
                     const filePromises = folders.map(folder =>
