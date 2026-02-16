@@ -34,6 +34,7 @@ async function fetchMembersRobust(supabase: ReturnType<typeof createClient>, com
                 company_roles ( id, name, color, base_role, permissions )
             `)
             .eq('company_id', companyId)
+            .eq('active', true)
             .order('created_at', { ascending: false })
 
         if (!error && data) {
@@ -71,6 +72,7 @@ async function fetchMembersRobust(supabase: ReturnType<typeof createClient>, com
             .from('members')
             .select('*')
             .eq('company_id', companyId)
+            .eq('active', true)
 
         if (rawError) {
             console.error('❌ Critical: Error fetching raw members:', JSON.stringify(rawError, null, 2))

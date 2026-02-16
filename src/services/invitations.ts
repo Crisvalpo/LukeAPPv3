@@ -185,28 +185,31 @@ export async function createInvitation(params: CreateInvitationParams) {
                     .from('members')
                     .select('project:projects(name), company:companies(name)')
                     .eq('user_id', existingUser.id)
+                    .eq('active', true) // NEW: Only block if they are ALREADY ACTIVE somewhere
                     .maybeSingle()
 
                 if (isBusy) {
                     return {
                         success: false,
-                        message: `⛔ LÍMITE: Este usuario ya pertenece a un proyecto en ${(isBusy.company as any)?.name}. Debe ser desvinculado antes de unirse a otro.`
+                        message: `⛔ LÍMITE: Este usuario ya tiene un proyecto ACTIVO en ${(isBusy.company as any)?.name}. Debe ser desvinculado (desactivado) antes de unirse a otro.`
                     }
                 }
             }
 
-            // Original Check: Already a member of THIS company (redundant if strict limits work, but safe to keep)
+            // Original Check: Already an ACTIVE member of THIS company
+            // If they are inactive, we ALLOW the invitation to proceed (Re-hire flow)
             const { data: existingMember } = await supabase
                 .from('members')
-                .select('id, role_id')
+                .select('id, role_id, active')
                 .eq('user_id', existingUser.id)
                 .eq('company_id', params.company_id)
+                .eq('active', true) // Only block if CURRENTLY active
                 .maybeSingle()
 
             if (existingMember) {
                 return {
                     success: false,
-                    message: `Este usuario ya es ${existingMember.role_id} de la empresa`
+                    message: `Este usuario ya es un miembro ACTIVO (${existingMember.role_id}) de la empresa. No necesitas invitarlo de nuevo.`
                 }
             }
         }

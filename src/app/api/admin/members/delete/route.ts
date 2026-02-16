@@ -29,7 +29,7 @@ export async function POST(request: Request) {
         const { createAdminClient } = await import('@/lib/supabase/server')
         const supabaseAdmin = createAdminClient()
 
-        // 3.5. Block deletion of Ghost Admin Account
+        // 3.5. Block deletion of Ghost Admin Account (Hard check)
         const { data: memberData } = await supabaseAdmin
             .from('members')
             .select('users(email)')
@@ -39,17 +39,20 @@ export async function POST(request: Request) {
         const targetEmail = (memberData?.users as any)?.email
         if (targetEmail === 'cristianluke@gmail.com') {
             return NextResponse.json(
-                { success: false, message: 'CRITICAL_SECURITY: Ghost Admin account cannot be deleted.' },
+                { success: false, message: 'CRITICAL_SECURITY: Ghost Admin account cannot be deleted or deactivated.' },
                 { status: 403 }
             )
         }
 
-        // 4. Delete Member using SECURITY DEFINER function (bypasses RLS)
-        const { data, error } = await supabaseAdmin
-            .rpc('admin_delete_member', { target_member_id: memberId })
+        // 4. Perform Soft Delete (Deactivation) 
+        // We update the record instead of deleting it to preserve historical attribution
+        const { error } = await supabaseAdmin
+            .from('members')
+            .update({ active: false })
+            .eq('id', memberId)
 
         if (error) {
-            console.error('Error deleting member:', error)
+            console.error('Error deactivating member:', error)
             return NextResponse.json(
                 { success: false, message: error.message },
                 { status: 500 }
@@ -58,7 +61,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
             success: true,
-            message: 'Member removed successfully (Unlinked).'
+            message: 'Member deactivated successfully (History preserved).'
         })
 
     } catch (error: any) {
