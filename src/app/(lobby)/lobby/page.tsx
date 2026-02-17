@@ -89,7 +89,7 @@ export default async function LobbyPage() {
             company_roles ( name, color )
         `)
             .eq('user_id', user.id)
-            .eq('status', 'ACTIVE')
+            .eq('active', true)
             .neq('role_id', 'super_admin')
             .single();
 

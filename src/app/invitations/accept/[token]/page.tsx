@@ -174,9 +174,10 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
 
     if (loading) {
         return (
-            <div className="accept-invitation-container">
-                <div className="accept-invitation-card">
-                    <p style={{ color: 'white' }}>Validando invitación...</p>
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+                <div className="w-full max-w-md bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 shadow-2xl flex flex-col items-center">
+                    <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-4" />
+                    <p className="text-slate-400 font-medium">Validando invitación...</p>
                 </div>
             </div>
         )
@@ -184,14 +185,19 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
 
     if (error && !invitation) {
         return (
-            <div className="accept-invitation-container">
-                <div className="accept-invitation-card">
-                    <div className="accept-invitation-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <X size={32} color="#f87171" strokeWidth={2.5} />
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 text-white">
+                <div className="w-full max-w-md bg-slate-900/50 backdrop-blur-xl border border-red-500/20 rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center">
+                    <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-center mb-6">
+                        <X size={32} className="text-red-400" strokeWidth={2.5} />
                     </div>
-                    <h1 className="accept-invitation-title">Invitación Inválida</h1>
-                    <p style={{ color: '#94a3b8', marginBottom: '2rem' }}>{error}</p>
-                    <button onClick={() => router.push('/')} className="accept-button">Volver al Inicio</button>
+                    <h1 className="text-2xl font-bold text-white mb-2">Invitación Inválida</h1>
+                    <p className="text-slate-400 mb-8">{error}</p>
+                    <button
+                        onClick={() => router.push('/')}
+                        className="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-2xl transition-all active:scale-95"
+                    >
+                        Volver al Inicio
+                    </button>
                 </div>
             </div>
         )
@@ -200,22 +206,31 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
     // CHECK EMAIL MISMATCH
     if (isAuthenticated && currentUserEmail && invitation && currentUserEmail.toLowerCase() !== invitation.email.toLowerCase()) {
         return (
-            <div className="accept-invitation-container">
-                <div className="accept-invitation-card">
-                    <div className="accept-invitation-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', borderColor: 'rgba(245, 158, 11, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <UserPlus size={32} color="#fbbf24" strokeWidth={2.5} />
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 text-white">
+                <div className="w-full max-w-md bg-slate-900/50 backdrop-blur-xl border border-amber-500/20 rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center">
+                    <div className="w-16 h-16 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center mb-6">
+                        <UserPlus size={32} className="text-amber-400" strokeWidth={2.5} />
                     </div>
-                    <h1 className="accept-invitation-title" style={{ color: '#fbbf24' }}>Conflicto de Sesión</h1>
-                    <div style={{ textAlign: 'left', background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '0.5rem', margin: '1.5rem 0' }}>
-                        <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '0.5rem' }}>La invitación es para:</p>
-                        <p style={{ color: 'white', fontWeight: 'bold', marginBottom: '1rem' }}>{invitation.email}</p>
-                        <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Estás conectado como:</p>
-                        <p style={{ color: 'white', fontWeight: 'bold' }}>{currentUserEmail}</p>
-                    </div>
-                    <p style={{ color: '#94a3b8', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                    <h1 className="text-2xl font-bold text-amber-400 mb-2">Conflicto de Sesión</h1>
+                    <p className="text-slate-400 text-sm mb-6">
                         Para aceptar esta invitación, debes cerrar sesión e ingresar con la cuenta correcta.
                     </p>
-                    <button onClick={handleLogout} className="accept-button" style={{ background: '#fbbf24', color: 'black' }}>
+
+                    <div className="w-full text-left space-y-4 bg-slate-950/50 border border-slate-800 p-5 rounded-2xl mb-8">
+                        <div>
+                            <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Invitación para:</p>
+                            <p className="text-slate-200 font-medium truncate">{invitation.email}</p>
+                        </div>
+                        <div className="pt-3 border-t border-slate-800/50">
+                            <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Sesión actual:</p>
+                            <p className="text-slate-200 font-medium truncate">{currentUserEmail}</p>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={handleLogout}
+                        className="w-full py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-2xl transition-all shadow-lg shadow-amber-500/20 active:scale-95"
+                    >
                         Cerrar Sesión y Continuar
                     </button>
                 </div>
@@ -224,115 +239,132 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
     }
 
     return (
-        <div className="accept-invitation-container">
-            <div className="accept-invitation-card">
-                <div className="accept-invitation-icon">
-                    <UserPlus size={32} color="#60a5fa" />
-                </div>
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 text-white">
+            <div className="w-full max-w-md bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+                {/* Decorative background glow */}
+                <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/20 blur-[100px] rounded-full pointer-events-none" />
 
-                <h1 className="accept-invitation-title">Has sido invitado</h1>
-                <p className="accept-invitation-company">{invitation?.company?.name || 'LukeAPP'}</p>
+                <div className="flex flex-col items-center text-center relative z-10">
+                    <div className="w-16 h-16 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-center mb-6 animate-pulse">
+                        <UserPlus size={32} className="text-blue-400" />
+                    </div>
 
-                <div className="accept-invitation-details">
-                    <div className="accept-invitation-detail">
-                        <span className="detail-label">Email:</span>
-                        <span className="detail-value">{invitation?.email}</span>
+                    <h1 className="text-2xl font-bold mb-1">Has sido invitado</h1>
+                    <p className="text-blue-400 font-bold text-lg mb-8 tracking-tight">
+                        {invitation?.company?.name || 'LukeAPP'}
+                    </p>
+
+                    <div className="w-full space-y-3 p-5 bg-slate-950/50 border border-slate-800 rounded-2xl mb-8">
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-slate-500 font-medium">Email</span>
+                            <span className="text-slate-200 font-semibold">{invitation?.email}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm pt-3 border-t border-slate-800/50">
+                            <span className="text-slate-500 font-medium">Rol</span>
+                            <span className="text-slate-200 font-semibold capitalize">{invitation?.role_id}</span>
+                        </div>
+                        {invitation?.project && (
+                            <div className="flex justify-between items-center text-sm pt-3 border-t border-slate-800/50">
+                                <span className="text-slate-500 font-medium">Proyecto</span>
+                                <span className="text-slate-200 font-semibold">{invitation.project.name}</span>
+                            </div>
+                        )}
                     </div>
-                    <div className="accept-invitation-detail">
-                        <span className="detail-label">Rol:</span>
-                        <span className="detail-value" style={{ textTransform: 'capitalize' }}>
-                            {invitation?.role_id}
-                        </span>
-                    </div>
-                    {invitation?.project && (
-                        <div className="accept-invitation-detail">
-                            <span className="detail-label">Proyecto:</span>
-                            <span className="detail-value">{invitation.project.name}</span>
+
+                    {!isAuthenticated && (
+                        <div className="w-full space-y-5">
+                            {userExists ? (
+                                <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl">
+                                    <p className="text-sm text-blue-400 font-medium">
+                                        ¡Hola de nuevo! Esta cuenta ya existe.
+                                        <span className="block mt-1 font-bold">Ingresa tu contraseña para aceptar.</span>
+                                    </p>
+                                </div>
+                            ) : (
+                                <p className="text-slate-400 text-sm font-medium">
+                                    Crea tu contraseña para activar tu cuenta
+                                </p>
+                            )}
+
+                            <div className="space-y-4 text-left">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 px-1">
+                                        Contraseña
+                                    </label>
+                                    <input
+                                        type="password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-5 py-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-700"
+                                        placeholder={userExists ? "Tu contraseña actual" : "Mínimo 6 caracteres"}
+                                    />
+                                </div>
+
+                                {!userExists && (
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 px-1">
+                                            Confirmar Contraseña
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-5 py-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-700"
+                                            placeholder="Repite tu contraseña"
+                                        />
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
-                </div>
 
-                {!isAuthenticated && (
-                    <div style={{ width: '100%', marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {userExists ? (
-                            <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '0.75rem', borderRadius: '0.5rem' }}>
-                                <p style={{ fontSize: '0.875rem', color: '#60a5fa', textAlign: 'center', marginBottom: 0 }}>
-                                    ¡Hola de nuevo! Esta cuenta ya existe.
-                                    <br />
-                                    <strong>Ingresa tu contraseña para aceptar la invitación.</strong>
-                                </p>
-                            </div>
-                        ) : (
-                            <p style={{ fontSize: '0.875rem', color: '#94a3b8', textAlign: 'center' }}>
-                                Crea tu contraseña para activar tu cuenta
-                            </p>
-                        )}
-
-                        <div>
-                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#e2e8f0', marginBottom: '0.5rem' }}>
-                                Contraseña
-                            </label>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="form-input"
-                                placeholder={userExists ? "Tu contraseña actual" : "Mínimo 6 caracteres"}
-                                style={{ width: '100%' }}
-                            />
+                    {error && (
+                        <div className="w-full mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm font-medium">
+                            {error}
+                            {error.includes('credentials') && (
+                                <div className="mt-2">
+                                    <button
+                                        onClick={() => router.push('/forgot-password')}
+                                        className="text-xs underline hover:text-red-300 transition-colors"
+                                    >
+                                        ¿Olvidaste tu contraseña?
+                                    </button>
+                                </div>
+                            )}
                         </div>
+                    )}
 
-                        {!userExists && (
-                            <div>
-                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#e2e8f0', marginBottom: '0.5rem' }}>
-                                    Confirmar Contraseña
-                                </label>
-                                <input
-                                    type="password"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="form-input"
-                                    placeholder="Repite tu contraseña"
-                                    style={{ width: '100%' }}
-                                />
-                            </div>
-                        )}
-                    </div>
-                )}
+                    <div className="w-full mt-8 flex flex-col items-center gap-6">
+                        <button
+                            onClick={handleAccept}
+                            disabled={accepting}
+                            className={`w-full py-4 rounded-2xl font-bold transition-all active:scale-95 shadow-lg ${accepting
+                                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                    : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/20'
+                                }`}
+                        >
+                            {accepting ? (
+                                <div className="flex items-center justify-center gap-2">
+                                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                                    <span>Procesando...</span>
+                                </div>
+                            ) : (
+                                isAuthenticated ? 'Aceptar Invitación' : (userExists ? 'Iniciar Sesión y Aceptar' : 'Crear Cuenta y Aceptar')
+                            )}
+                        </button>
 
-                {error && (
-                    <div style={{ padding: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '0.5rem', color: '#f87171', fontSize: '0.875rem', marginTop: '1rem' }}>
-                        {error}
-                        {error.includes('credentials') && (
-                            <div style={{ marginTop: '0.5rem', textAlign: 'center' }}>
-                                <a href="/forgot-password" style={{ color: '#f87171', textDecoration: 'underline', fontSize: '0.8rem' }}>
-                                    ¿Olvidaste tu contraseña?
-                                </a>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                <div className="accept-invitation-actions" style={{ marginTop: '1.5rem' }}>
-                    <button
-                        onClick={handleAccept}
-                        disabled={accepting}
-                        className="accept-button"
-                    >
-                        {accepting ? 'Procesando...' : (isAuthenticated ? 'Aceptar Invitación' : (userExists ? 'Iniciar Sesión y Aceptar' : 'Crear Cuenta y Aceptar'))}
-                    </button>
-                    {!isAuthenticated && (
-                        <div style={{ marginTop: '1rem', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {!isAuthenticated && (
                             <button
-                                onClick={() => router.push('/')}
-                                style={{ background: 'none', border: 'none', color: '#60a5fa', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
+                                onClick={() => userExists ? router.push('/') : setUserExists(true)}
+                                className="text-blue-400 text-sm font-semibold hover:text-blue-300 transition-colors underline-offset-4 hover:underline"
                             >
                                 {userExists ? 'Volver al Inicio' : 'Ya tengo una cuenta, iniciar sesión'}
                             </button>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
     )
 }
+

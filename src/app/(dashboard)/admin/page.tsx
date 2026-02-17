@@ -116,172 +116,160 @@ export default function AdminDashboard() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-10 animate-fade-in">
-            {/* Header */}
-            <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                    <div className="w-1.5 h-8 bg-indigo-500 rounded-full" />
-                    <Heading level={1} className="tracking-tight text-white">Dashboard Admin</Heading>
-                </div>
-                <Text size="base" className="text-text-muted font-medium ml-4.5">
-                    Gestiona las operaciones de tu proyecto
-                </Text>
-            </div>
+        <div className="max-w-7xl mx-auto pt-8 pb-20 space-y-12 animate-fade-in px-4">
+            {/* 1. Header & Hero Section */}
+            <div className="relative overflow-hidden p-8 rounded-[32px] bg-gradient-to-br from-[hsl(220,15%,14%)] to-transparent border border-white/5 shadow-2xl">
+                {/* Decorative background effects */}
+                <div className="absolute -top-24 -right-24 w-64 h-64 bg-indigo-500/10 blur-[100px] rounded-full" />
+                <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-emerald-500/5 blur-[100px] rounded-full" />
 
-            {/* Project Card */}
-            <div
-                className="company-header-card"
-                style={{ marginBottom: '2rem', cursor: 'pointer', transition: 'transform 0.2s' }}
-                onClick={() => router.push(`/admin/projects/${projectData.id}?tab=details&action=edit`)}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
-            >
-                <div className="company-header-content">
-                    <div className="company-header-icon">
-                        📁
+                <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-1.5 h-8 bg-indigo-500 rounded-full" />
+                            <Heading level={1} className="text-xl font-bold tracking-tight text-white uppercase">
+                                Dashboard Admin
+                            </Heading>
+                        </div>
+
+                        <div className="ml-4.5">
+                            <h2 className="text-3xl font-bold text-white mb-2 leading-tight">
+                                {projectData.name}
+                            </h2>
+                            <div className="flex items-center gap-3">
+                                <span className="px-2 py-0.5 bg-indigo-500/10 border border-indigo-500/20 rounded font-mono text-xs text-indigo-400 font-bold tracking-wider">
+                                    {projectData.code}
+                                </span>
+                                <Text size="sm" variant="dim" className="font-bold uppercase tracking-wider">
+                                    {projectData.company_name}
+                                </Text>
+                            </div>
+                        </div>
                     </div>
-                    <div className="company-header-info">
-                        <h2 className="company-header-name">{projectData.name}</h2>
-                        <p className="company-header-role" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span style={{
-                                padding: '0.25rem 0.5rem',
-                                background: 'rgba(96, 165, 250, 0.1)',
-                                border: '1px solid rgba(96, 165, 250, 0.3)',
-                                borderRadius: '0.25rem',
-                                fontSize: '0.75rem',
-                                fontFamily: 'monospace',
-                                color: '#60a5fa'
-                            }}>
-                                {projectData.code}
-                            </span>
-                            • {projectData.company_name}
+
+                    <div className="flex flex-col items-end gap-3">
+                        <div className="flex items-center gap-4">
                             {projectData.current_week && (
-                                <>
-                                    <span style={{ color: '#64748b' }}>•</span>
-                                    <span style={{
-                                        padding: '0.25rem 0.5rem',
-                                        background: 'rgba(168, 85, 247, 0.1)',
-                                        border: '1px solid rgba(168, 85, 247, 0.3)',
-                                        borderRadius: '0.25rem',
-                                        fontSize: '0.75rem',
-                                        fontWeight: '600',
-                                        color: '#c084fc'
-                                    }}>
-                                        {projectData.current_week}
-                                    </span>
-                                </>
+                                <div className="px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-xl">
+                                    <div className="text-[10px] text-purple-400 font-bold uppercase tracking-wider mb-0.5">Semana Actual</div>
+                                    <div className="text-lg font-bold text-white">{projectData.current_week}</div>
+                                </div>
                             )}
-                        </p>
+                            <div className={`px-4 py-2 rounded-xl border ${projectData.status === 'active' ? 'bg-emerald-500/10 border-emerald-500/20' :
+                                    projectData.status === 'planning' ? 'bg-blue-500/10 border-blue-500/20' :
+                                        'bg-orange-500/10 border-orange-500/20'
+                                }`}>
+                                <div className="text-[10px] uppercase tracking-wider mb-0.5 font-bold opacity-60">Status</div>
+                                <div className={`text-lg font-bold ${projectData.status === 'active' ? 'text-emerald-400' :
+                                        projectData.status === 'planning' ? 'text-blue-400' :
+                                            'text-orange-400'
+                                    }`}>
+                                    {projectData.status === 'active' && 'Activo'}
+                                    {projectData.status === 'planning' && 'Planificación'}
+                                    {projectData.status === 'on_hold' && 'Pausa'}
+                                    {projectData.status === 'completed' && 'Cerrado'}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Stats Section */}
-            < div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }
-            }>
-                {/* Members Count */}
-                < div className="company-form-container" style={{ padding: '1.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
-                        <div style={{
-                            width: '3rem',
-                            height: '3rem',
-                            background: 'rgba(34, 197, 94, 0.1)',
-                            border: '1px solid rgba(34, 197, 94, 0.3)',
-                            borderRadius: '0.75rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            <Users size={24} color="#4ade80" />
+            {/* 2. Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
+                {/* Team Stats */}
+                <div className="group relative p-8 rounded-3xl bg-[rgba(255,255,255,0.02)] border border-white/5 hover:border-emerald-500/30 transition-all duration-500 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                    <div className="relative z-10 flex items-center gap-6">
+                        <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-xl group-hover:scale-105 transition-transform duration-500">
+                            <Users size={32} />
                         </div>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>
+                        <div>
+                            <Text size="xs" variant="dim" className="font-bold uppercase tracking-widest mb-1">
                                 Miembros del Equipo
-                            </div>
-                            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white' }}>
-                                {stats.totalMembers}
-                            </div>
-                        </div>
-                    </div>
-                </div >
-
-                {/* Project Status */}
-                < div className="company-form-container" style={{ padding: '1.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
-                        <div style={{
-                            width: '3rem',
-                            height: '3rem',
-                            background: 'rgba(59, 130, 246, 0.1)',
-                            border: '1px solid rgba(59, 130, 246, 0.3)',
-                            borderRadius: '0.75rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            <BarChart3 size={24} color="#60a5fa" />
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>
-                                Estado del Proyecto
-                            </div>
-                            <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'white' }}>
-                                {projectData.status === 'active' && '🟢 Activo'}
-                                {projectData.status === 'planning' && '🔵 Planificación'}
-                                {projectData.status === 'on_hold' && '🟠 En Pausa'}
-                                {projectData.status === 'completed' && '✅ Completado'}
-                                {projectData.status === 'cancelled' && '🔴 Cancelado'}
+                            </Text>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-4xl font-bold text-white tracking-tight">
+                                    {stats.totalMembers}
+                                </span>
+                                <Text size="xs" variant="dim" className="font-bold uppercase tracking-widest">Activos</Text>
                             </div>
                         </div>
                     </div>
-                </div >
-            </div >
-
-            {/* Quick Actions */}
-            <div className="quick-actions-grid">
-                {/* Workforce Management */}
-                <div
-                    className="quick-action-card"
-                    onClick={() => router.push(`/admin/projects/${projectData.id}?tab=team`)}
-                    style={{ cursor: 'pointer' }}
-                >
-                    <div className="quick-action-icon">
-                        <Users size={24} color="#4ade80" />
-                    </div>
-                    <h3 className="quick-action-title">Gestión de Personal</h3>
-                    <p className="quick-action-description">
-                        Administra turnos, cuadrillas y asistencia
-                    </p>
                 </div>
 
-                {/* Configuration */}
-                < div
-                    className="quick-action-card"
-                    onClick={() => router.push(`/admin/projects/${projectData.id}?tab=settings`)}
-                    style={{ cursor: 'pointer' }}
-                >
-                    <div className="quick-action-icon">
-                        <Settings size={24} color="#94a3b8" />
-                    </div>
-                    <h3 className="quick-action-title">Configuración</h3>
-                    <p className="quick-action-description">
-                        Configura parámetros del proyecto
-                    </p>
-                </div >
-            </div >
+                {/* Project Overview */}
+                <div className="group relative p-8 rounded-3xl bg-[rgba(255,255,255,0.02)] border border-white/5 hover:border-indigo-500/30 transition-all duration-500 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-            {/* Project Info */}
-            {
-                projectData.description && (
-                    <div className="company-form-container" style={{ padding: '1.5rem', marginTop: '2rem' }}>
-                        <h3 style={{ fontSize: '1.125rem', fontWeight: '700', color: 'white', marginBottom: '0.75rem' }}>
-                            Descripción del Proyecto
-                        </h3>
-                        <p style={{ fontSize: '0.875rem', color: '#94a3b8', lineHeight: '1.6' }}>
-                            {projectData.description}
-                        </p>
+                    <div className="relative z-10 flex items-center gap-6">
+                        <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-xl group-hover:scale-105 transition-transform duration-500">
+                            <BarChart3 size={32} />
+                        </div>
+                        <div>
+                            <Text size="xs" variant="dim" className="font-bold uppercase tracking-widest mb-1">
+                                Estado del Proyecto
+                            </Text>
+                            <div className="flex items-center gap-3">
+                                <div className={`w-2.5 h-2.5 rounded-full animate-pulse-glow ${projectData.status === 'active' ? 'bg-emerald-400' : 'bg-blue-400'
+                                    }`} />
+                                <span className="text-2xl font-bold text-white tracking-tight uppercase">
+                                    {projectData.status === 'active' ? 'Operativo' : 'Preparación'}
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                )
-            }
-        </div >
+                </div>
+            </div>
+
+            {/* 3. Global Actions */}
+            <div className="pt-8">
+                <div className="flex items-center gap-3 mb-8">
+                    <div className="w-1.5 h-6 bg-white/20 rounded-full" />
+                    <Heading level={3} className="text-sm font-bold text-text-muted uppercase tracking-widest">Acciones de Gestión</Heading>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {/* Action Card 1 */}
+                    <button
+                        onClick={() => router.push(`/admin/projects/${projectData.id}?tab=team`)}
+                        className="group relative flex items-center gap-6 p-8 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] hover:border-emerald-500/30 hover:-translate-y-1 transition-all duration-300 text-left"
+                    >
+                        <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:shadow-[0_0_20px_rgba(52,211,153,0.3)] transition-all">
+                            <Users size={24} />
+                        </div>
+                        <div>
+                            <h4 className="text-lg font-bold text-white mb-1 group-hover:text-emerald-400 transition-colors tracking-tight">Gestión de Personal</h4>
+                            <p className="text-sm text-text-muted font-medium leading-relaxed">Administra turnos, cuadrillas y asistencia del equipo.</p>
+                        </div>
+                    </button>
+
+                    {/* Action Card 2 */}
+                    <button
+                        onClick={() => router.push(`/admin/projects/${projectData.id}?tab=settings`)}
+                        className="group relative flex items-center gap-6 p-8 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] hover:border-indigo-500/30 hover:-translate-y-1 transition-all duration-300 text-left"
+                    >
+                        <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] transition-all">
+                            <Settings size={24} />
+                        </div>
+                        <div>
+                            <h4 className="text-lg font-bold text-white mb-1 group-hover:text-indigo-400 transition-colors tracking-tight">Configuración</h4>
+                            <p className="text-sm text-text-muted font-medium leading-relaxed">Configura parámetros globales y workflows del proyecto.</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            {/* 4. Project Details Footer */}
+            {projectData.description && (
+                <div className="relative p-8 rounded-3xl bg-[rgba(255,255,255,0.01)] border border-white/5 mt-8">
+                    <Text size="xs" variant="dim" className="font-bold uppercase tracking-widest mb-4">Información Adicional</Text>
+                    <p className="text-sm text-text-muted leading-relaxed max-w-3xl font-medium">
+                        {projectData.description}
+                    </p>
+                </div>
+            )}
+        </div>
     )
 }

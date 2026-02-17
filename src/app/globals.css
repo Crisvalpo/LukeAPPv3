@@ -969,3 +969,51 @@
     scrollbar-color: var(--color-bg-surface-2) var(--color-bg-app);
   }
 }
+
+/* ==========================================
+   CONFETTI ANIMATIONS
+   ========================================== */
+.confetti-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.confetti-particle {
+  position: absolute;
+  top: -20px;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  animation: confetti-fall linear forwards;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(0) rotate(0deg) skew(0deg);
+    opacity: 1;
+  }
+
+  25% {
+    transform: translateY(25vh) rotate(90deg) skew(10deg);
+  }
+
+  50% {
+    transform: translateY(50vh) rotate(180deg) skew(-10deg);
+    opacity: 1;
+  }
+
+  75% {
+    transform: translateY(75vh) rotate(270deg) skew(10deg);
+  }
+
+  100% {
+    transform: translateY(100vh) rotate(360deg) skew(0deg);
+    opacity: 0;
+  }
+}

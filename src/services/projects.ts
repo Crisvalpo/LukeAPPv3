@@ -112,18 +112,28 @@ export async function createProject(params: CreateProjectParams) {
         // Check Project Limits
         const { data: company } = await supabase
             .from('companies')
-            .select(`
-                custom_projects_limit,
-                subscription_plans (
-                    max_projects
-                )
-            `)
+            .select('custom_projects_limit, subscription_tier')
             .eq('id', params.company_id)
             .single()
 
         if (company) {
-            // @ts-ignore
-            const maxProjects = company.custom_projects_limit ?? company.subscription_plans?.max_projects ?? 999
+            let maxProjects = company.custom_projects_limit
+
+            // If no custom limit, fetch from subscription plan
+            if (maxProjects === null && company.subscription_tier) {
+                const { data: plan } = await supabase
+                    .from('subscription_plans')
+                    .select('max_projects')
+                    .eq('id', company.subscription_tier)
+                    .maybeSingle()
+
+                if (plan) {
+                    maxProjects = plan.max_projects
+                }
+            }
+
+            // Default fallback
+            maxProjects = maxProjects ?? 999 // Fallback to 999 if everything fails
 
             const { count } = await supabase
                 .from('projects')

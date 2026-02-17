@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
-import { MemberWithRelations, MemberWithFunctionalRole, ApiResponse } from '@/types'
+import { MemberWithRelations, ApiResponse } from '@/types'
 
 /**
  * Get all members for a specific company with their user info and assigned project
@@ -13,10 +13,16 @@ export async function getMembersByCompany(companyId: string): Promise<MemberWith
  * Helper to fetch members with error handling and fallback
  * (Added to diagnose RLS/Join issues)
  */
-async function fetchMembersRobust(supabase: ReturnType<typeof createClient>, companyId: string) {
-    // 1. Try full query with joins
-    // We use a try-catch for the promise itself just in case
+async function fetchMembersRobust(supabase: ReturnType<typeof createClient>, companyId: string): Promise<MemberWithRelations[]> {
+    // 1. Try fetching specialties separately to avoid PostgREST join issues
     try {
+        const { data: specialtiesData } = await supabase.from('specialties').select('id, name, code')
+        const specialtyMap = (specialtiesData || []).reduce((acc: any, s: any) => {
+            acc[s.id] = s
+            return acc
+        }, {})
+
+        // 2. Try primary fetch with allowed joins
         const { data, error } = await supabase
             .from('members')
             .select(`
@@ -32,7 +38,6 @@ async function fetchMembersRobust(supabase: ReturnType<typeof createClient>, com
                 projects ( name, code ),
                 companies ( name, slug ),
                 company_roles ( id, name, color, base_role, permissions ),
-                specialties!members_primary_specialty_id_fkey ( name, code ),
                 primary_specialty_id
             `)
             .eq('company_id', companyId)
@@ -40,8 +45,11 @@ async function fetchMembersRobust(supabase: ReturnType<typeof createClient>, com
             .order('created_at', { ascending: false })
 
         if (!error && data) {
-            return data
-                .filter((m: any) => m.users?.email !== 'cristianluke@gmail.com')
+            return (data as any[])
+                .filter((m: any) =>
+                    m.users?.email !== 'cristianluke@gmail.com' &&
+                    m.user_id !== '4c8a1bab-4775-cc52-d1d8-40749fff-faaa2e248af3'
+                )
                 .map((m: any) => ({
                     id: m.id,
                     user_id: m.user_id,
@@ -55,12 +63,11 @@ async function fetchMembersRobust(supabase: ReturnType<typeof createClient>, com
                     project: m.projects,
                     company: m.companies,
                     company_role: m.company_roles,
-                    specialty: m.specialties,
+                    specialty: m.primary_specialty_id ? specialtyMap[m.primary_specialty_id] : null,
                     primary_specialty_id: m.primary_specialty_id
-                }))
+                })) as MemberWithRelations[]
         }
 
-        // Only log if it's a real error, not just empty data
         if (error) {
             console.error('⚠️ Error fetching members with joins:', JSON.stringify(error, null, 2))
         }
@@ -68,7 +75,7 @@ async function fetchMembersRobust(supabase: ReturnType<typeof createClient>, com
         console.error('⚠️ Exception fetching members with joins:', e)
     }
 
-    // 2. Fallback: Fetch raw members only (to isolate RLS issues)
+    // 3. Fallback: Fetch raw members only (to isolate RLS issues)
     console.warn('🔄 Attempting fallback fetch (no joins)...')
 
     try {
@@ -85,23 +92,28 @@ async function fetchMembersRobust(supabase: ReturnType<typeof createClient>, com
 
         if (!rawData) return []
 
-        // 3. Return minimal data
-        return rawData.map((m: any) => ({
-            id: m.id,
-            user_id: m.user_id,
-            company_id: m.company_id,
-            project_id: m.project_id,
-            role_id: m.role_id,
-            job_title: m.job_title,
-            functional_role_id: m.functional_role_id,
-            created_at: m.created_at,
-            user: { email: 'Unknown (RLS Error)' },
-            project: null,
-            company: null,
-            company_role: null,
-            specialty: null,
-            primary_specialty_id: m.primary_specialty_id
-        }))
+        // 4. Return minimal data and FILTER protected user
+        return (rawData as any[])
+            .filter((m: any) =>
+                m.user_id !== '97418854-2fcf-4ab8-b99d-4a5f8a2cc838' &&
+                m.user_id !== '4c8a1bab-4775-cc52-d1d8-40749fff-faaa2e248af3'
+            )
+            .map((m: any) => ({
+                id: m.id,
+                user_id: m.user_id,
+                company_id: m.company_id,
+                project_id: m.project_id,
+                role_id: m.role_id,
+                job_title: m.job_title,
+                functional_role_id: m.functional_role_id,
+                created_at: m.created_at,
+                user: { email: 'Unknown (RLS/Auth Error)' },
+                project: null,
+                company: null,
+                company_role: null,
+                specialty: null,
+                primary_specialty_id: m.primary_specialty_id
+            })) as MemberWithRelations[]
     } catch (fallbackError) {
         console.error('❌ Critical: Exception in fallback:', fallbackError)
         return []
