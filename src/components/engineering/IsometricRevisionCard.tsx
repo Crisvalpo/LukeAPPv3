@@ -1467,7 +1467,7 @@ export default function IsometricRevisionCard({
             // @ts-ignore
             const company = { id: projectData.companies.id, slug: projectData.companies.slug }
             const project = { id: rev.project_id, code: projectData.code, name: projectData.name }
-            const filePath = getProjectFilePath(company, project, 'isometric-models', fileName)
+            const filePath = getProjectFilePath(company, project, 'piping/isometric-models', fileName)
 
             // 1. Upload to Storage
             const { error: uploadError } = await supabase.storage
@@ -1543,7 +1543,7 @@ export default function IsometricRevisionCard({
             // @ts-ignore
             const company = { id: projectData.companies.id, slug: projectData.companies.slug }
             const project = { id: rev.project_id, code: projectData.code, name: projectData.name }
-            const filePath = getProjectFilePath(company, project, 'isometric-pdfs', fileName)
+            const filePath = getProjectFilePath(company, project, 'piping/isometric-pdfs', fileName)
 
             // 1. Upload to Storage (Using project-files bucket)
             const { error: uploadError } = await supabase.storage

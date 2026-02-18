@@ -374,7 +374,20 @@ export async function deleteRole(roleId: string): Promise<ApiResponse<void>> {
         if (count && count > 0) {
             return {
                 success: false,
-                message: `No puedes eliminar este rol. ${count} usuario(s) lo están usando.`
+                message: `No puedes eliminar este rol. Hay ${count} usuario(s) asignados a él.`
+            };
+        }
+
+        // Protection 3: Cannot delete if active invitations exist
+        const { count: inviteCount } = await supabase
+            .from('invitations')
+            .select('id', { count: 'exact', head: true })
+            .eq('functional_role_id', roleId);
+
+        if (inviteCount && inviteCount > 0) {
+            return {
+                success: false,
+                message: `No puedes eliminar este rol. Hay ${inviteCount} invitaci\u00f3n(es) pendientes con este rol.`
             };
         }
 
@@ -385,10 +398,9 @@ export async function deleteRole(roleId: string): Promise<ApiResponse<void>> {
             .eq('id', roleId);
 
         if (error) {
-            console.error('Error deleting role:', error);
             return {
                 success: false,
-                message: 'Error al eliminar el rol'
+                message: error.message || 'Error al eliminar el rol'
             };
         }
 

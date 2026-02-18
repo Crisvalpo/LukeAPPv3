@@ -94,7 +94,12 @@ export default function RolesManagementPage() {
         const result = await getCompanyRolesWithStats(companyId);
 
         if (result.success) {
-            setRoles(result.data || []);
+            // Sort roles by hierarchy: admin (1) > supervisor (2) > worker (3)
+            const rolePriority = { admin: 1, supervisor: 2, worker: 3 };
+            const sortedRoles = (result.data || []).sort((a, b) => {
+                return (rolePriority[a.base_role] || 99) - (rolePriority[b.base_role] || 99);
+            });
+            setRoles(sortedRoles);
         } else {
             setError(result.message ?? 'Error desconocido');
         }
@@ -409,9 +414,9 @@ function RoleCard({ role, onEdit, onDelete }: RoleCardProps) {
                     >
                         {role.name.charAt(0).toUpperCase()}
                     </div>
-                    <div className="space-y-1">
+                    <div className="flex-1 min-w-0 pr-2">
                         <div className="flex items-center gap-2">
-                            <Heading level={3} className="text-base font-bold text-white truncate max-w-[150px]">{role.name}</Heading>
+                            <Heading level={3} className="text-base font-bold text-white leading-snug">{role.name}</Heading>
                         </div>
                         <div className="flex items-center gap-2">
                             <div

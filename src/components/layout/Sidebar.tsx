@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
+import { getOnboardingStatus } from '@/actions/onboarding'
 // Styles migrated to Tailwind v4
 import OnboardingWidget from '@/components/onboarding/OnboardingWidget'
 
@@ -47,6 +48,22 @@ export default function Sidebar({ role, companyName, companyId, companyLogoUrl, 
     const [openItems, setOpenItems] = useState<Record<string, boolean>>({})
     const [isOpen, setIsOpen] = useState(false) // Mobile drawer state
     const [isCollapsed, setIsCollapsed] = useState(false) // Desktop collapse state
+    const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean>(true) // Default to true to avoid flash
+
+    // Fetch onboarding status for Founders
+    React.useEffect(() => {
+        if (role === 'founder' && companyId) {
+            const checkOnboarding = async () => {
+                const status = await getOnboardingStatus(companyId)
+                setIsOnboardingComplete(status.isComplete)
+            }
+            checkOnboarding()
+
+            // Listen for onboarding updates
+            window.addEventListener('onboarding-updated', checkOnboarding)
+            return () => window.removeEventListener('onboarding-updated', checkOnboarding)
+        }
+    }, [role, companyId])
 
     // Synchronize --sidebar-width variable
     React.useEffect(() => {
@@ -239,9 +256,14 @@ export default function Sidebar({ role, companyName, companyId, companyLogoUrl, 
                                             : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'}
                                         ${visibilityClass}
                                         ${isCollapsed ? 'justify-center p-2' : ''}
+                                        ${(role === 'founder' && !isOnboardingComplete) ? 'opacity-40 grayscale pointer-events-none' : ''}
                                     `}
-                                    title={isCollapsed ? item.name : ''}
+                                    title={(role === 'founder' && !isOnboardingComplete) ? 'Completa el onboarding para desbloquear' : (isCollapsed ? item.name : '')}
                                     onClick={(e) => {
+                                        if (role === 'founder' && !isOnboardingComplete) {
+                                            e.preventDefault()
+                                            return
+                                        }
                                         if (hasSubitems) {
                                             e.preventDefault()
                                             toggleSubitem(item.name)

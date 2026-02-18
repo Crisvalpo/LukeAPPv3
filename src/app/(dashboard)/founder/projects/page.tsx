@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Trash2, Plus, XCircle, ArrowUpCircle } from 'lucide-react'
 
 import { getProjectsByCompany, type Project } from '@/services/projects'
+import { getOnboardingStatus } from '@/actions/onboarding'
 import { ListView } from '@/components/views/ListView'
 import { ProjectSchema } from '@/schemas/project'
 import DeleteProjectModal from '@/components/modals/DeleteProjectModal'
@@ -28,7 +29,7 @@ export default function ProjectsListPage() {
     const [projects, setProjects] = useState<ProjectWithStats[]>([])
     const [companyId, setCompanyId] = useState<string | null>(null)
     const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTierType>('starter')
-
+    const [isOnboardingStep, setIsOnboardingStep] = useState(false)
     const [customProjectsLimit, setCustomProjectsLimit] = useState<number | null>(null)
 
     const [maxProjectsLimit, setMaxProjectsLimit] = useState<number>(1) // Default fallback
@@ -80,6 +81,10 @@ export default function ProjectsListPage() {
         }
 
         const projectsData = await getProjectsByCompany(memberData.company_id)
+
+        // Check Onboarding
+        const status = await getOnboardingStatus(memberData.company_id)
+        setIsOnboardingStep(status.currentStep === 'projects')
 
         const projectsWithStats = await Promise.all(
             projectsData.map(async (project) => {
@@ -178,10 +183,20 @@ export default function ProjectsListPage() {
                     <Button
                         onClick={handleCreateClick}
                         disabled={projects.length >= currentLimit}
-                        className="bg-brand-primary hover:bg-brand-primary/90 text-white shadow-lg shadow-brand-primary/20 active:scale-95 transition-all"
+                        className={`
+                            bg-brand-primary hover:bg-brand-primary/90 text-white shadow-lg shadow-brand-primary/20 
+                            active:scale-95 transition-all relative
+                            ${isOnboardingStep ? 'animate-pulse-glow ring-2 ring-brand-primary/50 ring-offset-2 ring-offset-bg-app' : ''}
+                        `}
                     >
                         <Plus className="mr-2 h-4 w-4" />
                         Nuevo Proyecto
+                        {isOnboardingStep && (
+                            <span className="absolute -top-2 -right-2 flex h-4 w-4">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-primary opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-4 w-4 bg-brand-primary text-[8px] items-center justify-center font-bold text-white">1</span>
+                            </span>
+                        )}
                     </Button>
                 </div>
             </div>

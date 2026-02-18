@@ -434,7 +434,7 @@ export default function InvitationManager({
                             <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
                                 <Mail size={20} className="text-blue-400" />
                             </div>
-                            <h2 className="text-lg font-black text-white tracking-tight uppercase">Audit de Invitaciones</h2>
+                            <h2 className="text-lg font-black text-white tracking-tight uppercase">Auditoría de Invitaciones</h2>
                         </div>
                         {invitations.length > 0 && (
                             <span className="px-3 py-1 bg-blue-500/10 text-blue-400 text-[10px] font-black rounded-lg border border-blue-500/20">

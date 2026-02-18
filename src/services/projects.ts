@@ -201,13 +201,15 @@ export async function createProject(params: CreateProjectParams) {
                     const folders = [
                         'logos',
                         'structure-models',
-                        'isometric-models',
-                        'drawings',
                         'photos',
                         'civil',
                         'electrical',
                         'instrumentation',
-                        'mechanical'
+                        'mechanical',
+                        'piping',
+                        'piping/isometric-models',
+                        'piping/isometric-pdfs',
+                        'piping/spools'
                     ]
 
                     // Upload a placeholder .keep file to each folder to initialize it

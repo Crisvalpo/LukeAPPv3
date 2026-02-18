@@ -228,10 +228,12 @@ export default function NewProjectPage() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {allSpecialties.map(spec => {
                                     const isSelected = selectedSpecialtyIds.includes(spec.id)
+                                    const isAvailable = spec.code === 'PIP'
                                     return (
                                         <div
                                             key={spec.id}
                                             onClick={() => {
+                                                if (!isAvailable) return
                                                 if (isSelected) {
                                                     setSelectedSpecialtyIds(prev => prev.filter(id => id !== spec.id))
                                                 } else {
@@ -239,14 +241,22 @@ export default function NewProjectPage() {
                                                 }
                                             }}
                                             className={`
-                                                cursor-pointer flex items-center justify-between p-4 rounded-xl border transition-all duration-200
-                                                ${isSelected
+                                                relative flex items-center justify-between p-4 rounded-xl border transition-all duration-200
+                                                ${isAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-50 grayscale'}
+                                                ${isSelected && isAvailable
                                                     ? 'bg-brand-primary/10 border-brand-primary shadow-[0_0_15px_rgba(59,130,246,0.1)]'
                                                     : 'bg-white/5 border-white/10 hover:border-white/20'}
                                             `}
                                         >
+                                            {!isAvailable && (
+                                                <div className="absolute -top-2 -right-1 z-20">
+                                                    <span className="bg-slate-800 text-slate-400 text-[9px] font-bold px-2 py-0.5 rounded-full border border-white/10 shadow-sm">
+                                                        Próximamente
+                                                    </span>
+                                                </div>
+                                            )}
                                             <div className="flex flex-col">
-                                                <span className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-slate-300'}`}>
+                                                <span className={`text-sm font-bold ${isSelected && isAvailable ? 'text-white' : 'text-slate-300'}`}>
                                                     {spec.name}
                                                 </span>
                                                 <span className="text-[10px] text-slate-500 font-medium uppercase tracking-tighter">
@@ -255,7 +265,7 @@ export default function NewProjectPage() {
                                             </div>
                                             <div className={`
                                                 w-5 h-5 rounded-full border flex items-center justify-center transition-all
-                                                ${isSelected ? 'bg-brand-primary border-brand-primary text-white' : 'border-white/20 text-transparent'}
+                                                ${isSelected && isAvailable ? 'bg-brand-primary border-brand-primary text-white' : 'border-white/20 text-transparent'}
                                             `}>
                                                 <Check size={12} strokeWidth={4} />
                                             </div>
@@ -264,7 +274,7 @@ export default function NewProjectPage() {
                                 })}
                             </div>
                             <Text size="xs" className="text-text-dim ml-1">
-                                Selecciona las disciplinas que se gestionarán en este proyecto. Podrás añadir más después.
+                                Actualmente enfocado en <b>Piping & AWP Core</b>. Próximamente se habilitarán más disciplinas.
                             </Text>
                         </div>
 

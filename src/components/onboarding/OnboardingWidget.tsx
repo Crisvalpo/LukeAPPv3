@@ -45,20 +45,26 @@ export default function OnboardingWidget({ companyId }: OnboardingWidgetProps) {
 
             // Logic 2: Effect runs on mount. value is 0. If result has 2 steps, it triggers.
             // We want to avoid trigger on initial page load if steps were ALREADY done.
-            // So we only trigger if we have loaded at least once.
+            // So we only trigger if we have loaded at least once AND we haven't celebrated yet.
+            const celebrationKey = `onboarding_celebrated_${companyId}`;
+            const alreadyCelebrated = typeof window !== 'undefined' ? localStorage.getItem(celebrationKey) === 'true' : false;
 
-            if (status) { // Only check transition if we had a previous status loaded
+            if (status && !alreadyCelebrated) { // Only check transition if we had a previous status loaded
                 const prevCount = status.completedSteps.length;
                 if (completedCount > prevCount) {
                     console.log('🎉 Step Completed! Triggering Confetti...');
                     setShowConfetti(true);
+                    if (result.isComplete) {
+                        localStorage.setItem(celebrationKey, 'true');
+                    }
                 }
             }
 
             // Also checking full completion just in case logic 2 misses a transition (though unlikely)
-            if (!prevIsCompleteRef.current && result.isComplete && status) {
+            if (!prevIsCompleteRef.current && result.isComplete && status && !alreadyCelebrated) {
                 // Redundant if step count incrs, but safe.
                 setShowConfetti(true);
+                localStorage.setItem(celebrationKey, 'true');
             }
 
             // Update refs
@@ -85,7 +91,12 @@ export default function OnboardingWidget({ companyId }: OnboardingWidgetProps) {
     }, [companyId, pathname]); // REMOVED 'status' from dependency array to fix infinite loop
 
     // Don't show widget if onboarding is complete AND we are not showing confetti
-    if ((!status || status.isComplete) && !showConfetti && !isLoading) {
+    // FIX: Tightened condition to avoid flashing during isLoading when already complete
+    if (status?.isComplete && !showConfetti) {
+        return null;
+    }
+
+    if (!status && !showConfetti && !isLoading) {
         return null;
     }
 
