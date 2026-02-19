@@ -314,7 +314,63 @@ export async function deleteCompanyCascade(companyId: string): Promise<{ success
     const supabase = createClient()
 
     try {
-        // 1. Call the secure RPC function
+        // 1. Client-Side Storage Cleanup (RPC cannot do it directly)
+        // Retrieve generic company info to construct path
+        const { data: company } = await supabase
+            .from('companies')
+            .select('slug, suspended_at, subscription_status')
+            .eq('id', companyId)
+            .single()
+
+        if (company) {
+            // Proceed with storage cleanup regardless of days check
+            // (RPC will enforce the 15-day rule for DB deletion)
+            try {
+                const { getCompanyStoragePath } = await import('@/lib/storage-paths')
+                const companyPath = getCompanyStoragePath({ id: companyId, slug: company.slug })
+
+                console.log(`Cleaning up storage for company: ${companyPath}`)
+
+                // Recursive delete - handles ALL files including .keep placeholders
+                const recursiveDelete = async (path: string): Promise<void> => {
+                    const { data: items } = await supabase.storage
+                        .from('project-files')
+                        .list(path, { limit: 100 })
+
+                    if (!items || items.length === 0) return
+
+                    const files: string[] = []
+                    const folders: string[] = []
+
+                    for (const item of items) {
+                        const fullPath = `${path}/${item.name}`
+                        if (item.id === null) {
+                            folders.push(fullPath) // virtual folder prefix
+                        } else {
+                            files.push(fullPath) // actual file (including .keep)
+                        }
+                    }
+
+                    // Delete files first
+                    if (files.length > 0) {
+                        await supabase.storage.from('project-files').remove(files)
+                    }
+
+                    // Recurse into subfolders
+                    for (const folder of folders) {
+                        await recursiveDelete(folder)
+                    }
+                }
+
+                await recursiveDelete(companyPath)
+
+            } catch (storageErr) {
+                console.warn('Storage cleanup failed (non-critical):', storageErr)
+            }
+        }
+
+        // 2. Call the secure RPC function to delete DB records
+        // usage of 'delete_company_cascade'
         const { data: result, error } = await supabase.rpc('delete_company_cascade', {
             p_company_id: companyId
         })
@@ -326,11 +382,6 @@ export async function deleteCompanyCascade(companyId: string): Promise<{ success
         if (!response.success) {
             return response
         }
-
-        // 2. Storage cleanup is handled within the RPC function
-        // The SQL function deletes files matching pattern: {slug}-{id}/*
-        // Example: acme-construction-fd48f0e5/*
-        // No additional client-side cleanup needed
 
         return response
 

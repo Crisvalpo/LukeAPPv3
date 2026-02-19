@@ -310,6 +310,10 @@ export interface Isometric {
     isometric_id: string  // Business ID (e.g., "ISO-001")
     rev_id: string  // Revision (e.g., "R0", "R1")
     file_id: string | null  // FK to master_views
+    // Bridge fields
+    document_id?: string | null
+    revision_status?: string // 'VIGENTE' | 'OBSOLETA' | 'ELIMINADA'
+    spooling_status?: string // 'SIN_SPOOLEAR' | 'EN_PROCESO' | 'SPOOLEADO' | 'SPOOLEADO_MANUAL'
     created_at: string
     updated_at: string
 }
@@ -730,11 +734,16 @@ export interface EngineeringRevision {
     company_id: string
     rev_code: string
     revision_status: string
+    spooling_status: string // Added in migration
     transmittal?: string
     transmittal_code?: string
     transmittal_date?: string
     release_date?: string
     announcement_date?: string
+    spooling_date?: string // Added in migration
+    delivery_date?: string // Added in migration
+    delivery_transmittal_code?: string // Added in migration
+    document_revision_id?: string | null // Bridge FK
     has_production_data?: boolean
     spools_loaded?: boolean
     welds_loaded?: boolean

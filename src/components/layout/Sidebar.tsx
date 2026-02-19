@@ -18,6 +18,8 @@ import {
     Palette,
     Menu,
     X,
+    FileText,
+    FolderOpen,
 } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
@@ -113,6 +115,8 @@ export default function Sidebar({ role, companyName, companyId, companyLogoUrl, 
     const adminMenu: MenuItem[] = [
         { name: 'Vista General', href: '/admin', icon: LayoutDashboard },
         { name: 'Proyectos', href: '/admin/projects', icon: FolderKanban },
+        { name: 'Documentos', href: '/admin/documents', icon: FileText },
+        { name: 'Ingeniería', href: '/admin/engineering', icon: Users },
     ]
 
     const menuItems = role === 'super_admin' ? staffMenu : (role === 'founder' ? founderMenu : adminMenu)

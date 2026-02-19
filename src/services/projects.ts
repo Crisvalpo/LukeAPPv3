@@ -209,7 +209,10 @@ export async function createProject(params: CreateProjectParams) {
                         'piping',
                         'piping/isometric-models',
                         'piping/isometric-pdfs',
-                        'piping/spools'
+                        'piping/spools',
+                        'documents',
+                        'documents/revisions',
+                        'documents/transmittals'
                     ]
 
                     // Upload a placeholder .keep file to each folder to initialize it
@@ -228,6 +231,24 @@ export async function createProject(params: CreateProjectParams) {
                 }
             } catch (storageError) {
                 console.warn('Error initiating storage folder creation:', storageError)
+            }
+        }
+
+        // Initialize Project Document Config
+        if (data) {
+            const { error: configError } = await supabase
+                .from('project_document_config')
+                .insert({
+                    project_id: data.id,
+                    company_id: params.company_id,
+                    coding_pattern: '{PROJECT_CODE}-{DOC_TYPE}-{SPECIALTY}-{SEQ}',
+                    next_sequence: 1,
+                    is_frozen: false
+                })
+
+            if (configError) {
+                console.error('Error creating project document config:', configError)
+                // We don't fail the whole project creation, but warn
             }
         }
 
@@ -338,37 +359,42 @@ export async function deleteProjectComplete(
                 // @ts-ignore
                 const company = { id: projectData.companies.id, slug: projectData.companies.slug }
                 const project = { id: projectData.id, code: projectData.code, name: projectData.name }
-
-                // Get the root folder for this project: {slug}-{id}/{code}-{id}
                 const projectPath = getProjectStoragePath(company, project)
 
                 console.log('Cleaning up project storage at:', projectPath)
 
-                // Subfolders to clean
-                const subfolders = ['logos', 'structure-models', 'isometric-models', 'drawings', 'photos', 'isometric-pdfs']
-
-                for (const folder of subfolders) {
-                    const folderPath = `${projectPath}/${folder}`
-                    const { data: files } = await supabase.storage
+                // Recursive delete helper - deletes ALL files including .keep placeholders
+                const recursiveDelete = async (path: string): Promise<void> => {
+                    const { data: items } = await supabase.storage
                         .from('project-files')
-                        .list(folderPath, { limit: 100 })
+                        .list(path, { limit: 100 })
 
-                    if (files && files.length > 0) {
-                        const paths = files.map(f => `${folderPath}/${f.name}`)
-                        await supabase.storage.from('project-files').remove(paths)
+                    if (!items || items.length === 0) return
+
+                    const files: string[] = []
+                    const folders: string[] = []
+
+                    for (const item of items) {
+                        const fullPath = `${path}/${item.name}`
+                        if (item.id === null) {
+                            folders.push(fullPath) // virtual folder
+                        } else {
+                            files.push(fullPath) // actual file (including .keep)
+                        }
+                    }
+
+                    // Delete files first
+                    if (files.length > 0) {
+                        await supabase.storage.from('project-files').remove(files)
+                    }
+
+                    // Recurse into subfolders
+                    for (const folder of folders) {
+                        await recursiveDelete(folder)
                     }
                 }
 
-                // Also try cleaning root of project folder
-                const { data: rootFiles } = await supabase.storage.from('project-files').list(projectPath)
-                if (rootFiles && rootFiles.length > 0) {
-                    const rootPaths = rootFiles
-                        .filter(f => f.name !== '.emptyFolderPlaceholder')
-                        .map(f => `${projectPath}/${f.name}`)
-                    if (rootPaths.length > 0) {
-                        await supabase.storage.from('project-files').remove(rootPaths)
-                    }
-                }
+                await recursiveDelete(projectPath)
 
             } catch (storageError) {
                 console.warn('Error cleaning up project-files:', storageError)

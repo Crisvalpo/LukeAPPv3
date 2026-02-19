@@ -81,8 +81,10 @@ export function getProjectFilePath(
     subfolder: string,
     filename: string
 ): string {
+    // Force subfolder to be relative, remove leading slashes
+    const cleanSubfolder = subfolder.replace(/^\/+/g, '');
     const projectPath = getProjectStoragePath(company, project);
-    return `${projectPath}/${subfolder}/${filename}`;
+    return `${projectPath}/${cleanSubfolder}/${filename}`;
 }
 
 /**
@@ -97,6 +99,23 @@ export function getCompanyFilePath(
 ): string {
     const companyPath = getCompanyStoragePath(company);
     return `${companyPath}/company/${subfolder}/${filename}`;
+}
+
+/**
+ * Build the full storage path for a document revision file.
+ * Format: {company-slug}-{id}/{project-code}-{id}/documents/revisions/{document_code}/{rev_code}_{filename}
+ */
+export function getDocumentRevisionStoragePath(
+    company: { id: string; slug: string },
+    project: { id: string; code?: string | null; name: string },
+    documentCode: string,
+    revCode: string,
+    filename: string
+): string {
+    const DOC_REVISIONS_FOLDER = 'documents/revisions'
+    const basePath = getProjectStoragePath(company, project)
+    const safeDocCode = documentCode.replace(/[^a-zA-Z0-9_-]/g, '_')
+    return `${basePath}/${DOC_REVISIONS_FOLDER}/${safeDocCode}/${revCode}_${filename}`
 }
 
 /**
