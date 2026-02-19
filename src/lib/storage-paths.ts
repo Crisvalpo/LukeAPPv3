@@ -37,23 +37,20 @@ export function getCompanyStoragePath(company: {
     id: string;
     slug: string;
 }): string {
-    const shortId = getShortId(company.id);
-    return `${company.slug}-${shortId}`;
+    return company.slug;
 }
 
 /**
  * Generate project storage folder name
- * Format: {project-code}-{id-prefix} or {project-name}-{id-prefix}
- * Example: proyecto-norte-8af4928e
+ * Format: {project-code} or {project-name-slug}
+ * Example: proyecto-norte
  */
 export function getProjectStorageName(project: {
     id: string;
     code?: string | null;
     name: string;
 }): string {
-    const shortId = getShortId(project.id);
-    const identifier = project.code || sanitizeForPath(project.name);
-    return `${identifier}-${shortId}`;
+    return project.code || sanitizeForPath(project.name);
 }
 
 /**

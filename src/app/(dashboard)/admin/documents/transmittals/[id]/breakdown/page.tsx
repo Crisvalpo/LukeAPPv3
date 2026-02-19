@@ -16,6 +16,26 @@ import { toast } from 'sonner'
 import JSZip from 'jszip'
 import * as XLSX from 'xlsx'
 
+const GLOBAL_PATTERNS = {
+    SPECIALTIES: [
+        { key: 'PIP', keywords: ['PIP', 'ISO', 'XA', 'CIRCULATION', 'PIPING', 'LINE'], prefixes: ['XA'] },
+        { key: 'INS', keywords: ['INS', 'KA', 'INSTRUMENT', 'HOOK-UP', 'THERMOCOUPLE', 'TRANSMITTER', 'VALVE', 'ANALYS'], prefixes: ['KA'] },
+        { key: 'MEC', keywords: ['MEC', 'GA', 'PUMP', 'MOTOR', 'NOISE', 'PERFORMANCE', 'EQUIPMENT'], prefixes: ['GA'] },
+        { key: 'STR', keywords: ['STR', 'CA', 'CIV', 'FOUNDATION', 'CIVIL', 'CONCRETE', 'STEEL'], prefixes: ['CA'] },
+        { key: 'ELE', keywords: ['ELE', 'NA', 'VFD', 'CABLE', 'CONVERTER', 'POWER', 'LIGHTING'], prefixes: ['NA'] },
+        { key: 'PRO', keywords: ['PRO', 'BA', 'PROCESS', 'FLOW', 'P&ID', 'DIAGRAM'], prefixes: ['BA'] }
+    ],
+    DOC_TYPES: [
+        { key: 'ISO', keywords: ['ISO', 'ISOMÉTRICO', 'ISOMETRIC'] },
+        { key: 'DS', keywords: ['DS', 'DATA SHEET', 'HOJA DE DATOS', 'DATASHEET', 'CURVE'] },
+        { key: 'SPE', keywords: ['SPE', 'SPECIFICATION', 'ESPECIFICACIÓN'] },
+        { key: 'MR', keywords: ['MR', 'REQUISITION', 'REQUISICIÓN', 'PURCHASE'] },
+        { key: 'LST', keywords: ['LST', 'LIST', 'LISTADO', 'SCHEDULE'] },
+        { key: 'DWG', keywords: ['DWG', 'DRAWING', 'PLANO', 'LAYOUT', 'P&ID', 'DIAGRAM', 'GENERAL ARRANGEMENT', 'ASSEMBLY', 'TEE'] },
+        { key: 'QCP', keywords: ['QCP', 'QUALITY', 'CONTROL PLAN', 'QUALITY CONTROL'] }
+    ]
+}
+
 interface UnzippedFile {
     name: string
     size: number
@@ -31,6 +51,8 @@ interface ManifestItem {
     document_type_id: string
     specialty_id: string
     status: 'MATCHED' | 'MISSING_FILE' | 'EXTRA_FILE'
+    is_specialty_suggested?: boolean
+    is_doc_type_suggested?: boolean
 }
 
 interface DocType { id: string; name: string; code: string }
@@ -107,6 +129,31 @@ export default function TransmittalBreakdownPage() {
                 setZipFiles(files)
             }
 
+            const suggestSpecialty = (code: string, title: string) => {
+                const combined = (code + ' ' + title).toUpperCase()
+                const pattern = GLOBAL_PATTERNS.SPECIALTIES.find(p =>
+                    p.prefixes.some(pre => code.toUpperCase().includes('-' + pre + '-') || code.toUpperCase().startsWith(pre)) ||
+                    p.keywords.some(k => combined.includes(k))
+                )
+                if (pattern) {
+                    return specialties.find(s => s.code === pattern.key || s.name.toUpperCase().includes(pattern.key))?.id || ''
+                }
+                return ''
+            }
+
+            const suggestDocType = (code: string, title: string) => {
+                const combined = (code + ' ' + title).toUpperCase()
+                const pattern = GLOBAL_PATTERNS.DOC_TYPES.find(p =>
+                    p.keywords.some(k => combined.includes(k))
+                )
+                if (pattern) {
+                    return docTypes.find(t => t.code === pattern.key || t.name.toUpperCase().includes(pattern.key))?.id || ''
+                }
+                return ''
+            }
+
+            const cleanName = (n: string) => n.toLowerCase().replace(/_cmtd$|_rev\d+$|_v\d+$/, '').replace(/\.(pdf|xlsx|docx|doc|xls)$/, '')
+
             // 2. Parse Manifest Excel
             if (transmittal.manifest_url) {
                 toast.info('Procesando manifiesto Excel...')
@@ -117,34 +164,66 @@ export default function TransmittalBreakdownPage() {
                 const jsonData = XLSX.utils.sheet_to_json(firstSheet)
                 setManifestData(jsonData)
 
-                // 3. Simple matching logic (Can be improved)
-                // Mock logic: looking for "Código", "Título", "Revisión", "Archivo"
+                // 3. Global Matching + Suggestions
                 const mapped: ManifestItem[] = jsonData.map((row: any) => {
-                    const filename = row.Archivo || row.Filename || row.Name || ''
-                    const zipMatch = files.find(f => f.name.toLowerCase() === filename.toLowerCase())
+                    const code = row.Código || row.Code || row['Document Number'] || row['N° Documento'] || row['Plano'] || 'DOC-' + Math.random().toString(36).substring(7)
+
+                    // Try to find filename column
+                    let filename = row.Archivo || row.Filename || row.Name || row['FileName'] || row['File'] || ''
+
+                    // Find match in ZIP
+                    let zipMatch = undefined
+
+                    // 1. Try by explicit filename column
+                    if (filename) {
+                        zipMatch = files.find(f => cleanName(f.name) === cleanName(filename))
+                    }
+
+                    // 2. Try by Code (common in Engineering: Code = Filename)
+                    if (!zipMatch && code) {
+                        zipMatch = files.find(f => cleanName(f.name).includes(cleanName(code)))
+                        if (zipMatch) {
+                            filename = zipMatch.name // Auto-assign filename if matched by code
+                        }
+                    }
+
+                    const title = row.Título || row.Title || row['Document Title'] || 'Documento sin título'
+
+                    const specId = suggestSpecialty(code, title)
+                    const typeId = suggestDocType(code, title)
 
                     return {
-                        code: row.Código || row.Code || 'DOC-' + Math.random().toString(36).substring(7),
-                        title: row.Título || row.Title || 'Documento sin título',
-                        revision: String(row.Revisión || row.Revision || '0'),
+                        code: code,
+                        title: title,
+                        revision: String(row.Revisión || row.Revision || row['Issue Index'] || '0'),
                         filename: filename,
-                        document_type_id: '',
-                        specialty_id: '',
-                        status: zipMatch ? 'MATCHED' : 'MISSING_FILE'
+                        document_type_id: typeId,
+                        specialty_id: specId,
+                        status: zipMatch ? 'MATCHED' : 'MISSING_FILE',
+                        is_specialty_suggested: !!specId,
+                        is_doc_type_suggested: !!typeId
                     }
                 })
                 setBreakdownItems(mapped)
             } else if (files.length > 0) {
                 // If no manifest, list zip files as potential docs
-                const mapped: ManifestItem[] = files.map(f => ({
-                    code: f.name.replace(/\.[^/.]+$/, ""), // file name without ext
-                    title: f.name,
-                    revision: '0',
-                    filename: f.name,
-                    document_type_id: '',
-                    specialty_id: '',
-                    status: 'MATCHED'
-                }))
+                const mapped: ManifestItem[] = files.map(f => {
+                    const code = f.name.replace(/\.[^/.]+$/, "")
+                    const specId = suggestSpecialty(code, f.name)
+                    const typeId = suggestDocType(code, f.name)
+
+                    return {
+                        code: code,
+                        title: f.name,
+                        revision: '0',
+                        filename: f.name,
+                        document_type_id: typeId,
+                        specialty_id: specId,
+                        status: 'MATCHED',
+                        is_specialty_suggested: !!specId,
+                        is_doc_type_suggested: !!typeId
+                    }
+                })
                 setBreakdownItems(mapped)
             }
 
@@ -385,32 +464,50 @@ export default function TransmittalBreakdownPage() {
                                                 />
                                             </td>
                                             <td className="px-6 py-4">
-                                                <select
-                                                    value={item.document_type_id}
-                                                    onChange={e => {
-                                                        const newItems = [...breakdownItems]
-                                                        newItems[i].document_type_id = e.target.value
-                                                        setBreakdownItems(newItems)
-                                                    }}
-                                                    className="bg-black/20 border border-white/10 rounded px-1 py-1 text-[10px] text-slate-300 outline-none w-full"
-                                                >
-                                                    <option value="">Seleccionar...</option>
-                                                    {docTypes.map(t => <option key={t.id} value={t.id}>{t.code}</option>)}
-                                                </select>
+                                                <div className="relative group/select">
+                                                    <select
+                                                        value={item.document_type_id}
+                                                        onChange={e => {
+                                                            const newItems = [...breakdownItems]
+                                                            newItems[i].document_type_id = e.target.value
+                                                            newItems[i].is_doc_type_suggested = false // Manual override
+                                                            setBreakdownItems(newItems)
+                                                        }}
+                                                        className={`bg-black/20 border rounded px-1 py-1 text-[10px] outline-none w-full transition-colors ${item.is_doc_type_suggested
+                                                            ? 'border-blue-500/50 text-blue-300'
+                                                            : 'border-white/10 text-slate-300'
+                                                            }`}
+                                                    >
+                                                        <option value="">Seleccionar...</option>
+                                                        {docTypes.map(t => <option key={t.id} value={t.id}>{t.code}</option>)}
+                                                    </select>
+                                                    {item.is_doc_type_suggested && (
+                                                        <div className="absolute -top-2 -right-1 bg-blue-500 text-[8px] px-1 rounded text-white font-bold pointer-events-none">IA</div>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <select
-                                                    value={item.specialty_id}
-                                                    onChange={e => {
-                                                        const newItems = [...breakdownItems]
-                                                        newItems[i].specialty_id = e.target.value
-                                                        setBreakdownItems(newItems)
-                                                    }}
-                                                    className="bg-black/20 border border-white/10 rounded px-1 py-1 text-[10px] text-slate-300 outline-none w-full"
-                                                >
-                                                    <option value="">Seleccionar...</option>
-                                                    {specialties.map(s => <option key={s.id} value={s.id}>{s.code}</option>)}
-                                                </select>
+                                                <div className="relative group/select">
+                                                    <select
+                                                        value={item.specialty_id}
+                                                        onChange={e => {
+                                                            const newItems = [...breakdownItems]
+                                                            newItems[i].specialty_id = e.target.value
+                                                            newItems[i].is_specialty_suggested = false // Manual override
+                                                            setBreakdownItems(newItems)
+                                                        }}
+                                                        className={`bg-black/20 border rounded px-1 py-1 text-[10px] outline-none w-full transition-colors ${item.is_specialty_suggested
+                                                            ? 'border-blue-500/50 text-blue-300'
+                                                            : 'border-white/10 text-slate-300'
+                                                            }`}
+                                                    >
+                                                        <option value="">Seleccionar...</option>
+                                                        {specialties.map(s => <option key={s.id} value={s.id}>{s.code}</option>)}
+                                                    </select>
+                                                    {item.is_specialty_suggested && (
+                                                        <div className="absolute -top-2 -right-1 bg-blue-500 text-[8px] px-1 rounded text-white font-bold pointer-events-none">IA</div>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className="bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-xs border border-white/5">

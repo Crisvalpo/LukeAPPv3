@@ -576,9 +576,10 @@ export async function getTransmittal(
 
 export async function createTransmittal(
     params: CreateTransmittalParams,
-    userId: string
+    userId: string,
+    supabaseClient?: any // Optional injected client (for Server Actions/API routes)
 ): Promise<ApiResponse<Transmittal>> {
-    const supabase = await createClient()
+    const supabase = supabaseClient || await createClient()
 
     try {
         // 1. Get next transmittal number
@@ -603,7 +604,8 @@ export async function createTransmittal(
                 direction: params.direction || 'OUTGOING',
                 package_url: params.package_url || null,
                 manifest_url: params.manifest_url || null,
-                created_by: userId
+                created_by: userId,
+                status: params.direction === 'INCOMING' ? 'PENDING_PROCESS' : 'DRAFT'
             })
             .select()
             .single()
@@ -620,12 +622,53 @@ export async function createTransmittal(
 
             const { error: itemsError } = await supabase
                 .from('transmittal_items')
-                .insert(items)
-
             if (itemsError) throw new Error(itemsError.message)
         }
 
         return { success: true, data: { ...transmittal, items_count: params.items.length } }
+    } catch (err: any) {
+        return { success: false, message: err.message }
+    }
+}
+
+export async function deleteTransmittal(
+    transmittalId: string,
+    redirectPath?: string // Optional path to revalidate
+): Promise<ApiResponse<void>> {
+    const supabase = await createClient()
+
+    try {
+        // 1. Get transmittal details (for file cleanup)
+        const { data: transmittal } = await supabase
+            .from('transmittals')
+            .select('transmittal_code, package_url, manifest_url')
+            .eq('id', transmittalId)
+            .single()
+
+        // 2. Delete items (Cascade usually handles this, but explicit is safer)
+        const { error: itemsError } = await supabase
+            .from('transmittal_items')
+            .delete()
+            .eq('transmittal_id', transmittalId)
+
+        if (itemsError) throw new Error(`Error deleting items: ${itemsError.message}`)
+
+        // 3. Delete transmittal
+        const { error: deleteError } = await supabase
+            .from('transmittals')
+            .delete()
+            .eq('id', transmittalId)
+
+        if (deleteError) throw new Error(`Error deleting transmittal: ${deleteError.message}`)
+
+        // 4. Cleanup Storage (Optional/Background)
+        // We attempt to delete the package folder if it matches the code
+        if (transmittal) {
+            // TODO: Implement storage cleanup logic if strictly needed.
+            // For now, we leave files as backup or manual cleanup to avoid accidental data loss.
+        }
+
+        return { success: true }
     } catch (err: any) {
         return { success: false, message: err.message }
     }

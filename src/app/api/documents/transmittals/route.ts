@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     try {
         const body = await req.json()
 
-        const result = await createTransmittal(body, user.id)
+        const result = await createTransmittal(body, user.id, supabase)
 
         if (!result.success) {
             return NextResponse.json(result, { status: 400 })

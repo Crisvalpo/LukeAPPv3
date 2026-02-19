@@ -6,7 +6,7 @@ import Link from 'next/link'
 import {
     ChevronLeft, FileText, Download, PackageOpen,
     Calendar, User, Send, CheckCircle2, AlertCircle,
-    ArrowDownCircle, ArrowUpCircle, ExternalLink
+    ArrowDownCircle, ArrowUpCircle, ExternalLink, Trash2
 } from 'lucide-react'
 import { Heading, Text } from '@/components/ui/Typography'
 import { getTransmittal } from '@/services/document-control'
@@ -108,6 +108,33 @@ export default function TransmittalDetailsPage() {
                             Descargar ZIP
                         </a>
                     )}
+
+                    <button
+                        onClick={async () => {
+                            if (!confirm('¿Estás seguro de que deseas eliminar este transmittal? Esta acción no se puede deshacer.')) return
+
+                            toast.loading('Eliminando transmittal...')
+                            try {
+                                const { deleteTransmittal } = await import('@/services/document-control')
+                                const res = await deleteTransmittal(id as string)
+                                if (res.success) {
+                                    toast.dismiss()
+                                    toast.success('Transmittal eliminado correctamente')
+                                    router.push('/admin/documents/transmittals')
+                                } else {
+                                    toast.dismiss()
+                                    toast.error(res.message || 'Error al eliminar transmittal')
+                                }
+                            } catch (err) {
+                                toast.dismiss()
+                                toast.error('Error inesperado al eliminar')
+                            }
+                        }}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 rounded-xl font-medium transition-all"
+                        title="Eliminar Transmittal"
+                    >
+                        <Trash2 size={18} />
+                    </button>
                 </div>
             </div>
 

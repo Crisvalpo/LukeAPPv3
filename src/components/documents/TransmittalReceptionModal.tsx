@@ -31,6 +31,32 @@ export default function TransmittalReceptionModal({
     const [direction, setDirection] = useState<TransmittalDirectionType>('INCOMING')
     const [packageFile, setPackageFile] = useState<File | null>(null)
     const [manifestFile, setManifestFile] = useState<File | null>(null)
+    const [companyName, setCompanyName] = useState('')
+
+    useEffect(() => {
+        if (isOpen && companyId) {
+            loadCompanyName()
+        }
+    }, [isOpen, companyId])
+
+    async function loadCompanyName() {
+        const supabase = createClient()
+        const { data } = await supabase.from('companies').select('name').eq('id', companyId).single()
+        if (data) setCompanyName(data.name)
+    }
+
+    // Auto-suggest logic: Only set if empty and outgoing
+    useEffect(() => {
+        if (direction === 'OUTGOING' && !recipient) {
+            setRecipient(companyName)
+        } else if (direction === 'INCOMING') {
+            // Clearing logic: if the current recipient is our own company name, clear it
+            // or if it was just switched from outgoing, clear it to be safe for incoming.
+            if (recipient === companyName) {
+                setRecipient('')
+            }
+        }
+    }, [direction, companyName])
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
@@ -50,7 +76,17 @@ export default function TransmittalReceptionModal({
             if (!company || !project) throw new Error('Información de empresa o proyecto no encontrada')
 
             // 2. Upload Package (ZIP)
-            const packagePath = `${company.slug}-${companyId}/${project.code}-${projectId}/documents/transmittals/${direction}/${Date.now()}_${packageFile.name}`
+            // Use clean paths from storage-paths.ts
+            const { getProjectStoragePath } = await import('@/lib/storage-paths')
+            const basePath = getProjectStoragePath(
+                { id: companyId, slug: company.slug },
+                { id: projectId, code: project.code, name: 'Project' }
+            )
+
+            const transmittalsPath = `${basePath}/transmittals/${direction}`
+            const safePackageName = packageFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')
+            const packagePath = `${transmittalsPath}/${Date.now()}_${safePackageName}`
+
             const { error: pkgError } = await supabase.storage.from('project-files').upload(packagePath, packageFile)
             if (pkgError) throw pkgError
             const packageUrl = supabase.storage.from('project-files').getPublicUrl(packagePath).data.publicUrl
@@ -58,7 +94,8 @@ export default function TransmittalReceptionModal({
             // 3. Upload Manifest (Optional)
             let manifestUrl = null
             if (manifestFile) {
-                const manifestPath = `${company.slug}-${companyId}/${project.code}-${projectId}/documents/transmittals/${direction}/${Date.now()}_${manifestFile.name}`
+                const safeManifestName = manifestFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')
+                const manifestPath = `${transmittalsPath}/${Date.now()}_${safeManifestName}`
                 const { error: manError } = await supabase.storage.from('project-files').upload(manifestPath, manifestFile)
                 if (manError) throw manError
                 manifestUrl = supabase.storage.from('project-files').getPublicUrl(manifestPath).data.publicUrl
@@ -164,7 +201,7 @@ export default function TransmittalReceptionModal({
                                 type="text"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                placeholder="Ej: K484-KT-EIMISA1-T-1345"
+                                placeholder="Ej: TRANS-PROY-001"
                                 className="w-full bg-[#0f172a] border border-white/10 rounded-lg text-sm text-white px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
                             />
                         </div>
@@ -174,7 +211,7 @@ export default function TransmittalReceptionModal({
                                 type="text"
                                 value={recipient}
                                 onChange={(e) => setRecipient(e.target.value)}
-                                placeholder="Ej: EIMISA S.A."
+                                placeholder="Ej: Constructora ABC / Cliente XYZ"
                                 className="w-full bg-[#0f172a] border border-white/10 rounded-lg text-sm text-white px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
                             />
                         </div>

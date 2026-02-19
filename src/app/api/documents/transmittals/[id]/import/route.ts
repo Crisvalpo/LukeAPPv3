@@ -36,7 +36,7 @@ export async function POST(
                 let { data: docMaster } = await supabase
                     .from('document_master')
                     .select('id')
-                    .eq('code', item.code)
+                    .eq('document_code', item.code)
                     .eq('project_id', transmittal.project_id)
                     .maybeSingle()
 
@@ -46,7 +46,7 @@ export async function POST(
                         .insert({
                             project_id: transmittal.project_id,
                             company_id: transmittal.company_id,
-                            code: item.code,
+                            document_code: item.code,
                             title: item.title,
                             document_type_id: item.document_type_id,
                             specialty_id: item.specialty_id,
