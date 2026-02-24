@@ -14,7 +14,9 @@ INSERT INTO public.specialties (name, code, description) VALUES
 ('Structural', 'STR', 'Estructuras metálicas y hormigón'),
 ('Electrical', 'ELE', 'Sistemas eléctricos y bandejas'),
 ('Instrumentation', 'INS', 'Instrumentación y control'),
-('Mechanical', 'MEC', 'Equipos mecánicos y montaje')
+('Mechanical', 'MEC', 'Equipos mecánicos y montaje'),
+('Process', 'PRO', 'Ingeniería de Procesos'),
+('Civil', 'CIV', 'Obras Civiles y Estructuras de Hormigón')
 ON CONFLICT (code) DO NOTHING;
 
 -- Create project_specialties join table

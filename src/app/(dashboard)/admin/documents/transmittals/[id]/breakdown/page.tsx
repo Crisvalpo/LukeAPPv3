@@ -84,8 +84,8 @@ export default function TransmittalBreakdownPage() {
             // Fetch configuration
             const supabase = createClient()
             const [typesRes, specsRes] = await Promise.all([
-                supabase.from('document_types').select('id, name, code').eq('company_id', res.data.company_id),
-                supabase.from('specialties').select('id, name, code').eq('company_id', res.data.company_id)
+                supabase.from('document_types').select('id, name, code').or(`company_id.eq.${res.data.company_id},company_id.is.null`),
+                supabase.from('specialties').select('id, name, code').or(`company_id.eq.${res.data.company_id},company_id.is.null`)
             ])
             if (typesRes.data) setDocTypes(typesRes.data)
             if (specsRes.data) setSpecialties(specsRes.data)
@@ -322,7 +322,7 @@ export default function TransmittalBreakdownPage() {
     if (!transmittal) return null
 
     return (
-        <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
+        <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-full mx-auto">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="space-y-1">
