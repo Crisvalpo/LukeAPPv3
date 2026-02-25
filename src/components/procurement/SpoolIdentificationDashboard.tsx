@@ -131,8 +131,8 @@ export default function SpoolIdentificationDashboard({ projectId }: Props) {
                         <div
                             key={candidate.id}
                             className={`p-5 rounded-2xl border transition-all ${candidate.status === 'APPROVED' ? 'bg-emerald-500/5 border-emerald-500/20' :
-                                    candidate.status === 'REJECTED' ? 'bg-rose-500/5 border-rose-500/20' :
-                                        'bg-white/[0.03] border-white/10 hover:border-white/20'
+                                candidate.status === 'REJECTED' ? 'bg-rose-500/5 border-rose-500/20' :
+                                    'bg-white/[0.03] border-white/10 hover:border-white/20'
                                 }`}
                         >
                             <div className="flex items-start justify-between mb-4">
@@ -156,7 +156,7 @@ export default function SpoolIdentificationDashboard({ projectId }: Props) {
                                     <Text className="text-xs text-slate-500 mb-1">Componentes</Text>
                                     <Text className="text-white font-bold flex items-center gap-2">
                                         <List className="w-4 h-4 text-slate-400" />
-                                        {candidate.item_count} Items
+                                        {candidate.items?.length || 0} Items
                                     </Text>
                                 </div>
                                 <div className="bg-black/20 p-3 rounded-xl border border-white/5">

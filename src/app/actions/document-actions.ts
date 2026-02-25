@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { updateDocumentRevision } from '@/services/document-control'
+import { updateDocumentRevision, prepareRevisionUpload } from '@/services/document-control'
 import { ApiResponse } from '@/types'
 import { RevisionStatusType } from '@/types/document-control'
 

@@ -79,7 +79,7 @@ export default function TransmittalWizard({ projectId, companyId, userId }: Tran
         try {
             const items = selectedDocs.map(doc => ({
                 document_revision_id: doc.current_revision_id!,
-                purpose: 'FOR_APPROVAL' // Default purpose for now, could be customizable per item
+                purpose: 'FOR_APPROVAL' as const
             }))
 
             const res = await createTransmittal({
@@ -123,8 +123,8 @@ export default function TransmittalWizard({ projectId, companyId, userId }: Tran
             {/* Steps Progress */}
             <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
                 <div className={`flex items-center gap-2 ${step === 'recipient' ? 'text-purple-400' : 'text-slate-300'}`}>
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center border ${step === 'recipient' ? 'border-purple-500 bg-purple-500/20' : step !== 'recipient' ? 'border-emerald-500 bg-emerald-500/20 text-emerald-500' : 'border-slate-700'}`}>
-                        {step !== 'recipient' ? <Check size={14} /> : '1'}
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center border ${step === 'recipient' ? 'border-purple-500 bg-purple-500/20' : 'border-emerald-500 bg-emerald-500/20 text-emerald-500'}`}>
+                        {step === 'recipient' ? '1' : <Check size={14} />}
                     </div>
                     Información
                 </div>

@@ -7,8 +7,12 @@
  */
 
 -- =====================================================
--- 1. DROP MOCKUP TABLES (from migration 0014)
+-- 1. CLEAN EXISTING TABLES (Mockup and Real)
 -- =====================================================
+
+DROP TABLE IF EXISTS public.isometrics CASCADE;
+DROP TABLE IF EXISTS public.spools CASCADE;
+DROP TABLE IF EXISTS public.welds CASCADE;
 
 DROP TABLE IF EXISTS public.mockup_isometrics CASCADE;
 DROP TABLE IF EXISTS public.mockup_spools CASCADE;

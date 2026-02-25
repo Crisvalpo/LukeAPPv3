@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
-import { ProjectMaterialItem, ProjectMaterialStats, SpoolCandidate } from '@/types/procurement'
+import type { ProjectMaterialItem, ProjectMaterialStats, SpoolCandidate } from '@/types/procurement'
+export type { ProjectMaterialItem, ProjectMaterialStats, SpoolCandidate }
 
 /**
  * Buscar materiales en el catálogo del proyecto

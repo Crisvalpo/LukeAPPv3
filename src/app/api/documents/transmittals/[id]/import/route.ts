@@ -4,9 +4,9 @@ import { getTransmittal } from '@/services/document-control'
 
 export async function POST(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
-    const { id: transmittalId } = params
+    const { id: transmittalId } = await params;
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
