@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
@@ -8,8 +9,9 @@ export async function updateSession(request: NextRequest) {
         },
     })
 
+    // Client for reading cookies / validating the user session (uses ANON_KEY + cookies)
     const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_INTERNAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
             cookies: {
@@ -31,13 +33,19 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
+    // Admin client for privileged DB queries (uses SERVICE_ROLE_KEY, bypasses RLS)
+    const supabaseAdmin = createClient(
+        process.env.SUPABASE_INTERNAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
     const {
         data: { user },
     } = await supabase.auth.getUser()
 
     if (user && request.nextUrl.pathname !== '/') {
         // 1. Fetch User Role + Functional Role + Permissions
-        const { data: memberData, error: memberError } = await supabase
+        const { data: memberData, error: memberError } = await supabaseAdmin
             .from('members')
             .select(`
                 role_id,
@@ -57,7 +65,7 @@ export async function updateSession(request: NextRequest) {
 
         // Auto-accept pending invitation if no membership exists
         if (!memberData && user.email) {
-            const { data: pendingInv } = await supabase
+            const { data: pendingInv } = await supabaseAdmin
                 .from('invitations')
                 .select('id, token') // Select ID for the RPC
                 .eq('email', user.email)
@@ -68,7 +76,7 @@ export async function updateSession(request: NextRequest) {
                 console.log('MW: Found pending invitation for', user.email)
 
                 // Call RPC with correct arguments (invitation_id_input)
-                const { data: rpcResult, error: conversionError } = await supabase.rpc('accept_invitation', {
+                const { data: rpcResult, error: conversionError } = await supabaseAdmin.rpc('accept_invitation', {
                     invitation_id_input: pendingInv.id,
                     user_id_input: user.id
                 })
