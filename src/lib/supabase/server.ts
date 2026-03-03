@@ -5,7 +5,7 @@ export async function createClient() {
     const cookieStore = await cookies()
 
     return createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_INTERNAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
             cookies: {
@@ -17,6 +17,9 @@ export async function createClient() {
                     // This is handled by Middleware or Server Actions.
                 },
             },
+            cookieOptions: {
+                name: 'sb-api-auth-token'
+            }
         }
     )
 }
@@ -31,7 +34,7 @@ export function createAdminClient() {
     const { createClient } = require('@supabase/supabase-js')
 
     return createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_INTERNAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!,
         {
             auth: {

@@ -30,6 +30,9 @@ export async function updateSession(request: NextRequest) {
                     )
                 },
             },
+            cookieOptions: {
+                name: 'sb-api-auth-token'
+            }
         }
     )
 
