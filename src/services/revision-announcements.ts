@@ -332,22 +332,35 @@ function groupByIsometric(
 
 /**
  * Fetch existing isometrics from database
+ * 
+ * NOTE: We avoid using `.in()` or `.filter('iso_number','in',...)` because
+ * PostgREST has encoding issues with iso_numbers that contain hyphens or
+ * other special characters, returning 400 errors regardless of quoting.
+ * Instead, we run parallel individual `.eq()` queries — one per iso_number —
+ * which are always safe regardless of value content.
  */
 async function fetchExistingIsometrics(
     supabase: ReturnType<typeof createClient>,
     projectId: string,
     isoNumbers: string[]
 ): Promise<Map<string, { id: string; iso_number: string; status?: string }>> {
-    const { data, error } = await supabase
-        .from('isometrics')
-        .select('id, iso_number, status')
-        .eq('project_id', projectId)
-        .in('iso_number', isoNumbers)
-
-    if (error) throw error
+    // Run all queries in parallel for performance
+    const results = await Promise.all(
+        isoNumbers.map(isoNumber =>
+            supabase
+                .from('isometrics')
+                .select('id, iso_number, status')
+                .eq('project_id', projectId)
+                .eq('iso_number', isoNumber)
+                .maybeSingle()
+        )
+    )
 
     const map = new Map<string, { id: string; iso_number: string; status?: string }>()
-    data?.forEach(iso => map.set(iso.iso_number, iso))
+    for (const { data, error } of results) {
+        if (error) throw error
+        if (data) map.set(data.iso_number, data)
+    }
 
     return map
 }
