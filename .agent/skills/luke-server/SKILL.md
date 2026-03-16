@@ -50,10 +50,24 @@ The server implements a fully automated "Push-to-Deploy" flow:
 
 ## 🗄️ Supabase Self-Hosted (Docker)
 - **Directory**: `~/supabase-docker/docker/`
-- **Active Minimal Stack**: `db`, `kong`, `auth`, `rest`, `meta`, `studio`, `storage` 
-- *(Services disabled to save RAM: analytics, realtime, vector, pooler, inbucket).*
-- **API Gateway (Kong)**: Runs on port `8000` (`api.lukeapp.me`).
-- **Studio**: Runs on port `54323` (`studio.lukeapp.me`).
+- **Compose file (local copy)**: `D:\Github\LUKEAPP\supabase-docker-compose.yml`
+- **Active Stack**: `db`, `kong`, `auth`, `rest`, `meta`, `studio`, `storage`, `realtime`, `pooler (supavisor)`, `imgproxy`
+- *(Services disabled to save RAM: `analytics/logflare`, `vector`, `functions/edge-runtime`, `inbucket`.)*
+- **API Gateway (Kong)**: Port `8000` → `api.lukeapp.me`
+- **Studio**: Port `54323` → `studio.lukeapp.me` ✅ **Confirmed working**
+- **Supavisor (Pooler)**: Port `6543`
+
+### 📋 Startup / Restart Commands
+```bash
+# Start the stack (from server)
+cd ~/supabase-docker/docker && docker compose up -d
+
+# Stop the stack
+cd ~/supabase-docker/docker && docker compose down
+
+# Upload a new docker-compose from local machine:
+scp ./supabase-docker-compose.yml luke-ssh:~/supabase-docker/docker/docker-compose.yml
+```
 
 ### ⚠️ Supabase Troubleshooting & CORS
 - **Kong CORS Issue**: By default, Kong can reject cross-origin preflight requests (OPTIONS). To fix this, edit the `kong.yml` file (`~/supabase-docker/docker/volumes/api/kong.yml`) and explicitly allow our origins in the `cors` configurations:

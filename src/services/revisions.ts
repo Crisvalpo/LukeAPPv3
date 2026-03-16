@@ -226,13 +226,11 @@ export async function getProjectRevisions(projectId: string): Promise<ApiRespons
                     .select('*', { count: 'exact', head: true })
                     .eq('revision_id', rev.id)
 
-                // Count unique spools
-                const { data: welds } = await supabase
-                    .from('spools_welds')
-                    .select('spool_number')
+                // Count unique spools accurately
+                const { count: realSpoolsCount } = await supabase
+                    .from('spools')
+                    .select('*', { count: 'exact', head: true })
                     .eq('revision_id', rev.id)
-
-                const uniqueSpools = new Set(welds?.map(w => w.spool_number) || [])
 
                 return {
                     id: rev.id,
@@ -262,7 +260,7 @@ export async function getProjectRevisions(projectId: string): Promise<ApiRespons
                     model_data: rev.model_data,
                     iso_number: iso?.iso_number || 'N/A',
                     welds_count: count || 0,
-                    spools_count: uniqueSpools.size
+                    spools_count: realSpoolsCount || 0
                 } as EngineeringRevision
             })
         )

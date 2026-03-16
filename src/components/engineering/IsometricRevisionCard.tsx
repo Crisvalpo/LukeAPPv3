@@ -1882,7 +1882,7 @@ export default function IsometricRevisionCard({
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className={`px-3 py-1 h-8 rounded-lg transition-all ${rev.pdf_url ? 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20' : 'text-text-dim bg-white/5 hover:bg-white/10 border border-white/5'}`}
+                                                    className={`px-3 py-1 h-8 rounded-lg transition-all ${rev.pdf_url ? 'text-green-400 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20' : 'text-text-dim bg-white/5 hover:bg-white/10 border border-white/5'}`}
                                                     onClick={(e) => {
                                                         e.stopPropagation()
                                                         if (uploadingPdfRevId === rev.id) return

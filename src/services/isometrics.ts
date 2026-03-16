@@ -48,8 +48,6 @@ export async function searchIsometrics(
                 sheet,
                 created_at,
                 updated_at,
-                created_at,
-                updated_at,
                 engineering_revisions:engineering_revisions!engineering_revisions_isometric_id_fkey (
                     id,
                     rev_code,
@@ -88,10 +86,7 @@ export async function searchIsometrics(
             }
         }
 
-        console.log(`[SearchIsometrics] ProjectId: ${projectId}, Query: "${query}", Limit: ${limit}, Offset: ${offset}, Found: ${isometrics?.length || 0}`)
-
         if (!isometrics || isometrics.length === 0) {
-
             return {
                 success: true,
                 message: 'No se encontraron isométricos',
@@ -99,8 +94,8 @@ export async function searchIsometrics(
             }
         }
 
-        // 3. Process and Structure Data
-        const masterViewData: IsometricMasterView[] = isometrics.map((iso: any) => {
+        // 3. Process and Structure Data (Async)
+        const masterViewData: IsometricMasterView[] = await Promise.all(isometrics.map(async (iso: any) => {
             // Sort revisions: Descending by created_at (Newest first)
             const sortedRevisions = (iso.engineering_revisions || []).sort((a: any, b: any) =>
                 new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -110,11 +105,21 @@ export async function searchIsometrics(
             const vigentes = sortedRevisions.filter((r: any) => r.revision_status === 'VIGENTE')
             const current = vigentes.length > 0 ? vigentes[0] : sortedRevisions[0] || null
 
+            // Count real spools for the current revision to be absolute sure
+            let realSpools = 0;
+            if (current) {
+                const { count: spoolCount } = await supabase
+                    .from('spools')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('revision_id', current.id);
+                realSpools = spoolCount || 0;
+            }
+
             // Calculate Stats
             const stats = {
                 total: sortedRevisions.length,
                 vigentes: vigentes.length,
-                spooleadas: sortedRevisions.filter((r: any) => r.revision_status === 'SPOOLEADO').length,
+                spooleadas: realSpools || current?.spools_count || 0,
                 obsoletas: sortedRevisions.filter((r: any) =>
                     ['OBSOLETO', 'OBSOLETA', 'OBSOLETO_SPOOLEADO', 'ELIMINADO'].includes(r.revision_status)
                 ).length,
@@ -150,10 +155,9 @@ export async function searchIsometrics(
                 revisions: mappedRevisions,
                 stats
             }
-        })
+        }))
 
-        // 4. Client-side Filter for Current Status (if passed)
-        // Note: Doing this client-side for now as filtering parent by child status in Supabase is tricky in one query
+        // 4. Client-side Filter for Current Status
         let filteredResult = masterViewData
         if (filters.status && filters.status !== 'ALL') {
             filteredResult = masterViewData.filter(item =>
