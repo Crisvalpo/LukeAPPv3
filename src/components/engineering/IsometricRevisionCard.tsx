@@ -1857,7 +1857,20 @@ export default function IsometricRevisionCard({
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className={`px-3 py-1 h-8 rounded-lg text-[10px] font-bold font-mono transition-all ${rev.glb_model_url ? 'text-green-400 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20' : 'text-text-dim bg-white/5 hover:bg-white/10 border border-white/5'}`}
+                                                    className="px-3 py-1 h-8 rounded-lg text-[10px] font-bold font-mono transition-all"
+                                                    style={rev.glb_model_url ? {
+                                                        color: '#4ade80',
+                                                        background: 'rgba(34,197,94,0.1)',
+                                                        borderColor: 'rgba(34,197,94,0.2)',
+                                                        borderWidth: '1px',
+                                                        borderStyle: 'solid'
+                                                    } : {
+                                                        color: 'var(--color-text-muted)',
+                                                        background: 'rgba(255,255,255,0.05)',
+                                                        borderColor: 'rgba(255,255,255,0.05)',
+                                                        borderWidth: '1px',
+                                                        borderStyle: 'solid'
+                                                    }}
                                                     onClick={(e) => {
                                                         e.stopPropagation()
                                                         if (uploadingModelRevId === rev.id) return
@@ -1882,7 +1895,20 @@ export default function IsometricRevisionCard({
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className={`px-3 py-1 h-8 rounded-lg transition-all ${rev.pdf_url ? 'text-green-400 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20' : 'text-text-dim bg-white/5 hover:bg-white/10 border border-white/5'}`}
+                                                    className="px-3 py-1 h-8 rounded-lg transition-all"
+                                                    style={rev.pdf_url ? {
+                                                        color: '#4ade80',
+                                                        background: 'rgba(34,197,94,0.1)',
+                                                        borderColor: 'rgba(34,197,94,0.2)',
+                                                        borderWidth: '1px',
+                                                        borderStyle: 'solid'
+                                                    } : {
+                                                        color: 'var(--color-text-muted)',
+                                                        background: 'rgba(255,255,255,0.05)',
+                                                        borderColor: 'rgba(255,255,255,0.05)',
+                                                        borderWidth: '1px',
+                                                        borderStyle: 'solid'
+                                                    }}
                                                     onClick={(e) => {
                                                         e.stopPropagation()
                                                         if (uploadingPdfRevId === rev.id) return
